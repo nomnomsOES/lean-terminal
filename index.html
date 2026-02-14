@@ -1,0 +1,252 @@
+<!doctype html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lean Terminal</title>
+  <link rel="manifest" href="manifest.json" />
+  <meta name="theme-color" content="#0b0b0b" />
+  <style>
+    :root { --bg:#0b0b0b; --card:#121212; --muted:#9aa0a6; --text:#e8eaed; --green:#29d64a; --yellow:#fbbc04; --red:#ff4d4f; }
+    body { margin:0; font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
+    header { position:sticky; top:0; background:rgba(11,11,11,.9); backdrop-filter: blur(10px); padding:16px; border-bottom:1px solid #1f1f1f; }
+    h1 { margin:0; font-size:18px; }
+    .sub { color:var(--muted); font-size:12px; margin-top:6px; }
+    .wrap { padding:16px; max-width: 980px; margin:0 auto; }
+    .row { display:flex; gap:12px; flex-wrap:wrap; }
+    .card { background:var(--card); border:1px solid #1f1f1f; border-radius:14px; padding:14px; flex:1; min-width:260px; }
+    .btn { background:#1f1f1f; border:1px solid #2a2a2a; color:var(--text); padding:10px 12px; border-radius:12px; cursor:pointer; }
+    .btn.primary { background:#1b5e20; border-color:#2e7d32; }
+    .btn.warn { background:#5a3b00; border-color:#7a4f00; }
+    .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid #2a2a2a; }
+    .dot { width:10px; height:10px; border-radius:50%; }
+    .g { background:var(--green); } .y { background:var(--yellow); } .r { background:var(--red); }
+    table { width:100%; border-collapse: collapse; font-size:13px; }
+    th, td { padding:10px; border-bottom:1px solid #232323; text-align:left; }
+    th { color:var(--muted); font-weight:600; }
+    .muted { color:var(--muted); }
+    .small { font-size:12px; }
+    input[type="text"] { width:100%; background:#0f0f0f; border:1px solid #2a2a2a; border-radius:10px; padding:10px; color:var(--text); }
+    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
+    @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
+    .section-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+  </style>
+</head>
+
+<body>
+<header>
+  <h1>Lean Terminal — App 1.0</h1>
+  <div class="sub" id="statusLine">Waiting for data…</div>
+</header>
+
+<div class="wrap">
+  <div class="row">
+    <div class="card">
+      <div class="section-title">
+        <strong>Good Morning</strong>
+        <button class="btn primary" id="btnGM">Run Scan</button>
+      </div>
+      <div class="row">
+        <span class="pill"><span class="dot" id="dotRegime"></span><span id="txtRegime">Regime: —</span></span>
+        <span class="pill"><span class="dot" id="dotLiquidity"></span><span id="txtLiquidity">Liquidity: —</span></span>
+        <span class="pill"><span class="dot" id="dotVol"></span><span id="txtVol">Volatility: —</span></span>
+        <span class="pill"><span class="dot" id="dotL5"></span><span id="txtL5">Level 5: —</span></span>
+      </div>
+      <p class="muted small" style="margin-top:12px;">
+        App 1.0 uses your Google Sheet as the data source. Level 5 remains modular.
+      </p>
+    </div>
+
+    <div class="card">
+      <div class="section-title">
+        <strong>Data Source</strong>
+        <button class="btn" id="btnSave">Save</button>
+      </div>
+      <div class="grid2">
+        <div>
+          <div class="muted small">Published CSV URL (Google Sheets)</div>
+          <input id="csvUrl" type="text" placeholder="Paste your published CSV link here" />
+        </div>
+        <div>
+          <div class="muted small">Notes (stored locally on device)</div>
+          <input id="note" type="text" placeholder="e.g., 'Watching volatility compression for Level 5'" />
+        </div>
+      </div>
+      <p class="muted small">Tip: Keep the CSV link unshared. We can upgrade to authenticated access later.</p>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div class="section-title">
+        <strong>Holdings</strong>
+        <button class="btn" id="btnRefresh">Refresh</button>
+      </div>
+      <div class="muted small" id="holdingsMeta">—</div>
+      <div style="margin-top:10px; overflow:auto;">
+        <table id="tbl">
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Role</th>
+              <th>Bucket</th>
+              <th>Shares</th>
+              <th>Price</th>
+              <th>Value</th>
+              <th class="muted">Notes</th>
+            </tr>
+          </thead>
+          <tbody></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
+  <div class="row">
+    <div class="card">
+      <div class="section-title">
+        <strong>Level 5 Module</strong>
+        <button class="btn warn" id="btnToggleL5">Toggle Module</button>
+      </div>
+      <div id="l5Block">
+        <p class="muted small">
+          This block can be removed later without affecting Lean. App 1.0 shows “ON/OFF” based on your scan rules.
+        </p>
+        <ul class="small">
+          <li><span class="muted">Activation Gate:</span> VIX cooling + RS leaders + compression breakout</li>
+          <li><span class="muted">Rules:</span> -15% hard stop, no averaging, profits → SGOV</li>
+        </ul>
+      </div>
+    </div>
+  </div>
+</div>
+
+<script>
+  // --- Simple helpers ---
+  const $ = (id) => document.getElementById(id);
+  const setDot = (id, color) => { const el=$(id); el.className = "dot " + color; };
+
+  function parseCSV(text){
+    const lines = text.trim().split(/\r?\n/);
+    const rows = lines.map(l => l.split(",").map(s => s.replace(/^"|"$/g,"").trim()));
+    const headers = rows.shift();
+    return rows.map(r => Object.fromEntries(headers.map((h,i)=>[h, r[i] ?? ""])));
+  }
+
+  function toNum(x){
+    const n = Number(String(x).replace(/[^0-9.\-]/g,""));
+    return Number.isFinite(n) ? n : null;
+  }
+
+  function loadSettings(){
+    const url = localStorage.getItem("LEAN_CSV_URL") || "";
+    const note = localStorage.getItem("LEAN_NOTE") || "";
+    const l5 = localStorage.getItem("LEAN_L5_ENABLED");
+    $("csvUrl").value = url;
+    $("note").value = note;
+    if(l5 === "0") $("l5Block").style.display = "none";
+  }
+
+  function saveSettings(){
+    localStorage.setItem("LEAN_CSV_URL", $("csvUrl").value.trim());
+    localStorage.setItem("LEAN_NOTE", $("note").value.trim());
+    $("statusLine").textContent = "Saved settings.";
+  }
+
+  async function fetchHoldings(){
+    const url = (localStorage.getItem("LEAN_CSV_URL") || "").trim();
+    if(!url){ $("statusLine").textContent = "Paste your Google Sheet CSV URL, then Save."; return null; }
+    $("statusLine").textContent = "Fetching holdings…";
+    const res = await fetch(url, { cache: "no-store" });
+    const text = await res.text();
+    const data = parseCSV(text);
+    $("statusLine").textContent = "Holdings updated.";
+    return data;
+  }
+
+  function renderHoldings(data){
+    const tbody = $("tbl").querySelector("tbody");
+    tbody.innerHTML = "";
+    let total = 0;
+    for(const row of data){
+      const t = row.Ticker || row.ticker;
+      if(!t) continue;
+      const shares = toNum(row.Shares) ?? toNum(row.shares) ?? null;
+      const price  = toNum(row.Price) ?? toNum(row.price) ?? null;
+      const value  = toNum(row.Value) ?? (shares!=null && price!=null ? shares*price : null);
+      if(value!=null) total += value;
+
+      const tr = document.createElement("tr");
+      tr.innerHTML = `
+        <td><strong>${t}</strong></td>
+        <td>${row.Role || ""}</td>
+        <td>${row.Bucket || ""}</td>
+        <td>${shares!=null ? shares.toFixed(4) : ""}</td>
+        <td>${price!=null ? price.toFixed(2) : ""}</td>
+        <td>${value!=null ? value.toFixed(2) : ""}</td>
+        <td class="muted">${row.Notes || ""}</td>
+      `;
+      tbody.appendChild(tr);
+    }
+    $("holdingsMeta").textContent = `Approx total value: $${total.toFixed(2)}  •  Note: ${localStorage.getItem("LEAN_NOTE") || ""}`;
+  }
+
+  // --- Good Morning scan (App 1.0: simple heuristic placeholders) ---
+  // In App 1.1 we’ll compute real indicators (RS, volatility compression) from price history.
+  function runGoodMorningHeuristic(data){
+    // Heuristic: if SGOV exists and value share is high, we call liquidity “good”.
+    const tickers = new Set(data.map(d => (d.Ticker || "").toUpperCase()));
+    const hasSGOV = tickers.has("SGOV");
+    const hasQQQ  = tickers.has("QQQ") || tickers.has("QQQM");
+    const hasVOO  = tickers.has("VOO") || tickers.has("IVV") || tickers.has("SPY");
+
+    // Regime: if you have broad core ETFs, treat as “Transition” unless you mark otherwise.
+    $("txtRegime").textContent = "Regime: TRANSITION";
+    setDot("dotRegime", "y");
+
+    $("txtLiquidity").textContent = hasSGOV ? "Liquidity: OK (SGOV anchor)" : "Liquidity: UNKNOWN";
+    setDot("dotLiquidity", hasSGOV ? "g" : "y");
+
+    $("txtVol").textContent = "Volatility: WATCH";
+    setDot("dotVol", "y");
+
+    // Level 5: require BOTH QQQ & VOO present for risk-on participation; else OFF
+    const l5Enabled = localStorage.getItem("LEAN_L5_ENABLED") !== "0";
+    const l5On = l5Enabled && hasQQQ && hasVOO;
+    $("txtL5").textContent = l5On ? "Level 5: WATCH (gate not confirmed)" : "Level 5: OFF";
+    setDot("dotL5", l5On ? "y" : "r");
+  }
+
+  // --- Events ---
+  $("btnSave").addEventListener("click", saveSettings);
+  $("btnRefresh").addEventListener("click", async () => {
+    const data = await fetchHoldings();
+    if(!data) return;
+    renderHoldings(data);
+  });
+
+  $("btnGM").addEventListener("click", async () => {
+    const data = await fetchHoldings();
+    if(!data) return;
+    renderHoldings(data);
+    runGoodMorningHeuristic(data);
+    $("statusLine").textContent = "Good Morning scan complete.";
+  });
+
+  $("btnToggleL5").addEventListener("click", () => {
+    const cur = localStorage.getItem("LEAN_L5_ENABLED");
+    const next = (cur === "0") ? "1" : "0";
+    localStorage.setItem("LEAN_L5_ENABLED", next);
+    $("l5Block").style.display = (next === "0") ? "none" : "block";
+    $("statusLine").textContent = (next === "0") ? "Level 5 module hidden." : "Level 5 module shown.";
+  });
+
+  // PWA SW
+  if ("serviceWorker" in navigator) {
+    navigator.serviceWorker.register("sw.js");
+  }
+
+  loadSettings();
+</script>
+</body>
+</html>

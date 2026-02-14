@@ -1,0 +1,15 @@
+{
+  "name": "Lean Terminal",
+  "short_name": "Lean",
+  "start_url": "./",
+  "display": "standalone",
+  "background_color": "#0b0b0b",
+  "theme_color": "#0b0b0b",
+  "icons": [
+    {
+      "src": "https://www.google.com/s2/favicons?domain=example.com&sz=128",
+      "sizes": "128x128",
+      "type": "image/png"
+    }
+  ]
+}
