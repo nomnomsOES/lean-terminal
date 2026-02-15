@@ -1,197 +1,5 @@
-<!doctype html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal — App 1.0</title>
-
-<style>
-:root{
-  --bg:#0b0b0d;
-  --text:#f3f4f6;
-  --muted:#a7aab3;
-  --green:#22c55e;
-  --yellow:#f59e0b;
-  --red:#ef4444;
-  --blue:#60a5fa;
-}
-*{box-sizing:border-box}
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-  background:#0b0b0d;
-  color:var(--text);
-}
-body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.15); }
-body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.15); }
-body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.15); }
-
-header{
-  padding:24px;
-  border-bottom:1px solid rgba(255,255,255,.05);
-}
-.wrap{max-width:1100px;margin:auto;padding:24px}
-h1{margin:0;font-size:22px}
-.sub{color:var(--muted);font-size:13px;margin-top:6px}
-#lastUpdated{
-  margin-top:8px;
-  font-size:18px;
-  font-weight:800;
-  color:var(--blue);
-}
-#nextRefresh{
-  margin-top:4px;
-  font-size:12px;
-  color:var(--muted);
-}
-.card{
-  margin-top:20px;
-  padding:18px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  background:rgba(255,255,255,.02);
-}
-.pills{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  margin-top:12px;
-}
-.pill{
-  padding:10px 14px;
-  border-radius:999px;
-  background:rgba(0,0,0,.3);
-  border:1px solid rgba(255,255,255,.08);
-  font-size:13px;
-}
-button{
-  padding:8px 14px;
-  border-radius:8px;
-  background:#1f2937;
-  border:1px solid rgba(255,255,255,.15);
-  color:white;
-  cursor:pointer;
-}
-input, textarea{
-  width:100%;
-  margin-top:6px;
-  padding:8px;
-  background:#111;
-  border:1px solid rgba(255,255,255,.15);
-  color:white;
-}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:14px;
-}
-th, td{
-  padding:8px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  font-size:13px;
-}
-th{color:var(--muted);text-align:left}
-.right{text-align:right}
-
-#divergenceBanner{
-  margin-top:10px;
-  color:var(--yellow);
-  font-weight:800;
-}
-
-#leanSignal{
-  margin-top:12px;
-  font-size:14px;
-  font-weight:900;
-}
-#leanSignal small{
-  display:block;
-  margin-top:6px;
-  font-size:12px;
-  font-weight:700;
-  color:var(--muted);
-}
-
-#violations{
-  margin-top:10px;
-  font-size:13px;
-  font-weight:900;
-}
-
-#checklist{
-  margin-top:10px;
-  font-size:13px;
-  font-weight:900;
-}
-</style>
-</head>
-
-<body>
-
-<header>
-  <div class="wrap">
-    <h1>Lean Terminal — App 1.0</h1>
-    <div class="sub" id="statusLine">Ready.</div>
-    <div id="lastUpdated">LAST UPDATED: —</div>
-    <div id="nextRefresh">Next refresh in: 60s</div>
-  </div>
-</header>
-
-<div class="wrap">
-
-<div class="card">
-  <h2>Good Morning</h2>
-  <button id="runScanBtn">Run Scan</button>
-
-  <div class="pills">
-    <div class="pill">Regime: <span id="valRegime">—</span></div>
-    <div class="pill">Deployment: <span id="valDeploy">—</span></div>
-    <div class="pill">Cash: <span id="valCash">—</span></div>
-    <div class="pill">Level 5: <span id="valL5">—</span></div>
-    <div class="pill">Liquidity: <span id="valLiq">—</span></div>
-    <div class="pill">Volatility: <span id="valVol">—</span></div>
-    <div class="pill">Violations: <span id="valViol">—</span></div>
-  </div>
-
-  <div id="divergenceBanner"></div>
-
-  <div id="leanSignal">LEAN SIGNAL: —<small id="leanSuggestion">—</small></div>
-
-  <div id="violations">DISCIPLINE: <span id="violationsText">—</span></div>
-
-  <div id="checklist">TODAY: <span id="checklistText" style="color:var(--muted);">—</span></div>
-</div>
-
-<div class="card">
-  <h2>Data Source</h2>
-  <input id="holdingsUrl" placeholder="HOLDINGS CSV URL">
-  <input id="systemUrl" placeholder="SYSTEM_EXPORT CSV URL">
-  <textarea id="notesBox" placeholder="Notes"></textarea>
-  <button id="saveBtn">Save</button>
-</div>
-
-<div class="card">
-  <h2>Holdings</h2>
-  <button id="refreshBtn">Refresh</button>
-  <div style="margin-top:8px">Total: <b id="totalValue">$—</b></div>
-  <table>
-    <thead>
-      <tr>
-        <th>Ticker</th>
-        <th>Role</th>
-        <th>Bucket</th>
-        <th class="right">Shares</th>
-        <th class="right">Price</th>
-        <th class="right">Value</th>
-      </tr>
-    </thead>
-    <tbody id="holdingsBody">
-      <tr><td colspan="6">Waiting for data…</td></tr>
-    </tbody>
-  </table>
-</div>
-
-</div>
+<!-- SAME HEAD / STYLE AS BEFORE -->
+<!-- Only showing script portion change for clarity -->
 
 <script>
 
@@ -212,33 +20,30 @@ const divergenceBanner=document.getElementById("divergenceBanner");
 
 const leanSignal=document.getElementById("leanSignal");
 
-const lastUpdated=document.getElementById("lastUpdated");
-const nextRefresh=document.getElementById("nextRefresh");
-
-const holdingsUrl=document.getElementById("holdingsUrl");
-const systemUrl=document.getElementById("systemUrl");
-const holdingsBody=document.getElementById("holdingsBody");
-const totalValue=document.getElementById("totalValue");
-
-function money(n){
-  if(!isFinite(n)) return "$—";
-  return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
+function streetLine(text){
+  return "<div style='color:#ef4444;margin-top:6px;font-weight:800;'>🔴 STREET: "+text+"</div>";
 }
 
-function updateTimestamp(){
-  lastUpdated.textContent="LAST UPDATED: "+new Date().toLocaleTimeString();
-  lastUpdated.style.opacity="0.4";
-  setTimeout(()=>{lastUpdated.style.opacity="1"},200);
-}
+function computeStreetSpeak(){
+  let street = "";
 
-async function fetchText(url){
-  const sep=url.includes("?")?"&":"?";
-  const res=await fetch(url+sep+"t="+Date.now());
-  return await res.text();
-}
+  if(valRegime.textContent.includes("RISK ON") &&
+     valVol.textContent.includes("WATCH")){
+     street += streetLine("You can nibble, don’t get cute.");
+  }
 
-function parseCSV(text){
-  return text.trim().split("\n").map(r=>r.split(","));
+  if(valRegime.textContent.includes("RISK ON") &&
+     parseFloat(valCash.textContent)/100 > 0.5){
+     street += streetLine("Market’s running. You’re parked.");
+  }
+
+  if(valViol.textContent === "—" || valViol.textContent === ""){
+     street += streetLine("You’re not doing anything stupid.");
+  } else {
+     street += streetLine("You’re bending your own rules.");
+  }
+
+  leanSignal.innerHTML += street;
 }
 
 async function loadSystem(){
@@ -267,64 +72,14 @@ async function loadSystem(){
   if(valRegime.textContent.includes("RISK ON") &&
      valCash.textContent.includes("%") &&
      parseFloat(valCash.textContent)/100>0.5){
-      divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
+      divergenceBanner.innerHTML =
+        "⚠ Posture Divergence: Heavy cash in Risk-On regime."
+        + streetLine("Market’s running. You’re parked.");
   }
+
+  leanSignal.innerHTML = "LEAN SIGNAL: " + valDeploy.textContent;
+  computeStreetSpeak();
 
   updateTimestamp();
 }
-
-async function loadHoldings(){
-  if(!holdingsUrl.value) return;
-  const rows=parseCSV(await fetchText(holdingsUrl.value));
-  const headers=rows[0];
-  const idx=(h)=>headers.indexOf(h);
-  let total=0;
-  const body=[];
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i];
-    if(!r[idx("Ticker")]) continue;
-    const value=parseFloat(r[idx("Value")])||0;
-    total+=value;
-    body.push(`<tr>
-      <td>${r[idx("Ticker")]}</td>
-      <td>${r[idx("Role")]||""}</td>
-      <td>${r[idx("Bucket")]||""}</td>
-      <td class="right">${r[idx("Shares")]||""}</td>
-      <td class="right">${r[idx("Price")]||""}</td>
-      <td class="right">${money(value)}</td>
-    </tr>`);
-  }
-  holdingsBody.innerHTML=body.join("");
-  totalValue.textContent=money(total);
-  updateTimestamp();
-}
-
-document.getElementById("saveBtn").onclick=()=>{
-  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
-  localStorage.setItem(LS_SYSTEM,systemUrl.value);
-  loadSystem();loadHoldings();
-};
-
-document.getElementById("refreshBtn").onclick=()=>{loadSystem();loadHoldings()};
-document.getElementById("runScanBtn").onclick=()=>{loadSystem();loadHoldings()};
-
-holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
-systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
-
-let secondsLeft=60;
-setInterval(()=>{
-  secondsLeft--;
-  if(secondsLeft<=0){
-    secondsLeft=60;
-    loadSystem();loadHoldings();
-  }
-  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
-},1000);
-
-loadSystem();
-loadHoldings();
-
 </script>
-
-</body>
-</html>
