@@ -15,16 +15,13 @@
   --red:#ef4444;
   --blue:#60a5fa;
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
   background:#0b0b0d;
   color:var(--text);
 }
-
 body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.15); }
 body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.15); }
 body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.15); }
@@ -33,26 +30,20 @@ header{
   padding:24px;
   border-bottom:1px solid rgba(255,255,255,.05);
 }
-
 .wrap{max-width:1100px;margin:auto;padding:24px}
-
 h1{margin:0;font-size:22px}
-
 .sub{color:var(--muted);font-size:13px;margin-top:6px}
-
 #lastUpdated{
   margin-top:8px;
   font-size:18px;
   font-weight:800;
   color:var(--blue);
 }
-
 #nextRefresh{
   margin-top:4px;
   font-size:12px;
   color:var(--muted);
 }
-
 .card{
   margin-top:20px;
   padding:18px;
@@ -60,14 +51,12 @@ h1{margin:0;font-size:22px}
   border-radius:12px;
   background:rgba(255,255,255,.02);
 }
-
 .pills{
   display:flex;
   gap:12px;
   flex-wrap:wrap;
   margin-top:12px;
 }
-
 .pill{
   padding:10px 14px;
   border-radius:999px;
@@ -75,7 +64,6 @@ h1{margin:0;font-size:22px}
   border:1px solid rgba(255,255,255,.08);
   font-size:13px;
 }
-
 button{
   padding:8px 14px;
   border-radius:8px;
@@ -84,7 +72,6 @@ button{
   color:white;
   cursor:pointer;
 }
-
 input, textarea{
   width:100%;
   margin-top:6px;
@@ -93,21 +80,38 @@ input, textarea{
   border:1px solid rgba(255,255,255,.15);
   color:white;
 }
-
 table{
   width:100%;
   border-collapse:collapse;
   margin-top:14px;
 }
-
 th, td{
   padding:8px;
   border-bottom:1px solid rgba(255,255,255,.08);
   font-size:13px;
 }
-
 th{color:var(--muted);text-align:left}
 .right{text-align:right}
+
+#divergenceBanner{
+  margin-top:10px;
+  color:var(--yellow);
+  font-weight:800;
+}
+
+#leanSignal{
+  margin-top:12px;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+#leanSignal small{
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+}
 </style>
 </head>
 
@@ -137,7 +141,9 @@ th{color:var(--muted);text-align:left}
     <div class="pill">Volatility: <span id="valVol">—</span></div>
   </div>
 
-  <div id="divergenceBanner" style="margin-top:10px;color:var(--yellow);font-weight:700;"></div>
+  <div id="divergenceBanner"></div>
+
+  <div id="leanSignal">LEAN SIGNAL: —<small id="leanSuggestion">—</small></div>
 </div>
 
 <div class="card">
@@ -172,7 +178,6 @@ th{color:var(--muted);text-align:left}
 </div>
 
 <script>
-
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
 
@@ -187,6 +192,9 @@ const valCash=document.getElementById("valCash");
 const valL5=document.getElementById("valL5");
 const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
+
+const leanSignal=document.getElementById("leanSignal");
+const leanSuggestion=document.getElementById("leanSuggestion");
 
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
@@ -214,11 +222,74 @@ function parseCSV(text){
   return text.trim().split("\n").map(r=>r.split(","));
 }
 
+function pctToNum(p){
+  if(!p || !p.includes("%")) return NaN;
+  return parseFloat(p.replace("%",""))/100;
+}
+
+function computeLeanSignal(){
+  // Inputs
+  const regime=(valRegime.textContent||"").toUpperCase();
+  const vol=(valVol.textContent||"").toUpperCase();
+  const liq=(valLiq.textContent||"").toUpperCase();
+  const deploy=(valDeploy.textContent||"").toUpperCase();
+
+  const cashNum = pctToNum(valCash.textContent);
+  const l5Num   = pctToNum(valL5.textContent);
+
+  // Defaults
+  let signal="🟡 CAUTION";
+  let reason="Mixed signals.";
+  let suggestion="No action implied.";
+
+  // Rules (simple + disciplined)
+  const riskOn = regime.includes("RISK ON");
+  const defensive = regime.includes("DEFENSIVE");
+  const volHot = vol.includes("HOT") || vol.includes("🔴");
+  const volCalm = vol.includes("CALM") || vol.includes("🟢");
+  const liqGreen = liq.includes("LIQUID") || liq.includes("🟢");
+  const liqRed = liq.includes("TIGHT") || liq.includes("🔴");
+
+  if (defensive || volHot || liqRed) {
+    signal="🔴 NO-GO";
+    reason = defensive ? "Market regime defensive." : (volHot ? "Volatility is hot." : "Liquidity is tight.");
+    suggestion="Hold posture. If adding risk, keep it minimal and rule-based.";
+  } else if (riskOn && volCalm && liqGreen) {
+    signal="🟢 GO";
+    reason="Risk-on regime + calm vol + liquid posture.";
+    // Suggest a tiny deploy if cash is high (debt phase safe)
+    if (isFinite(cashNum) && cashNum > 0.50) {
+      suggestion="Consider deploying 1–2% into Lean core (not Level 5).";
+    } else {
+      suggestion="Maintain Lean structure. Small adds only if aligned.";
+    }
+  } else {
+    signal="🟡 CAUTION";
+    reason="Transition or partial confirmation.";
+    // If deployment signal already says consider deploying, keep it small
+    if (deploy.includes("CONSIDER") && isFinite(cashNum) && cashNum > 0.50) {
+      suggestion="If you deploy, keep it tiny: 0.5–1% test adds (Lean only).";
+    } else {
+      suggestion="Stay patient. Wait for confirmation before increasing exposure.";
+    }
+  }
+
+  // Level 5 guardrail mention
+  if (isFinite(l5Num) && l5Num > 0.05) {
+    suggestion += " Level 5 is high—reduce toward ≤5%.";
+  }
+
+  // Render
+  leanSignal.innerHTML = "LEAN SIGNAL: " + signal + "<small id='leanSuggestion'></small>";
+  document.getElementById("leanSuggestion").textContent = reason + " " + suggestion;
+}
+
 async function loadSystem(){
   if(!systemUrl.value) return;
+
   const rows=parseCSV(await fetchText(systemUrl.value));
   const map=new Map();
-  rows.forEach(r=>map.set(r[0]?.toUpperCase(),r[1]));
+  rows.forEach(r=>map.set((r[0]||"").toUpperCase(),(r[1]||"").trim()));
 
   valRegime.textContent=map.get("MARKET REGIME")||"—";
   valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
@@ -227,7 +298,7 @@ async function loadSystem(){
   valLiq.textContent=map.get("LIQUIDITY")||"—";
   valVol.textContent=map.get("VOLATILITY")||"—";
 
-  const regimeText=valRegime.textContent.toLowerCase();
+  const regimeText=(valRegime.textContent||"").toLowerCase();
   document.body.classList.remove("risk-on","defensive","transition");
   if(regimeText.includes("risk on")) document.body.classList.add("risk-on");
   else if(regimeText.includes("defensive")) document.body.classList.add("defensive");
@@ -235,15 +306,17 @@ async function loadSystem(){
 
   divergenceBanner.textContent="";
   if(regimeText.includes("risk on") && valCash.textContent.includes("%")){
-    const cash=parseFloat(valCash.textContent)/100;
-    if(cash>0.5) divergenceBanner.textContent="⚠ Heavy cash in Risk-On regime.";
+    const cash=pctToNum(valCash.textContent);
+    if(isFinite(cash) && cash>0.5) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
   }
 
+  computeLeanSignal();
   updateTimestamp();
 }
 
 async function loadHoldings(){
   if(!holdingsUrl.value) return;
+
   const rows=parseCSV(await fetchText(holdingsUrl.value));
   const headers=rows[0];
   const idx=(h)=>headers.indexOf(h);
@@ -255,6 +328,7 @@ async function loadHoldings(){
     if(!r[idx("Ticker")]) continue;
     const value=parseFloat(r[idx("Value")])||0;
     total+=value;
+
     body.push(`<tr>
       <td>${r[idx("Ticker")]}</td>
       <td>${r[idx("Role")]||""}</td>
@@ -265,7 +339,7 @@ async function loadHoldings(){
     </tr>`);
   }
 
-  holdingsBody.innerHTML=body.join("");
+  holdingsBody.innerHTML=body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
   totalValue.textContent=money(total);
   updateTimestamp();
 }
@@ -287,14 +361,16 @@ setInterval(()=>{
   secondsLeft--;
   if(secondsLeft<=0){
     secondsLeft=60;
+    statusLine.textContent="Auto-refresh…";
     loadSystem();loadHoldings();
+    statusLine.textContent="Auto-refresh complete.";
   }
   nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
 },1000);
 
+// Initial load
 loadSystem();
 loadHoldings();
-
 </script>
 
 </body>
