@@ -1,233 +1,3 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal — App 1.0</title>
-  <meta name="theme-color" content="#0b0b0d" />
-  <link rel="manifest" href="manifest.json" />
-  <style>
-    :root{
-      --bg:#0b0b0d; --panel:#121217; --panel2:#0f0f13;
-      --text:#f3f4f6; --muted:#a7aab3; --line:#222331;
-      --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#60a5fa;
-      --pill:#0e0e13;
-      --radius:18px;
-      body.risk-on { box-shadow: inset 0 0 120px rgba(34,197,94,0.15); }
-body.defensive { box-shadow: inset 0 0 120px rgba(239,68,68,0.15); }
-body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
-
-    }
-    *{box-sizing:border-box}
-    body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background: radial-gradient(1200px 800px at 30% 0%, #12121a 0%, var(--bg) 55%);
-      color:var(--text);
-    }
-    header{
-      padding:28px 24px 10px 24px;
-      border-bottom:1px solid rgba(255,255,255,.04);
-    }
-    h1{margin:0; font-size:22px; font-weight:700}
-    .sub{margin-top:6px; color:var(--muted); font-size:13px}
-    .wrap{max-width:1120px; margin:0 auto; padding:18px 18px 40px;}
-    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:18px;}
-    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-      border:1px solid rgba(255,255,255,.06);
-      border-radius: var(--radius);
-      padding:16px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-    }
-    .card h2{margin:0; font-size:18px}
-    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
-    .btn{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-weight:600;
-    }
-    .btn.green{background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.30)}
-    .btn.gold{background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.30)}
-    .btn:active{transform:translateY(1px)}
-    .pills{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-    .pill{
-      display:flex; align-items:center; gap:10px;
-      background: rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.06);
-      padding:10px 12px;
-      border-radius: 999px;
-      font-size:13px;
-      color:var(--text);
-    }
-    .dot{width:10px; height:10px; border-radius:999px; background:var(--yellow)}
-    .dot.green{background:var(--green)}
-    .dot.red{background:var(--red)}
-    .dot.yellow{background:var(--yellow)}
-    .kv{display:flex; flex-direction:column; gap:4px}
-    .kv b{font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.2px}
-    .kv span{font-size:13px; font-weight:700}
-    .small{font-size:12px; color:var(--muted); margin-top:10px; line-height:1.35}
-    .inputs{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
-    @media (max-width: 720px){ .inputs{grid-template-columns:1fr} }
-    input, textarea{
-      width:100%;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.08);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius: 14px;
-      outline:none;
-    }
-    textarea{min-height:44px; resize:vertical}
-    table{width:100%; border-collapse:collapse; margin-top:10px}
-    th, td{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px}
-    th{color:var(--muted); font-weight:700; text-align:left}
-    .muted{color:var(--muted)}
-    .right{ text-align:right }
-    .footer-note{margin-top:6px; color:var(--muted); font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
-  </style>
-</head>
-
-<body>
-<header>
-  <div class="wrap">
-    <h1>Lean Terminal — App 1.0</h1>
-    <div class="sub" id="statusLine">Good Morning scan: ready.</div>
- <div id="lastUpdated"
-     style="margin-top:6px;
-            font-size:18px;
-            font-weight:700;
-            color:#60a5fa;">
-  LAST UPDATED: —
-</div>
-
-  </div>
-</header>
-
-<div class="wrap">
-  <div class="grid">
-    <!-- Good Morning -->
-    <section class="card">
-      <div class="row">
-        <h2>Good Morning</h2>
-        <button class="btn green" id="runScanBtn">Run Scan</button>
-      </div>
-
-      <div class="pills" style="margin-top:14px">
-        <div class="pill">
-          <div class="dot" id="dotRegime"></div>
-          <div class="kv">
-            <b>Regime</b>
-            <span id="valRegime">—</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="dot" id="dotDeploy"></div>
-          <div class="kv">
-            <b>Deployment</b>
-            <span id="valDeploy">—</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="dot" id="dotCash"></div>
-          <div class="kv">
-            <b>Cash Anchor</b>
-            <span id="valCash">—</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="dot" id="dotL5"></div>
-          <div class="kv">
-            <b>Level 5</b>
-            <span id="valL5">—</span>
-          </div>
-        </div>
-      </div>
-
-      <div class="small">
-        App 1.0 reads two published CSVs: <span class="mono">HOLDINGS</span> (table) and <span class="mono">SYSTEM_EXPORT</span> (status).
-      </div>
-    </section>
-
-    <!-- Data Source -->
-    <section class="card">
-      <div class="row">
-        <h2>Data Source</h2>
-        <button class="btn" id="saveBtn">Save</button>
-      </div>
-
-      <div class="inputs">
-        <div>
-          <div class="footer-note">Holdings CSV URL (Google Sheets → Publish as CSV)</div>
-          <input id="holdingsUrl" placeholder="Paste HOLDINGS CSV URL here (output=csv)" />
-        </div>
-        <div>
-          <div class="footer-note">System CSV URL (SYSTEM_EXPORT tab → Publish as CSV)</div>
-          <input id="systemUrl" placeholder="Paste SYSTEM_EXPORT CSV URL here (output=csv)" />
-        </div>
-        <div style="grid-column:1/-1">
-          <div class="footer-note">Notes (stored locally on device)</div>
-          <textarea id="notesBox" placeholder='e.g., "Watching volatility compression"'></textarea>
-        </div>
-      </div>
-
-      <div class="small">
-        Tip: These are stored locally in your browser. If you clear website data, you’ll need to paste again.
-      </div>
-    </section>
-  </div>
-
-  <!-- Holdings -->
-  <section class="card" style="margin-top:18px">
-    <div class="row">
-      <h2>Holdings</h2>
-      <button class="btn" id="refreshBtn">Refresh</button>
-    </div>
-    <div class="sub" style="padding:6px 0 0 0">
-      Approx total value: <b id="totalValue">$—</b>
-      <span class="muted"> • Note:</span> <span id="noteInline" class="muted">—</span>
-    </div>
-
-    <table>
-      <thead>
-        <tr>
-          <th>Ticker</th>
-          <th>Role</th>
-          <th>Bucket</th>
-          <th class="right">Shares</th>
-          <th class="right">Price</th>
-          <th class="right">Value</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody id="holdingsBody">
-        <tr><td class="muted" colspan="7">Waiting for data…</td></tr>
-      </tbody>
-    </table>
-  </section>
-
-  <!-- Level 5 Module -->
-  <section class="card" style="margin-top:18px">
-    <div class="row">
-      <h2>Level 5 Module</h2>
-      <button class="btn gold" id="toggleL5Btn">Toggle Module</button>
-    </div>
-    <div class="small" style="margin-top:10px">
-      This block can be removed later without affecting Lean. App 1.0 shows “ON/OFF” based on your scan rules.
-      <ul>
-        <li>Rules: -15% hard stop, no averaging, profits → SGOV</li>
-        <li>Activation (example): VIX cooling + RS leaders + compression breakout</li>
-      </ul>
-    </div>
-  </section>
-</div>
-
 <script>
   // --- Local storage keys
   const LS_HOLDINGS = "lean_holdings_csv_url";
@@ -255,19 +25,41 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
   const totalValueEl = document.getElementById("totalValue");
   const holdingsBody = document.getElementById("holdingsBody");
 
+  // Optional banner (created dynamically so you don't have to edit HTML again)
+  let divergenceBanner = document.getElementById("divergenceBanner");
+  if (!divergenceBanner) {
+    divergenceBanner = document.createElement("div");
+    divergenceBanner.id = "divergenceBanner";
+    divergenceBanner.style.marginTop = "12px";
+    divergenceBanner.style.fontSize = "12px";
+    divergenceBanner.style.fontWeight = "700";
+    divergenceBanner.style.color = "#f59e0b";
+    // Insert it under the "App 1.0 reads two published CSVs..." line
+    const gmSmall = document.querySelector(".card .small");
+    if (gmSmall && gmSmall.parentElement) gmSmall.parentElement.appendChild(divergenceBanner);
+  }
+
   // --- Small helpers
   const money = (n) => {
     if (!isFinite(n)) return "$—";
     return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
   };
-  const pct = (n) => {
-    if (!isFinite(n)) return "—";
-    return (n*100).toFixed(2) + "%";
-  };
 
   function setDot(dotEl, state){
     dotEl.classList.remove("green","yellow","red");
     dotEl.classList.add(state); // "green" | "yellow" | "red"
+  }
+
+  // Timestamp updater (big, subtle flash)
+  function updateTimestamp(){
+    const el = document.getElementById("lastUpdated");
+    if (!el) return;
+    const now = new Date();
+    el.textContent = "LAST UPDATED: " + now.toLocaleTimeString();
+
+    // subtle flash
+    el.style.opacity = "0.35";
+    setTimeout(() => { el.style.opacity = "1"; }, 200);
   }
 
   // Lightweight CSV parser that handles quoted fields
@@ -307,6 +99,8 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
   // --- SYSTEM_EXPORT reader
   async function loadSystem(){
     const url = systemUrl.value.trim();
+
+    // Reset defaults if missing URL
     if (!url){
       valRegime.textContent = "—";
       valDeploy.textContent = "—";
@@ -316,22 +110,15 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       setDot(dotDeploy, "yellow");
       setDot(dotCash, "yellow");
       setDot(dotL5, "yellow");
-      return;
+      divergenceBanner.textContent = "";
       document.body.classList.remove("risk-on","defensive","transition");
-
-const regimeText = regime.toLowerCase();
-if (regimeText.includes("risk on")) {
-  document.body.classList.add("risk-on");
-} else if (regimeText.includes("defensive")) {
-  document.body.classList.add("defensive");
-} else {
-  document.body.classList.add("transition");
-}
-
+      updateTimestamp();
+      return;
     }
 
     const text = await fetchText(url);
     const rows = parseCSV(text);
+
     // Expect 2 columns: label,value
     const map = new Map();
     for (const r of rows){
@@ -361,20 +148,49 @@ if (regimeText.includes("risk on")) {
 
     setDot(dotRegime, dotFromText(regime));
     setDot(dotDeploy, dotFromText(deploy));
-    // Cash dot: >50% green defensive; 25–50 yellow; else red (fallback if no emoji)
+
+    // Cash dot: >50% green defensive; 25–50 yellow; else red
     if (typeof cash === "string" && cash.includes("%")){
       const num = parseFloat(cash.replace("%","")) / 100;
       if (isFinite(num)){
         setDot(dotCash, num > 0.50 ? "green" : (num > 0.25 ? "yellow" : "red"));
       } else setDot(dotCash, dotFromText(cash));
-    } else setDot(dotCash, dotFromText(cash));
-    // Level5 dot: if tiny or "0" = green (controlled), else yellow
+    } else {
+      setDot(dotCash, dotFromText(cash));
+    }
+
+    // Level5 dot: <=3% green, <=5% yellow, else red
     if (typeof l5 === "string" && l5.includes("%")){
       const num = parseFloat(l5.replace("%","")) / 100;
       if (isFinite(num)){
         setDot(dotL5, num <= 0.03 ? "green" : (num <= 0.05 ? "yellow" : "red"));
       } else setDot(dotL5, dotFromText(l5));
-    } else setDot(dotL5, dotFromText(l5));
+    } else {
+      setDot(dotL5, dotFromText(l5));
+    }
+
+    // Regime glow (FIXED: this now runs)
+    document.body.classList.remove("risk-on","defensive","transition");
+    const regimeText = (regime || "").toLowerCase();
+    if (regimeText.includes("risk on")) {
+      document.body.classList.add("risk-on");
+    } else if (regimeText.includes("defensive")) {
+      document.body.classList.add("defensive");
+    } else {
+      document.body.classList.add("transition");
+    }
+
+    // Divergence banner (simple + useful)
+    // Show when RISK ON but cash is high (e.g., > 50%)
+    divergenceBanner.textContent = "";
+    if (cash.includes("%")){
+      const cashNum = parseFloat(cash.replace("%","")) / 100;
+      if (regimeText.includes("risk on") && isFinite(cashNum) && cashNum > 0.50) {
+        divergenceBanner.textContent = "⚠ Posture Divergence: Heavy cash in Risk-On regime.";
+      }
+    }
+
+    updateTimestamp();
   }
 
   // --- HOLDINGS reader
@@ -383,6 +199,7 @@ if (regimeText.includes("risk on")) {
     if (!url){
       holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">Paste your HOLDINGS CSV URL, click Save, then Refresh.</td></tr>`;
       totalValueEl.textContent = "$—";
+      updateTimestamp();
       return;
     }
 
@@ -390,6 +207,7 @@ if (regimeText.includes("risk on")) {
     const rows = parseCSV(text);
     if (!rows.length){
       holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">No rows found in CSV.</td></tr>`;
+      updateTimestamp();
       return;
     }
 
@@ -440,6 +258,7 @@ if (regimeText.includes("risk on")) {
       : `<tr><td class="muted" colspan="7">No holdings found (check your CSV headers and rows).</td></tr>`;
 
     totalValueEl.textContent = money(total);
+    updateTimestamp();
   }
 
   function loadLocal(){
@@ -468,15 +287,6 @@ if (regimeText.includes("risk on")) {
       console.error(e);
     }
   });
-// Auto refresh every 60 seconds
-setInterval(async () => {
-  try {
-    await Promise.all([loadSystem(), loadHoldings()]);
-    statusLine.textContent = "Auto-refresh complete.";
-  } catch (e) {
-    console.error("Auto-refresh failed:", e);
-  }
-}, 60000);
 
   document.getElementById("refreshBtn").addEventListener("click", async () => {
     statusLine.textContent = "Refreshing…";
@@ -519,10 +329,18 @@ setInterval(async () => {
     }
   })();
 
+  // Auto refresh every 60 seconds
+  setInterval(async () => {
+    try {
+      await Promise.all([loadSystem(), loadHoldings()]);
+      statusLine.textContent = "Auto-refresh complete.";
+    } catch (e) {
+      console.error("Auto-refresh failed:", e);
+    }
+  }, 60000);
+
   // Service worker (optional)
   if ("serviceWorker" in navigator) {
     navigator.serviceWorker.register("./sw.js").catch(()=>{});
   }
 </script>
-</body>
-</html>
