@@ -113,13 +113,7 @@ th{color:var(--muted);text-align:left}
   color:var(--muted);
 }
 
-#violations{
-  margin-top:10px;
-  font-size:13px;
-  font-weight:900;
-  letter-spacing:.2px;
-}
-#checklist{
+#violations, #checklist{
   margin-top:10px;
   font-size:13px;
   font-weight:900;
@@ -253,11 +247,12 @@ function updateTimestamp(){
 async function fetchText(url){
   const sep=url.includes("?")?"&":"?";
   const res=await fetch(url+sep+"t="+Date.now(), {cache:"no-store"});
+  if(!res.ok) throw new Error("Fetch failed: "+res.status);
   return await res.text();
 }
 
 function parseCSV(text){
-  // simple CSV; keep exported values comma-free (your current exports are fine)
+  // simple CSV; keep exported values comma-free
   return text.trim().split("\n").map(r=>r.split(","));
 }
 
@@ -267,18 +262,17 @@ function pctToNum(p){
 }
 
 function setDiscipline(text){
-  if(!text || text.trim()==="" || text.trim()==="—"){
+  const t=(text||"").trim();
+  if(!t || t==="—"){
     violationsText.textContent="✅ No violations";
     violationsText.style.color="var(--green)";
-    streetDiscipline.textContent="🔴 STREET: Rules clean. No dumb moves detected.";
+    streetDiscipline.textContent="🔴 STREET: Rules clean. No dumb stuff detected. Keep it boring.";
     return;
   }
-  violationsText.textContent=text.trim();
-  const t=text.toLowerCase();
+  violationsText.textContent=t;
   if(t.includes("🔴")) violationsText.style.color="var(--red)";
-  else if(t.includes("🟡")) violationsText.style.color="var(--yellow)";
   else violationsText.style.color="var(--yellow)";
-  streetDiscipline.textContent="🔴 STREET: You’re bending your own rules. Fix this first.";
+  streetDiscipline.textContent="🔴 STREET: Fix the leak first. No new moves until rules are clean.";
 }
 
 function computeLeanSignalAndStreet(){
@@ -293,7 +287,7 @@ function computeLeanSignalAndStreet(){
   let signal="🟡 CAUTION";
   let reason="Mixed signals.";
   let suggestion="No action implied.";
-  let street="Hold. Don’t get cute.";
+  let street="Slow hands. Let it prove itself.";
 
   const riskOn = regime.includes("RISK ON");
   const defensive = regime.includes("DEFENSIVE");
@@ -306,32 +300,34 @@ function computeLeanSignalAndStreet(){
     signal="🔴 NO-GO";
     reason = defensive ? "Market regime defensive." : (volHot ? "Volatility is hot." : "Liquidity is tight.");
     suggestion="Hold posture. If adding risk, keep it minimal and rule-based.";
-    street = defensive ? "Market’s in a bad mood. Sit tight." : (volHot ? "Vol is spicy. Don’t press." : "Cash is tight. Don’t add risk.");
+    street = defensive
+      ? "Market’s grumpy. Sit on your hands and protect cash."
+      : (volHot ? "Vol is spicy. Don’t press. Stay chill." : "You’re low on cushion. Don’t add risk.");
   } else if (riskOn && volCalm && liqGreen) {
     signal="🟢 GO";
     reason="Risk-on regime + calm vol + liquid posture.";
     if (isFinite(cashNum) && cashNum > 0.50) {
       suggestion="Consider deploying 1–2% into Lean core (not Level 5).";
-      street="Green light. Tiny adds are fine. Don’t YOLO.";
+      street="Green light. Tiny adds are fine. No hero stuff.";
     } else {
       suggestion="Maintain Lean structure. Small adds only if aligned.";
-      street="You’re already in. Stay smooth.";
+      street="You’re already riding. Stay smooth. No need to sprint.";
     }
   } else {
     signal="🟡 CAUTION";
     reason="Transition or partial confirmation.";
     if (deploy.includes("CONSIDER") && isFinite(cashNum) && cashNum > 0.50) {
       suggestion="If you deploy, keep it tiny: 0.5–1% test adds (Lean only).";
-      street="You can nibble. Don’t chase.";
+      street="You can nibble… but don’t chase shiny objects.";
     } else {
       suggestion="Stay patient. Wait for confirmation before increasing exposure.";
-      street="Wait. Let it prove itself.";
+      street="Do nothing today. Boring is a strategy.";
     }
   }
 
   if (isFinite(l5Num) && l5Num > 0.05) {
     suggestion += " Level 5 is high—reduce toward ≤5%.";
-    street += " Also: your Level 5 is getting chunky. Trim it.";
+    street += " Also: Level 5 is getting chunky—trim it.";
   }
 
   leanSignal.innerHTML = "LEAN SIGNAL: " + signal + "<small id='leanSuggestion'></small>";
@@ -340,16 +336,15 @@ function computeLeanSignalAndStreet(){
 }
 
 function setStreetDivergence(){
-  // Always-on street speak for divergence
   const regimeText=(valRegime.textContent||"").toUpperCase();
   const cashNum = pctToNum(valCash.textContent);
 
   if (regimeText.includes("RISK ON") && isFinite(cashNum) && cashNum > 0.50) {
-    streetDivergence.textContent = "🔴 STREET: Market’s running. You’re parked (by choice).";
+    streetDivergence.textContent = "🔴 STREET: Market’s moving. You’re mostly parked (on purpose).";
   } else if (regimeText.includes("DEFENSIVE")) {
-    streetDivergence.textContent = "🔴 STREET: Good. Cash is king when markets get ugly.";
+    streetDivergence.textContent = "🔴 STREET: Good. Cash is armor when markets get ugly.";
   } else {
-    streetDivergence.textContent = "🔴 STREET: You’re neutral. No need to force moves.";
+    streetDivergence.textContent = "🔴 STREET: Neutral zone. No need to force anything.";
   }
 }
 
@@ -360,18 +355,19 @@ function setStreetToday(){
   } else if (t.includes("OPTIONAL DEPLOY") || t.includes("1–2%") || t.includes("1-2%")) {
     streetToday.textContent = "🔴 STREET: If you add, keep it small and boring (Lean only).";
   } else if (t.includes("TINY") || t.includes("0.5") || t.includes("TEST")) {
-    streetToday.textContent = "🔴 STREET: Small test adds only. No hero trades.";
-  } else if (t.includes("NO ACTION") || t.includes("WAIT")) {
+    streetToday.textContent = "🔴 STREET: Tiny test adds only. No hero trades.";
+  } else if (t.includes("NO ACTION") || t.includes("WAIT") || t.includes("HOLD")) {
     streetToday.textContent = "🔴 STREET: Do nothing. Protect your cash and patience.";
   } else {
-    streetToday.textContent = "🔴 STREET: Follow the checklist. Don’t freelance.";
+    streetToday.textContent = "🔴 STREET: Follow the checklist. Don’t freestyle.";
   }
 }
 
 async function loadSystem(){
-  if(!systemUrl.value) return;
+  const url = (systemUrl.value||"").trim();
+  if(!url) return;
 
-  const rows=parseCSV(await fetchText(systemUrl.value));
+  const rows=parseCSV(await fetchText(url));
   const map=new Map();
   rows.forEach(r=>map.set((r[0]||"").toUpperCase(),(r[1]||"").trim()));
 
@@ -390,15 +386,15 @@ async function loadSystem(){
   checklistText.textContent = checklist;
 
   // Regime glow
-  const regimeText=(valRegime.textContent||"").toLowerCase();
+  const regimeLower=(valRegime.textContent||"").toLowerCase();
   document.body.classList.remove("risk-on","defensive","transition");
-  if(regimeText.includes("risk on")) document.body.classList.add("risk-on");
-  else if(regimeText.includes("defensive")) document.body.classList.add("defensive");
+  if(regimeLower.includes("risk on")) document.body.classList.add("risk-on");
+  else if(regimeLower.includes("defensive")) document.body.classList.add("defensive");
   else document.body.classList.add("transition");
 
   // Divergence technical + street
   divergenceBanner.textContent="";
-  if(regimeText.includes("risk on") && valCash.textContent.includes("%")){
+  if(regimeLower.includes("risk on") && valCash.textContent.includes("%")){
     const cash=pctToNum(valCash.textContent);
     if(isFinite(cash) && cash>0.5) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
   }
@@ -414,11 +410,13 @@ async function loadSystem(){
 }
 
 async function loadHoldings(){
-  if(!holdingsUrl.value) return;
+  const url = (holdingsUrl.value||"").trim();
+  if(!url) return;
 
-  const rows=parseCSV(await fetchText(holdingsUrl.value));
+  const rows=parseCSV(await fetchText(url));
   const headers=rows[0];
   const idx=(h)=>headers.indexOf(h);
+
   let total=0;
   const body=[];
 
@@ -436,39 +434,12 @@ async function loadHoldings(){
       <td class="right">${money(value)}</td>
     </tr>`);
   }
+
   holdingsBody.innerHTML=body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
   totalValue.textContent=money(total);
   updateTimestamp();
 }
 
 document.getElementById("saveBtn").onclick=()=>{
-  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
-  localStorage.setItem(LS_SYSTEM,systemUrl.value);
-  loadSystem();loadHoldings();
-};
-
-document.getElementById("refreshBtn").onclick=()=>{loadSystem();loadHoldings()};
-document.getElementById("runScanBtn").onclick=()=>{loadSystem();loadHoldings()};
-
-holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
-systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
-
-let secondsLeft=60;
-setInterval(()=>{
-  secondsLeft--;
-  if(secondsLeft<=0){
-    secondsLeft=60;
-    statusLine.textContent="Auto-refresh…";
-    loadSystem();loadHoldings();
-    statusLine.textContent="Auto-refresh complete.";
-  }
-  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
-},1000);
-
-// Initial load
-loadSystem();
-loadHoldings();
-</script>
-
-</body>
-</html>
+  localStorage.setItem(LS_HOLDINGS,(holdingsUrl.value||"").trim());
+  localStorage.setItem(LS_SYSTEM,(systemUrl.value_
