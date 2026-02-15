@@ -445,6 +445,15 @@
       console.error(e);
     }
   });
+// Auto refresh every 60 seconds
+setInterval(async () => {
+  try {
+    await Promise.all([loadSystem(), loadHoldings()]);
+    statusLine.textContent = "Auto-refresh complete.";
+  } catch (e) {
+    console.error("Auto-refresh failed:", e);
+  }
+}, 60000);
 
   document.getElementById("refreshBtn").addEventListener("click", async () => {
     statusLine.textContent = "Refreshing…";
