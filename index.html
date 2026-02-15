@@ -103,7 +103,6 @@ th{color:var(--muted);text-align:left}
   margin-top:12px;
   font-size:14px;
   font-weight:900;
-  letter-spacing:.2px;
 }
 #leanSignal small{
   display:block;
@@ -117,10 +116,12 @@ th{color:var(--muted);text-align:left}
   margin-top:10px;
   font-size:13px;
   font-weight:900;
-  letter-spacing:.2px;
 }
-#violations span{
-  font-weight:800;
+
+#checklist{
+  margin-top:10px;
+  font-size:13px;
+  font-weight:900;
 }
 </style>
 </head>
@@ -157,6 +158,8 @@ th{color:var(--muted);text-align:left}
   <div id="leanSignal">LEAN SIGNAL: —<small id="leanSuggestion">—</small></div>
 
   <div id="violations">DISCIPLINE: <span id="violationsText">—</span></div>
+
+  <div id="checklist">TODAY: <span id="checklistText" style="color:var(--muted);">—</span></div>
 </div>
 
 <div class="card">
@@ -191,13 +194,9 @@ th{color:var(--muted);text-align:left}
 </div>
 
 <script>
+
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
-
-const statusLine=document.getElementById("statusLine");
-const lastUpdated=document.getElementById("lastUpdated");
-const nextRefresh=document.getElementById("nextRefresh");
-const divergenceBanner=document.getElementById("divergenceBanner");
 
 const valRegime=document.getElementById("valRegime");
 const valDeploy=document.getElementById("valDeploy");
@@ -207,9 +206,14 @@ const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
 const valViol=document.getElementById("valViol");
 
+const violationsText=document.getElementById("violationsText");
+const checklistText=document.getElementById("checklistText");
+const divergenceBanner=document.getElementById("divergenceBanner");
+
 const leanSignal=document.getElementById("leanSignal");
 
-const violationsText=document.getElementById("violationsText");
+const lastUpdated=document.getElementById("lastUpdated");
+const nextRefresh=document.getElementById("nextRefresh");
 
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
@@ -237,75 +241,6 @@ function parseCSV(text){
   return text.trim().split("\n").map(r=>r.split(","));
 }
 
-function pctToNum(p){
-  if(!p || !p.includes("%")) return NaN;
-  return parseFloat(p.replace("%",""))/100;
-}
-
-function setDiscipline(text){
-  if(!text || text.trim()==="" || text.trim()==="—"){
-    violationsText.textContent="✅ No violations";
-    violationsText.style.color="var(--green)";
-    return;
-  }
-  violationsText.textContent=text.trim();
-  // color based on severity glyph
-  const t=text.toLowerCase();
-  if(t.includes("🔴")) violationsText.style.color="var(--red)";
-  else if(t.includes("🟡")) violationsText.style.color="var(--yellow)";
-  else violationsText.style.color="var(--yellow)";
-}
-
-function computeLeanSignal(){
-  const regime=(valRegime.textContent||"").toUpperCase();
-  const vol=(valVol.textContent||"").toUpperCase();
-  const liq=(valLiq.textContent||"").toUpperCase();
-  const deploy=(valDeploy.textContent||"").toUpperCase();
-
-  const cashNum = pctToNum(valCash.textContent);
-  const l5Num   = pctToNum(valL5.textContent);
-
-  let signal="🟡 CAUTION";
-  let reason="Mixed signals.";
-  let suggestion="No action implied.";
-
-  const riskOn = regime.includes("RISK ON");
-  const defensive = regime.includes("DEFENSIVE");
-  const volHot = vol.includes("HOT") || vol.includes("🔴");
-  const volCalm = vol.includes("CALM") || vol.includes("🟢");
-  const liqGreen = liq.includes("LIQUID") || liq.includes("🟢");
-  const liqRed = liq.includes("TIGHT") || liq.includes("🔴");
-
-  if (defensive || volHot || liqRed) {
-    signal="🔴 NO-GO";
-    reason = defensive ? "Market regime defensive." : (volHot ? "Volatility is hot." : "Liquidity is tight.");
-    suggestion="Hold posture. If adding risk, keep it minimal and rule-based.";
-  } else if (riskOn && volCalm && liqGreen) {
-    signal="🟢 GO";
-    reason="Risk-on regime + calm vol + liquid posture.";
-    if (isFinite(cashNum) && cashNum > 0.50) {
-      suggestion="Consider deploying 1–2% into Lean core (not Level 5).";
-    } else {
-      suggestion="Maintain Lean structure. Small adds only if aligned.";
-    }
-  } else {
-    signal="🟡 CAUTION";
-    reason="Transition or partial confirmation.";
-    if (deploy.includes("CONSIDER") && isFinite(cashNum) && cashNum > 0.50) {
-      suggestion="If you deploy, keep it tiny: 0.5–1% test adds (Lean only).";
-    } else {
-      suggestion="Stay patient. Wait for confirmation before increasing exposure.";
-    }
-  }
-
-  if (isFinite(l5Num) && l5Num > 0.05) {
-    suggestion += " Level 5 is high—reduce toward ≤5%.";
-  }
-
-  leanSignal.innerHTML = "LEAN SIGNAL: " + signal + "<small id='leanSuggestion'></small>";
-  document.getElementById("leanSuggestion").textContent = reason + " " + suggestion;
-}
-
 async function loadSystem(){
   if(!systemUrl.value) return;
 
@@ -319,43 +254,37 @@ async function loadSystem(){
   valL5.textContent=map.get("LEVEL5 TOTAL %")||"—";
   valLiq.textContent=map.get("LIQUIDITY")||"—";
   valVol.textContent=map.get("VOLATILITY")||"—";
+  valViol.textContent=map.get("RULE VIOLATIONS")||"—";
 
-  // violations label can be either "RULE VIOLATIONS" or "VIOLATIONS"
-  const viol = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
-  valViol.textContent = viol || "—";
-  setDiscipline(viol);
+  checklistText.textContent=map.get("TODAY'S CHECKLIST")||"—";
 
-  const regimeText=(valRegime.textContent||"").toLowerCase();
-  document.body.classList.remove("risk-on","defensive","transition");
-  if(regimeText.includes("risk on")) document.body.classList.add("risk-on");
-  else if(regimeText.includes("defensive")) document.body.classList.add("defensive");
-  else document.body.classList.add("transition");
+  violationsText.textContent =
+    valViol.textContent && valViol.textContent !== "—"
+      ? valViol.textContent
+      : "✅ No violations";
 
   divergenceBanner.textContent="";
-  if(regimeText.includes("risk on") && valCash.textContent.includes("%")){
-    const cash=pctToNum(valCash.textContent);
-    if(isFinite(cash) && cash>0.5) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
+  if(valRegime.textContent.includes("RISK ON") &&
+     valCash.textContent.includes("%") &&
+     parseFloat(valCash.textContent)/100>0.5){
+      divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
   }
 
-  computeLeanSignal();
   updateTimestamp();
 }
 
 async function loadHoldings(){
   if(!holdingsUrl.value) return;
-
   const rows=parseCSV(await fetchText(holdingsUrl.value));
   const headers=rows[0];
   const idx=(h)=>headers.indexOf(h);
-  const body=[];
   let total=0;
-
+  const body=[];
   for(let i=1;i<rows.length;i++){
     const r=rows[i];
     if(!r[idx("Ticker")]) continue;
     const value=parseFloat(r[idx("Value")])||0;
     total+=value;
-
     body.push(`<tr>
       <td>${r[idx("Ticker")]}</td>
       <td>${r[idx("Role")]||""}</td>
@@ -365,8 +294,7 @@ async function loadHoldings(){
       <td class="right">${money(value)}</td>
     </tr>`);
   }
-
-  holdingsBody.innerHTML=body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
+  holdingsBody.innerHTML=body.join("");
   totalValue.textContent=money(total);
   updateTimestamp();
 }
@@ -388,16 +316,14 @@ setInterval(()=>{
   secondsLeft--;
   if(secondsLeft<=0){
     secondsLeft=60;
-    statusLine.textContent="Auto-refresh…";
     loadSystem();loadHoldings();
-    statusLine.textContent="Auto-refresh complete.";
   }
   nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
 },1000);
 
-// Initial load
 loadSystem();
 loadHoldings();
+
 </script>
 
 </body>
