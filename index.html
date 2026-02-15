@@ -133,6 +133,8 @@ th{color:var(--muted);text-align:left}
     <div class="pill">Deployment: <span id="valDeploy">—</span></div>
     <div class="pill">Cash: <span id="valCash">—</span></div>
     <div class="pill">Level 5: <span id="valL5">—</span></div>
+    <div class="pill">Liquidity: <span id="valLiq">—</span></div>
+    <div class="pill">Volatility: <span id="valVol">—</span></div>
   </div>
 
   <div id="divergenceBanner" style="margin-top:10px;color:var(--yellow);font-weight:700;"></div>
@@ -170,6 +172,7 @@ th{color:var(--muted);text-align:left}
 </div>
 
 <script>
+
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
 
@@ -182,6 +185,8 @@ const valRegime=document.getElementById("valRegime");
 const valDeploy=document.getElementById("valDeploy");
 const valCash=document.getElementById("valCash");
 const valL5=document.getElementById("valL5");
+const valLiq=document.getElementById("valLiq");
+const valVol=document.getElementById("valVol");
 
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
@@ -214,15 +219,24 @@ async function loadSystem(){
   const rows=parseCSV(await fetchText(systemUrl.value));
   const map=new Map();
   rows.forEach(r=>map.set(r[0]?.toUpperCase(),r[1]));
+
   valRegime.textContent=map.get("MARKET REGIME")||"—";
   valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
   valCash.textContent=map.get("CASH ANCHOR %")||"—";
   valL5.textContent=map.get("LEVEL5 TOTAL %")||"—";
+  valLiq.textContent=map.get("LIQUIDITY")||"—";
+  valVol.textContent=map.get("VOLATILITY")||"—";
 
-  if(valRegime.textContent.includes("RISK ON") && valCash.textContent.includes("%")){
+  const regimeText=valRegime.textContent.toLowerCase();
+  document.body.classList.remove("risk-on","defensive","transition");
+  if(regimeText.includes("risk on")) document.body.classList.add("risk-on");
+  else if(regimeText.includes("defensive")) document.body.classList.add("defensive");
+  else document.body.classList.add("transition");
+
+  divergenceBanner.textContent="";
+  if(regimeText.includes("risk on") && valCash.textContent.includes("%")){
     const cash=parseFloat(valCash.textContent)/100;
     if(cash>0.5) divergenceBanner.textContent="⚠ Heavy cash in Risk-On regime.";
-    else divergenceBanner.textContent="";
   }
 
   updateTimestamp();
@@ -235,6 +249,7 @@ async function loadHoldings(){
   const idx=(h)=>headers.indexOf(h);
   const body=[];
   let total=0;
+
   for(let i=1;i<rows.length;i++){
     const r=rows[i];
     if(!r[idx("Ticker")]) continue;
@@ -249,6 +264,7 @@ async function loadHoldings(){
       <td class="right">${money(value)}</td>
     </tr>`);
   }
+
   holdingsBody.innerHTML=body.join("");
   totalValue.textContent=money(total);
   updateTimestamp();
@@ -278,6 +294,7 @@ setInterval(()=>{
 
 loadSystem();
 loadHoldings();
+
 </script>
 
 </body>
