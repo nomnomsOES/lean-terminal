@@ -1,10 +1,220 @@
-<!-- SAME HEAD / STYLE AS BEFORE -->
-<!-- Only showing script portion change for clarity -->
+<!doctype html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lean Terminal — App 1.0</title>
+
+<style>
+:root{
+  --bg:#0b0b0d;
+  --text:#f3f4f6;
+  --muted:#a7aab3;
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --blue:#60a5fa;
+}
+*{box-sizing:border-box}
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:#0b0b0d;
+  color:var(--text);
+}
+body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.15); }
+body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.15); }
+body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.15); }
+
+header{
+  padding:24px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
+.wrap{max-width:1100px;margin:auto;padding:24px}
+h1{margin:0;font-size:22px}
+.sub{color:var(--muted);font-size:13px;margin-top:6px}
+#lastUpdated{
+  margin-top:8px;
+  font-size:18px;
+  font-weight:800;
+  color:var(--blue);
+}
+#nextRefresh{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+}
+.card{
+  margin-top:20px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+}
+.pills{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
+.pill{
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
+button{
+  padding:8px 14px;
+  border-radius:8px;
+  background:#1f2937;
+  border:1px solid rgba(255,255,255,.15);
+  color:white;
+  cursor:pointer;
+}
+input, textarea{
+  width:100%;
+  margin-top:6px;
+  padding:8px;
+  background:#111;
+  border:1px solid rgba(255,255,255,.15);
+  color:white;
+}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:14px;
+}
+th, td{
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
+th{color:var(--muted);text-align:left}
+.right{text-align:right}
+
+#divergenceBanner{
+  margin-top:10px;
+  color:var(--yellow);
+  font-weight:800;
+}
+
+#leanSignal{
+  margin-top:12px;
+  font-size:14px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+#leanSignal small{
+  display:block;
+  margin-top:6px;
+  font-size:12px;
+  font-weight:700;
+  color:var(--muted);
+}
+
+#violations{
+  margin-top:10px;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+#checklist{
+  margin-top:10px;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+
+/* STREET SPEAK */
+.street{
+  margin-top:6px;
+  color:var(--red);
+  font-weight:900;
+  font-size:12px;
+  letter-spacing:.2px;
+}
+</style>
+</head>
+
+<body>
+
+<header>
+  <div class="wrap">
+    <h1>Lean Terminal — App 1.0</h1>
+    <div class="sub" id="statusLine">Ready.</div>
+    <div id="lastUpdated">LAST UPDATED: —</div>
+    <div id="nextRefresh">Next refresh in: 60s</div>
+  </div>
+</header>
+
+<div class="wrap">
+
+<div class="card">
+  <h2>Good Morning</h2>
+  <button id="runScanBtn">Run Scan</button>
+
+  <div class="pills">
+    <div class="pill">Regime: <span id="valRegime">—</span></div>
+    <div class="pill">Deployment: <span id="valDeploy">—</span></div>
+    <div class="pill">Cash: <span id="valCash">—</span></div>
+    <div class="pill">Level 5: <span id="valL5">—</span></div>
+    <div class="pill">Liquidity: <span id="valLiq">—</span></div>
+    <div class="pill">Volatility: <span id="valVol">—</span></div>
+    <div class="pill">Violations: <span id="valViol">—</span></div>
+  </div>
+
+  <div id="divergenceBanner"></div>
+  <div id="streetDivergence" class="street">🔴 STREET: —</div>
+
+  <div id="leanSignal">LEAN SIGNAL: —<small id="leanSuggestion">—</small></div>
+  <div id="streetLean" class="street">🔴 STREET: —</div>
+
+  <div id="violations">DISCIPLINE: <span id="violationsText">—</span></div>
+  <div id="streetDiscipline" class="street">🔴 STREET: —</div>
+
+  <div id="checklist">TODAY: <span id="checklistText" style="color:var(--muted);">—</span></div>
+  <div id="streetToday" class="street">🔴 STREET: —</div>
+</div>
+
+<div class="card">
+  <h2>Data Source</h2>
+  <input id="holdingsUrl" placeholder="HOLDINGS CSV URL">
+  <input id="systemUrl" placeholder="SYSTEM_EXPORT CSV URL">
+  <textarea id="notesBox" placeholder="Notes"></textarea>
+  <button id="saveBtn">Save</button>
+</div>
+
+<div class="card">
+  <h2>Holdings</h2>
+  <button id="refreshBtn">Refresh</button>
+  <div style="margin-top:8px">Total: <b id="totalValue">$—</b></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ticker</th>
+        <th>Role</th>
+        <th>Bucket</th>
+        <th class="right">Shares</th>
+        <th class="right">Price</th>
+        <th class="right">Value</th>
+      </tr>
+    </thead>
+    <tbody id="holdingsBody">
+      <tr><td colspan="6">Waiting for data…</td></tr>
+    </tbody>
+  </table>
+</div>
+
+</div>
 
 <script>
-
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
+
+const statusLine=document.getElementById("statusLine");
+const lastUpdated=document.getElementById("lastUpdated");
+const nextRefresh=document.getElementById("nextRefresh");
 
 const valRegime=document.getElementById("valRegime");
 const valDeploy=document.getElementById("valDeploy");
@@ -14,36 +224,148 @@ const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
 const valViol=document.getElementById("valViol");
 
+const divergenceBanner=document.getElementById("divergenceBanner");
 const violationsText=document.getElementById("violationsText");
 const checklistText=document.getElementById("checklistText");
-const divergenceBanner=document.getElementById("divergenceBanner");
-
 const leanSignal=document.getElementById("leanSignal");
 
-function streetLine(text){
-  return "<div style='color:#ef4444;margin-top:6px;font-weight:800;'>🔴 STREET: "+text+"</div>";
+const streetDivergence=document.getElementById("streetDivergence");
+const streetLean=document.getElementById("streetLean");
+const streetDiscipline=document.getElementById("streetDiscipline");
+const streetToday=document.getElementById("streetToday");
+
+const holdingsUrl=document.getElementById("holdingsUrl");
+const systemUrl=document.getElementById("systemUrl");
+const holdingsBody=document.getElementById("holdingsBody");
+const totalValue=document.getElementById("totalValue");
+
+function money(n){
+  if(!isFinite(n)) return "$—";
+  return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
 }
 
-function computeStreetSpeak(){
-  let street = "";
+function updateTimestamp(){
+  lastUpdated.textContent="LAST UPDATED: "+new Date().toLocaleTimeString();
+  lastUpdated.style.opacity="0.4";
+  setTimeout(()=>{lastUpdated.style.opacity="1"},200);
+}
 
-  if(valRegime.textContent.includes("RISK ON") &&
-     valVol.textContent.includes("WATCH")){
-     street += streetLine("You can nibble, don’t get cute.");
+async function fetchText(url){
+  const sep=url.includes("?")?"&":"?";
+  const res=await fetch(url+sep+"t="+Date.now(), {cache:"no-store"});
+  return await res.text();
+}
+
+function parseCSV(text){
+  // simple CSV; keep exported values comma-free (your current exports are fine)
+  return text.trim().split("\n").map(r=>r.split(","));
+}
+
+function pctToNum(p){
+  if(!p || !p.includes("%")) return NaN;
+  return parseFloat(p.replace("%",""))/100;
+}
+
+function setDiscipline(text){
+  if(!text || text.trim()==="" || text.trim()==="—"){
+    violationsText.textContent="✅ No violations";
+    violationsText.style.color="var(--green)";
+    streetDiscipline.textContent="🔴 STREET: Rules clean. No dumb moves detected.";
+    return;
   }
+  violationsText.textContent=text.trim();
+  const t=text.toLowerCase();
+  if(t.includes("🔴")) violationsText.style.color="var(--red)";
+  else if(t.includes("🟡")) violationsText.style.color="var(--yellow)";
+  else violationsText.style.color="var(--yellow)";
+  streetDiscipline.textContent="🔴 STREET: You’re bending your own rules. Fix this first.";
+}
 
-  if(valRegime.textContent.includes("RISK ON") &&
-     parseFloat(valCash.textContent)/100 > 0.5){
-     street += streetLine("Market’s running. You’re parked.");
-  }
+function computeLeanSignalAndStreet(){
+  const regime=(valRegime.textContent||"").toUpperCase();
+  const vol=(valVol.textContent||"").toUpperCase();
+  const liq=(valLiq.textContent||"").toUpperCase();
+  const deploy=(valDeploy.textContent||"").toUpperCase();
 
-  if(valViol.textContent === "—" || valViol.textContent === ""){
-     street += streetLine("You’re not doing anything stupid.");
+  const cashNum = pctToNum(valCash.textContent);
+  const l5Num   = pctToNum(valL5.textContent);
+
+  let signal="🟡 CAUTION";
+  let reason="Mixed signals.";
+  let suggestion="No action implied.";
+  let street="Hold. Don’t get cute.";
+
+  const riskOn = regime.includes("RISK ON");
+  const defensive = regime.includes("DEFENSIVE");
+  const volHot = vol.includes("HOT") || vol.includes("🔴");
+  const volCalm = vol.includes("CALM") || vol.includes("🟢");
+  const liqGreen = liq.includes("LIQUID") || liq.includes("🟢");
+  const liqRed = liq.includes("TIGHT") || liq.includes("🔴");
+
+  if (defensive || volHot || liqRed) {
+    signal="🔴 NO-GO";
+    reason = defensive ? "Market regime defensive." : (volHot ? "Volatility is hot." : "Liquidity is tight.");
+    suggestion="Hold posture. If adding risk, keep it minimal and rule-based.";
+    street = defensive ? "Market’s in a bad mood. Sit tight." : (volHot ? "Vol is spicy. Don’t press." : "Cash is tight. Don’t add risk.");
+  } else if (riskOn && volCalm && liqGreen) {
+    signal="🟢 GO";
+    reason="Risk-on regime + calm vol + liquid posture.";
+    if (isFinite(cashNum) && cashNum > 0.50) {
+      suggestion="Consider deploying 1–2% into Lean core (not Level 5).";
+      street="Green light. Tiny adds are fine. Don’t YOLO.";
+    } else {
+      suggestion="Maintain Lean structure. Small adds only if aligned.";
+      street="You’re already in. Stay smooth.";
+    }
   } else {
-     street += streetLine("You’re bending your own rules.");
+    signal="🟡 CAUTION";
+    reason="Transition or partial confirmation.";
+    if (deploy.includes("CONSIDER") && isFinite(cashNum) && cashNum > 0.50) {
+      suggestion="If you deploy, keep it tiny: 0.5–1% test adds (Lean only).";
+      street="You can nibble. Don’t chase.";
+    } else {
+      suggestion="Stay patient. Wait for confirmation before increasing exposure.";
+      street="Wait. Let it prove itself.";
+    }
   }
 
-  leanSignal.innerHTML += street;
+  if (isFinite(l5Num) && l5Num > 0.05) {
+    suggestion += " Level 5 is high—reduce toward ≤5%.";
+    street += " Also: your Level 5 is getting chunky. Trim it.";
+  }
+
+  leanSignal.innerHTML = "LEAN SIGNAL: " + signal + "<small id='leanSuggestion'></small>";
+  document.getElementById("leanSuggestion").textContent = reason + " " + suggestion;
+  streetLean.textContent = "🔴 STREET: " + street;
+}
+
+function setStreetDivergence(){
+  // Always-on street speak for divergence
+  const regimeText=(valRegime.textContent||"").toUpperCase();
+  const cashNum = pctToNum(valCash.textContent);
+
+  if (regimeText.includes("RISK ON") && isFinite(cashNum) && cashNum > 0.50) {
+    streetDivergence.textContent = "🔴 STREET: Market’s running. You’re parked (by choice).";
+  } else if (regimeText.includes("DEFENSIVE")) {
+    streetDivergence.textContent = "🔴 STREET: Good. Cash is king when markets get ugly.";
+  } else {
+    streetDivergence.textContent = "🔴 STREET: You’re neutral. No need to force moves.";
+  }
+}
+
+function setStreetToday(){
+  const t = (checklistText.textContent || "").toUpperCase();
+  if (t.includes("FIX VIOLATIONS") || t.includes("🔴 TODAY")) {
+    streetToday.textContent = "🔴 STREET: Handle the leaks first. Then think about adds.";
+  } else if (t.includes("OPTIONAL DEPLOY") || t.includes("1–2%") || t.includes("1-2%")) {
+    streetToday.textContent = "🔴 STREET: If you add, keep it small and boring (Lean only).";
+  } else if (t.includes("TINY") || t.includes("0.5") || t.includes("TEST")) {
+    streetToday.textContent = "🔴 STREET: Small test adds only. No hero trades.";
+  } else if (t.includes("NO ACTION") || t.includes("WAIT")) {
+    streetToday.textContent = "🔴 STREET: Do nothing. Protect your cash and patience.";
+  } else {
+    streetToday.textContent = "🔴 STREET: Follow the checklist. Don’t freelance.";
+  }
 }
 
 async function loadSystem(){
@@ -59,27 +381,94 @@ async function loadSystem(){
   valL5.textContent=map.get("LEVEL5 TOTAL %")||"—";
   valLiq.textContent=map.get("LIQUIDITY")||"—";
   valVol.textContent=map.get("VOLATILITY")||"—";
-  valViol.textContent=map.get("RULE VIOLATIONS")||"—";
 
-  checklistText.textContent=map.get("TODAY'S CHECKLIST")||"—";
+  const viol = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
+  valViol.textContent = viol || "—";
+  setDiscipline(viol);
 
-  violationsText.textContent =
-    valViol.textContent && valViol.textContent !== "—"
-      ? valViol.textContent
-      : "✅ No violations";
+  const checklist = map.get("TODAY'S CHECKLIST") || map.get("TODAYS CHECKLIST") || "—";
+  checklistText.textContent = checklist;
 
+  // Regime glow
+  const regimeText=(valRegime.textContent||"").toLowerCase();
+  document.body.classList.remove("risk-on","defensive","transition");
+  if(regimeText.includes("risk on")) document.body.classList.add("risk-on");
+  else if(regimeText.includes("defensive")) document.body.classList.add("defensive");
+  else document.body.classList.add("transition");
+
+  // Divergence technical + street
   divergenceBanner.textContent="";
-  if(valRegime.textContent.includes("RISK ON") &&
-     valCash.textContent.includes("%") &&
-     parseFloat(valCash.textContent)/100>0.5){
-      divergenceBanner.innerHTML =
-        "⚠ Posture Divergence: Heavy cash in Risk-On regime."
-        + streetLine("Market’s running. You’re parked.");
+  if(regimeText.includes("risk on") && valCash.textContent.includes("%")){
+    const cash=pctToNum(valCash.textContent);
+    if(isFinite(cash) && cash>0.5) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
   }
+  setStreetDivergence();
 
-  leanSignal.innerHTML = "LEAN SIGNAL: " + valDeploy.textContent;
-  computeStreetSpeak();
+  // Lean signal + street
+  computeLeanSignalAndStreet();
+
+  // Today street
+  setStreetToday();
 
   updateTimestamp();
 }
+
+async function loadHoldings(){
+  if(!holdingsUrl.value) return;
+
+  const rows=parseCSV(await fetchText(holdingsUrl.value));
+  const headers=rows[0];
+  const idx=(h)=>headers.indexOf(h);
+  let total=0;
+  const body=[];
+
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r[idx("Ticker")]) continue;
+    const value=parseFloat(r[idx("Value")])||0;
+    total+=value;
+    body.push(`<tr>
+      <td>${r[idx("Ticker")]}</td>
+      <td>${r[idx("Role")]||""}</td>
+      <td>${r[idx("Bucket")]||""}</td>
+      <td class="right">${r[idx("Shares")]||""}</td>
+      <td class="right">${r[idx("Price")]||""}</td>
+      <td class="right">${money(value)}</td>
+    </tr>`);
+  }
+  holdingsBody.innerHTML=body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
+  totalValue.textContent=money(total);
+  updateTimestamp();
+}
+
+document.getElementById("saveBtn").onclick=()=>{
+  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
+  localStorage.setItem(LS_SYSTEM,systemUrl.value);
+  loadSystem();loadHoldings();
+};
+
+document.getElementById("refreshBtn").onclick=()=>{loadSystem();loadHoldings()};
+document.getElementById("runScanBtn").onclick=()=>{loadSystem();loadHoldings()};
+
+holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
+systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
+
+let secondsLeft=60;
+setInterval(()=>{
+  secondsLeft--;
+  if(secondsLeft<=0){
+    secondsLeft=60;
+    statusLine.textContent="Auto-refresh…";
+    loadSystem();loadHoldings();
+    statusLine.textContent="Auto-refresh complete.";
+  }
+  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
+},1000);
+
+// Initial load
+loadSystem();
+loadHoldings();
 </script>
+
+</body>
+</html>
