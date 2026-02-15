@@ -1,575 +1,283 @@
 <!doctype html>
 <html lang="en">
 <head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal — App 1.0</title>
-  <meta name="theme-color" content="#0b0b0d" />
-  <link rel="manifest" href="manifest.json" />
-  <style>
-    :root{
-      --bg:#0b0b0d;
-      --panel:#121217;
-      --text:#f3f4f6;
-      --muted:#a7aab3;
-      --line:#222331;
-      --green:#22c55e;
-      --yellow:#f59e0b;
-      --red:#ef4444;
-      --blue:#60a5fa;
-      --radius:18px;
-    }
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lean Terminal — App 1.0</title>
 
-    *{box-sizing:border-box}
+<style>
+:root{
+  --bg:#0b0b0d;
+  --text:#f3f4f6;
+  --muted:#a7aab3;
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --blue:#60a5fa;
+}
 
-    body{
-      margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
-      background: radial-gradient(1200px 800px at 30% 0%, #12121a 0%, var(--bg) 55%);
-      color:var(--text);
-    }
+*{box-sizing:border-box}
 
-    /* Regime glow */
-    body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.16); }
-    body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.16); }
-    body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.16); }
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+  background:#0b0b0d;
+  color:var(--text);
+}
 
-    header{
-      padding:28px 24px 12px 24px;
-      border-bottom:1px solid rgba(255,255,255,.05);
-    }
-    .wrap{max-width:1120px; margin:0 auto; padding:18px 18px 42px;}
-    h1{margin:0; font-size:22px; font-weight:800; letter-spacing:.2px}
-    .sub{margin-top:6px; color:var(--muted); font-size:13px}
+body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.15); }
+body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.15); }
+body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.15); }
 
-    /* Big timestamp */
-    #lastUpdated{
-      margin-top:8px;
-      font-size:18px;
-      font-weight:800;
-      color:var(--blue);
-      letter-spacing:.4px;
-    }
+header{
+  padding:24px;
+  border-bottom:1px solid rgba(255,255,255,.05);
+}
 
-    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:18px;}
-    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+.wrap{max-width:1100px;margin:auto;padding:24px}
 
-    .card{
-      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
-      border:1px solid rgba(255,255,255,.06);
-      border-radius: var(--radius);
-      padding:16px;
-      box-shadow: 0 12px 30px rgba(0,0,0,.35);
-    }
-    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
-    .card h2{margin:0; font-size:18px}
+h1{margin:0;font-size:22px}
 
-    .btn{
-      border:1px solid rgba(255,255,255,.10);
-      background: rgba(255,255,255,.06);
-      color:var(--text);
-      padding:10px 14px;
-      border-radius: 14px;
-      cursor:pointer;
-      font-weight:700;
-    }
-    .btn.green{background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.30)}
-    .btn.gold{background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.30)}
-    .btn:active{transform:translateY(1px)}
+.sub{color:var(--muted);font-size:13px;margin-top:6px}
 
-    .pills{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
-    .pill{
-      display:flex; align-items:center; gap:10px;
-      background: rgba(0,0,0,.25);
-      border:1px solid rgba(255,255,255,.06);
-      padding:10px 12px;
-      border-radius: 999px;
-      font-size:13px;
-      color:var(--text);
-      min-width: 210px;
-    }
-    .dot{width:10px; height:10px; border-radius:999px; background:var(--yellow)}
-    .dot.green{background:var(--green)}
-    .dot.red{background:var(--red)}
-    .dot.yellow{background:var(--yellow)}
-    .kv{display:flex; flex-direction:column; gap:4px}
-    .kv b{font-size:12px; color:var(--muted); font-weight:800; letter-spacing:.2px}
-    .kv span{font-size:13px; font-weight:900}
+#lastUpdated{
+  margin-top:8px;
+  font-size:18px;
+  font-weight:800;
+  color:var(--blue);
+}
 
-    .small{font-size:12px; color:var(--muted); margin-top:10px; line-height:1.35}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+#nextRefresh{
+  margin-top:4px;
+  font-size:12px;
+  color:var(--muted);
+}
 
-    /* Divergence banner */
-    #divergenceBanner{
-      margin-top:12px;
-      font-size:12px;
-      font-weight:900;
-      color:var(--yellow);
-      letter-spacing:.2px;
-    }
+.card{
+  margin-top:20px;
+  padding:18px;
+  border:1px solid rgba(255,255,255,.08);
+  border-radius:12px;
+  background:rgba(255,255,255,.02);
+}
 
-    .inputs{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
-    @media (max-width: 720px){ .inputs{grid-template-columns:1fr} }
+.pills{
+  display:flex;
+  gap:12px;
+  flex-wrap:wrap;
+  margin-top:12px;
+}
 
-    input, textarea{
-      width:100%;
-      background: rgba(0,0,0,.28);
-      border:1px solid rgba(255,255,255,.08);
-      color:var(--text);
-      padding:10px 12px;
-      border-radius: 14px;
-      outline:none;
-    }
-    textarea{min-height:44px; resize:vertical}
+.pill{
+  padding:10px 14px;
+  border-radius:999px;
+  background:rgba(0,0,0,.3);
+  border:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
 
-    table{width:100%; border-collapse:collapse; margin-top:10px}
-    th, td{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px}
-    th{color:var(--muted); font-weight:900; text-align:left}
-    .muted{color:var(--muted)}
-    .right{ text-align:right }
-    .footer-note{margin-top:6px; color:var(--muted); font-size:12px}
-  </style>
+button{
+  padding:8px 14px;
+  border-radius:8px;
+  background:#1f2937;
+  border:1px solid rgba(255,255,255,.15);
+  color:white;
+  cursor:pointer;
+}
+
+input, textarea{
+  width:100%;
+  margin-top:6px;
+  padding:8px;
+  background:#111;
+  border:1px solid rgba(255,255,255,.15);
+  color:white;
+}
+
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:14px;
+}
+
+th, td{
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
+
+th{color:var(--muted);text-align:left}
+.right{text-align:right}
+</style>
 </head>
 
 <body>
+
 <header>
   <div class="wrap">
     <h1>Lean Terminal — App 1.0</h1>
     <div class="sub" id="statusLine">Ready.</div>
     <div id="lastUpdated">LAST UPDATED: —</div>
-  <div class="sub" id="nextRefresh">Next refresh in: 60s</div>
-
+    <div id="nextRefresh">Next refresh in: 60s</div>
   </div>
 </header>
 
 <div class="wrap">
-  <div class="grid">
-    <!-- Good Morning -->
-    <section class="card">
-      <div class="row">
-        <h2>Good Morning</h2>
-        <button class="btn green" id="runScanBtn">Run Scan</button>
-      </div>
 
-      <div class="pills" style="margin-top:14px">
-        <div class="pill">
-          <div class="dot" id="dotRegime"></div>
-          <div class="kv">
-            <b>Regime</b>
-            <span id="valRegime">—</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="dot" id="dotDeploy"></div>
-          <div class="kv">
-            <b>Deployment</b>
-            <span id="valDeploy">—</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="dot" id="dotCash"></div>
-          <div class="kv">
-            <b>Cash Anchor</b>
-            <span id="valCash">—</span>
-          </div>
-        </div>
-        <div class="pill">
-          <div class="dot" id="dotL5"></div>
-          <div class="kv">
-            <b>Level 5</b>
-            <span id="valL5">—</span>
-          </div>
-        </div>
-      </div>
+<div class="card">
+  <h2>Good Morning</h2>
+  <button id="runScanBtn">Run Scan</button>
 
-      <div id="divergenceBanner"></div>
-
-      <div class="small">
-        App reads two published CSVs: <span class="mono">HOLDINGS</span> (table) and <span class="mono">SYSTEM_EXPORT</span> (status).
-      </div>
-    </section>
-
-    <!-- Data Source -->
-    <section class="card">
-      <div class="row">
-        <h2>Data Source</h2>
-        <button class="btn" id="saveBtn">Save</button>
-      </div>
-
-      <div class="inputs">
-        <div>
-          <div class="footer-note">Holdings CSV URL (Google Sheets → Publish as CSV)</div>
-          <input id="holdingsUrl" placeholder="Paste HOLDINGS CSV URL here (output=csv)" />
-        </div>
-        <div>
-          <div class="footer-note">System CSV URL (SYSTEM_EXPORT tab → Publish as CSV)</div>
-          <input id="systemUrl" placeholder="Paste SYSTEM_EXPORT CSV URL here (output=csv)" />
-        </div>
-        <div style="grid-column:1/-1">
-          <div class="footer-note">Notes (stored locally on device)</div>
-          <textarea id="notesBox" placeholder='e.g., "Watching volatility compression"'></textarea>
-        </div>
-      </div>
-
-      <div class="small">
-        Tip: Stored locally in your browser.
-      </div>
-    </section>
+  <div class="pills">
+    <div class="pill">Regime: <span id="valRegime">—</span></div>
+    <div class="pill">Deployment: <span id="valDeploy">—</span></div>
+    <div class="pill">Cash: <span id="valCash">—</span></div>
+    <div class="pill">Level 5: <span id="valL5">—</span></div>
   </div>
 
-  <!-- Holdings -->
-  <section class="card" style="margin-top:18px">
-    <div class="row">
-      <h2>Holdings</h2>
-      <button class="btn" id="refreshBtn">Refresh</button>
-    </div>
+  <div id="divergenceBanner" style="margin-top:10px;color:var(--yellow);font-weight:700;"></div>
+</div>
 
-    <div class="sub" style="padding:6px 0 0 0">
-      Approx total value: <b id="totalValue">$—</b>
-      <span class="muted"> • Note:</span> <span id="noteInline" class="muted">—</span>
-    </div>
+<div class="card">
+  <h2>Data Source</h2>
+  <input id="holdingsUrl" placeholder="HOLDINGS CSV URL">
+  <input id="systemUrl" placeholder="SYSTEM_EXPORT CSV URL">
+  <textarea id="notesBox" placeholder="Notes"></textarea>
+  <button id="saveBtn">Save</button>
+</div>
 
-    <table>
-      <thead>
-        <tr>
-          <th>Ticker</th>
-          <th>Role</th>
-          <th>Bucket</th>
-          <th class="right">Shares</th>
-          <th class="right">Price</th>
-          <th class="right">Value</th>
-          <th>Notes</th>
-        </tr>
-      </thead>
-      <tbody id="holdingsBody">
-        <tr><td class="muted" colspan="7">Waiting for data…</td></tr>
-      </tbody>
-    </table>
-  </section>
+<div class="card">
+  <h2>Holdings</h2>
+  <button id="refreshBtn">Refresh</button>
+  <div style="margin-top:8px">Total: <b id="totalValue">$—</b></div>
+  <table>
+    <thead>
+      <tr>
+        <th>Ticker</th>
+        <th>Role</th>
+        <th>Bucket</th>
+        <th class="right">Shares</th>
+        <th class="right">Price</th>
+        <th class="right">Value</th>
+      </tr>
+    </thead>
+    <tbody id="holdingsBody">
+      <tr><td colspan="6">Waiting for data…</td></tr>
+    </tbody>
+  </table>
+</div>
 
-  <!-- Level 5 Module -->
-  <section class="card" style="margin-top:18px">
-    <div class="row">
-      <h2>Level 5 Module</h2>
-      <button class="btn gold" id="toggleL5Btn">Toggle Module</button>
-    </div>
-    <div class="small" style="margin-top:10px">
-      Rules: -15% hard stop, no averaging, profits → SGOV
-    </div>
-  </section>
 </div>
 
 <script>
-  // Local storage keys
-  const LS_HOLDINGS = "lean_holdings_csv_url";
-  const LS_SYSTEM   = "lean_system_csv_url";
-  const LS_NOTES    = "lean_notes";
+const LS_HOLDINGS="lean_holdings_csv_url";
+const LS_SYSTEM="lean_system_csv_url";
 
-  // Elements
-  const statusLine  = document.getElementById("statusLine");
-  const lastUpdated = document.getElementById("lastUpdated");
-  const divergenceBanner = document.getElementById("divergenceBanner");
+const statusLine=document.getElementById("statusLine");
+const lastUpdated=document.getElementById("lastUpdated");
+const nextRefresh=document.getElementById("nextRefresh");
+const divergenceBanner=document.getElementById("divergenceBanner");
 
-  const holdingsUrl = document.getElementById("holdingsUrl");
-  const systemUrl   = document.getElementById("systemUrl");
-  const notesBox    = document.getElementById("notesBox");
-  const noteInline  = document.getElementById("noteInline");
+const valRegime=document.getElementById("valRegime");
+const valDeploy=document.getElementById("valDeploy");
+const valCash=document.getElementById("valCash");
+const valL5=document.getElementById("valL5");
 
-  const valRegime = document.getElementById("valRegime");
-  const valDeploy = document.getElementById("valDeploy");
-  const valCash   = document.getElementById("valCash");
-  const valL5     = document.getElementById("valL5");
+const holdingsUrl=document.getElementById("holdingsUrl");
+const systemUrl=document.getElementById("systemUrl");
+const holdingsBody=document.getElementById("holdingsBody");
+const totalValue=document.getElementById("totalValue");
 
-  const dotRegime = document.getElementById("dotRegime");
-  const dotDeploy = document.getElementById("dotDeploy");
-  const dotCash   = document.getElementById("dotCash");
-  const dotL5     = document.getElementById("dotL5");
+function money(n){
+  if(!isFinite(n)) return "$—";
+  return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
+}
 
-  const totalValueEl = document.getElementById("totalValue");
-  const holdingsBody = document.getElementById("holdingsBody");
+function updateTimestamp(){
+  lastUpdated.textContent="LAST UPDATED: "+new Date().toLocaleTimeString();
+  lastUpdated.style.opacity="0.4";
+  setTimeout(()=>{lastUpdated.style.opacity="1"},200);
+}
 
-  function money(n){
-    if (!isFinite(n)) return "$—";
-    return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
+async function fetchText(url){
+  const sep=url.includes("?")?"&":"?";
+  const res=await fetch(url+sep+"t="+Date.now());
+  return await res.text();
+}
+
+function parseCSV(text){
+  return text.trim().split("\n").map(r=>r.split(","));
+}
+
+async function loadSystem(){
+  if(!systemUrl.value) return;
+  const rows=parseCSV(await fetchText(systemUrl.value));
+  const map=new Map();
+  rows.forEach(r=>map.set(r[0]?.toUpperCase(),r[1]));
+  valRegime.textContent=map.get("MARKET REGIME")||"—";
+  valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
+  valCash.textContent=map.get("CASH ANCHOR %")||"—";
+  valL5.textContent=map.get("LEVEL5 TOTAL %")||"—";
+
+  if(valRegime.textContent.includes("RISK ON") && valCash.textContent.includes("%")){
+    const cash=parseFloat(valCash.textContent)/100;
+    if(cash>0.5) divergenceBanner.textContent="⚠ Heavy cash in Risk-On regime.";
+    else divergenceBanner.textContent="";
   }
 
-  function setDot(dotEl, state){
-    dotEl.classList.remove("green","yellow","red");
-    dotEl.classList.add(state);
+  updateTimestamp();
+}
+
+async function loadHoldings(){
+  if(!holdingsUrl.value) return;
+  const rows=parseCSV(await fetchText(holdingsUrl.value));
+  const headers=rows[0];
+  const idx=(h)=>headers.indexOf(h);
+  const body=[];
+  let total=0;
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    if(!r[idx("Ticker")]) continue;
+    const value=parseFloat(r[idx("Value")])||0;
+    total+=value;
+    body.push(`<tr>
+      <td>${r[idx("Ticker")]}</td>
+      <td>${r[idx("Role")]||""}</td>
+      <td>${r[idx("Bucket")]||""}</td>
+      <td class="right">${r[idx("Shares")]||""}</td>
+      <td class="right">${r[idx("Price")]||""}</td>
+      <td class="right">${money(value)}</td>
+    </tr>`);
   }
+  holdingsBody.innerHTML=body.join("");
+  totalValue.textContent=money(total);
+  updateTimestamp();
+}
 
-  function updateTimestamp(){
-    const now = new Date();
-    lastUpdated.textContent = "LAST UPDATED: " + now.toLocaleTimeString();
-    // subtle flash
-    lastUpdated.style.opacity = "0.35";
-    setTimeout(() => { lastUpdated.style.opacity = "1"; }, 200);
+document.getElementById("saveBtn").onclick=()=>{
+  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
+  localStorage.setItem(LS_SYSTEM,systemUrl.value);
+  loadSystem();loadHoldings();
+};
+
+document.getElementById("refreshBtn").onclick=()=>{loadSystem();loadHoldings()};
+document.getElementById("runScanBtn").onclick=()=>{loadSystem();loadHoldings()};
+
+holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
+systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
+
+let secondsLeft=60;
+setInterval(()=>{
+  secondsLeft--;
+  if(secondsLeft<=0){
+    secondsLeft=60;
+    loadSystem();loadHoldings();
   }
+  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
+},1000);
 
-  function parseCSV(text){
-    const rows = [];
-    let row = [], field = "", inQuotes = false;
-    for (let i=0;i<text.length;i++){
-      const c = text[i];
-      const next = text[i+1];
-      if (c === '"' && inQuotes && next === '"'){ field += '"'; i++; continue; }
-      if (c === '"'){ inQuotes = !inQuotes; continue; }
-      if (c === ',' && !inQuotes){ row.push(field); field=""; continue; }
-      if ((c === '\n' || c === '\r') && !inQuotes){
-        if (c === '\r' && next === '\n') i++;
-        row.push(field);
-        if (row.some(v => v.trim() !== "")) rows.push(row);
-        row = []; field="";
-        continue;
-      }
-      field += c;
-    }
-    row.push(field);
-    if (row.some(v => v.trim() !== "")) rows.push(row);
-    return rows;
-  }
-
-  function normalizeHeader(h){ return (h||"").trim().toLowerCase(); }
-
-  async function fetchText(url){
-    const sep = url.includes("?") ? "&" : "?";
-    const res = await fetch(url + sep + "t=" + Date.now(), { cache:"no-store" });
-    if (!res.ok) throw new Error("Fetch failed: " + res.status);
-    return await res.text();
-  }
-
-  function dotFromText(t){
-    const s = (t||"").toLowerCase();
-    if (s.includes("🟢") || s.includes("risk on") || s.includes("aligned") || s.includes("ok")) return "green";
-    if (s.includes("🔴") || s.includes("defensive") || s.includes("over")) return "red";
-    if (s.includes("🟡") || s.includes("consider") || s.includes("transition") || s.includes("watch")) return "yellow";
-    return "yellow";
-  }
-
-  async function loadSystem(){
-    const url = systemUrl.value.trim();
-    if (!url){
-      valRegime.textContent = "—";
-      valDeploy.textContent = "—";
-      valCash.textContent = "—";
-      valL5.textContent = "—";
-      setDot(dotRegime, "yellow");
-      setDot(dotDeploy, "yellow");
-      setDot(dotCash, "yellow");
-      setDot(dotL5, "yellow");
-      divergenceBanner.textContent = "";
-      document.body.classList.remove("risk-on","defensive","transition");
-      updateTimestamp();
-      return;
-    }
-
-    const text = await fetchText(url);
-    const rows = parseCSV(text);
-
-    const map = new Map();
-    for (const r of rows){
-      const label = (r[0]||"").trim();
-      const value = (r[1]||"").trim();
-      if (label) map.set(label.toUpperCase(), value);
-    }
-
-    const regime = map.get("MARKET REGIME") || "—";
-    const deploy = map.get("DEPLOYMENT SIGNAL") || "—";
-    const cash   = map.get("CASH ANCHOR %") || "—";
-    const l5     = map.get("LEVEL5 TOTAL %") || map.get("LEVEL5 TOTAL%") || "—";
-
-    valRegime.textContent = regime;
-    valDeploy.textContent = deploy;
-    valCash.textContent = cash;
-    valL5.textContent = l5;
-
-    setDot(dotRegime, dotFromText(regime));
-    setDot(dotDeploy, dotFromText(deploy));
-
-    // Cash dot
-    if (cash.includes("%")){
-      const cashNum = parseFloat(cash.replace("%","")) / 100;
-      if (isFinite(cashNum)) setDot(dotCash, cashNum > 0.50 ? "green" : (cashNum > 0.25 ? "yellow" : "red"));
-      else setDot(dotCash, dotFromText(cash));
-    } else {
-      setDot(dotCash, dotFromText(cash));
-    }
-
-    // Level5 dot
-    if (l5.includes("%")){
-      const l5Num = parseFloat(l5.replace("%","")) / 100;
-      if (isFinite(l5Num)) setDot(dotL5, l5Num <= 0.03 ? "green" : (l5Num <= 0.05 ? "yellow" : "red"));
-      else setDot(dotL5, dotFromText(l5));
-    } else {
-      setDot(dotL5, dotFromText(l5));
-    }
-
-    // Regime glow
-    document.body.classList.remove("risk-on","defensive","transition");
-    const rt = regime.toLowerCase();
-    if (rt.includes("risk on")) document.body.classList.add("risk-on");
-    else if (rt.includes("defensive")) document.body.classList.add("defensive");
-    else document.body.classList.add("transition");
-
-    // Divergence banner (Risk On + high cash)
-    divergenceBanner.textContent = "";
-    if (rt.includes("risk on") && cash.includes("%")){
-      const cashNum = parseFloat(cash.replace("%","")) / 100;
-      if (isFinite(cashNum) && cashNum > 0.50){
-        divergenceBanner.textContent = "⚠ Posture Divergence: Heavy cash in Risk-On regime.";
-      }
-    }
-
-    updateTimestamp();
-  }
-
-  async function loadHoldings(){
-    const url = holdingsUrl.value.trim();
-    if (!url){
-      holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">Paste your HOLDINGS CSV URL, click Save, then Refresh.</td></tr>`;
-      totalValueEl.textContent = "$—";
-      updateTimestamp();
-      return;
-    }
-
-    const text = await fetchText(url);
-    const rows = parseCSV(text);
-    if (!rows.length){
-      holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">No rows found in CSV.</td></tr>`;
-      updateTimestamp();
-      return;
-    }
-
-    const headers = rows[0].map(normalizeHeader);
-    const idx = (name) => headers.indexOf(name);
-
-    const iTicker = idx("ticker");
-    const iRole   = idx("role");
-    const iBucket = idx("bucket");
-    const iShares = idx("shares");
-    const iPrice  = idx("price");
-    const iValue  = idx("value");
-    const iNotes  = idx("notes");
-
-    let total = 0;
-    const bodyRows = [];
-
-    for (let r=1; r<rows.length; r++){
-      const row = rows[r];
-      const ticker = (row[iTicker] ?? "").trim();
-      if (!ticker) continue;
-
-      const role   = (row[iRole] ?? "").trim();
-      const bucket = (row[iBucket] ?? "").trim();
-      const shares = parseFloat((row[iShares] ?? "").toString().replace(/[^0-9.\-]/g,"")) || 0;
-      const price  = parseFloat((row[iPrice]  ?? "").toString().replace(/[^0-9.\-]/g,"")) || 0;
-      const value  = parseFloat((row[iValue]  ?? "").toString().replace(/[^0-9.\-]/g,"")) || (shares * price);
-      const notes  = (row[iNotes] ?? "").trim();
-
-      total += (isFinite(value) ? value : 0);
-
-      bodyRows.push(`
-        <tr>
-          <td><b>${ticker}</b></td>
-          <td>${role || `<span class="muted">—</span>`}</td>
-          <td>${bucket || `<span class="muted">—</span>`}</td>
-          <td class="right">${shares ? shares.toFixed(4) : `<span class="muted">—</span>`}</td>
-          <td class="right">${price ? money(price) : `<span class="muted">—</span>`}</td>
-          <td class="right">${value ? money(value) : `<span class="muted">—</span>`}</td>
-          <td>${notes || `<span class="muted">—</span>`}</td>
-        </tr>
-      `);
-    }
-
-    holdingsBody.innerHTML = bodyRows.length
-      ? bodyRows.join("")
-      : `<tr><td class="muted" colspan="7">No holdings found (check CSV headers and rows).</td></tr>`;
-
-    totalValueEl.textContent = money(total);
-    updateTimestamp();
-  }
-
-  function loadLocal(){
-    holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
-    systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
-    notesBox.value    = localStorage.getItem(LS_NOTES) || "";
-    noteInline.textContent = notesBox.value ? notesBox.value : "—";
-  }
-
-  function saveLocal(){
-    localStorage.setItem(LS_HOLDINGS, holdingsUrl.value.trim());
-    localStorage.setItem(LS_SYSTEM, systemUrl.value.trim());
-    localStorage.setItem(LS_NOTES, notesBox.value.trim());
-    noteInline.textContent = notesBox.value.trim() ? notesBox.value.trim() : "—";
-  }
-
-  document.getElementById("saveBtn").addEventListener("click", async () => {
-    saveLocal();
-    statusLine.textContent = "Saved. Refreshing…";
-    try{
-      await Promise.all([loadSystem(), loadHoldings()]);
-      statusLine.textContent = "Saved + refreshed.";
-    }catch(e){
-      statusLine.textContent = "Saved, but refresh failed (check CSV links).";
-      console.error(e);
-    }
-  });
-
-  document.getElementById("refreshBtn").addEventListener("click", async () => {
-    statusLine.textContent = "Refreshing…";
-    try{
-      await Promise.all([loadSystem(), loadHoldings()]);
-      statusLine.textContent = "Refresh complete.";
-    }catch(e){
-      statusLine.textContent = "Refresh failed (check CSV links).";
-      console.error(e);
-    }
-  });
-
-  document.getElementById("runScanBtn").addEventListener("click", async () => {
-    statusLine.textContent = "Running scan…";
-    try{
-      await loadSystem();
-      statusLine.textContent = "Good Morning scan complete.";
-    }catch(e){
-      statusLine.textContent = "Scan failed (check SYSTEM_EXPORT CSV link).";
-      console.error(e);
-    }
-  });
-
-  document.getElementById("toggleL5Btn").addEventListener("click", () => {
-    alert("Level 5 module toggle (UI only).");
-  });
-
-  async function refreshAll(label){
-    statusLine.textContent = label;
-    await Promise.all([loadSystem(), loadHoldings()]);
-  }
-
-  (async function init(){
-    loadLocal();
-    try{
-      await refreshAll("Loaded from saved links.");
-    }catch(e){
-      statusLine.textContent = "Paste CSV links and click Save.";
-      console.error(e);
-    }
-  })();
-
-  // Auto-refresh every 60 seconds
-  setInterval(async () => {
-    try{
-      await refreshAll("Auto-refresh complete.");
-    }catch(e){
-      console.error("Auto-refresh failed:", e);
-    }
-  }, 60000);
-
-  // NOTE: Service worker disabled for stability while we iterate.
-  // Re-enable later once everything is stable.
-  // if ("serviceWorker" in navigator) {
-  //   navigator.serviceWorker.register("./sw.js").catch(()=>{});
-  // }
+loadSystem();
+loadHoldings();
 </script>
 
 </body>
