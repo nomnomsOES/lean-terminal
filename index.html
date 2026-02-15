@@ -309,6 +309,17 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       setDot(dotCash, "yellow");
       setDot(dotL5, "yellow");
       return;
+      document.body.classList.remove("risk-on","defensive","transition");
+
+const regimeText = regime.toLowerCase();
+if (regimeText.includes("risk on")) {
+  document.body.classList.add("risk-on");
+} else if (regimeText.includes("defensive")) {
+  document.body.classList.add("defensive");
+} else {
+  document.body.classList.add("transition");
+}
+
     }
 
     const text = await fetchText(url);
