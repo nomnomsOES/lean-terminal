@@ -112,6 +112,16 @@ th{color:var(--muted);text-align:left}
   font-weight:700;
   color:var(--muted);
 }
+
+#violations{
+  margin-top:10px;
+  font-size:13px;
+  font-weight:900;
+  letter-spacing:.2px;
+}
+#violations span{
+  font-weight:800;
+}
 </style>
 </head>
 
@@ -139,11 +149,14 @@ th{color:var(--muted);text-align:left}
     <div class="pill">Level 5: <span id="valL5">—</span></div>
     <div class="pill">Liquidity: <span id="valLiq">—</span></div>
     <div class="pill">Volatility: <span id="valVol">—</span></div>
+    <div class="pill">Violations: <span id="valViol">—</span></div>
   </div>
 
   <div id="divergenceBanner"></div>
 
   <div id="leanSignal">LEAN SIGNAL: —<small id="leanSuggestion">—</small></div>
+
+  <div id="violations">DISCIPLINE: <span id="violationsText">—</span></div>
 </div>
 
 <div class="card">
@@ -192,9 +205,11 @@ const valCash=document.getElementById("valCash");
 const valL5=document.getElementById("valL5");
 const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
+const valViol=document.getElementById("valViol");
 
 const leanSignal=document.getElementById("leanSignal");
-const leanSuggestion=document.getElementById("leanSuggestion");
+
+const violationsText=document.getElementById("violationsText");
 
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
@@ -227,8 +242,21 @@ function pctToNum(p){
   return parseFloat(p.replace("%",""))/100;
 }
 
+function setDiscipline(text){
+  if(!text || text.trim()==="" || text.trim()==="—"){
+    violationsText.textContent="✅ No violations";
+    violationsText.style.color="var(--green)";
+    return;
+  }
+  violationsText.textContent=text.trim();
+  // color based on severity glyph
+  const t=text.toLowerCase();
+  if(t.includes("🔴")) violationsText.style.color="var(--red)";
+  else if(t.includes("🟡")) violationsText.style.color="var(--yellow)";
+  else violationsText.style.color="var(--yellow)";
+}
+
 function computeLeanSignal(){
-  // Inputs
   const regime=(valRegime.textContent||"").toUpperCase();
   const vol=(valVol.textContent||"").toUpperCase();
   const liq=(valLiq.textContent||"").toUpperCase();
@@ -237,12 +265,10 @@ function computeLeanSignal(){
   const cashNum = pctToNum(valCash.textContent);
   const l5Num   = pctToNum(valL5.textContent);
 
-  // Defaults
   let signal="🟡 CAUTION";
   let reason="Mixed signals.";
   let suggestion="No action implied.";
 
-  // Rules (simple + disciplined)
   const riskOn = regime.includes("RISK ON");
   const defensive = regime.includes("DEFENSIVE");
   const volHot = vol.includes("HOT") || vol.includes("🔴");
@@ -257,7 +283,6 @@ function computeLeanSignal(){
   } else if (riskOn && volCalm && liqGreen) {
     signal="🟢 GO";
     reason="Risk-on regime + calm vol + liquid posture.";
-    // Suggest a tiny deploy if cash is high (debt phase safe)
     if (isFinite(cashNum) && cashNum > 0.50) {
       suggestion="Consider deploying 1–2% into Lean core (not Level 5).";
     } else {
@@ -266,7 +291,6 @@ function computeLeanSignal(){
   } else {
     signal="🟡 CAUTION";
     reason="Transition or partial confirmation.";
-    // If deployment signal already says consider deploying, keep it small
     if (deploy.includes("CONSIDER") && isFinite(cashNum) && cashNum > 0.50) {
       suggestion="If you deploy, keep it tiny: 0.5–1% test adds (Lean only).";
     } else {
@@ -274,12 +298,10 @@ function computeLeanSignal(){
     }
   }
 
-  // Level 5 guardrail mention
   if (isFinite(l5Num) && l5Num > 0.05) {
     suggestion += " Level 5 is high—reduce toward ≤5%.";
   }
 
-  // Render
   leanSignal.innerHTML = "LEAN SIGNAL: " + signal + "<small id='leanSuggestion'></small>";
   document.getElementById("leanSuggestion").textContent = reason + " " + suggestion;
 }
@@ -297,6 +319,11 @@ async function loadSystem(){
   valL5.textContent=map.get("LEVEL5 TOTAL %")||"—";
   valLiq.textContent=map.get("LIQUIDITY")||"—";
   valVol.textContent=map.get("VOLATILITY")||"—";
+
+  // violations label can be either "RULE VIOLATIONS" or "VIOLATIONS"
+  const viol = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
+  valViol.textContent = viol || "—";
+  setDiscipline(viol);
 
   const regimeText=(valRegime.textContent||"").toLowerCase();
   document.body.classList.remove("risk-on","defensive","transition");
