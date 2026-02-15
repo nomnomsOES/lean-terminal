@@ -8,31 +8,52 @@
   <link rel="manifest" href="manifest.json" />
   <style>
     :root{
-      --bg:#0b0b0d; --panel:#121217; --panel2:#0f0f13;
-      --text:#f3f4f6; --muted:#a7aab3; --line:#222331;
-      --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#60a5fa;
-      --pill:#0e0e13;
+      --bg:#0b0b0d;
+      --panel:#121217;
+      --text:#f3f4f6;
+      --muted:#a7aab3;
+      --line:#222331;
+      --green:#22c55e;
+      --yellow:#f59e0b;
+      --red:#ef4444;
+      --blue:#60a5fa;
       --radius:18px;
-      body.risk-on { box-shadow: inset 0 0 120px rgba(34,197,94,0.15); }
-body.defensive { box-shadow: inset 0 0 120px rgba(239,68,68,0.15); }
-body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
-
     }
+
     *{box-sizing:border-box}
+
     body{
-      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
       background: radial-gradient(1200px 800px at 30% 0%, #12121a 0%, var(--bg) 55%);
       color:var(--text);
     }
+
+    /* Regime glow */
+    body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.16); }
+    body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.16); }
+    body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.16); }
+
     header{
-      padding:28px 24px 10px 24px;
-      border-bottom:1px solid rgba(255,255,255,.04);
+      padding:28px 24px 12px 24px;
+      border-bottom:1px solid rgba(255,255,255,.05);
     }
-    h1{margin:0; font-size:22px; font-weight:700}
+    .wrap{max-width:1120px; margin:0 auto; padding:18px 18px 42px;}
+    h1{margin:0; font-size:22px; font-weight:800; letter-spacing:.2px}
     .sub{margin-top:6px; color:var(--muted); font-size:13px}
-    .wrap{max-width:1120px; margin:0 auto; padding:18px 18px 40px;}
+
+    /* Big timestamp */
+    #lastUpdated{
+      margin-top:8px;
+      font-size:18px;
+      font-weight:800;
+      color:var(--blue);
+      letter-spacing:.4px;
+    }
+
     .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:18px;}
     @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+
     .card{
       background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
       border:1px solid rgba(255,255,255,.06);
@@ -40,8 +61,9 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       padding:16px;
       box-shadow: 0 12px 30px rgba(0,0,0,.35);
     }
-    .card h2{margin:0; font-size:18px}
     .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .card h2{margin:0; font-size:18px}
+
     .btn{
       border:1px solid rgba(255,255,255,.10);
       background: rgba(255,255,255,.06);
@@ -49,11 +71,12 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       padding:10px 14px;
       border-radius: 14px;
       cursor:pointer;
-      font-weight:600;
+      font-weight:700;
     }
     .btn.green{background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.30)}
     .btn.gold{background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.30)}
     .btn:active{transform:translateY(1px)}
+
     .pills{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
     .pill{
       display:flex; align-items:center; gap:10px;
@@ -63,17 +86,31 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       border-radius: 999px;
       font-size:13px;
       color:var(--text);
+      min-width: 210px;
     }
     .dot{width:10px; height:10px; border-radius:999px; background:var(--yellow)}
     .dot.green{background:var(--green)}
     .dot.red{background:var(--red)}
     .dot.yellow{background:var(--yellow)}
     .kv{display:flex; flex-direction:column; gap:4px}
-    .kv b{font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.2px}
-    .kv span{font-size:13px; font-weight:700}
+    .kv b{font-size:12px; color:var(--muted); font-weight:800; letter-spacing:.2px}
+    .kv span{font-size:13px; font-weight:900}
+
     .small{font-size:12px; color:var(--muted); margin-top:10px; line-height:1.35}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
+
+    /* Divergence banner */
+    #divergenceBanner{
+      margin-top:12px;
+      font-size:12px;
+      font-weight:900;
+      color:var(--yellow);
+      letter-spacing:.2px;
+    }
+
     .inputs{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
     @media (max-width: 720px){ .inputs{grid-template-columns:1fr} }
+
     input, textarea{
       width:100%;
       background: rgba(0,0,0,.28);
@@ -84,13 +121,13 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       outline:none;
     }
     textarea{min-height:44px; resize:vertical}
+
     table{width:100%; border-collapse:collapse; margin-top:10px}
     th, td{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px}
-    th{color:var(--muted); font-weight:700; text-align:left}
+    th{color:var(--muted); font-weight:900; text-align:left}
     .muted{color:var(--muted)}
     .right{ text-align:right }
     .footer-note{margin-top:6px; color:var(--muted); font-size:12px}
-    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
   </style>
 </head>
 
@@ -98,15 +135,8 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
 <header>
   <div class="wrap">
     <h1>Lean Terminal — App 1.0</h1>
-    <div class="sub" id="statusLine">Good Morning scan: ready.</div>
- <div id="lastUpdated"
-     style="margin-top:6px;
-            font-size:18px;
-            font-weight:700;
-            color:#60a5fa;">
-  LAST UPDATED: —
-</div>
-
+    <div class="sub" id="statusLine">Ready.</div>
+    <div id="lastUpdated">LAST UPDATED: —</div>
   </div>
 </header>
 
@@ -150,8 +180,10 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
         </div>
       </div>
 
+      <div id="divergenceBanner"></div>
+
       <div class="small">
-        App 1.0 reads two published CSVs: <span class="mono">HOLDINGS</span> (table) and <span class="mono">SYSTEM_EXPORT</span> (status).
+        App reads two published CSVs: <span class="mono">HOLDINGS</span> (table) and <span class="mono">SYSTEM_EXPORT</span> (status).
       </div>
     </section>
 
@@ -178,7 +210,7 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       </div>
 
       <div class="small">
-        Tip: These are stored locally in your browser. If you clear website data, you’ll need to paste again.
+        Tip: Stored locally in your browser.
       </div>
     </section>
   </div>
@@ -189,6 +221,7 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       <h2>Holdings</h2>
       <button class="btn" id="refreshBtn">Refresh</button>
     </div>
+
     <div class="sub" style="padding:6px 0 0 0">
       Approx total value: <b id="totalValue">$—</b>
       <span class="muted"> • Note:</span> <span id="noteInline" class="muted">—</span>
@@ -219,24 +252,22 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       <button class="btn gold" id="toggleL5Btn">Toggle Module</button>
     </div>
     <div class="small" style="margin-top:10px">
-      This block can be removed later without affecting Lean. App 1.0 shows “ON/OFF” based on your scan rules.
-      <ul>
-        <li>Rules: -15% hard stop, no averaging, profits → SGOV</li>
-        <li>Activation (example): VIX cooling + RS leaders + compression breakout</li>
-      </ul>
+      Rules: -15% hard stop, no averaging, profits → SGOV
     </div>
   </section>
 </div>
 
 <script>
-  // --- Local storage keys
+  // Local storage keys
   const LS_HOLDINGS = "lean_holdings_csv_url";
   const LS_SYSTEM   = "lean_system_csv_url";
   const LS_NOTES    = "lean_notes";
-  const LS_L5_TOGGLE = "lean_level5_toggle"; // optional manual toggle for module display
 
-  // --- Elements
+  // Elements
   const statusLine  = document.getElementById("statusLine");
+  const lastUpdated = document.getElementById("lastUpdated");
+  const divergenceBanner = document.getElementById("divergenceBanner");
+
   const holdingsUrl = document.getElementById("holdingsUrl");
   const systemUrl   = document.getElementById("systemUrl");
   const notesBox    = document.getElementById("notesBox");
@@ -255,22 +286,24 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
   const totalValueEl = document.getElementById("totalValue");
   const holdingsBody = document.getElementById("holdingsBody");
 
-  // --- Small helpers
-  const money = (n) => {
+  function money(n){
     if (!isFinite(n)) return "$—";
     return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
-  };
-  const pct = (n) => {
-    if (!isFinite(n)) return "—";
-    return (n*100).toFixed(2) + "%";
-  };
+  }
 
   function setDot(dotEl, state){
     dotEl.classList.remove("green","yellow","red");
-    dotEl.classList.add(state); // "green" | "yellow" | "red"
+    dotEl.classList.add(state);
   }
 
-  // Lightweight CSV parser that handles quoted fields
+  function updateTimestamp(){
+    const now = new Date();
+    lastUpdated.textContent = "LAST UPDATED: " + now.toLocaleTimeString();
+    // subtle flash
+    lastUpdated.style.opacity = "0.35";
+    setTimeout(() => { lastUpdated.style.opacity = "1"; }, 200);
+  }
+
   function parseCSV(text){
     const rows = [];
     let row = [], field = "", inQuotes = false;
@@ -297,14 +330,20 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
   function normalizeHeader(h){ return (h||"").trim().toLowerCase(); }
 
   async function fetchText(url){
-    // cache-bust to avoid stale CSV
     const sep = url.includes("?") ? "&" : "?";
     const res = await fetch(url + sep + "t=" + Date.now(), { cache:"no-store" });
     if (!res.ok) throw new Error("Fetch failed: " + res.status);
     return await res.text();
   }
 
-  // --- SYSTEM_EXPORT reader
+  function dotFromText(t){
+    const s = (t||"").toLowerCase();
+    if (s.includes("🟢") || s.includes("risk on") || s.includes("aligned") || s.includes("ok")) return "green";
+    if (s.includes("🔴") || s.includes("defensive") || s.includes("over")) return "red";
+    if (s.includes("🟡") || s.includes("consider") || s.includes("transition") || s.includes("watch")) return "yellow";
+    return "yellow";
+  }
+
   async function loadSystem(){
     const url = systemUrl.value.trim();
     if (!url){
@@ -316,23 +355,15 @@ body.transition { box-shadow: inset 0 0 120px rgba(245,158,11,0.15); }
       setDot(dotDeploy, "yellow");
       setDot(dotCash, "yellow");
       setDot(dotL5, "yellow");
-      return;
+      divergenceBanner.textContent = "";
       document.body.classList.remove("risk-on","defensive","transition");
-
-const regimeText = regime.toLowerCase();
-if (regimeText.includes("risk on")) {
-  document.body.classList.add("risk-on");
-} else if (regimeText.includes("defensive")) {
-  document.body.classList.add("defensive");
-} else {
-  document.body.classList.add("transition");
-}
-
+      updateTimestamp();
+      return;
     }
 
     const text = await fetchText(url);
     const rows = parseCSV(text);
-    // Expect 2 columns: label,value
+
     const map = new Map();
     for (const r of rows){
       const label = (r[0]||"").trim();
@@ -350,39 +381,52 @@ if (regimeText.includes("risk on")) {
     valCash.textContent = cash;
     valL5.textContent = l5;
 
-    // Dots: infer from emoji / keywords
-    const dotFromText = (t) => {
-      const s = (t||"").toLowerCase();
-      if (s.includes("🟢") || s.includes("risk on") || s.includes("aligned") || s.includes("ok")) return "green";
-      if (s.includes("🔴") || s.includes("defensive") || s.includes("over")) return "red";
-      if (s.includes("🟡") || s.includes("consider") || s.includes("transition") || s.includes("watch")) return "yellow";
-      return "yellow";
-    };
-
     setDot(dotRegime, dotFromText(regime));
     setDot(dotDeploy, dotFromText(deploy));
-    // Cash dot: >50% green defensive; 25–50 yellow; else red (fallback if no emoji)
-    if (typeof cash === "string" && cash.includes("%")){
-      const num = parseFloat(cash.replace("%","")) / 100;
-      if (isFinite(num)){
-        setDot(dotCash, num > 0.50 ? "green" : (num > 0.25 ? "yellow" : "red"));
-      } else setDot(dotCash, dotFromText(cash));
-    } else setDot(dotCash, dotFromText(cash));
-    // Level5 dot: if tiny or "0" = green (controlled), else yellow
-    if (typeof l5 === "string" && l5.includes("%")){
-      const num = parseFloat(l5.replace("%","")) / 100;
-      if (isFinite(num)){
-        setDot(dotL5, num <= 0.03 ? "green" : (num <= 0.05 ? "yellow" : "red"));
-      } else setDot(dotL5, dotFromText(l5));
-    } else setDot(dotL5, dotFromText(l5));
+
+    // Cash dot
+    if (cash.includes("%")){
+      const cashNum = parseFloat(cash.replace("%","")) / 100;
+      if (isFinite(cashNum)) setDot(dotCash, cashNum > 0.50 ? "green" : (cashNum > 0.25 ? "yellow" : "red"));
+      else setDot(dotCash, dotFromText(cash));
+    } else {
+      setDot(dotCash, dotFromText(cash));
+    }
+
+    // Level5 dot
+    if (l5.includes("%")){
+      const l5Num = parseFloat(l5.replace("%","")) / 100;
+      if (isFinite(l5Num)) setDot(dotL5, l5Num <= 0.03 ? "green" : (l5Num <= 0.05 ? "yellow" : "red"));
+      else setDot(dotL5, dotFromText(l5));
+    } else {
+      setDot(dotL5, dotFromText(l5));
+    }
+
+    // Regime glow
+    document.body.classList.remove("risk-on","defensive","transition");
+    const rt = regime.toLowerCase();
+    if (rt.includes("risk on")) document.body.classList.add("risk-on");
+    else if (rt.includes("defensive")) document.body.classList.add("defensive");
+    else document.body.classList.add("transition");
+
+    // Divergence banner (Risk On + high cash)
+    divergenceBanner.textContent = "";
+    if (rt.includes("risk on") && cash.includes("%")){
+      const cashNum = parseFloat(cash.replace("%","")) / 100;
+      if (isFinite(cashNum) && cashNum > 0.50){
+        divergenceBanner.textContent = "⚠ Posture Divergence: Heavy cash in Risk-On regime.";
+      }
+    }
+
+    updateTimestamp();
   }
 
-  // --- HOLDINGS reader
   async function loadHoldings(){
     const url = holdingsUrl.value.trim();
     if (!url){
       holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">Paste your HOLDINGS CSV URL, click Save, then Refresh.</td></tr>`;
       totalValueEl.textContent = "$—";
+      updateTimestamp();
       return;
     }
 
@@ -390,13 +434,13 @@ if (regimeText.includes("risk on")) {
     const rows = parseCSV(text);
     if (!rows.length){
       holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">No rows found in CSV.</td></tr>`;
+      updateTimestamp();
       return;
     }
 
     const headers = rows[0].map(normalizeHeader);
     const idx = (name) => headers.indexOf(name);
 
-    // Map common header names
     const iTicker = idx("ticker");
     const iRole   = idx("role");
     const iBucket = idx("bucket");
@@ -437,9 +481,10 @@ if (regimeText.includes("risk on")) {
 
     holdingsBody.innerHTML = bodyRows.length
       ? bodyRows.join("")
-      : `<tr><td class="muted" colspan="7">No holdings found (check your CSV headers and rows).</td></tr>`;
+      : `<tr><td class="muted" colspan="7">No holdings found (check CSV headers and rows).</td></tr>`;
 
     totalValueEl.textContent = money(total);
+    updateTimestamp();
   }
 
   function loadLocal(){
@@ -456,7 +501,6 @@ if (regimeText.includes("risk on")) {
     noteInline.textContent = notesBox.value.trim() ? notesBox.value.trim() : "—";
   }
 
-  // Buttons
   document.getElementById("saveBtn").addEventListener("click", async () => {
     saveLocal();
     statusLine.textContent = "Saved. Refreshing…";
@@ -468,15 +512,6 @@ if (regimeText.includes("risk on")) {
       console.error(e);
     }
   });
-// Auto refresh every 60 seconds
-setInterval(async () => {
-  try {
-    await Promise.all([loadSystem(), loadHoldings()]);
-    statusLine.textContent = "Auto-refresh complete.";
-  } catch (e) {
-    console.error("Auto-refresh failed:", e);
-  }
-}, 60000);
 
   document.getElementById("refreshBtn").addEventListener("click", async () => {
     statusLine.textContent = "Refreshing…";
@@ -501,28 +536,39 @@ setInterval(async () => {
   });
 
   document.getElementById("toggleL5Btn").addEventListener("click", () => {
-    const current = localStorage.getItem(LS_L5_TOGGLE) || "OFF";
-    const next = current === "ON" ? "OFF" : "ON";
-    localStorage.setItem(LS_L5_TOGGLE, next);
-    alert("Level 5 module toggle: " + next + " (manual UI toggle only)");
+    alert("Level 5 module toggle (UI only).");
   });
 
-  // Initial load
+  async function refreshAll(label){
+    statusLine.textContent = label;
+    await Promise.all([loadSystem(), loadHoldings()]);
+  }
+
   (async function init(){
     loadLocal();
     try{
-      await Promise.all([loadSystem(), loadHoldings()]);
-      statusLine.textContent = "Loaded from saved links.";
+      await refreshAll("Loaded from saved links.");
     }catch(e){
       statusLine.textContent = "Paste CSV links and click Save.";
       console.error(e);
     }
   })();
 
-  // Service worker (optional)
-  if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("./sw.js").catch(()=>{});
-  }
+  // Auto-refresh every 60 seconds
+  setInterval(async () => {
+    try{
+      await refreshAll("Auto-refresh complete.");
+    }catch(e){
+      console.error("Auto-refresh failed:", e);
+    }
+  }, 60000);
+
+  // NOTE: Service worker disabled for stability while we iterate.
+  // Re-enable later once everything is stable.
+  // if ("serviceWorker" in navigator) {
+  //   navigator.serviceWorker.register("./sw.js").catch(()=>{});
+  // }
 </script>
+
 </body>
 </html>
