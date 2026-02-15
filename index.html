@@ -3,250 +3,494 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal</title>
+  <title>Lean Terminal — App 1.0</title>
+  <meta name="theme-color" content="#0b0b0d" />
   <link rel="manifest" href="manifest.json" />
-  <meta name="theme-color" content="#0b0b0b" />
   <style>
-    :root { --bg:#0b0b0b; --card:#121212; --muted:#9aa0a6; --text:#e8eaed; --green:#29d64a; --yellow:#fbbc04; --red:#ff4d4f; }
-    body { margin:0; font-family: -apple-system, system-ui, Segoe UI, Roboto, Arial; background:var(--bg); color:var(--text); }
-    header { position:sticky; top:0; background:rgba(11,11,11,.9); backdrop-filter: blur(10px); padding:16px; border-bottom:1px solid #1f1f1f; }
-    h1 { margin:0; font-size:18px; }
-    .sub { color:var(--muted); font-size:12px; margin-top:6px; }
-    .wrap { padding:16px; max-width: 980px; margin:0 auto; }
-    .row { display:flex; gap:12px; flex-wrap:wrap; }
-    .card { background:var(--card); border:1px solid #1f1f1f; border-radius:14px; padding:14px; flex:1; min-width:260px; }
-    .btn { background:#1f1f1f; border:1px solid #2a2a2a; color:var(--text); padding:10px 12px; border-radius:12px; cursor:pointer; }
-    .btn.primary { background:#1b5e20; border-color:#2e7d32; }
-    .btn.warn { background:#5a3b00; border-color:#7a4f00; }
-    .pill { display:inline-flex; align-items:center; gap:8px; padding:6px 10px; border-radius:999px; font-size:12px; border:1px solid #2a2a2a; }
-    .dot { width:10px; height:10px; border-radius:50%; }
-    .g { background:var(--green); } .y { background:var(--yellow); } .r { background:var(--red); }
-    table { width:100%; border-collapse: collapse; font-size:13px; }
-    th, td { padding:10px; border-bottom:1px solid #232323; text-align:left; }
-    th { color:var(--muted); font-weight:600; }
-    .muted { color:var(--muted); }
-    .small { font-size:12px; }
-    input[type="text"] { width:100%; background:#0f0f0f; border:1px solid #2a2a2a; border-radius:10px; padding:10px; color:var(--text); }
-    .grid2 { display:grid; grid-template-columns: 1fr 1fr; gap:12px; }
-    @media (max-width:720px){ .grid2{ grid-template-columns:1fr; } }
-    .section-title { display:flex; justify-content:space-between; align-items:center; margin-bottom:10px; }
+    :root{
+      --bg:#0b0b0d; --panel:#121217; --panel2:#0f0f13;
+      --text:#f3f4f6; --muted:#a7aab3; --line:#222331;
+      --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#60a5fa;
+      --pill:#0e0e13;
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    body{
+      margin:0; font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
+      background: radial-gradient(1200px 800px at 30% 0%, #12121a 0%, var(--bg) 55%);
+      color:var(--text);
+    }
+    header{
+      padding:28px 24px 10px 24px;
+      border-bottom:1px solid rgba(255,255,255,.04);
+    }
+    h1{margin:0; font-size:22px; font-weight:700}
+    .sub{margin-top:6px; color:var(--muted); font-size:13px}
+    .wrap{max-width:1120px; margin:0 auto; padding:18px 18px 40px;}
+    .grid{display:grid; grid-template-columns: 1.2fr .8fr; gap:18px;}
+    @media (max-width: 980px){ .grid{grid-template-columns:1fr} }
+    .card{
+      background: linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      border:1px solid rgba(255,255,255,.06);
+      border-radius: var(--radius);
+      padding:16px;
+      box-shadow: 0 12px 30px rgba(0,0,0,.35);
+    }
+    .card h2{margin:0; font-size:18px}
+    .row{display:flex; align-items:center; justify-content:space-between; gap:10px; flex-wrap:wrap}
+    .btn{
+      border:1px solid rgba(255,255,255,.10);
+      background: rgba(255,255,255,.06);
+      color:var(--text);
+      padding:10px 14px;
+      border-radius: 14px;
+      cursor:pointer;
+      font-weight:600;
+    }
+    .btn.green{background:rgba(34,197,94,.18); border-color:rgba(34,197,94,.30)}
+    .btn.gold{background:rgba(245,158,11,.18); border-color:rgba(245,158,11,.30)}
+    .btn:active{transform:translateY(1px)}
+    .pills{display:flex; gap:10px; flex-wrap:wrap; margin-top:12px}
+    .pill{
+      display:flex; align-items:center; gap:10px;
+      background: rgba(0,0,0,.25);
+      border:1px solid rgba(255,255,255,.06);
+      padding:10px 12px;
+      border-radius: 999px;
+      font-size:13px;
+      color:var(--text);
+    }
+    .dot{width:10px; height:10px; border-radius:999px; background:var(--yellow)}
+    .dot.green{background:var(--green)}
+    .dot.red{background:var(--red)}
+    .dot.yellow{background:var(--yellow)}
+    .kv{display:flex; flex-direction:column; gap:4px}
+    .kv b{font-size:12px; color:var(--muted); font-weight:600; letter-spacing:.2px}
+    .kv span{font-size:13px; font-weight:700}
+    .small{font-size:12px; color:var(--muted); margin-top:10px; line-height:1.35}
+    .inputs{display:grid; grid-template-columns: 1fr 1fr; gap:10px; margin-top:10px}
+    @media (max-width: 720px){ .inputs{grid-template-columns:1fr} }
+    input, textarea{
+      width:100%;
+      background: rgba(0,0,0,.28);
+      border:1px solid rgba(255,255,255,.08);
+      color:var(--text);
+      padding:10px 12px;
+      border-radius: 14px;
+      outline:none;
+    }
+    textarea{min-height:44px; resize:vertical}
+    table{width:100%; border-collapse:collapse; margin-top:10px}
+    th, td{padding:10px 10px; border-bottom:1px solid rgba(255,255,255,.06); font-size:13px}
+    th{color:var(--muted); font-weight:700; text-align:left}
+    .muted{color:var(--muted)}
+    .right{ text-align:right }
+    .footer-note{margin-top:6px; color:var(--muted); font-size:12px}
+    .mono{font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace}
   </style>
 </head>
 
 <body>
 <header>
-  <h1>Lean Terminal — App 1.0</h1>
-  <div class="sub" id="statusLine">Waiting for data…</div>
+  <div class="wrap">
+    <h1>Lean Terminal — App 1.0</h1>
+    <div class="sub" id="statusLine">Good Morning scan: ready.</div>
+  </div>
 </header>
 
 <div class="wrap">
-  <div class="row">
-    <div class="card">
-      <div class="section-title">
-        <strong>Good Morning</strong>
-        <button class="btn primary" id="btnGM">Run Scan</button>
-      </div>
+  <div class="grid">
+    <!-- Good Morning -->
+    <section class="card">
       <div class="row">
-        <span class="pill"><span class="dot" id="dotRegime"></span><span id="txtRegime">Regime: —</span></span>
-        <span class="pill"><span class="dot" id="dotLiquidity"></span><span id="txtLiquidity">Liquidity: —</span></span>
-        <span class="pill"><span class="dot" id="dotVol"></span><span id="txtVol">Volatility: —</span></span>
-        <span class="pill"><span class="dot" id="dotL5"></span><span id="txtL5">Level 5: —</span></span>
+        <h2>Good Morning</h2>
+        <button class="btn green" id="runScanBtn">Run Scan</button>
       </div>
-      <p class="muted small" style="margin-top:12px;">
-        App 1.0 uses your Google Sheet as the data source. Level 5 remains modular.
-      </p>
-    </div>
 
-    <div class="card">
-      <div class="section-title">
-        <strong>Data Source</strong>
-        <button class="btn" id="btnSave">Save</button>
+      <div class="pills" style="margin-top:14px">
+        <div class="pill">
+          <div class="dot" id="dotRegime"></div>
+          <div class="kv">
+            <b>Regime</b>
+            <span id="valRegime">—</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="dot" id="dotDeploy"></div>
+          <div class="kv">
+            <b>Deployment</b>
+            <span id="valDeploy">—</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="dot" id="dotCash"></div>
+          <div class="kv">
+            <b>Cash Anchor</b>
+            <span id="valCash">—</span>
+          </div>
+        </div>
+        <div class="pill">
+          <div class="dot" id="dotL5"></div>
+          <div class="kv">
+            <b>Level 5</b>
+            <span id="valL5">—</span>
+          </div>
+        </div>
       </div>
-      <div class="grid2">
+
+      <div class="small">
+        App 1.0 reads two published CSVs: <span class="mono">HOLDINGS</span> (table) and <span class="mono">SYSTEM_EXPORT</span> (status).
+      </div>
+    </section>
+
+    <!-- Data Source -->
+    <section class="card">
+      <div class="row">
+        <h2>Data Source</h2>
+        <button class="btn" id="saveBtn">Save</button>
+      </div>
+
+      <div class="inputs">
         <div>
-          <div class="muted small">Published CSV URL (Google Sheets)</div>
-          <input id="csvUrl" type="text" placeholder="Paste your published CSV link here" />
+          <div class="footer-note">Holdings CSV URL (Google Sheets → Publish as CSV)</div>
+          <input id="holdingsUrl" placeholder="Paste HOLDINGS CSV URL here (output=csv)" />
         </div>
         <div>
-          <div class="muted small">Notes (stored locally on device)</div>
-          <input id="note" type="text" placeholder="e.g., 'Watching volatility compression for Level 5'" />
+          <div class="footer-note">System CSV URL (SYSTEM_EXPORT tab → Publish as CSV)</div>
+          <input id="systemUrl" placeholder="Paste SYSTEM_EXPORT CSV URL here (output=csv)" />
+        </div>
+        <div style="grid-column:1/-1">
+          <div class="footer-note">Notes (stored locally on device)</div>
+          <textarea id="notesBox" placeholder='e.g., "Watching volatility compression"'></textarea>
         </div>
       </div>
-      <p class="muted small">Tip: Keep the CSV link unshared. We can upgrade to authenticated access later.</p>
-    </div>
+
+      <div class="small">
+        Tip: These are stored locally in your browser. If you clear website data, you’ll need to paste again.
+      </div>
+    </section>
   </div>
 
-  <div class="row">
-    <div class="card">
-      <div class="section-title">
-        <strong>Holdings</strong>
-        <button class="btn" id="btnRefresh">Refresh</button>
-      </div>
-      <div class="muted small" id="holdingsMeta">—</div>
-      <div style="margin-top:10px; overflow:auto;">
-        <table id="tbl">
-          <thead>
-            <tr>
-              <th>Ticker</th>
-              <th>Role</th>
-              <th>Bucket</th>
-              <th>Shares</th>
-              <th>Price</th>
-              <th>Value</th>
-              <th class="muted">Notes</th>
-            </tr>
-          </thead>
-          <tbody></tbody>
-        </table>
-      </div>
+  <!-- Holdings -->
+  <section class="card" style="margin-top:18px">
+    <div class="row">
+      <h2>Holdings</h2>
+      <button class="btn" id="refreshBtn">Refresh</button>
     </div>
-  </div>
+    <div class="sub" style="padding:6px 0 0 0">
+      Approx total value: <b id="totalValue">$—</b>
+      <span class="muted"> • Note:</span> <span id="noteInline" class="muted">—</span>
+    </div>
 
-  <div class="row">
-    <div class="card">
-      <div class="section-title">
-        <strong>Level 5 Module</strong>
-        <button class="btn warn" id="btnToggleL5">Toggle Module</button>
-      </div>
-      <div id="l5Block">
-        <p class="muted small">
-          This block can be removed later without affecting Lean. App 1.0 shows “ON/OFF” based on your scan rules.
-        </p>
-        <ul class="small">
-          <li><span class="muted">Activation Gate:</span> VIX cooling + RS leaders + compression breakout</li>
-          <li><span class="muted">Rules:</span> -15% hard stop, no averaging, profits → SGOV</li>
-        </ul>
-      </div>
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Role</th>
+          <th>Bucket</th>
+          <th class="right">Shares</th>
+          <th class="right">Price</th>
+          <th class="right">Value</th>
+          <th>Notes</th>
+        </tr>
+      </thead>
+      <tbody id="holdingsBody">
+        <tr><td class="muted" colspan="7">Waiting for data…</td></tr>
+      </tbody>
+    </table>
+  </section>
+
+  <!-- Level 5 Module -->
+  <section class="card" style="margin-top:18px">
+    <div class="row">
+      <h2>Level 5 Module</h2>
+      <button class="btn gold" id="toggleL5Btn">Toggle Module</button>
     </div>
-  </div>
+    <div class="small" style="margin-top:10px">
+      This block can be removed later without affecting Lean. App 1.0 shows “ON/OFF” based on your scan rules.
+      <ul>
+        <li>Rules: -15% hard stop, no averaging, profits → SGOV</li>
+        <li>Activation (example): VIX cooling + RS leaders + compression breakout</li>
+      </ul>
+    </div>
+  </section>
 </div>
 
 <script>
-  // --- Simple helpers ---
-  const $ = (id) => document.getElementById(id);
-  const setDot = (id, color) => { const el=$(id); el.className = "dot " + color; };
+  // --- Local storage keys
+  const LS_HOLDINGS = "lean_holdings_csv_url";
+  const LS_SYSTEM   = "lean_system_csv_url";
+  const LS_NOTES    = "lean_notes";
+  const LS_L5_TOGGLE = "lean_level5_toggle"; // optional manual toggle for module display
 
+  // --- Elements
+  const statusLine  = document.getElementById("statusLine");
+  const holdingsUrl = document.getElementById("holdingsUrl");
+  const systemUrl   = document.getElementById("systemUrl");
+  const notesBox    = document.getElementById("notesBox");
+  const noteInline  = document.getElementById("noteInline");
+
+  const valRegime = document.getElementById("valRegime");
+  const valDeploy = document.getElementById("valDeploy");
+  const valCash   = document.getElementById("valCash");
+  const valL5     = document.getElementById("valL5");
+
+  const dotRegime = document.getElementById("dotRegime");
+  const dotDeploy = document.getElementById("dotDeploy");
+  const dotCash   = document.getElementById("dotCash");
+  const dotL5     = document.getElementById("dotL5");
+
+  const totalValueEl = document.getElementById("totalValue");
+  const holdingsBody = document.getElementById("holdingsBody");
+
+  // --- Small helpers
+  const money = (n) => {
+    if (!isFinite(n)) return "$—";
+    return n.toLocaleString(undefined, { style:"currency", currency:"USD" });
+  };
+  const pct = (n) => {
+    if (!isFinite(n)) return "—";
+    return (n*100).toFixed(2) + "%";
+  };
+
+  function setDot(dotEl, state){
+    dotEl.classList.remove("green","yellow","red");
+    dotEl.classList.add(state); // "green" | "yellow" | "red"
+  }
+
+  // Lightweight CSV parser that handles quoted fields
   function parseCSV(text){
-    const lines = text.trim().split(/\r?\n/);
-    const rows = lines.map(l => l.split(",").map(s => s.replace(/^"|"$/g,"").trim()));
-    const headers = rows.shift();
-    return rows.map(r => Object.fromEntries(headers.map((h,i)=>[h, r[i] ?? ""])));
-  }
-
-  function toNum(x){
-    const n = Number(String(x).replace(/[^0-9.\-]/g,""));
-    return Number.isFinite(n) ? n : null;
-  }
-
-  function loadSettings(){
-    const url = localStorage.getItem("LEAN_CSV_URL") || "";
-    const note = localStorage.getItem("LEAN_NOTE") || "";
-    const l5 = localStorage.getItem("LEAN_L5_ENABLED");
-    $("csvUrl").value = url;
-    $("note").value = note;
-    if(l5 === "0") $("l5Block").style.display = "none";
-  }
-
-  function saveSettings(){
-    localStorage.setItem("LEAN_CSV_URL", $("csvUrl").value.trim());
-    localStorage.setItem("LEAN_NOTE", $("note").value.trim());
-    $("statusLine").textContent = "Saved settings.";
-  }
-
-  async function fetchHoldings(){
-    const url = (localStorage.getItem("LEAN_CSV_URL") || "").trim();
-    if(!url){ $("statusLine").textContent = "Paste your Google Sheet CSV URL, then Save."; return null; }
-    $("statusLine").textContent = "Fetching holdings…";
-    const res = await fetch(url, { cache: "no-store" });
-    const text = await res.text();
-    const data = parseCSV(text);
-    $("statusLine").textContent = "Holdings updated.";
-    return data;
-  }
-
-  function renderHoldings(data){
-    const tbody = $("tbl").querySelector("tbody");
-    tbody.innerHTML = "";
-    let total = 0;
-    for(const row of data){
-      const t = row.Ticker || row.ticker;
-      if(!t) continue;
-      const shares = toNum(row.Shares) ?? toNum(row.shares) ?? null;
-      const price  = toNum(row.Price) ?? toNum(row.price) ?? null;
-      const value  = toNum(row.Value) ?? (shares!=null && price!=null ? shares*price : null);
-      if(value!=null) total += value;
-
-      const tr = document.createElement("tr");
-      tr.innerHTML = `
-        <td><strong>${t}</strong></td>
-        <td>${row.Role || ""}</td>
-        <td>${row.Bucket || ""}</td>
-        <td>${shares!=null ? shares.toFixed(4) : ""}</td>
-        <td>${price!=null ? price.toFixed(2) : ""}</td>
-        <td>${value!=null ? value.toFixed(2) : ""}</td>
-        <td class="muted">${row.Notes || ""}</td>
-      `;
-      tbody.appendChild(tr);
+    const rows = [];
+    let row = [], field = "", inQuotes = false;
+    for (let i=0;i<text.length;i++){
+      const c = text[i];
+      const next = text[i+1];
+      if (c === '"' && inQuotes && next === '"'){ field += '"'; i++; continue; }
+      if (c === '"'){ inQuotes = !inQuotes; continue; }
+      if (c === ',' && !inQuotes){ row.push(field); field=""; continue; }
+      if ((c === '\n' || c === '\r') && !inQuotes){
+        if (c === '\r' && next === '\n') i++;
+        row.push(field);
+        if (row.some(v => v.trim() !== "")) rows.push(row);
+        row = []; field="";
+        continue;
+      }
+      field += c;
     }
-    $("holdingsMeta").textContent = `Approx total value: $${total.toFixed(2)}  •  Note: ${localStorage.getItem("LEAN_NOTE") || ""}`;
+    row.push(field);
+    if (row.some(v => v.trim() !== "")) rows.push(row);
+    return rows;
   }
 
-  // --- Good Morning scan (App 1.0: simple heuristic placeholders) ---
-  // In App 1.1 we’ll compute real indicators (RS, volatility compression) from price history.
-  function runGoodMorningHeuristic(data){
-    // Heuristic: if SGOV exists and value share is high, we call liquidity “good”.
-    const tickers = new Set(data.map(d => (d.Ticker || "").toUpperCase()));
-    const hasSGOV = tickers.has("SGOV");
-    const hasQQQ  = tickers.has("QQQ") || tickers.has("QQQM");
-    const hasVOO  = tickers.has("VOO") || tickers.has("IVV") || tickers.has("SPY");
+  function normalizeHeader(h){ return (h||"").trim().toLowerCase(); }
 
-    // Regime: if you have broad core ETFs, treat as “Transition” unless you mark otherwise.
-    $("txtRegime").textContent = "Regime: TRANSITION";
-    setDot("dotRegime", "y");
-
-    $("txtLiquidity").textContent = hasSGOV ? "Liquidity: OK (SGOV anchor)" : "Liquidity: UNKNOWN";
-    setDot("dotLiquidity", hasSGOV ? "g" : "y");
-
-    $("txtVol").textContent = "Volatility: WATCH";
-    setDot("dotVol", "y");
-
-    // Level 5: require BOTH QQQ & VOO present for risk-on participation; else OFF
-    const l5Enabled = localStorage.getItem("LEAN_L5_ENABLED") !== "0";
-    const l5On = l5Enabled && hasQQQ && hasVOO;
-    $("txtL5").textContent = l5On ? "Level 5: WATCH (gate not confirmed)" : "Level 5: OFF";
-    setDot("dotL5", l5On ? "y" : "r");
+  async function fetchText(url){
+    // cache-bust to avoid stale CSV
+    const sep = url.includes("?") ? "&" : "?";
+    const res = await fetch(url + sep + "t=" + Date.now(), { cache:"no-store" });
+    if (!res.ok) throw new Error("Fetch failed: " + res.status);
+    return await res.text();
   }
 
-  // --- Events ---
-  $("btnSave").addEventListener("click", saveSettings);
-  $("btnRefresh").addEventListener("click", async () => {
-    const data = await fetchHoldings();
-    if(!data) return;
-    renderHoldings(data);
+  // --- SYSTEM_EXPORT reader
+  async function loadSystem(){
+    const url = systemUrl.value.trim();
+    if (!url){
+      valRegime.textContent = "—";
+      valDeploy.textContent = "—";
+      valCash.textContent = "—";
+      valL5.textContent = "—";
+      setDot(dotRegime, "yellow");
+      setDot(dotDeploy, "yellow");
+      setDot(dotCash, "yellow");
+      setDot(dotL5, "yellow");
+      return;
+    }
+
+    const text = await fetchText(url);
+    const rows = parseCSV(text);
+    // Expect 2 columns: label,value
+    const map = new Map();
+    for (const r of rows){
+      const label = (r[0]||"").trim();
+      const value = (r[1]||"").trim();
+      if (label) map.set(label.toUpperCase(), value);
+    }
+
+    const regime = map.get("MARKET REGIME") || "—";
+    const deploy = map.get("DEPLOYMENT SIGNAL") || "—";
+    const cash   = map.get("CASH ANCHOR %") || "—";
+    const l5     = map.get("LEVEL5 TOTAL %") || map.get("LEVEL5 TOTAL%") || "—";
+
+    valRegime.textContent = regime;
+    valDeploy.textContent = deploy;
+    valCash.textContent = cash;
+    valL5.textContent = l5;
+
+    // Dots: infer from emoji / keywords
+    const dotFromText = (t) => {
+      const s = (t||"").toLowerCase();
+      if (s.includes("🟢") || s.includes("risk on") || s.includes("aligned") || s.includes("ok")) return "green";
+      if (s.includes("🔴") || s.includes("defensive") || s.includes("over")) return "red";
+      if (s.includes("🟡") || s.includes("consider") || s.includes("transition") || s.includes("watch")) return "yellow";
+      return "yellow";
+    };
+
+    setDot(dotRegime, dotFromText(regime));
+    setDot(dotDeploy, dotFromText(deploy));
+    // Cash dot: >50% green defensive; 25–50 yellow; else red (fallback if no emoji)
+    if (typeof cash === "string" && cash.includes("%")){
+      const num = parseFloat(cash.replace("%","")) / 100;
+      if (isFinite(num)){
+        setDot(dotCash, num > 0.50 ? "green" : (num > 0.25 ? "yellow" : "red"));
+      } else setDot(dotCash, dotFromText(cash));
+    } else setDot(dotCash, dotFromText(cash));
+    // Level5 dot: if tiny or "0" = green (controlled), else yellow
+    if (typeof l5 === "string" && l5.includes("%")){
+      const num = parseFloat(l5.replace("%","")) / 100;
+      if (isFinite(num)){
+        setDot(dotL5, num <= 0.03 ? "green" : (num <= 0.05 ? "yellow" : "red"));
+      } else setDot(dotL5, dotFromText(l5));
+    } else setDot(dotL5, dotFromText(l5));
+  }
+
+  // --- HOLDINGS reader
+  async function loadHoldings(){
+    const url = holdingsUrl.value.trim();
+    if (!url){
+      holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">Paste your HOLDINGS CSV URL, click Save, then Refresh.</td></tr>`;
+      totalValueEl.textContent = "$—";
+      return;
+    }
+
+    const text = await fetchText(url);
+    const rows = parseCSV(text);
+    if (!rows.length){
+      holdingsBody.innerHTML = `<tr><td class="muted" colspan="7">No rows found in CSV.</td></tr>`;
+      return;
+    }
+
+    const headers = rows[0].map(normalizeHeader);
+    const idx = (name) => headers.indexOf(name);
+
+    // Map common header names
+    const iTicker = idx("ticker");
+    const iRole   = idx("role");
+    const iBucket = idx("bucket");
+    const iShares = idx("shares");
+    const iPrice  = idx("price");
+    const iValue  = idx("value");
+    const iNotes  = idx("notes");
+
+    let total = 0;
+    const bodyRows = [];
+
+    for (let r=1; r<rows.length; r++){
+      const row = rows[r];
+      const ticker = (row[iTicker] ?? "").trim();
+      if (!ticker) continue;
+
+      const role   = (row[iRole] ?? "").trim();
+      const bucket = (row[iBucket] ?? "").trim();
+      const shares = parseFloat((row[iShares] ?? "").toString().replace(/[^0-9.\-]/g,"")) || 0;
+      const price  = parseFloat((row[iPrice]  ?? "").toString().replace(/[^0-9.\-]/g,"")) || 0;
+      const value  = parseFloat((row[iValue]  ?? "").toString().replace(/[^0-9.\-]/g,"")) || (shares * price);
+      const notes  = (row[iNotes] ?? "").trim();
+
+      total += (isFinite(value) ? value : 0);
+
+      bodyRows.push(`
+        <tr>
+          <td><b>${ticker}</b></td>
+          <td>${role || `<span class="muted">—</span>`}</td>
+          <td>${bucket || `<span class="muted">—</span>`}</td>
+          <td class="right">${shares ? shares.toFixed(4) : `<span class="muted">—</span>`}</td>
+          <td class="right">${price ? money(price) : `<span class="muted">—</span>`}</td>
+          <td class="right">${value ? money(value) : `<span class="muted">—</span>`}</td>
+          <td>${notes || `<span class="muted">—</span>`}</td>
+        </tr>
+      `);
+    }
+
+    holdingsBody.innerHTML = bodyRows.length
+      ? bodyRows.join("")
+      : `<tr><td class="muted" colspan="7">No holdings found (check your CSV headers and rows).</td></tr>`;
+
+    totalValueEl.textContent = money(total);
+  }
+
+  function loadLocal(){
+    holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
+    systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
+    notesBox.value    = localStorage.getItem(LS_NOTES) || "";
+    noteInline.textContent = notesBox.value ? notesBox.value : "—";
+  }
+
+  function saveLocal(){
+    localStorage.setItem(LS_HOLDINGS, holdingsUrl.value.trim());
+    localStorage.setItem(LS_SYSTEM, systemUrl.value.trim());
+    localStorage.setItem(LS_NOTES, notesBox.value.trim());
+    noteInline.textContent = notesBox.value.trim() ? notesBox.value.trim() : "—";
+  }
+
+  // Buttons
+  document.getElementById("saveBtn").addEventListener("click", async () => {
+    saveLocal();
+    statusLine.textContent = "Saved. Refreshing…";
+    try{
+      await Promise.all([loadSystem(), loadHoldings()]);
+      statusLine.textContent = "Saved + refreshed.";
+    }catch(e){
+      statusLine.textContent = "Saved, but refresh failed (check CSV links).";
+      console.error(e);
+    }
   });
 
-  $("btnGM").addEventListener("click", async () => {
-    const data = await fetchHoldings();
-    if(!data) return;
-    renderHoldings(data);
-    runGoodMorningHeuristic(data);
-    $("statusLine").textContent = "Good Morning scan complete.";
+  document.getElementById("refreshBtn").addEventListener("click", async () => {
+    statusLine.textContent = "Refreshing…";
+    try{
+      await Promise.all([loadSystem(), loadHoldings()]);
+      statusLine.textContent = "Refresh complete.";
+    }catch(e){
+      statusLine.textContent = "Refresh failed (check CSV links).";
+      console.error(e);
+    }
   });
 
-  $("btnToggleL5").addEventListener("click", () => {
-    const cur = localStorage.getItem("LEAN_L5_ENABLED");
-    const next = (cur === "0") ? "1" : "0";
-    localStorage.setItem("LEAN_L5_ENABLED", next);
-    $("l5Block").style.display = (next === "0") ? "none" : "block";
-    $("statusLine").textContent = (next === "0") ? "Level 5 module hidden." : "Level 5 module shown.";
+  document.getElementById("runScanBtn").addEventListener("click", async () => {
+    statusLine.textContent = "Running scan…";
+    try{
+      await loadSystem();
+      statusLine.textContent = "Good Morning scan complete.";
+    }catch(e){
+      statusLine.textContent = "Scan failed (check SYSTEM_EXPORT CSV link).";
+      console.error(e);
+    }
   });
 
-  // PWA SW
+  document.getElementById("toggleL5Btn").addEventListener("click", () => {
+    const current = localStorage.getItem(LS_L5_TOGGLE) || "OFF";
+    const next = current === "ON" ? "OFF" : "ON";
+    localStorage.setItem(LS_L5_TOGGLE, next);
+    alert("Level 5 module toggle: " + next + " (manual UI toggle only)");
+  });
+
+  // Initial load
+  (async function init(){
+    loadLocal();
+    try{
+      await Promise.all([loadSystem(), loadHoldings()]);
+      statusLine.textContent = "Loaded from saved links.";
+    }catch(e){
+      statusLine.textContent = "Paste CSV links and click Save.";
+      console.error(e);
+    }
+  })();
+
+  // Service worker (optional)
   if ("serviceWorker" in navigator) {
-    navigator.serviceWorker.register("sw.js");
+    navigator.serviceWorker.register("./sw.js").catch(()=>{});
   }
-
-  loadSettings();
 </script>
 </body>
 </html>
