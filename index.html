@@ -428,7 +428,7 @@ async function loadSystem(){
     map.get("WEATHER SYSTEM") ||
     "—";
 
-  valWeather.textContent = (rawWeather === "—") ? "—" : `${weatherEmoji(rawWeather)} ${rawWeather}`;
+  valWeather.textContent = "🌥 Partly Cloudy";
   valDrawdown.textContent = map.get("DRAWDOWN STATUS") || "—";
 
   // Divergence technical
