@@ -281,6 +281,16 @@ function pctToNum(p){
   return parseFloat(p.replace("%",""))/100;
 }
 
+/** NEW: weather -> emoji mapping */
+function weatherEmoji(status){
+  const w = (status || "").toLowerCase();
+  if (w.includes("storm") || w.includes("⛈")) return "⛈";
+  if (w.includes("rain")  || w.includes("🌧")) return "🌧";
+  if (w.includes("cloud") || w.includes("partly") || w.includes("⛅") || w.includes("🌥")) return "🌥";
+  if (w.includes("clear") || w.includes("sun") || w.includes("☀️")) return "☀️";
+  return "🌤";
+}
+
 function setRegimeGlow(){
   const t=(valRegime.textContent||"").toLowerCase();
   document.body.classList.remove("risk-on","defensive","transition");
@@ -308,7 +318,7 @@ function setStreetWeather(){
   const w=(valWeather.textContent||"").toUpperCase();
   if(w.includes("CLEAR SKY") || w.includes("☀️")){
     streetWeather.textContent="🔴 STREET: Green light. Stay disciplined, not reckless.";
-  } else if(w.includes("PARTLY") || w.includes("🌤") || w.includes("⛅")){
+  } else if(w.includes("PARTLY") || w.includes("🌤") || w.includes("⛅") || w.includes("🌥")){
     streetWeather.textContent="🔴 STREET: You can move… but keep it small. No hero moves.";
   } else if(w.includes("RAIN") || w.includes("🌧")){
     streetWeather.textContent="🔴 STREET: Core only. Pause the spicy stuff.";
@@ -411,8 +421,14 @@ async function loadSystem(){
 
   checklistText.textContent = map.get("TODAY'S CHECKLIST") || map.get("TODAYS CHECKLIST") || "—";
 
-  // NEW: weather + drawdown (from your sheet)
-  valWeather.textContent = map.get("WEATHER STATUS") || "—";
+  // UPDATED: weather + drawdown (from your sheet) + emoji
+  const rawWeather =
+    map.get("WEATHER STATUS") ||
+    map.get("WEATHER") ||
+    map.get("WEATHER SYSTEM") ||
+    "—";
+
+  valWeather.textContent = (rawWeather === "—") ? "—" : `${weatherEmoji(rawWeather)} ${rawWeather}`;
   valDrawdown.textContent = map.get("DRAWDOWN STATUS") || "—";
 
   // Divergence technical
