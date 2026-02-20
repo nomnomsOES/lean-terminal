@@ -1,6 +1,5 @@
 <script>
-
-/* ========= Lean Terminal — Stable Auto-Refresh Build ========= */
+/* ========= Lean Terminal — Auto-Refresh (Self-Healing UI) ========= */
 
 const LS_HOLDINGS = "lean_holdings_csv_url";
 const LS_SYSTEM   = "lean_system_csv_url";
@@ -10,11 +9,8 @@ const LS_LAST_TICKER = "lean_last_added_ticker";
 const PHASE = "DEPLOY";
 const RAMP_DOLLARS = 75;
 
-/* ---------- Elements ---------- */
-
-const statusLine   = document.getElementById("statusLine");
-const lastUpdated  = document.getElementById("lastUpdated");
-const nextRefresh  = document.getElementById("nextRefresh");
+/* ---------- Elements (required) ---------- */
+const statusLine = document.getElementById("statusLine");
 
 const valRegime = document.getElementById("valRegime");
 const valDeploy = document.getElementById("valDeploy");
@@ -32,10 +28,37 @@ const systemUrl    = document.getElementById("systemUrl");
 const holdingsBody = document.getElementById("holdingsBody");
 const totalValue   = document.getElementById("totalValue");
 
+/* ---------- Elements (optional; we will create if missing) ---------- */
+let lastUpdated = document.getElementById("lastUpdated");
+let nextRefresh = document.getElementById("nextRefresh");
+
+/* ---------- Self-heal header UI (creates countdown + timestamp if missing) ---------- */
+(function ensureHeaderUI(){
+  if(!statusLine) return;
+
+  const parent = statusLine.parentElement || document.body;
+
+  if(!lastUpdated){
+    lastUpdated = document.createElement("div");
+    lastUpdated.id = "lastUpdated";
+    lastUpdated.className = "sub";
+    lastUpdated.textContent = "LAST UPDATED: —";
+    parent.appendChild(lastUpdated);
+  }
+
+  if(!nextRefresh){
+    nextRefresh = document.createElement("div");
+    nextRefresh.id = "nextRefresh";
+    nextRefresh.className = "sub";
+    nextRefresh.textContent = "Next refresh in: 60s";
+    parent.appendChild(nextRefresh);
+  }
+})();
+
+/* ---------- State ---------- */
 let holdingsData = [];
 
 /* ---------- Utilities ---------- */
-
 function safeUpper(s){ return (s || "").toString().trim().toUpperCase(); }
 
 function money(n){
@@ -43,16 +66,16 @@ function money(n){
   return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
 }
 
-function updateTimestamp(label){
+function stamp(label){
   const t = new Date().toLocaleTimeString();
   if(lastUpdated) lastUpdated.textContent = "LAST UPDATED: " + t;
-  if(label) statusLine.textContent = label + " @ " + t;
+  if(label && statusLine) statusLine.textContent = label + " @ " + t;
 }
 
 async function fetchText(url){
   const sep = url.includes("?") ? "&" : "?";
-  const res = await fetch(url + sep + "t=" + Date.now(), {cache:"no-store"});
-  if(!res.ok) throw new Error("Fetch failed");
+  const res = await fetch(url + sep + "t=" + Date.now(), { cache: "no-store" });
+  if(!res.ok) throw new Error("Fetch failed: " + res.status);
   return await res.text();
 }
 
@@ -61,7 +84,6 @@ function parseCSV(text){
 }
 
 /* ---------- Rotation Logic ---------- */
-
 function normalizeTier(t){
   const x = safeUpper(t);
   if(x.startsWith("H")) return "HIGH";
@@ -85,14 +107,11 @@ function pickNextTickerForTier(tier){
 
   const lastTicker = (localStorage.getItem(LS_LAST_TICKER) || "").toUpperCase();
   const pick = candidates.find(h => (h.Ticker || "").toUpperCase() !== lastTicker) || candidates[0];
-
   return (pick.Ticker || "").toUpperCase();
 }
 
 /* ---------- Action Renderer ---------- */
-
 function renderAction(){
-
   const lastTier = localStorage.getItem(LS_LAST_TIER) || "";
   const nextTier = nextTierFromLast(lastTier);
   const nextTicker = pickNextTickerForTier(nextTier);
@@ -105,23 +124,18 @@ function renderAction(){
   }
 
   if(nextTicker){
-    actionMain.textContent =
-      `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`;
-    actionReason.textContent =
-      `Deploy Mode. Tier=${nextTier}. Funding source: SGOV.`;
+    actionMain.textContent = `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`;
+    actionReason.textContent = `Deploy Mode. Tier=${nextTier}. Funding source: SGOV.`;
     const afterTier = nextTierFromLast(nextTier);
     actionNext.textContent = `NEXT UP: ${afterTier} tier.`;
   } else {
-    actionMain.textContent =
-      `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Set RiskTier values)`;
-    actionReason.textContent =
-      "Fill RiskTier column with LOW/MED/HIGH in Holdings CSV.";
+    actionMain.textContent = `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Set RiskTier values)`;
+    actionReason.textContent = "Fill RiskTier column with LOW/MED/HIGH in Holdings CSV.";
     actionNext.textContent = `NEXT UP: ${nextTier} tier.`;
   }
 }
 
 /* ---------- CSV Loaders ---------- */
-
 async function loadSystem(){
   if(!systemUrl.value) return;
 
@@ -158,10 +172,7 @@ async function loadHoldings(){
 
     const riskTier = (idx("RiskTier") >= 0) ? (r[idx("RiskTier")] || "") : "";
 
-    holdingsData.push({
-      Ticker: ticker,
-      RiskTier: riskTier
-    });
+    holdingsData.push({ Ticker: ticker, RiskTier: riskTier });
 
     body.push(`<tr>
       <td>${ticker}</td>
@@ -176,55 +187,56 @@ async function loadHoldings(){
   renderAction();
 }
 
-/* ---------- Buttons ---------- */
+/* ---------- Refresh Orchestrator (shows errors) ---------- */
+async function refreshAll(label){
+  try{
+    await Promise.all([loadSystem(), loadHoldings()]);
+    stamp(label || "Refreshed");
+  }catch(e){
+    const msg = (e && e.message) ? e.message : "unknown error";
+    if(statusLine) statusLine.textContent = "Refresh error: " + msg;
+    // Also keep the countdown running regardless
+  }
+}
 
+/* ---------- Buttons ---------- */
 document.getElementById("saveBtn").onclick = () => {
   localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
   localStorage.setItem(LS_SYSTEM, systemUrl.value);
-
-  Promise.all([loadSystem(), loadHoldings()])
-    .then(() => updateTimestamp("Saved + refreshed"))
-    .catch(() => statusLine.textContent = "Refresh failed");
+  refreshAll("Saved + refreshed");
 };
 
-document.getElementById("refreshBtn").onclick = () => {
-  Promise.all([loadSystem(), loadHoldings()])
-    .then(() => updateTimestamp("Manual refresh"));
-};
+document.getElementById("refreshBtn").onclick = () => refreshAll("Manual refresh");
+document.getElementById("runScanBtn").onclick = () => refreshAll("Scan complete");
 
-document.getElementById("runScanBtn").onclick = () => {
-  Promise.all([loadSystem(), loadHoldings()])
-    .then(() => updateTimestamp("Scan complete"));
-};
+/* ---------- Initial Load ---------- */
+holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
+systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
+refreshAll("Loaded");
 
-/* ---------- Auto Refresh ---------- */
-
+/* ---------- Auto Refresh + Visible Heartbeat ---------- */
 let secondsLeft = 60;
+let tick = 0;
 
 setInterval(() => {
   secondsLeft--;
+  tick++;
+
+  if(nextRefresh) nextRefresh.textContent = "Next refresh in: " + secondsLeft + "s";
+
+  // Heartbeat every 5 seconds so you can SEE it’s alive even if refresh fails
+  if(statusLine && (tick % 5 === 0)){
+    // don't overwrite real status if it's showing an error
+    if(!statusLine.textContent.startsWith("Refresh error")){
+      statusLine.textContent = "Heartbeat… (" + tick + ")";
+    }
+  }
 
   if(secondsLeft <= 0){
     secondsLeft = 60;
-    statusLine.textContent = "Auto-refresh…";
-
-    Promise.all([loadSystem(), loadHoldings()])
-      .then(() => updateTimestamp("Auto-refresh complete"))
-      .catch(() => statusLine.textContent = "Auto-refresh failed");
+    if(statusLine) statusLine.textContent = "Auto-refresh…";
+    refreshAll("Auto-refresh complete");
   }
-
-  if(nextRefresh)
-    nextRefresh.textContent = "Next refresh in: " + secondsLeft + "s";
-
 }, 1000);
-
-/* ---------- Initial Load ---------- */
-
-holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
-systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
-
-Promise.all([loadSystem(), loadHoldings()])
-  .then(() => updateTimestamp("Loaded"))
-  .catch(() => statusLine.textContent = "Paste CSV links and click Save.");
 
 </script>
