@@ -1,242 +1,228 @@
 <script>
-/* ========= Lean Terminal — Auto-Refresh (Self-Healing UI) ========= */
+/* ===== FAILSAFE LEAN TERMINAL SCRIPT =====
+   Purpose: prevent white screens by catching errors and displaying them.
+*/
 
-const LS_HOLDINGS = "lean_holdings_csv_url";
-const LS_SYSTEM   = "lean_system_csv_url";
-const LS_LAST_TIER = "lean_last_risk_tier";
-const LS_LAST_TICKER = "lean_last_added_ticker";
-
-const PHASE = "DEPLOY";
-const RAMP_DOLLARS = 75;
-
-/* ---------- Elements (required) ---------- */
-const statusLine = document.getElementById("statusLine");
-
-const valRegime = document.getElementById("valRegime");
-const valDeploy = document.getElementById("valDeploy");
-const valCash   = document.getElementById("valCash");
-const valLiq    = document.getElementById("valLiq");
-const valVol    = document.getElementById("valVol");
-const valViol   = document.getElementById("valViol");
-
-const actionMain   = document.getElementById("actionMain");
-const actionReason = document.getElementById("actionReason");
-const actionNext   = document.getElementById("actionNext");
-
-const holdingsUrl  = document.getElementById("holdingsUrl");
-const systemUrl    = document.getElementById("systemUrl");
-const holdingsBody = document.getElementById("holdingsBody");
-const totalValue   = document.getElementById("totalValue");
-
-/* ---------- Elements (optional; we will create if missing) ---------- */
-let lastUpdated = document.getElementById("lastUpdated");
-let nextRefresh = document.getElementById("nextRefresh");
-
-/* ---------- Self-heal header UI (creates countdown + timestamp if missing) ---------- */
-(function ensureHeaderUI(){
-  if(!statusLine) return;
-
-  const parent = statusLine.parentElement || document.body;
-
-  if(!lastUpdated){
-    lastUpdated = document.createElement("div");
-    lastUpdated.id = "lastUpdated";
-    lastUpdated.className = "sub";
-    lastUpdated.textContent = "LAST UPDATED: —";
-    parent.appendChild(lastUpdated);
-  }
-
-  if(!nextRefresh){
-    nextRefresh = document.createElement("div");
-    nextRefresh.id = "nextRefresh";
-    nextRefresh.className = "sub";
-    nextRefresh.textContent = "Next refresh in: 60s";
-    parent.appendChild(nextRefresh);
-  }
-})();
-
-/* ---------- State ---------- */
-let holdingsData = [];
-
-/* ---------- Utilities ---------- */
-function safeUpper(s){ return (s || "").toString().trim().toUpperCase(); }
-
-function money(n){
-  if(!isFinite(n)) return "$—";
-  return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
-}
-
-function stamp(label){
-  const t = new Date().toLocaleTimeString();
-  if(lastUpdated) lastUpdated.textContent = "LAST UPDATED: " + t;
-  if(label && statusLine) statusLine.textContent = label + " @ " + t;
-}
-
-async function fetchText(url){
-  const sep = url.includes("?") ? "&" : "?";
-  const res = await fetch(url + sep + "t=" + Date.now(), { cache: "no-store" });
-  if(!res.ok) throw new Error("Fetch failed: " + res.status);
-  return await res.text();
-}
-
-function parseCSV(text){
-  return text.trim().split("\n").map(r => r.split(","));
-}
-
-/* ---------- Rotation Logic ---------- */
-function normalizeTier(t){
-  const x = safeUpper(t);
-  if(x.startsWith("H")) return "HIGH";
-  if(x.startsWith("M")) return "MED";
-  if(x.startsWith("L")) return "LOW";
-  return "";
-}
-
-function nextTierFromLast(last){
-  const L = normalizeTier(last);
-  if(L === "HIGH") return "LOW";
-  if(L === "LOW")  return "MED";
-  if(L === "MED")  return "LOW";
-  return "LOW";
-}
-
-function pickNextTickerForTier(tier){
-  const t = normalizeTier(tier);
-  const candidates = holdingsData.filter(h => normalizeTier(h.RiskTier) === t);
-  if(candidates.length === 0) return null;
-
-  const lastTicker = (localStorage.getItem(LS_LAST_TICKER) || "").toUpperCase();
-  const pick = candidates.find(h => (h.Ticker || "").toUpperCase() !== lastTicker) || candidates[0];
-  return (pick.Ticker || "").toUpperCase();
-}
-
-/* ---------- Action Renderer ---------- */
-function renderAction(){
-  const lastTier = localStorage.getItem(LS_LAST_TIER) || "";
-  const nextTier = nextTierFromLast(lastTier);
-  const nextTicker = pickNextTickerForTier(nextTier);
-
-  if(PHASE !== "DEPLOY"){
-    actionMain.textContent = "HOLD — Phase not DEPLOY";
-    actionReason.textContent = "Phase not set to DEPLOY.";
-    actionNext.textContent = "NEXT UP: —";
-    return;
-  }
-
-  if(nextTicker){
-    actionMain.textContent = `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`;
-    actionReason.textContent = `Deploy Mode. Tier=${nextTier}. Funding source: SGOV.`;
-    const afterTier = nextTierFromLast(nextTier);
-    actionNext.textContent = `NEXT UP: ${afterTier} tier.`;
-  } else {
-    actionMain.textContent = `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Set RiskTier values)`;
-    actionReason.textContent = "Fill RiskTier column with LOW/MED/HIGH in Holdings CSV.";
-    actionNext.textContent = `NEXT UP: ${nextTier} tier.`;
-  }
-}
-
-/* ---------- CSV Loaders ---------- */
-async function loadSystem(){
-  if(!systemUrl.value) return;
-
-  const rows = parseCSV(await fetchText(systemUrl.value));
-  const map = new Map();
-  rows.forEach(r => map.set((r[0] || "").toUpperCase(), (r[1] || "").trim()));
-
-  valRegime.textContent = map.get("MARKET REGIME") || "—";
-  valDeploy.textContent = map.get("DEPLOYMENT SIGNAL") || "—";
-  valCash.textContent   = map.get("CASH ANCHOR %") || "—";
-  valLiq.textContent    = map.get("LIQUIDITY") || "—";
-  valVol.textContent    = map.get("VOLATILITY") || "—";
-  valViol.textContent   = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
-}
-
-async function loadHoldings(){
-  if(!holdingsUrl.value) return;
-
-  const rows = parseCSV(await fetchText(holdingsUrl.value));
-  const headers = rows[0];
-  const idx = (h) => headers.indexOf(h);
-
-  holdingsData = [];
-  let total = 0;
-  const body = [];
-
-  for(let i=1;i<rows.length;i++){
-    const r = rows[i];
-    const ticker = r[idx("Ticker")];
-    if(!ticker) continue;
-
-    const value = parseFloat(r[idx("Value")]) || 0;
-    total += value;
-
-    const riskTier = (idx("RiskTier") >= 0) ? (r[idx("RiskTier")] || "") : "";
-
-    holdingsData.push({ Ticker: ticker, RiskTier: riskTier });
-
-    body.push(`<tr>
-      <td>${ticker}</td>
-      <td>${riskTier}</td>
-      <td class="right">${money(value)}</td>
-    </tr>`);
-  }
-
-  holdingsBody.innerHTML = body.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
-  totalValue.textContent = money(total);
-
-  renderAction();
-}
-
-/* ---------- Refresh Orchestrator (shows errors) ---------- */
-async function refreshAll(label){
-  try{
-    await Promise.all([loadSystem(), loadHoldings()]);
-    stamp(label || "Refreshed");
-  }catch(e){
-    const msg = (e && e.message) ? e.message : "unknown error";
-    if(statusLine) statusLine.textContent = "Refresh error: " + msg;
-    // Also keep the countdown running regardless
-  }
-}
-
-/* ---------- Buttons ---------- */
-document.getElementById("saveBtn").onclick = () => {
-  localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
-  localStorage.setItem(LS_SYSTEM, systemUrl.value);
-  refreshAll("Saved + refreshed");
-};
-
-document.getElementById("refreshBtn").onclick = () => refreshAll("Manual refresh");
-document.getElementById("runScanBtn").onclick = () => refreshAll("Scan complete");
-
-/* ---------- Initial Load ---------- */
-holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
-systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
-refreshAll("Loaded");
-
-/* ---------- Auto Refresh + Visible Heartbeat ---------- */
-let secondsLeft = 60;
-let tick = 0;
-
-setInterval(() => {
-  secondsLeft--;
-  tick++;
-
-  if(nextRefresh) nextRefresh.textContent = "Next refresh in: " + secondsLeft + "s";
-
-  // Heartbeat every 5 seconds so you can SEE it’s alive even if refresh fails
-  if(statusLine && (tick % 5 === 0)){
-    // don't overwrite real status if it's showing an error
-    if(!statusLine.textContent.startsWith("Refresh error")){
-      statusLine.textContent = "Heartbeat… (" + tick + ")";
+(function(){
+  // Create a visible debug banner no matter what
+  function banner(msg){
+    try{
+      let b = document.getElementById("debugBanner");
+      if(!b){
+        b = document.createElement("div");
+        b.id = "debugBanner";
+        b.style.cssText = "position:fixed;left:12px;right:12px;bottom:12px;z-index:9999;padding:10px 12px;border:1px solid rgba(255,255,255,.2);border-radius:10px;background:rgba(0,0,0,.85);color:#fff;font:12px/1.3 system-ui;";
+        document.body.appendChild(b);
+      }
+      b.textContent = msg;
+    }catch(e){
+      // if even banner fails, do nothing
     }
   }
 
-  if(secondsLeft <= 0){
-    secondsLeft = 60;
-    if(statusLine) statusLine.textContent = "Auto-refresh…";
-    refreshAll("Auto-refresh complete");
-  }
-}, 1000);
+  window.addEventListener("error", (e) => {
+    banner("JS ERROR: " + (e.message || "unknown") + (e.filename ? (" @ " + e.filename + ":" + e.lineno) : ""));
+  });
 
+  window.addEventListener("unhandledrejection", (e) => {
+    banner("PROMISE ERROR: " + (e.reason && e.reason.message ? e.reason.message : String(e.reason)));
+  });
+
+  // Run main in try/catch so we never white-screen
+  try{
+    const statusLine = document.getElementById("statusLine");
+    const lastUpdated = document.getElementById("lastUpdated");
+    const nextRefresh = document.getElementById("nextRefresh");
+
+    const holdingsUrl = document.getElementById("holdingsUrl");
+    const systemUrl = document.getElementById("systemUrl");
+
+    const valRegime = document.getElementById("valRegime");
+    const valDeploy = document.getElementById("valDeploy");
+    const valCash = document.getElementById("valCash");
+    const valLiq = document.getElementById("valLiq");
+    const valVol = document.getElementById("valVol");
+    const valViol = document.getElementById("valViol");
+
+    const actionMain = document.getElementById("actionMain");
+    const actionReason = document.getElementById("actionReason");
+    const actionNext = document.getElementById("actionNext");
+
+    const holdingsBody = document.getElementById("holdingsBody");
+    const totalValue = document.getElementById("totalValue");
+
+    // If core elements are missing, show it
+    if(!statusLine || !holdingsUrl || !systemUrl || !actionMain){
+      banner("Missing required HTML IDs. Check that your page has statusLine, holdingsUrl, systemUrl, actionMain.");
+      return;
+    }
+
+    const LS_HOLDINGS="lean_holdings_csv_url";
+    const LS_SYSTEM="lean_system_csv_url";
+    const LS_LAST_TIER="lean_last_risk_tier";
+    const LS_LAST_TICKER="lean_last_added_ticker";
+
+    const PHASE="DEPLOY";
+    const RAMP_DOLLARS=75;
+
+    let holdingsData = [];
+
+    function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
+    function money(n){ return isFinite(n) ? n.toLocaleString(undefined,{style:"currency",currency:"USD"}) : "$—"; }
+
+    function stamp(label){
+      const t = new Date().toLocaleTimeString();
+      if(lastUpdated) lastUpdated.textContent = "LAST UPDATED: " + t;
+      statusLine.textContent = label + " @ " + t;
+    }
+
+    async function fetchText(url){
+      const sep = url.includes("?") ? "&" : "?";
+      const res = await fetch(url + sep + "t=" + Date.now(), {cache:"no-store"});
+      if(!res.ok) throw new Error("Fetch failed: " + res.status);
+      return await res.text();
+    }
+
+    function parseCSV(text){ return text.trim().split("\n").map(r=>r.split(",")); }
+
+    function normalizeTier(t){
+      const x = safeUpper(t);
+      if(x.startsWith("H")) return "HIGH";
+      if(x.startsWith("M")) return "MED";
+      if(x.startsWith("L")) return "LOW";
+      return "";
+    }
+
+    function nextTierFromLast(last){
+      const L = normalizeTier(last);
+      if(L==="HIGH") return "LOW";
+      if(L==="LOW") return "MED";
+      if(L==="MED") return "LOW";
+      return "LOW";
+    }
+
+    function pickNextTickerForTier(tier){
+      const t = normalizeTier(tier);
+      const candidates = holdingsData.filter(h => normalizeTier(h.RiskTier) === t);
+      if(candidates.length===0) return null;
+
+      const lastTicker = (localStorage.getItem(LS_LAST_TICKER) || "").toUpperCase();
+      const pick = candidates.find(h => (h.Ticker||"").toUpperCase() !== lastTicker) || candidates[0];
+      return (pick.Ticker||"").toUpperCase();
+    }
+
+    function renderAction(){
+      const lastTier = localStorage.getItem(LS_LAST_TIER) || "";
+      const nextTier = nextTierFromLast(lastTier);
+      const nextTicker = pickNextTickerForTier(nextTier);
+
+      if(PHASE !== "DEPLOY"){
+        actionMain.textContent = "HOLD — Phase not DEPLOY";
+        actionReason.textContent = "Phase not set to DEPLOY.";
+        actionNext.textContent = "NEXT UP: —";
+        return;
+      }
+
+      if(nextTicker){
+        actionMain.textContent = `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`;
+        actionReason.textContent = `Deploy Mode. Tier=${nextTier}. Funding source: SGOV.`;
+        const afterTier = nextTierFromLast(nextTier);
+        actionNext.textContent = `NEXT UP: ${afterTier} tier.`;
+      } else {
+        actionMain.textContent = `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Set RiskTier values)`;
+        actionReason.textContent = "Fill RiskTier column with LOW/MED/HIGH in Holdings CSV.";
+        actionNext.textContent = `NEXT UP: ${nextTier} tier.`;
+      }
+    }
+
+    async function loadSystem(){
+      if(!systemUrl.value) return;
+      const rows = parseCSV(await fetchText(systemUrl.value));
+      const map = new Map();
+      rows.forEach(r => map.set((r[0]||"").toUpperCase(), (r[1]||"").trim()));
+
+      if(valRegime) valRegime.textContent = map.get("MARKET REGIME") || "—";
+      if(valDeploy) valDeploy.textContent = map.get("DEPLOYMENT SIGNAL") || "—";
+      if(valCash)   valCash.textContent   = map.get("CASH ANCHOR %") || "—";
+      if(valLiq)    valLiq.textContent    = map.get("LIQUIDITY") || "—";
+      if(valVol)    valVol.textContent    = map.get("VOLATILITY") || "—";
+      if(valViol)   valViol.textContent   = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
+    }
+
+    async function loadHoldings(){
+      if(!holdingsUrl.value) return;
+      const rows = parseCSV(await fetchText(holdingsUrl.value));
+      const headers = rows[0];
+      const idx = (h)=>headers.indexOf(h);
+
+      holdingsData = [];
+      let total = 0;
+      const body = [];
+
+      for(let i=1;i<rows.length;i++){
+        const r = rows[i];
+        const ticker = r[idx("Ticker")];
+        if(!ticker) continue;
+        const value = parseFloat(r[idx("Value")]) || 0;
+        total += value;
+        const riskTier = (idx("RiskTier")>=0) ? (r[idx("RiskTier")]||"") : "";
+        holdingsData.push({Ticker:ticker, RiskTier:riskTier});
+        body.push(`<tr><td>${ticker}</td><td>${riskTier}</td><td class="right">${money(value)}</td></tr>`);
+      }
+
+      if(holdingsBody) holdingsBody.innerHTML = body.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
+      if(totalValue) totalValue.textContent = money(total);
+
+      renderAction();
+    }
+
+    async function refreshAll(label){
+      try{
+        await Promise.all([loadSystem(), loadHoldings()]);
+        stamp(label);
+      }catch(e){
+        banner("REFRESH ERROR: " + (e.message || String(e)));
+        statusLine.textContent = "Refresh error";
+      }
+    }
+
+    // Restore saved URLs
+    holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || holdingsUrl.value || "";
+    systemUrl.value   = localStorage.getItem(LS_SYSTEM) || systemUrl.value || "";
+
+    // Buttons if present
+    const saveBtn = document.getElementById("saveBtn");
+    const refreshBtn = document.getElementById("refreshBtn");
+    const runScanBtn = document.getElementById("runScanBtn");
+
+    if(saveBtn){
+      saveBtn.onclick = ()=>{
+        localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
+        localStorage.setItem(LS_SYSTEM, systemUrl.value);
+        refreshAll("Saved + refreshed");
+      };
+    }
+    if(refreshBtn) refreshBtn.onclick = ()=>refreshAll("Manual refresh");
+    if(runScanBtn) runScanBtn.onclick = ()=>refreshAll("Scan complete");
+
+    // Start
+    refreshAll("Loaded");
+
+    // Countdown that ALWAYS moves if element exists
+    let secondsLeft = 60;
+    setInterval(()=>{
+      secondsLeft--;
+      if(nextRefresh) nextRefresh.textContent = "Next refresh in: " + secondsLeft + "s";
+      if(secondsLeft<=0){
+        secondsLeft=60;
+        refreshAll("Auto-refresh complete");
+      }
+    },1000);
+
+    banner("OK: script running (failsafe mode). If refresh fails, error will show here.");
+
+  }catch(e){
+    banner("FATAL SCRIPT ERROR: " + (e.message || String(e)));
+  }
+})();
 </script>
