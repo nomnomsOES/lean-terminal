@@ -817,6 +817,99 @@ function updateTodayAction(){
   const cashPct = parseCashPct();
   const { state, brake } = computeWeatherState();
 
+  let actionType = "HOLD";
+  let color = "var(--yellow)";
+  let reason = `Weather=${state}, Brake=${brake}`;
+
+  if(PHASE !== "DEPLOY"){
+    actionType = "HOLD";
+    reason = "Phase not DEPLOY.";
+  } 
+  else if(brake === "FULL"){
+    actionType = "SELL_ALL";
+    color = "var(--red)";
+    reason = "Drawdown brake FULL (≤ -10%). Halt deployment.";
+  } 
+  else if(brake === "HARD"){
+    actionType = "DEFEND";
+    color = "var(--red)";
+    reason = "Drawdown brake HARD (≤ -6%). Reduce exposure.";
+  } 
+  else if(state === "STORM"){
+    actionType = "HOLD";
+    color = "var(--red)";
+    reason = "Storm conditions. Protect capital.";
+  } 
+  else {
+    actionType = "DEPLOY";
+    color = (state==="CLEAR") ? "var(--green)" : "var(--yellow)";
+    reason = (state === "CLEAR")
+      ? "Clear conditions: deploy per ramp."
+      : "Partly Cloudy: deploy per ramp (core-only).";
+  }
+
+  const lastTier = localStorage.getItem(LS_LAST_TIER) || "";
+  const nextTier = nextTierFromLast(lastTier);
+  const nextTicker = pickNextTickerForTier(nextTier);
+
+  // Default display
+  actionMain.style.color = color;
+
+  if(actionType === "DEPLOY"){
+    if(nextTicker){
+
+      actionMain.textContent = 
+        `SELL $${RAMP_DOLLARS} SGOV  →  BUY $${RAMP_DOLLARS} ${nextTicker}`;
+
+      actionReason.textContent = 
+        reason + ` Tier: ${nextTier}. Funding source: SGOV (cash sleeve).`;
+
+      actionNext.textContent = 
+        `NEXT UP: After ${nextTier}, rotation continues automatically.`;
+
+      // Sync legacy TODAY line
+      checklistText.textContent = actionMain.textContent;
+      setStreetToday();
+
+    } else {
+      actionMain.textContent = 
+        `SELL $${RAMP_DOLLARS} SGOV  →  BUY $${RAMP_DOLLARS} (Add RiskTier to enable auto-pick)`;
+
+      actionReason.textContent = 
+        reason + " Add RiskTier=LOW/MED/HIGH in Holdings CSV.";
+
+      actionNext.textContent = 
+        `NEXT UP: Add RiskTier column to enable automatic ticker selection.`;
+
+      checklistText.textContent = actionMain.textContent;
+      setStreetToday();
+    }
+  }
+  else if(actionType === "HOLD"){
+    actionMain.textContent = "HOLD — No deployment today";
+    actionReason.textContent = reason;
+    actionNext.textContent = `NEXT UP: ${nextTier} tier when conditions improve.`;
+    checklistText.textContent = actionMain.textContent;
+    setStreetToday();
+  }
+  else if(actionType === "DEFEND"){
+    actionMain.textContent = "DEFENSIVE TRIM — Reduce high beta exposure";
+    actionReason.textContent = reason;
+    actionNext.textContent = "NEXT UP: Wait for stabilization before redeploying.";
+    checklistText.textContent = actionMain.textContent;
+    setStreetToday();
+  }
+  else if(actionType === "SELL_ALL"){
+    actionMain.textContent = "HALT DEPLOYMENT — Raise cash";
+    actionReason.textContent = reason;
+    actionNext.textContent = "NEXT UP: Reassess when brake resets.";
+    checklistText.textContent = actionMain.textContent;
+    setStreetToday();
+  }
+}
+  const cashPct = parseCashPct();
+  const { state, brake } = computeWeatherState();
+
   let action = "HOLD";
   let color = "var(--yellow)";
   let reason = `Weather=${state}, Brake=${brake}`;
