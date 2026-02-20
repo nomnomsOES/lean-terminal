@@ -1,189 +1,31 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal</title>
-
-<style>
-body{
-  margin:0;
-  font-family:system-ui,-apple-system,Segoe UI,Roboto;
-  background:#0b0b0d;
-  color:#f3f4f6;
-}
-
-header{
-  padding:24px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-}
-
-.wrap{
-  max-width:1000px;
-  margin:auto;
-  padding:24px;
-}
-
-.card{
-  margin-top:20px;
-  padding:18px;
-  border:1px solid rgba(255,255,255,.08);
-  border-radius:12px;
-  background:rgba(255,255,255,.02);
-}
-
-.pills{
-  display:flex;
-  gap:12px;
-  flex-wrap:wrap;
-  justify-content:flex-end;
-  margin-top:12px;
-}
-
-.pill{
-  padding:8px 14px;
-  border-radius:999px;
-  border:1px solid rgba(255,255,255,.15);
-  background:rgba(0,0,0,.3);
-  font-size:13px;
-}
-
-button{
-  padding:8px 14px;
-  border-radius:8px;
-  background:#1f2937;
-  border:1px solid rgba(255,255,255,.2);
-  color:white;
-  cursor:pointer;
-}
-</style>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lean Terminal Test</title>
+  <style>
+    body{margin:0;font-family:system-ui;background:#0b0b0d;color:#f3f4f6}
+    .wrap{max-width:900px;margin:auto;padding:24px}
+    .card{margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.15);border-radius:12px;background:rgba(255,255,255,.03)}
+    code{background:rgba(0,0,0,.4);padding:2px 6px;border-radius:6px}
+  </style>
 </head>
-
 <body>
-
-<header>
   <div class="wrap">
-    <h1>Lean Terminal</h1>
-    <div id="statusLine">Ready.</div>
-    <div id="lastUpdated">LAST UPDATED: —</div>
-    <div id="nextRefresh">Next refresh in: 60s</div>
-  </div>
-</header>
-
-<div class="wrap">
-
-  <div class="card">
-    <h2>Good Morning</h2>
-    <button id="runScanBtn">Run Scan</button>
-
-    <div class="pills">
-      <div class="pill">Regime: <span id="valRegime">—</span></div>
-      <div class="pill">Cash: <span id="valCash">—</span></div>
-      <div class="pill">Liquidity: <span id="valLiq">—</span></div>
-      <div class="pill">Volatility: <span id="valVol">—</span></div>
+    <h1>✅ Lean Terminal is loading</h1>
+    <div class="card">
+      <div>If you can see this, GitHub Pages is serving your <code>index.html</code>.</div>
+      <div style="margin-top:10px" id="clock">Clock: —</div>
+      <div style="margin-top:10px" id="msg">Status: script not started</div>
     </div>
-
-    <div style="margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:12px;">
-      <div style="font-size:12px;color:#aaa;">TODAY ACTION</div>
-      <div id="actionMain" style="margin-top:8px;font-size:20px;font-weight:700;">—</div>
-      <div id="actionNext" style="margin-top:6px;font-size:12px;color:#aaa;">NEXT UP: —</div>
-    </div>
-
   </div>
 
-  <div class="card">
-    <h2>Data Source</h2>
-    <input id="holdingsUrl" placeholder="HOLDINGS CSV URL" style="width:100%;margin-top:6px;padding:8px;background:#111;border:1px solid #333;color:white;">
-    <input id="systemUrl" placeholder="SYSTEM CSV URL" style="width:100%;margin-top:6px;padding:8px;background:#111;border:1px solid #333;color:white;">
-    <button id="saveBtn" style="margin-top:10px;">Save</button>
-  </div>
-
-</div>
-
-<script>
-
-/* SIMPLE WORKING VERSION */
-
-const LS_HOLDINGS="lean_holdings_csv_url";
-const LS_SYSTEM="lean_system_csv_url";
-
-const statusLine=document.getElementById("statusLine");
-const lastUpdated=document.getElementById("lastUpdated");
-const nextRefresh=document.getElementById("nextRefresh");
-
-const valRegime=document.getElementById("valRegime");
-const valCash=document.getElementById("valCash");
-const valLiq=document.getElementById("valLiq");
-const valVol=document.getElementById("valVol");
-
-const actionMain=document.getElementById("actionMain");
-const actionNext=document.getElementById("actionNext");
-
-const holdingsUrl=document.getElementById("holdingsUrl");
-const systemUrl=document.getElementById("systemUrl");
-
-function stamp(label){
-  const t=new Date().toLocaleTimeString();
-  lastUpdated.textContent="LAST UPDATED: "+t;
-  statusLine.textContent=label+" @ "+t;
-}
-
-async function fetchText(url){
-  const sep=url.includes("?")?"&":"?";
-  const res=await fetch(url+sep+"t="+Date.now());
-  return await res.text();
-}
-
-function parseCSV(text){
-  return text.trim().split("\n").map(r=>r.split(","));
-}
-
-async function loadSystem(){
-  if(!systemUrl.value) return;
-  const rows=parseCSV(await fetchText(systemUrl.value));
-  const map=new Map();
-  rows.forEach(r=>map.set((r[0]||"").toUpperCase(),(r[1]||"").trim()));
-  valRegime.textContent=map.get("MARKET REGIME")||"—";
-  valCash.textContent=map.get("CASH ANCHOR %")||"—";
-  valLiq.textContent=map.get("LIQUIDITY")||"—";
-  valVol.textContent=map.get("VOLATILITY")||"—";
-}
-
-function renderAction(){
-  actionMain.textContent="SELL $75 SGOV → BUY $75 VOO";
-  actionNext.textContent="NEXT UP: MED tier";
-}
-
-async function refreshAll(label){
-  await loadSystem();
-  renderAction();
-  stamp(label);
-}
-
-document.getElementById("saveBtn").onclick=()=>{
-  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
-  localStorage.setItem(LS_SYSTEM,systemUrl.value);
-  refreshAll("Saved + refreshed");
-};
-
-document.getElementById("runScanBtn").onclick=()=>refreshAll("Scan complete");
-
-holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
-systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
-
-refreshAll("Loaded");
-
-let secondsLeft=60;
-setInterval(()=>{
-  secondsLeft--;
-  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
-  if(secondsLeft<=0){
-    secondsLeft=60;
-    refreshAll("Auto-refresh complete");
-  }
-},1000);
-
-</script>
-
+  <script>
+    document.getElementById("msg").textContent = "Status: script running ✅";
+    setInterval(()=>{
+      document.getElementById("clock").textContent = "Clock: " + new Date().toLocaleTimeString();
+    },1000);
+  </script>
 </body>
 </html>
