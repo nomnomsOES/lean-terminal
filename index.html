@@ -122,7 +122,6 @@ th{color:var(--muted);text-align:left}
   letter-spacing:.2px;
 }
 
-/* Always-on street speak */
 .street{
   margin-top:6px;
   color:var(--red);
@@ -162,7 +161,6 @@ th{color:var(--muted);text-align:left}
       <div class="pill">Violations: <span id="valViol">—</span></div>
     </div>
 
-    <!-- TODAY ACTION (static, non-scrolling) -->
     <div id="actionBox" style="margin-top:14px;padding:14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.03);">
       <div style="font-size:13px;font-weight:900;letter-spacing:.2px;color:var(--muted);">TODAY ACTION</div>
       <div id="actionMain" style="margin-top:6px;font-size:18px;font-weight:950;">—</div>
@@ -170,7 +168,6 @@ th{color:var(--muted);text-align:left}
       <div id="actionNext" class="smallMuted" style="margin-top:8px;">NEXT UP: —</div>
     </div>
 
-    <!-- MATH ASSIST (the 3 modules) -->
     <div id="mathBox" style="margin-top:12px;padding:14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(0,0,0,.20);">
       <div style="font-size:13px;font-weight:900;letter-spacing:.2px;color:var(--muted);">MATH ASSIST</div>
       <div style="margin-top:8px;font-size:13px;font-weight:900;">
@@ -185,7 +182,7 @@ th{color:var(--muted);text-align:left}
         Overlap Risk: <span id="mathOverlap">—</span>
       </div>
       <div class="smallMuted" id="mathOverlapList" style="margin-top:6px;">Top overlaps: —</div>
-      <div class="smallMuted" id="mathNote" style="margin-top:8px;">Note: If you paste a Prices CSV URL, overlap uses real correlations. If not, it uses structural similarity (Role/Bucket/RiskTier).</div>
+      <div class="smallMuted" style="margin-top:8px;">Note: Overlap uses structural similarity (Role/Bucket/RiskTier) in this stable build.</div>
     </div>
 
     <div id="divergenceBanner"></div>
@@ -211,7 +208,6 @@ th{color:var(--muted);text-align:left}
     <h2>Data Source</h2>
     <input id="holdingsUrl" placeholder="HOLDINGS CSV URL">
     <input id="systemUrl" placeholder="SYSTEM_EXPORT CSV URL">
-    <input id="pricesUrl" placeholder="PRICES CSV URL (optional; enables real correlation overlap)">
     <textarea id="notesBox" placeholder="Notes"></textarea>
     <button id="saveBtn">Save</button>
   </div>
@@ -240,29 +236,27 @@ th{color:var(--muted);text-align:left}
 </div>
 
 <script>
+/* ========= STABLE LEAN TERMINAL BUILD =========
+   - Loads holdings + system CSV
+   - Shows TODAY ACTION as: SELL $X SGOV → BUY $X [Ticker]
+   - Uses simple history for drawdown + basic vol/sharpe-ish
+   - Uses structural overlap (Role/Bucket/RiskTier)
+*/
+
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
-const LS_PRICES="lean_prices_csv_url";
+const LS_HISTORY="lean_history_v1";
+const LS_LAST_TIER="lean_last_risk_tier";
+const LS_LAST_TICKER="lean_last_added_ticker";
 
-// ===== Lean settings (edit these if you want) =====
-const PHASE = "DEPLOY";          // DEPLOY / HOLD
-const RAMP_DOLLARS = 75;         // daily ramp
-const CASH_FLOOR = 0.60;         // deploy-mode target max cash
-
-// ===== History storage =====
-const LS_HISTORY = "lean_history_v1";
-const LS_LAST_TIER = "lean_last_risk_tier";
-const LS_LAST_TICKER = "lean_last_added_ticker";
-
-// ===== Runtime memory =====
-let holdingsData = [];     // array of {Ticker, Role, Bucket, RiskTier, Value}
-let pricesByTicker = null; // Map(ticker -> {dates:[], closes:[]})
-let overlapReport = { mode:"structural", topPairs:[], risk:"—" };
+const PHASE="DEPLOY";
+const RAMP_DOLLARS=75;
+const CASH_FLOOR=0.60;
 
 // Elements
-const statusLine = document.getElementById("statusLine");
-const lastUpdated = document.getElementById("lastUpdated");
-const nextRefresh = document.getElementById("nextRefresh");
+const statusLine=document.getElementById("statusLine");
+const lastUpdated=document.getElementById("lastUpdated");
+const nextRefresh=document.getElementById("nextRefresh");
 
 const valRegime=document.getElementById("valRegime");
 const valDeploy=document.getElementById("valDeploy");
@@ -276,33 +270,39 @@ const valWeather=document.getElementById("valWeather");
 const valDrawdown=document.getElementById("valDrawdown");
 
 const divergenceBanner=document.getElementById("divergenceBanner");
-const violationsText=document.getElementById("violationsText");
-const checklistText=document.getElementById("checklistText");
-const leanSignal=document.getElementById("leanSignal");
-
 const streetDivergence=document.getElementById("streetDivergence");
 const streetWeather=document.getElementById("streetWeather");
 const streetDrawdown=document.getElementById("streetDrawdown");
+const leanSignal=document.getElementById("leanSignal");
 const streetLean=document.getElementById("streetLean");
+
+const violationsText=document.getElementById("violationsText");
 const streetDiscipline=document.getElementById("streetDiscipline");
+
+const checklistText=document.getElementById("checklistText");
 const streetToday=document.getElementById("streetToday");
 
-const actionMain = document.getElementById("actionMain");
-const actionReason = document.getElementById("actionReason");
-const actionNext = document.getElementById("actionNext");
+const actionMain=document.getElementById("actionMain");
+const actionReason=document.getElementById("actionReason");
+const actionNext=document.getElementById("actionNext");
 
-const mathBrake = document.getElementById("mathBrake");
-const mathDD = document.getElementById("mathDD");
-const mathVol = document.getElementById("mathVol");
-const mathSharpe = document.getElementById("mathSharpe");
-const mathOverlap = document.getElementById("mathOverlap");
-const mathOverlapList = document.getElementById("mathOverlapList");
+const mathBrake=document.getElementById("mathBrake");
+const mathDD=document.getElementById("mathDD");
+const mathVol=document.getElementById("mathVol");
+const mathSharpe=document.getElementById("mathSharpe");
+const mathOverlap=document.getElementById("mathOverlap");
+const mathOverlapList=document.getElementById("mathOverlapList");
 
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
-const pricesUrl=document.getElementById("pricesUrl");
 const holdingsBody=document.getElementById("holdingsBody");
 const totalValue=document.getElementById("totalValue");
+
+// Runtime
+let holdingsData=[];
+
+// Helpers
+function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
 
 function money(n){
   if(!isFinite(n)) return "$—";
@@ -322,7 +322,6 @@ async function fetchText(url){
   return await res.text();
 }
 
-// Simple CSV parser: keep exported values comma-free
 function parseCSV(text){
   return text.trim().split("\n").map(r=>r.split(","));
 }
@@ -332,24 +331,21 @@ function pctToNum(p){
   return parseFloat(p.replace("%",""))/100;
 }
 
-function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
-
 function parseCashPct(){
-  const cash = pctToNum(valCash.textContent);
-  return isFinite(cash) ? cash : NaN;
+  const cash=pctToNum(valCash.textContent);
+  return isFinite(cash)?cash:NaN;
 }
 
-/** weather -> emoji mapping */
 function weatherEmoji(status){
-  const w = (status || "").toLowerCase();
-  if (w.includes("storm") || w.includes("⛈")) return "⛈";
-  if (w.includes("rain")  || w.includes("🌧")) return "🌧";
-  if (w.includes("cloud") || w.includes("partly") || w.includes("⛅") || w.includes("🌥")) return "🌥";
-  if (w.includes("clear") || w.includes("sun") || w.includes("☀️")) return "☀️";
+  const w=(status||"").toLowerCase();
+  if(w.includes("storm")) return "⛈";
+  if(w.includes("rain")) return "🌧";
+  if(w.includes("cloud") || w.includes("partly")) return "🌥";
+  if(w.includes("clear") || w.includes("sun")) return "☀️";
   return "🌤";
 }
 
-// ===== HISTORY =====
+// History
 function loadHistory(){
   try { return JSON.parse(localStorage.getItem(LS_HISTORY) || "[]"); }
   catch { return []; }
@@ -358,749 +354,315 @@ function saveHistory(arr){
   localStorage.setItem(LS_HISTORY, JSON.stringify(arr.slice(-250)));
 }
 function recordHistoryPoint(){
-  const totalText = (totalValue.textContent || "").replace(/[^0-9.\-]/g,"");
-  const total = parseFloat(totalText);
+  const totalText=(totalValue.textContent||"").replace(/[^0-9.\-]/g,"");
+  const total=parseFloat(totalText);
   if(!isFinite(total)) return;
-
-  const cashPct = parseCashPct();
-  const pt = {
-    ts: Date.now(),
-    total,
-    cashPct: isFinite(cashPct) ? cashPct : null,
-    regime: valRegime.textContent || "",
-    vol: valVol.textContent || "",
-    liq: valLiq.textContent || "",
-    weather: valWeather.textContent || ""
-  };
-
-  const hist = loadHistory();
-  hist.push(pt);
+  const hist=loadHistory();
+  hist.push({ts:Date.now(), total});
   saveHistory(hist);
 }
-
-function computeDrawdownFromHistory(){
-  const hist = loadHistory();
-  if(hist.length < 2) return { ddPct: null, peak: null, curr: null };
-  let peak = -Infinity;
+function computeDrawdown(){
+  const hist=loadHistory();
+  if(hist.length<2) return {ddPct:null, peak:null, curr:null};
+  let peak=-Infinity;
   for(const h of hist){
-    if(isFinite(h.total) && h.total > peak) peak = h.total;
+    if(isFinite(h.total) && h.total>peak) peak=h.total;
   }
-  const curr = hist[hist.length-1].total;
-  if(!isFinite(peak) || !isFinite(curr) || peak <= 0) return { ddPct: null, peak: null, curr: null };
-  const ddPct = (curr - peak) / peak;
-  return { ddPct, peak, curr };
+  const curr=hist[hist.length-1].total;
+  if(!isFinite(peak) || !isFinite(curr) || peak<=0) return {ddPct:null, peak:null, curr:null};
+  const ddPct=(curr-peak)/peak;
+  return {ddPct, peak, curr};
 }
-
-// ===== VOL + SHARPE-ish =====
-function computeStats(){
-  const hist = loadHistory();
-  if(hist.length < 10) return { vol: null, sharpe: null };
-
-  const rets = [];
-  for(let i=1;i<hist.length;i++){
-    const a = hist[i-1].total, b = hist[i].total;
-    if(isFinite(a) && isFinite(b) && a>0) rets.push((b-a)/a);
-  }
-  if(rets.length < 10) return { vol: null, sharpe: null };
-
-  const win = rets.slice(-30);
-  const mean = win.reduce((s,x)=>s+x,0)/win.length;
-  const varr = win.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(win.length-1);
-  const vol = Math.sqrt(Math.max(varr,0));
-  const sharpe = vol > 0 ? (mean/vol)*Math.sqrt(252) : null;
-  return { vol, sharpe };
-}
-
-// ===== BRAKE =====
 function brakeLevel(ddPct){
   if(!isFinite(ddPct)) return "UNKNOWN";
-  if(ddPct <= -0.10) return "FULL";
-  if(ddPct <= -0.06) return "HARD";
-  if(ddPct <= -0.03) return "SOFT";
+  if(ddPct<=-0.10) return "FULL";
+  if(ddPct<=-0.06) return "HARD";
+  if(ddPct<=-0.03) return "SOFT";
   return "NONE";
 }
-
-// ===== WEATHER STATE (conditions controller) =====
-function computeWeatherState(){
-  const regime = safeUpper(valRegime.textContent);
-  const vol = safeUpper(valVol.textContent);
-  const liq = safeUpper(valLiq.textContent);
-
-  const { ddPct } = computeDrawdownFromHistory();
-  const brake = brakeLevel(ddPct);
-
-  if(regime.includes("DEFENSIVE") || vol.includes("HOT") || vol.includes("🔴") || liq.includes("TIGHT") || brake==="FULL"){
-    return { state:"STORM", brake, ddPct };
+function computeStats(){
+  const hist=loadHistory();
+  if(hist.length<10) return {vol:null, sharpe:null};
+  const rets=[];
+  for(let i=1;i<hist.length;i++){
+    const a=hist[i-1].total, b=hist[i].total;
+    if(isFinite(a)&&isFinite(b)&&a>0) rets.push((b-a)/a);
   }
-  if(brake==="HARD") return { state:"RAIN", brake, ddPct };
-
-  if(regime.includes("RISK ON") && (vol.includes("WATCH") || vol.includes("🟡")) && liq.includes("LIQUID")){
-    return { state:"PARTLY", brake, ddPct };
-  }
-  if(regime.includes("RISK ON") && (vol.includes("CALM") || vol.includes("🟢")) && liq.includes("LIQUID") && brake==="NONE"){
-    return { state:"CLEAR", brake, ddPct };
-  }
-  return { state:"PARTLY", brake, ddPct };
+  if(rets.length<10) return {vol:null, sharpe:null};
+  const win=rets.slice(-30);
+  const mean=win.reduce((s,x)=>s+x,0)/win.length;
+  const varr=win.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(win.length-1);
+  const vol=Math.sqrt(Math.max(varr,0));
+  const sharpe=vol>0 ? (mean/vol)*Math.sqrt(252) : null;
+  return {vol, sharpe};
 }
 
-// ===== Overlap / Correlation module =====
-function corr(a, b){
-  const n = Math.min(a.length, b.length);
-  if(n < 20) return null;
-  let ma=0, mb=0;
-  for(let i=0;i<n;i++){ ma += a[i]; mb += b[i]; }
-  ma/=n; mb/=n;
-  let num=0, da=0, db=0;
-  for(let i=0;i<n;i++){
-    const xa=a[i]-ma, xb=b[i]-mb;
-    num += xa*xb; da += xa*xa; db += xb*xb;
-  }
-  const den = Math.sqrt(da*db);
-  if(den===0) return null;
-  return num/den;
-}
-
-function returnsFromCloses(closes){
-  const r=[];
-  for(let i=1;i<closes.length;i++){
-    const a=closes[i-1], b=closes[i];
-    if(isFinite(a) && isFinite(b) && a>0) r.push((b-a)/a);
-  }
-  return r;
-}
-
-// Structural similarity (fallback when no prices)
-function structuralVector(h){
-  const role = safeUpper(h.Role||"");
-  const bucket = safeUpper(h.Bucket||"");
-  const tier = safeUpper(h.RiskTier||"");
-  const feats = [];
-  if(role) feats.push("ROLE:"+role);
-  if(bucket) feats.push("BUCKET:"+bucket);
-  if(tier) feats.push("TIER:"+tier);
-  return feats;
-}
-function jaccard(a, b){
-  const A = new Set(a), B = new Set(b);
-  let inter=0;
-  for(const x of A) if(B.has(x)) inter++;
-  const uni = A.size + B.size - inter;
-  if(uni===0) return null;
-  return inter/uni;
-}
-
-function computeOverlapReport(){
-  const tickers = holdingsData.map(h => (h.Ticker||"").toUpperCase()).filter(Boolean);
-  const topPairs = [];
-
-  if(pricesByTicker && tickers.length >= 2){
-    // real correlations (last 60 returns if possible)
-    for(let i=0;i<tickers.length;i++){
-      for(let j=i+1;j<tickers.length;j++){
-        const ti=tickers[i], tj=tickers[j];
-        const pi=pricesByTicker.get(ti), pj=pricesByTicker.get(tj);
-        if(!pi || !pj) continue;
-
-        const ri = returnsFromCloses(pi.closes).slice(-60);
-        const rj = returnsFromCloses(pj.closes).slice(-60);
-        const c = corr(ri, rj);
-        if(c===null) continue;
-        topPairs.push({a:ti, b:tj, score:c, mode:"corr"});
-      }
-    }
-    topPairs.sort((x,y)=>Math.abs(y.score)-Math.abs(x.score));
-    const strongest = topPairs.slice(0,5);
-
-    // overlap risk: how many pairs above 0.80 corr
-    const high = topPairs.filter(p => p.score !== null && p.score >= 0.80).length;
-    let risk="LOW";
-    if(high >= 6) risk="HIGH";
-    else if(high >= 3) risk="MED";
-
-    return { mode:"corr", topPairs: strongest, risk };
-  }
-
-  // fallback: structural similarity (Role/Bucket/Tier)
-  for(let i=0;i<holdingsData.length;i++){
-    for(let j=i+1;j<holdingsData.length;j++){
-      const a=holdingsData[i], b=holdingsData[j];
-      const sa = structuralVector(a), sb = structuralVector(b);
-      const s = jaccard(sa, sb);
-      if(s===null) continue;
-      topPairs.push({a:(a.Ticker||"").toUpperCase(), b:(b.Ticker||"").toUpperCase(), score:s, mode:"struct"});
-    }
-  }
-  topPairs.sort((x,y)=>y.score-x.score);
-  const strongest = topPairs.slice(0,5);
-  const high = topPairs.filter(p => p.score >= 0.75).length;
-  let risk="LOW";
-  if(high >= 6) risk="HIGH";
-  else if(high >= 3) risk="MED";
-  return { mode:"structural", topPairs: strongest, risk };
-}
-
+// Rotation
 function normalizeTier(t){
-  const x = safeUpper(t);
+  const x=safeUpper(t);
   if(x.startsWith("H")) return "HIGH";
   if(x.startsWith("M")) return "MED";
   if(x.startsWith("L")) return "LOW";
   return "";
 }
 function nextTierFromLast(last){
-  const L = normalizeTier(last);
+  const L=normalizeTier(last);
   if(L==="HIGH") return "LOW";
-  if(L==="LOW")  return "MED";
-  if(L==="MED")  return "LOW";
+  if(L==="LOW") return "MED";
+  if(L==="MED") return "LOW";
   return "LOW";
 }
-
-// choose next ticker for tier, prefer lower overlap with top holdings
 function pickNextTickerForTier(tier){
-  const t = normalizeTier(tier);
-  const candidates = holdingsData.filter(h => normalizeTier(h.RiskTier||h.RISKTIER||"") === t);
-  if(candidates.length === 0) return null;
+  const t=normalizeTier(tier);
+  const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)==t);
+  if(candidates.length===0) return null;
+  // avoid repeating last ticker if possible
+  const last=(localStorage.getItem(LS_LAST_TICKER)||"").toUpperCase();
+  const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==last) || candidates[0];
+  return (pick.Ticker||"").toUpperCase();
+}
 
-  const lastTicker = (localStorage.getItem(LS_LAST_TICKER) || "").toUpperCase();
-  const topHoldings = [...holdingsData].sort((a,b)=>(b.Value||0)-(a.Value||0)).slice(0,3).map(h => (h.Ticker||"").toUpperCase());
-
-  function maxOverlapScore(tkr){
-    // if correlation mode exists, use max corr with top holdings
-    if(overlapReport.mode === "corr" && pricesByTicker){
-      let max = 0;
-      for(const th of topHoldings){
-        if(th === tkr) continue;
-        const pi=pricesByTicker.get(tkr), pj=pricesByTicker.get(th);
-        if(!pi || !pj) continue;
-        const ri = returnsFromCloses(pi.closes).slice(-60);
-        const rj = returnsFromCloses(pj.closes).slice(-60);
-        const c = corr(ri, rj);
-        if(c!==null) max = Math.max(max, c);
-      }
-      return max;
+// Structural overlap (simple)
+function structuralVector(h){
+  const role=safeUpper(h.Role||"");
+  const bucket=safeUpper(h.Bucket||"");
+  const tier=safeUpper(h.RiskTier||"");
+  const feats=[];
+  if(role) feats.push("ROLE:"+role);
+  if(bucket) feats.push("BUCKET:"+bucket);
+  if(tier) feats.push("TIER:"+tier);
+  return feats;
+}
+function jaccard(a,b){
+  const A=new Set(a), B=new Set(b);
+  let inter=0;
+  for(const x of A) if(B.has(x)) inter++;
+  const uni=A.size+B.size-inter;
+  if(uni===0) return null;
+  return inter/uni;
+}
+function computeOverlap(){
+  const pairs=[];
+  for(let i=0;i<holdingsData.length;i++){
+    for(let j=i+1;j<holdingsData.length;j++){
+      const a=holdingsData[i], b=holdingsData[j];
+      const s=jaccard(structuralVector(a), structuralVector(b));
+      if(s===null) continue;
+      pairs.push({a:(a.Ticker||"").toUpperCase(), b:(b.Ticker||"").toUpperCase(), s});
     }
-    // structural fallback: similarity with top holdings
-    const a = holdingsData.find(h => (h.Ticker||"").toUpperCase()===tkr);
-    if(!a) return 0;
-    const va = structuralVector(a);
-    let max = 0;
-    for(const th of topHoldings){
-      const b = holdingsData.find(h => (h.Ticker||"").toUpperCase()===th);
-      if(!b) continue;
-      const s = jaccard(va, structuralVector(b));
-      if(s!==null) max = Math.max(max, s);
-    }
-    return max;
   }
-
-  // score: avoid last ticker, then prefer lower overlap
-  const scored = candidates.map(h=>{
-    const tk = (h.Ticker||"").toUpperCase();
-    return { tk, overlap:maxOverlapScore(tk), isLast:(tk===lastTicker) };
-  }).sort((x,y)=>{
-    if(x.isLast !== y.isLast) return x.isLast ? 1 : -1;
-    return x.overlap - y.overlap;
-  });
-
-  return scored[0].tk || (candidates[0].Ticker||"").toUpperCase();
+  pairs.sort((x,y)=>y.s-x.s);
+  const top=pairs.slice(0,5);
+  const high=pairs.filter(p=>p.s>=0.75).length;
+  let risk="LOW";
+  if(high>=6) risk="HIGH";
+  else if(high>=3) risk="MED";
+  return {risk, top};
 }
 
-// ===== UI helpers =====
-function setRegimeGlow(){
-  const t=(valRegime.textContent||"").toLowerCase();
-  document.body.classList.remove("risk-on","defensive","transition");
-  if(t.includes("risk on")) document.body.classList.add("risk-on");
-  else if(t.includes("defensive")) document.body.classList.add("defensive");
-  else document.body.classList.add("transition");
-}
-
-function setDisciplineText(viol){
-  if(!viol || viol.trim()==="" || viol.trim()==="—"){
-    violationsText.textContent="✅ No violations";
-    violationsText.style.color="var(--green)";
-    streetDiscipline.textContent="🔴 STREET: Rules clean. Good. Keep it boring.";
-  } else {
-    violationsText.textContent=viol.trim();
-    const low=viol.toLowerCase();
-    if(low.includes("🔴")) violationsText.style.color="var(--red)";
-    else if(low.includes("🟡")) violationsText.style.color="var(--yellow)";
-    else violationsText.style.color="var(--yellow)";
-    streetDiscipline.textContent="🔴 STREET: Fix violations first. No freelancing.";
-  }
-}
-
-function setStreetWeather(){
-  const w=(valWeather.textContent||"").toUpperCase();
-  if(w.includes("CLEAR") || w.includes("☀️")){
-    streetWeather.textContent="🔴 STREET: Green light. Stay disciplined, not reckless.";
-  } else if(w.includes("PARTLY") || w.includes("🌤") || w.includes("⛅") || w.includes("🌥")){
-    streetWeather.textContent="🔴 STREET: You can move… but keep it small. No hero moves.";
-  } else if(w.includes("RAIN") || w.includes("🌧")){
-    streetWeather.textContent="🔴 STREET: Core only. Pause the spicy stuff.";
-  } else if(w.includes("STORM") || w.includes("⛈")){
-    streetWeather.textContent="🔴 STREET: Hands off. Protect capital. Live to fight tomorrow.";
-  } else {
-    streetWeather.textContent="🔴 STREET: Check conditions, then choose gear.";
-  }
-}
-
-function setStreetDrawdown(){
-  const d=(valDrawdown.textContent||"").toUpperCase();
-  if(d.includes("ADD HISTORY")){
-    streetDrawdown.textContent="🔴 STREET: Drawdown brake not installed yet (needs history points).";
-  } else if(d.includes("FULL") || d.includes("HARD") || d.includes("🔴")){
-    streetDrawdown.textContent="🔴 STREET: Brake engaged. Chill and reassess.";
-  } else if(d.includes("SOFT") || d.includes("🟡")){
-    streetDrawdown.textContent="🔴 STREET: Caution. Keep adds small and boring.";
-  } else {
-    streetDrawdown.textContent="🔴 STREET: All good. Keep the plan steady.";
-  }
-}
-
-function setStreetDivergence(){
-  const regime=(valRegime.textContent||"").toUpperCase();
-  const cash=pctToNum(valCash.textContent);
-  if(regime.includes("RISK ON") && isFinite(cash) && cash>0.50){
-    streetDivergence.textContent="🔴 STREET: Market’s moving. You’re parked (by choice).";
-  } else if(regime.includes("DEFENSIVE")){
-    streetDivergence.textContent="🔴 STREET: Good. Cash is your seatbelt.";
-  } else {
-    streetDivergence.textContent="🔴 STREET: Neutral stance. No need to force it.";
-  }
-}
-
-function computeLeanSignalAndStreet(){
-  const vol=(valVol.textContent||"").toUpperCase();
-  const regime=(valRegime.textContent||"").toUpperCase();
-  let signal="🟡 CAUTION";
-  let reason="Mixed signals.";
-  let suggestion="Stay disciplined.";
-
-  if(regime.includes("DEFENSIVE") || vol.includes("HOT") || vol.includes("🔴")){
-    signal="🔴 NO-GO";
-    reason="Bad conditions (defensive / hot vol).";
-    suggestion="Pause deployment. Protect capital.";
-  } else if(regime.includes("RISK ON") && (vol.includes("CALM") || vol.includes("🟢"))){
-    signal="🟢 GO";
-    reason="Supportive regime + calm volatility.";
-    suggestion="Deploy on schedule (core + small tilt).";
-  } else {
-    signal="🟡 CAUTION";
-    reason="Risk-on but volatility not calm yet.";
-    suggestion="Core ok, tilt small, no hero moves.";
-  }
-
-  leanSignal.innerHTML = "LEAN SIGNAL: " + signal + "<small id='leanSuggestion'></small>";
-  document.getElementById("leanSuggestion").textContent = reason + " " + suggestion;
-
-  if(signal.includes("GO")) streetLean.textContent="🔴 STREET: Green-ish. Small bites only. Don’t chase.";
-  else if(signal.includes("NO-GO")) streetLean.textContent="🔴 STREET: Sit tight. Cash > chaos.";
-  else streetLean.textContent="🔴 STREET: You can nibble, don’t get cute.";
-}
-
+// UI “street” helpers (simple)
 function setStreetToday(){
-  const t=(checklistText.textContent||"").toUpperCase();
-  if(t.includes("NO ACTION") || t.includes("WAIT")){
-    streetToday.textContent="🔴 STREET: Do nothing. Protect patience.";
-  } else if(t.includes("TINY") || t.includes("0.5") || t.includes("TEST")){
-    streetToday.textContent="🔴 STREET: Tiny test adds only. No chasing.";
-  } else if(t.includes("FIX VIOLATIONS")){
-    streetToday.textContent="🔴 STREET: Patch leaks first. Then offense.";
-  } else {
-    streetToday.textContent="🔴 STREET: Follow the checklist. Don’t freelance.";
-  }
+  const t=safeUpper(checklistText.textContent);
+  if(t.includes("SELL")) streetToday.textContent="🔴 STREET: Execute both legs. No freelancing.";
+  else if(t.includes("BUY")) streetToday.textContent="🔴 STREET: Execute the plan. Small bites.";
+  else streetToday.textContent="🔴 STREET: Hold. Protect patience.";
 }
 
-// ===== Prices loader (optional) =====
-// Supported formats:
-// 1) Long: Date,Ticker,Close
-// 2) Wide: Date,AAPL,MSFT,... (close prices)
-async function loadPrices(){
-  pricesByTicker = null;
-  if(!pricesUrl.value) return;
+// Main action logic
+function updateMathAndAction(){
+  // Drawdown + brake
+  const {ddPct}=computeDrawdown();
+  const brake=brakeLevel(ddPct);
 
-  const rows = parseCSV(await fetchText(pricesUrl.value));
-  if(rows.length < 2) return;
-
-  const headers = rows[0].map(h => (h||"").trim());
-  const H = headers.map(h=>h.toUpperCase());
-
-  const hasLong = H.includes("TICKER") && (H.includes("CLOSE") || H.includes("ADJCLOSE") || H.includes("ADJ CLOSE"));
-  const map = new Map();
-
-  if(hasLong){
-    const iDate = H.indexOf("DATE");
-    const iTicker = H.indexOf("TICKER");
-    const iClose = H.indexOf("CLOSE") >= 0 ? H.indexOf("CLOSE") : (H.indexOf("ADJCLOSE") >= 0 ? H.indexOf("ADJCLOSE") : H.indexOf("ADJ CLOSE"));
-    for(let i=1;i<rows.length;i++){
-      const r=rows[i];
-      const t=(r[iTicker]||"").toUpperCase().trim();
-      const c=parseFloat(r[iClose]);
-      if(!t || !isFinite(c)) continue;
-      if(!map.has(t)) map.set(t,{dates:[],closes:[]});
-      map.get(t).dates.push(r[iDate]||"");
-      map.get(t).closes.push(c);
-    }
-  } else {
-    // wide: Date + tickers
-    const iDate = H.indexOf("DATE");
-    for(let col=0; col<headers.length; col++){
-      if(col===iDate) continue;
-      const t=(headers[col]||"").toUpperCase().trim();
-      if(!t) continue;
-      map.set(t,{dates:[],closes:[]});
-    }
-    for(let i=1;i<rows.length;i++){
-      const r=rows[i];
-      for(let col=0; col<headers.length; col++){
-        if(col===iDate) continue;
-        const t=(headers[col]||"").toUpperCase().trim();
-        const c=parseFloat(r[col]);
-        if(!t || !isFinite(c)) continue;
-        const obj=map.get(t);
-        obj.dates.push(r[iDate]||"");
-        obj.closes.push(c);
-      }
-    }
-  }
-
-  pricesByTicker = map;
-}
-
-// ===== ACTION + MATH UI updater =====
-function updateMathAssist(){
-  const { ddPct } = computeDrawdownFromHistory();
-  const brake = brakeLevel(ddPct);
-  const ddText = isFinite(ddPct) ? `${(ddPct*100).toFixed(2)}%` : "—";
-
-  const stats = computeStats();
-  const volText = (stats.vol!==null) ? `${(stats.vol*100).toFixed(2)}%` : "—";
-  const sharpeText = (stats.sharpe!==null) ? `${stats.sharpe.toFixed(2)}` : "—";
-
-  overlapReport = computeOverlapReport();
-  const risk = overlapReport.risk;
-  const mode = overlapReport.mode === "corr" ? "corr" : "struct";
-  let riskIcon = "🟢";
-  if(risk==="MED") riskIcon="🟡";
-  if(risk==="HIGH") riskIcon="🔴";
-
-  mathBrake.textContent = brake;
+  mathBrake.textContent=brake;
   mathBrake.style.color = (brake==="NONE") ? "var(--green)" : (brake==="SOFT") ? "var(--yellow)" : "var(--red)";
-  mathDD.textContent = `DD: ${ddText}`;
-  mathVol.textContent = volText;
-  mathSharpe.textContent = `Sharpe-ish: ${sharpeText}`;
+  mathDD.textContent = isFinite(ddPct) ? `DD: ${(ddPct*100).toFixed(2)}%` : "DD: —";
 
-  mathOverlap.textContent = `${riskIcon} ${risk} (${mode})`;
-  mathOverlap.style.color = (risk==="LOW") ? "var(--green)" : (risk==="MED") ? "var(--yellow)" : "var(--red)";
+  const stats=computeStats();
+  mathVol.textContent = (stats.vol!==null) ? `${(stats.vol*100).toFixed(2)}%` : "—";
+  mathSharpe.textContent = `Sharpe-ish: ${(stats.sharpe!==null) ? stats.sharpe.toFixed(2) : "—"}`;
 
-  if(overlapReport.topPairs.length){
-    const fmt = overlapReport.topPairs.map(p=>{
-      const s = (p.mode==="corr") ? p.score.toFixed(2) : (p.score*100).toFixed(0)+"%";
-      const tag = (p.mode==="corr") ? "corr" : "sim";
-      return `${p.a}-${p.b} (${tag} ${s})`;
-    }).join(" • ");
-    mathOverlapList.textContent = "Top overlaps: " + fmt;
-  } else {
-    mathOverlapList.textContent = "Top overlaps: —";
-  }
+  // Overlap
+  const ov=computeOverlap();
+  const icon = ov.risk==="HIGH" ? "🔴" : ov.risk==="MED" ? "🟡" : "🟢";
+  mathOverlap.textContent = `${icon} ${ov.risk}`;
+  mathOverlap.style.color = ov.risk==="HIGH" ? "var(--red)" : ov.risk==="MED" ? "var(--yellow)" : "var(--green)";
+  mathOverlapList.textContent = ov.top.length
+    ? "Top overlaps: "+ov.top.map(p=>`${p.a}-${p.b} (sim ${(p.s*100).toFixed(0)}%)`).join(" • ")
+    : "Top overlaps: —";
 
-  // also keep the drawdown line readable
+  // Drawdown line display
   if(isFinite(ddPct)){
-    const ddLabel = ddPct <= -0.10 ? "🔴" : ddPct <= -0.06 ? "🔴" : ddPct <= -0.03 ? "🟡" : "🟢";
-    valDrawdown.textContent = `${ddLabel} ${(ddPct*100).toFixed(2)}%  (Brake: ${brake})`;
+    const ddLabel = ddPct<=-0.10 ? "🔴" : ddPct<=-0.06 ? "🔴" : ddPct<=-0.03 ? "🟡" : "🟢";
+    valDrawdown.textContent = `${ddLabel} ${(ddPct*100).toFixed(2)}% (Brake: ${brake})`;
   } else {
-    valDrawdown.textContent = "(Add a few scans to build history, then drawdown appears)";
+    valDrawdown.textContent = "(Run a few scans to build history)";
   }
-  setStreetDrawdown();
+
+  // Decide deploy/hold/defend
+  let mode="DEPLOY";
+  if(PHASE!=="DEPLOY") mode="HOLD";
+  if(brake==="FULL" || brake==="HARD") mode="DEFEND";
+
+  // Rotation target
+  const lastTier=localStorage.getItem(LS_LAST_TIER)||"";
+  const nextTier=nextTierFromLast(lastTier);
+  const nextTicker=pickNextTickerForTier(nextTier);
+
+  if(mode==="DEPLOY"){
+    const line = nextTicker
+      ? `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`
+      : `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Add RiskTier column)`;
+
+    actionMain.textContent=line;
+    actionMain.style.color="var(--yellow)";
+    actionReason.textContent = nextTicker
+      ? `Deploy per ramp. Tier=${nextTier}.`
+      : "Add RiskTier=LOW/MED/HIGH to Holdings CSV to auto-pick tickers.";
+    actionNext.textContent = `NEXT UP: ${nextTier} tier.`;
+
+    checklistText.textContent=line;
+    setStreetToday();
+    return;
+  }
+
+  // DEFEND
+  actionMain.textContent="DEFEND — Brake triggered (pause deployment)";
+  actionMain.style.color="var(--red)";
+  actionReason.textContent=`Brake=${brake}. Wait for stabilization.`;
+  actionNext.textContent="NEXT UP: Resume after brake resets.";
+  checklistText.textContent=actionMain.textContent;
+  setStreetToday();
 }
 
-function updateTodayAction(){
-  const cashPct = parseCashPct();
-  const { state, brake } = computeWeatherState();
-
-  let actionType = "HOLD";
-  let color = "var(--yellow)";
-  let reason = `Weather=${state}, Brake=${brake}`;
-
-  if(PHASE !== "DEPLOY"){
-    actionType = "HOLD";
-    reason = "Phase not DEPLOY.";
-  } 
-  else if(brake === "FULL"){
-    actionType = "SELL_ALL";
-    color = "var(--red)";
-    reason = "Drawdown brake FULL (≤ -10%). Halt deployment.";
-  } 
-  else if(brake === "HARD"){
-    actionType = "DEFEND";
-    color = "var(--red)";
-    reason = "Drawdown brake HARD (≤ -6%). Reduce exposure.";
-  } 
-  else if(state === "STORM"){
-    actionType = "HOLD";
-    color = "var(--red)";
-    reason = "Storm conditions. Protect capital.";
-  } 
-  else {
-    actionType = "DEPLOY";
-    color = (state==="CLEAR") ? "var(--green)" : "var(--yellow)";
-    reason = (state === "CLEAR")
-      ? "Clear conditions: deploy per ramp."
-      : "Partly Cloudy: deploy per ramp (core-only).";
-  }
-
-  const lastTier = localStorage.getItem(LS_LAST_TIER) || "";
-  const nextTier = nextTierFromLast(lastTier);
-  const nextTicker = pickNextTickerForTier(nextTier);
-
-  // Default display
-  actionMain.style.color = color;
-
-  if(actionType === "DEPLOY"){
-    if(nextTicker){
-
-      actionMain.textContent = 
-        `SELL $${RAMP_DOLLARS} SGOV  →  BUY $${RAMP_DOLLARS} ${nextTicker}`;
-
-      actionReason.textContent = 
-        reason + ` Tier: ${nextTier}. Funding source: SGOV (cash sleeve).`;
-
-      actionNext.textContent = 
-        `NEXT UP: After ${nextTier}, rotation continues automatically.`;
-
-      // Sync legacy TODAY line
-      checklistText.textContent = actionMain.textContent;
-      setStreetToday();
-
-    } else {
-      actionMain.textContent = 
-        `SELL $${RAMP_DOLLARS} SGOV  →  BUY $${RAMP_DOLLARS} (Add RiskTier to enable auto-pick)`;
-
-      actionReason.textContent = 
-        reason + " Add RiskTier=LOW/MED/HIGH in Holdings CSV.";
-
-      actionNext.textContent = 
-        `NEXT UP: Add RiskTier column to enable automatic ticker selection.`;
-
-      checklistText.textContent = actionMain.textContent;
-      setStreetToday();
-    }
-  }
-  else if(actionType === "HOLD"){
-    actionMain.textContent = "HOLD — No deployment today";
-    actionReason.textContent = reason;
-    actionNext.textContent = `NEXT UP: ${nextTier} tier when conditions improve.`;
-    checklistText.textContent = actionMain.textContent;
-    setStreetToday();
-  }
-  else if(actionType === "DEFEND"){
-    actionMain.textContent = "DEFENSIVE TRIM — Reduce high beta exposure";
-    actionReason.textContent = reason;
-    actionNext.textContent = "NEXT UP: Wait for stabilization before redeploying.";
-    checklistText.textContent = actionMain.textContent;
-    setStreetToday();
-  }
-  else if(actionType === "SELL_ALL"){
-    actionMain.textContent = "HALT DEPLOYMENT — Raise cash";
-    actionReason.textContent = reason;
-    actionNext.textContent = "NEXT UP: Reassess when brake resets.";
-    checklistText.textContent = actionMain.textContent;
-    setStreetToday();
-  }
-}
-  const cashPct = parseCashPct();
-  const { state, brake } = computeWeatherState();
-
-  let action = "HOLD";
-  let color = "var(--yellow)";
-  let reason = `Weather=${state}, Brake=${brake}`;
-
-  if(PHASE !== "DEPLOY"){
-    action = "HOLD";
-    color = "var(--yellow)";
-    reason = "Phase not DEPLOY.";
-  } else if(brake === "FULL"){
-    action = "SELL / HALT";
-    color = "var(--red)";
-    reason = "Drawdown brake FULL (≤ -10%). Stop deployment.";
-  } else if(brake === "HARD"){
-    action = "SELL / DEFEND";
-    color = "var(--red)";
-    reason = "Drawdown brake HARD (≤ -6%). Reduce risk.";
-  } else if(state === "STORM"){
-    action = "HOLD";
-    color = "var(--red)";
-    reason = "Storm conditions. Protect capital.";
-  } else {
-    // Deploy allowed
-    action = `BUY — $${RAMP_DOLLARS}`;
-    color = (state==="CLEAR") ? "var(--green)" : "var(--yellow)";
-    reason = (state === "CLEAR")
-      ? "Clear conditions: deploy per ramp."
-      : "Partly Cloudy: deploy per ramp (core-only).";
-  }
-
-  const lastTier = localStorage.getItem(LS_LAST_TIER) || "";
-  const nextTier = nextTierFromLast(lastTier);
-  const nextTicker = pickNextTickerForTier(nextTier);
-
-  // If cash is super high in deploy mode, remind that ramp is intentional
-  if(isFinite(cashPct) && cashPct > CASH_FLOOR && action.startsWith("BUY")){
-    reason += ` Cash>${Math.round(CASH_FLOOR*100)}% → ramp is intended to fix this slowly.`;
-  }
-
-  if(action.startsWith("BUY")){
-    if(nextTicker){
-      actionMain.textContent = `${action} — ${nextTicker} (Tier: ${nextTier})`;
-      actionReason.textContent = reason + " Rotation: High→Low→Med→Low… (overlap-aware selection).";
-      actionNext.textContent = `NEXT UP: after ${nextTier}, sequence continues automatically.`;
-    } else {
-      actionMain.textContent = `${action} — (Add RiskTier column to Holdings CSV)`;
-      actionReason.textContent = reason + " Add RiskTier=LOW/MED/HIGH to enable automatic rotation ticker picks.";
-      actionNext.textContent = `NEXT UP: Add RiskTier column, then the terminal picks tickers for you.`;
-    }
-  } else {
-    actionMain.textContent = action;
-    actionReason.textContent = reason;
-    actionNext.textContent = `NEXT UP: ${nextTier} tier (once rotation is configured).`;
-  }
-
-  actionMain.style.color = color;
-}
-
-// ===== System loader =====
+// Loaders
 async function loadSystem(){
   if(!systemUrl.value) return;
 
   const rows=parseCSV(await fetchText(systemUrl.value));
   const map=new Map();
-  rows.forEach(r=>map.set((r[0]||"").toUpperCase(),(r[1]||"").trim()));
+  rows.forEach(r=>map.set((r[0]||"").toUpperCase(), (r[1]||"").trim()));
 
-  valRegime.textContent=map.get("MARKET REGIME")||"—";
-  valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
-  valCash.textContent=map.get("CASH ANCHOR %")||"—";
-  valL5.textContent=map.get("LEVEL5 TOTAL %")||"—";
-  valLiq.textContent=map.get("LIQUIDITY")||"—";
-  valVol.textContent=map.get("VOLATILITY")||"—";
+  valRegime.textContent = map.get("MARKET REGIME") || "—";
+  valDeploy.textContent = map.get("DEPLOYMENT SIGNAL") || "—";
+  valCash.textContent = map.get("CASH ANCHOR %") || "—";
+  valL5.textContent = map.get("LEVEL5 TOTAL %") || "—";
+  valLiq.textContent = map.get("LIQUIDITY") || "—";
+  valVol.textContent = map.get("VOLATILITY") || "—";
+  valViol.textContent = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
 
-  const viol = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
-  valViol.textContent = viol || "—";
-  setDisciplineText(viol);
-
-  checklistText.textContent = map.get("TODAY'S CHECKLIST") || map.get("TODAYS CHECKLIST") || "—";
-
-  // Weather from sheet (text only; emoji will be prepended)
   const rawWeather =
     map.get("WEATHER STATUS") ||
     map.get("WEATHER") ||
     map.get("WEATHER SYSTEM") ||
     "—";
-  valWeather.textContent = (rawWeather === "—") ? "—" : `${weatherEmoji(rawWeather)} ${rawWeather}`;
+  valWeather.textContent = (rawWeather==="—") ? "—" : `${weatherEmoji(rawWeather)} ${rawWeather}`;
 
   // Divergence banner
   divergenceBanner.textContent="";
   const regimeLower=(valRegime.textContent||"").toLowerCase();
   if(regimeLower.includes("risk on") && valCash.textContent.includes("%")){
     const cash=pctToNum(valCash.textContent);
-    if(isFinite(cash) && cash>0.5) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
+    if(isFinite(cash) && cash>0.50) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
   }
 
-  setRegimeGlow();
-  setStreetDivergence();
-  setStreetWeather();
-  computeLeanSignalAndStreet();
-  setStreetToday();
+  // Simple discipline display
+  const viol=(valViol.textContent||"").trim();
+  if(!viol || viol==="—"){
+    violationsText.textContent="✅ No violations";
+    violationsText.style.color="var(--green)";
+    streetDiscipline.textContent="🔴 STREET: Rules clean. Keep it boring.";
+  } else {
+    violationsText.textContent=viol;
+    violationsText.style.color="var(--yellow)";
+    streetDiscipline.textContent="🔴 STREET: Fix violations first. No freelancing.";
+  }
 
-  updateMathAssist();
-  updateTodayAction();
+  streetDivergence.textContent="🔴 STREET: —";
+  streetWeather.textContent="🔴 STREET: —";
+  streetDrawdown.textContent="🔴 STREET: —";
+  streetLean.textContent="🔴 STREET: —";
+  leanSignal.textContent="LEAN SIGNAL: —";
+
   updateTimestamp();
 }
 
-// ===== Holdings loader =====
 async function loadHoldings(){
   if(!holdingsUrl.value) return;
 
   const rows=parseCSV(await fetchText(holdingsUrl.value));
   const headers=rows[0];
   const idx=(h)=>headers.indexOf(h);
+
   let total=0;
   const body=[];
-  holdingsData = [];
+  holdingsData=[];
 
   for(let i=1;i<rows.length;i++){
     const r=rows[i];
-    if(!r[idx("Ticker")]) continue;
+    const ticker=r[idx("Ticker")];
+    if(!ticker) continue;
+
     const value=parseFloat(r[idx("Value")])||0;
     total+=value;
 
     holdingsData.push({
-      Ticker: r[idx("Ticker")],
-      Role: r[idx("Role")]||"",
-      Bucket: r[idx("Bucket")]||"",
-      RiskTier: r[idx("RiskTier")] || r[idx("RISK TIER")] || r[idx("Risk")] || "",
+      Ticker: ticker,
+      Role: (idx("Role")>=0 ? (r[idx("Role")]||"") : ""),
+      Bucket: (idx("Bucket")>=0 ? (r[idx("Bucket")]||"") : ""),
+      RiskTier: (idx("RiskTier")>=0 ? (r[idx("RiskTier")]||"") : ""),
       Value: value
     });
 
     body.push(`<tr>
-      <td>${r[idx("Ticker")]}</td>
-      <td>${r[idx("Role")]||""}</td>
-      <td>${r[idx("Bucket")]||""}</td>
-      <td class="right">${r[idx("Shares")]||""}</td>
-      <td class="right">${r[idx("Price")]||""}</td>
+      <td>${ticker}</td>
+      <td>${idx("Role")>=0 ? (r[idx("Role")]||"") : ""}</td>
+      <td>${idx("Bucket")>=0 ? (r[idx("Bucket")]||"") : ""}</td>
+      <td class="right">${idx("Shares")>=0 ? (r[idx("Shares")]||"") : ""}</td>
+      <td class="right">${idx("Price")>=0 ? (r[idx("Price")]||"") : ""}</td>
       <td class="right">${money(value)}</td>
     </tr>`);
   }
 
-  holdingsBody.innerHTML=body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
-  totalValue.textContent=money(total);
+  holdingsBody.innerHTML = body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
+  totalValue.textContent = money(total);
 
   recordHistoryPoint();
-  updateMathAssist();
-  updateTodayAction();
+  updateMathAndAction();
   updateTimestamp();
 }
 
-// Buttons
+// Buttons + init
 document.getElementById("saveBtn").onclick=()=>{
-  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
-  localStorage.setItem(LS_SYSTEM,systemUrl.value);
-  localStorage.setItem(LS_PRICES,pricesUrl.value);
-
-  Promise.all([loadPrices(), loadSystem(), loadHoldings()])
+  localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
+  localStorage.setItem(LS_SYSTEM, systemUrl.value);
+  Promise.all([loadSystem(), loadHoldings()])
     .then(()=>{statusLine.textContent="Saved + refreshed.";})
     .catch(()=>{statusLine.textContent="Saved, but refresh failed (check CSV links).";});
 };
 
-document.getElementById("refreshBtn").onclick=()=>{
-  Promise.all([loadPrices(), loadSystem(), loadHoldings()]);
-};
-document.getElementById("runScanBtn").onclick=()=>{
-  Promise.all([loadPrices(), loadSystem(), loadHoldings()]);
-};
+document.getElementById("refreshBtn").onclick=()=>{ Promise.all([loadSystem(), loadHoldings()]); };
+document.getElementById("runScanBtn").onclick=()=>{ Promise.all([loadSystem(), loadHoldings()]); };
 
-// Load saved URLs
-holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
-systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
-pricesUrl.value=localStorage.getItem(LS_PRICES)||"";
+holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
+systemUrl.value = localStorage.getItem(LS_SYSTEM) || "";
 
-// Auto refresh / countdown
 let secondsLeft=60;
 setInterval(()=>{
   secondsLeft--;
   if(secondsLeft<=0){
     secondsLeft=60;
     statusLine.textContent="Auto-refresh…";
-    Promise.all([loadPrices(), loadSystem(), loadHoldings()])
-      .then(()=>{ statusLine.textContent="Auto-refresh complete."; })
-      .catch(()=>{ statusLine.textContent="Auto-refresh failed (check CSV links)."; });
+    Promise.all([loadSystem(), loadHoldings()])
+      .then(()=>{statusLine.textContent="Auto-refresh complete.";})
+      .catch(()=>{statusLine.textContent="Auto-refresh failed (check CSV links).";});
   }
   nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
 },1000);
 
-// Initial load
-Promise.all([loadPrices(), loadSystem(), loadHoldings()])
-  .then(()=>{ statusLine.textContent="Loaded."; })
-  .catch(()=>{ statusLine.textContent="Paste CSV links and click Save."; });
-
+Promise.all([loadSystem(), loadHoldings()])
+  .then(()=>{statusLine.textContent="Loaded.";})
+  .catch(()=>{statusLine.textContent="Paste CSV links and click Save.";});
 </script>
 
 </body>
