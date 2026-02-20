@@ -15,29 +15,19 @@
   --red:#ef4444;
   --blue:#60a5fa;
 }
-
 *{box-sizing:border-box}
-
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
   background:#0b0b0d;
   color:var(--text);
 }
-
-body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.15); }
-body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.15); }
-body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.15); }
-
 header{
   padding:24px;
   border-bottom:1px solid rgba(255,255,255,.05);
 }
-
 .wrap{max-width:1100px;margin:auto;padding:24px}
-
 h1{margin:0;font-size:22px}
-
 .sub{color:var(--muted);font-size:13px;margin-top:6px}
 
 .card{
@@ -48,7 +38,7 @@ h1{margin:0;font-size:22px}
   background:rgba(255,255,255,.02);
 }
 
-/* 🔥 UPDATED PILLS ALIGNMENT */
+/* ✅ Pills right aligned (your request) */
 .pills{
   display:flex;
   gap:12px;
@@ -56,7 +46,6 @@ h1{margin:0;font-size:22px}
   margin-top:12px;
   justify-content:flex-end;
 }
-
 .pill{
   padding:10px 14px;
   border-radius:999px;
@@ -64,7 +53,6 @@ h1{margin:0;font-size:22px}
   border:1px solid rgba(255,255,255,.08);
   font-size:13px;
 }
-
 button{
   padding:8px 14px;
   border-radius:8px;
@@ -73,12 +61,28 @@ button{
   color:white;
   cursor:pointer;
 }
-
-.smallMuted{
-  font-size:12px;
-  color:var(--muted);
-  font-weight:700;
+input, textarea{
+  width:100%;
+  margin-top:6px;
+  padding:8px;
+  background:#111;
+  border:1px solid rgba(255,255,255,.15);
+  color:white;
 }
+textarea{min-height:44px}
+table{
+  width:100%;
+  border-collapse:collapse;
+  margin-top:14px;
+}
+th, td{
+  padding:8px;
+  border-bottom:1px solid rgba(255,255,255,.08);
+  font-size:13px;
+}
+th{color:var(--muted);text-align:left}
+.right{text-align:right}
+.smallMuted{font-size:12px;color:var(--muted);font-weight:700}
 </style>
 </head>
 
@@ -112,16 +116,52 @@ button{
       <div id="actionReason" class="smallMuted" style="margin-top:6px;">—</div>
       <div id="actionNext" class="smallMuted" style="margin-top:6px;">NEXT UP: —</div>
     </div>
+  </div>
 
+  <div class="card">
+    <h2>Data Source</h2>
+    <input id="holdingsUrl" placeholder="HOLDINGS CSV URL">
+    <input id="systemUrl" placeholder="SYSTEM_EXPORT CSV URL">
+    <textarea id="notesBox" placeholder="Notes"></textarea>
+    <button id="saveBtn">Save</button>
+  </div>
+
+  <div class="card">
+    <h2>Holdings</h2>
+    <button id="refreshBtn">Refresh</button>
+    <div style="margin-top:8px">Total: <b id="totalValue">$—</b></div>
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>Role</th>
+          <th>Bucket</th>
+          <th>RiskTier</th>
+          <th class="right">Shares</th>
+          <th class="right">Price</th>
+          <th class="right">Value</th>
+        </tr>
+      </thead>
+      <tbody id="holdingsBody">
+        <tr><td colspan="7">Waiting for data…</td></tr>
+      </tbody>
+    </table>
   </div>
 
 </div>
 
 <script>
-/* Minimal stable build */
+/* ========= Lean Terminal (Stable CSV build + explicit SGOV→BUY) ========= */
+
+const LS_HOLDINGS="lean_holdings_csv_url";
+const LS_SYSTEM="lean_system_csv_url";
+const LS_LAST_TIER="lean_last_risk_tier";
+const LS_LAST_TICKER="lean_last_added_ticker";
 
 const PHASE="DEPLOY";
 const RAMP_DOLLARS=75;
+
+const statusLine=document.getElementById("statusLine");
 
 const valRegime=document.getElementById("valRegime");
 const valDeploy=document.getElementById("valDeploy");
@@ -134,12 +174,160 @@ const actionMain=document.getElementById("actionMain");
 const actionReason=document.getElementById("actionReason");
 const actionNext=document.getElementById("actionNext");
 
-document.getElementById("runScanBtn").onclick=()=>{
-  // Demo display for now (you can reconnect CSV later)
-  actionMain.textContent = "SELL $75 SGOV → BUY $75 VOO";
-  actionReason.textContent = "Deploy Mode. Core-only. Funding source: SGOV.";
-  actionNext.textContent = "NEXT UP: MED tier.";
+const holdingsUrl=document.getElementById("holdingsUrl");
+const systemUrl=document.getElementById("systemUrl");
+const holdingsBody=document.getElementById("holdingsBody");
+const totalValue=document.getElementById("totalValue");
+
+let holdingsData=[];
+
+function money(n){
+  if(!isFinite(n)) return "$—";
+  return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
+}
+
+async function fetchText(url){
+  const sep=url.includes("?")?"&":"?";
+  const res=await fetch(url+sep+"t="+Date.now(), {cache:"no-store"});
+  if(!res.ok) throw new Error("Fetch failed: "+res.status);
+  return await res.text();
+}
+
+function parseCSV(text){
+  return text.trim().split("\n").map(r=>r.split(","));
+}
+
+function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
+
+function normalizeTier(t){
+  const x=safeUpper(t);
+  if(x.startsWith("H")) return "HIGH";
+  if(x.startsWith("M")) return "MED";
+  if(x.startsWith("L")) return "LOW";
+  return "";
+}
+
+function nextTierFromLast(last){
+  const L=normalizeTier(last);
+  if(L==="HIGH") return "LOW";
+  if(L==="LOW") return "MED";
+  if(L==="MED") return "LOW";
+  return "LOW";
+}
+
+function pickNextTickerForTier(tier){
+  const t=normalizeTier(tier);
+  const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)===t);
+  if(candidates.length===0) return null;
+
+  const last=(localStorage.getItem(LS_LAST_TICKER)||"").toUpperCase();
+  const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==last) || candidates[0];
+  return (pick.Ticker||"").toUpperCase();
+}
+
+function renderAction(){
+  const lastTier=localStorage.getItem(LS_LAST_TIER)||"";
+  const nextTier=nextTierFromLast(lastTier);
+  const nextTicker=pickNextTickerForTier(nextTier);
+
+  if(PHASE!=="DEPLOY"){
+    actionMain.textContent="HOLD — Phase not DEPLOY";
+    actionReason.textContent="Phase not set to DEPLOY.";
+    actionNext.textContent="NEXT UP: —";
+    return;
+  }
+
+  if(nextTicker){
+    actionMain.textContent=`SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`;
+    actionReason.textContent=`Deploy Mode. Tier=${nextTier}. Funding source: SGOV.`;
+    actionNext.textContent=`NEXT UP: ${nextTier} tier.`;
+  } else {
+    actionMain.textContent=`SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Set RiskTier values)`;
+    actionReason.textContent="Fill RiskTier column with LOW/MED/HIGH for Lean holdings.";
+    actionNext.textContent=`NEXT UP: ${nextTier} tier.`;
+  }
+}
+
+async function loadSystem(){
+  if(!systemUrl.value) return;
+  const rows=parseCSV(await fetchText(systemUrl.value));
+  const map=new Map();
+  rows.forEach(r=>map.set((r[0]||"").toUpperCase(), (r[1]||"").trim()));
+
+  valRegime.textContent=map.get("MARKET REGIME")||"—";
+  valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
+  valCash.textContent=map.get("CASH ANCHOR %")||"—";
+  valLiq.textContent=map.get("LIQUIDITY")||"—";
+  valVol.textContent=map.get("VOLATILITY")||"—";
+  valViol.textContent=map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—";
+}
+
+async function loadHoldings(){
+  if(!holdingsUrl.value) return;
+
+  const rows=parseCSV(await fetchText(holdingsUrl.value));
+  const headers=rows[0];
+  const idx=(h)=>headers.indexOf(h);
+
+  holdingsData=[];
+  let total=0;
+  const body=[];
+
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    const ticker=r[idx("Ticker")];
+    if(!ticker) continue;
+
+    const value=parseFloat(r[idx("Value")])||0;
+    total+=value;
+
+    const riskTier = (idx("RiskTier")>=0) ? (r[idx("RiskTier")]||"") : "";
+
+    holdingsData.push({
+      Ticker:ticker,
+      Role:(idx("Role")>=0 ? (r[idx("Role")]||"") : ""),
+      Bucket:(idx("Bucket")>=0 ? (r[idx("Bucket")]||"") : ""),
+      RiskTier:riskTier,
+      Value:value
+    });
+
+    body.push(`<tr>
+      <td>${ticker}</td>
+      <td>${idx("Role")>=0 ? (r[idx("Role")]||"") : ""}</td>
+      <td>${idx("Bucket")>=0 ? (r[idx("Bucket")]||"") : ""}</td>
+      <td>${riskTier}</td>
+      <td class="right">${idx("Shares")>=0 ? (r[idx("Shares")]||"") : ""}</td>
+      <td class="right">${idx("Price")>=0 ? (r[idx("Price")]||"") : ""}</td>
+      <td class="right">${money(value)}</td>
+    </tr>`);
+  }
+
+  holdingsBody.innerHTML=body.join("") || `<tr><td colspan="7">No rows.</td></tr>`;
+  totalValue.textContent=money(total);
+
+  renderAction();
+}
+
+// Buttons
+document.getElementById("saveBtn").onclick=()=>{
+  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
+  localStorage.setItem(LS_SYSTEM,systemUrl.value);
+  Promise.all([loadSystem(), loadHoldings()])
+    .then(()=>{statusLine.textContent="Saved + refreshed.";})
+    .catch(()=>{statusLine.textContent="Saved, but refresh failed (check CSV links).";});
 };
+
+document.getElementById("refreshBtn").onclick=()=>{ Promise.all([loadSystem(), loadHoldings()]); };
+document.getElementById("runScanBtn").onclick=()=>{ Promise.all([loadSystem(), loadHoldings()]); };
+
+// Load saved URLs
+holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
+systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
+
+// Initial load
+Promise.all([loadSystem(), loadHoldings()])
+  .then(()=>{statusLine.textContent="Loaded.";})
+  .catch(()=>{statusLine.textContent="Paste CSV links and click Save.";});
 </script>
 
 </body>
