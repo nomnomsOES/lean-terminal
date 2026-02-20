@@ -15,13 +15,16 @@
   --red:#ef4444;
   --blue:#60a5fa;
 }
+
 *{box-sizing:border-box}
+
 body{
   margin:0;
   font-family:system-ui,-apple-system,Segoe UI,Roboto,Helvetica,Arial;
   background:#0b0b0d;
   color:var(--text);
 }
+
 body.risk-on { box-shadow: inset 0 0 140px rgba(34,197,94,0.15); }
 body.defensive { box-shadow: inset 0 0 140px rgba(239,68,68,0.15); }
 body.transition { box-shadow: inset 0 0 140px rgba(245,158,11,0.15); }
@@ -30,20 +33,12 @@ header{
   padding:24px;
   border-bottom:1px solid rgba(255,255,255,.05);
 }
+
 .wrap{max-width:1100px;margin:auto;padding:24px}
+
 h1{margin:0;font-size:22px}
+
 .sub{color:var(--muted);font-size:13px;margin-top:6px}
-#lastUpdated{
-  margin-top:8px;
-  font-size:18px;
-  font-weight:800;
-  color:var(--blue);
-}
-#nextRefresh{
-  margin-top:4px;
-  font-size:12px;
-  color:var(--muted);
-}
 
 .card{
   margin-top:20px;
@@ -52,12 +47,16 @@ h1{margin:0;font-size:22px}
   border-radius:12px;
   background:rgba(255,255,255,.02);
 }
+
+/* 🔥 UPDATED PILLS ALIGNMENT */
 .pills{
   display:flex;
   gap:12px;
   flex-wrap:wrap;
   margin-top:12px;
+  justify-content:flex-end;
 }
+
 .pill{
   padding:10px 14px;
   border-radius:999px;
@@ -65,6 +64,7 @@ h1{margin:0;font-size:22px}
   border:1px solid rgba(255,255,255,.08);
   font-size:13px;
 }
+
 button{
   padding:8px 14px;
   border-radius:8px;
@@ -73,64 +73,12 @@ button{
   color:white;
   cursor:pointer;
 }
-input, textarea{
-  width:100%;
-  margin-top:6px;
-  padding:8px;
-  background:#111;
-  border:1px solid rgba(255,255,255,.15);
-  color:white;
-}
-textarea{min-height:44px}
-table{
-  width:100%;
-  border-collapse:collapse;
-  margin-top:14px;
-}
-th, td{
-  padding:8px;
-  border-bottom:1px solid rgba(255,255,255,.08);
-  font-size:13px;
-}
-th{color:var(--muted);text-align:left}
-.right{text-align:right}
 
-#divergenceBanner{
-  margin-top:10px;
-  color:var(--yellow);
-  font-weight:800;
-}
-
-#leanSignal{
-  margin-top:12px;
-  font-size:14px;
-  font-weight:900;
-  letter-spacing:.2px;
-}
-#leanSignal small{
-  display:block;
-  margin-top:6px;
+.smallMuted{
   font-size:12px;
-  font-weight:700;
   color:var(--muted);
+  font-weight:700;
 }
-
-#violations, #checklist{
-  margin-top:10px;
-  font-size:13px;
-  font-weight:900;
-  letter-spacing:.2px;
-}
-
-.street{
-  margin-top:6px;
-  color:var(--red);
-  font-weight:900;
-  font-size:12px;
-  letter-spacing:.2px;
-}
-.smallMuted{font-size:12px;color:var(--muted);font-weight:700}
-.badge{display:inline-block;padding:3px 8px;border-radius:999px;border:1px solid rgba(255,255,255,.12);background:rgba(0,0,0,.25);font-size:12px;margin-left:6px}
 </style>
 </head>
 
@@ -140,8 +88,6 @@ th{color:var(--muted);text-align:left}
   <div class="wrap">
     <h1>Lean Terminal — App 1.0</h1>
     <div class="sub" id="statusLine">Ready.</div>
-    <div id="lastUpdated">LAST UPDATED: —</div>
-    <div id="nextRefresh">Next refresh in: 60s</div>
   </div>
 </header>
 
@@ -155,514 +101,45 @@ th{color:var(--muted);text-align:left}
       <div class="pill">Regime: <span id="valRegime">—</span></div>
       <div class="pill">Deployment: <span id="valDeploy">—</span></div>
       <div class="pill">Cash: <span id="valCash">—</span></div>
-      <div class="pill">Level 5: <span id="valL5">—</span></div>
       <div class="pill">Liquidity: <span id="valLiq">—</span></div>
       <div class="pill">Volatility: <span id="valVol">—</span></div>
       <div class="pill">Violations: <span id="valViol">—</span></div>
     </div>
 
-    <div id="actionBox" style="margin-top:14px;padding:14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(255,255,255,.03);">
-      <div style="font-size:13px;font-weight:900;letter-spacing:.2px;color:var(--muted);">TODAY ACTION</div>
-      <div id="actionMain" style="margin-top:6px;font-size:18px;font-weight:950;">—</div>
+    <div id="actionBox" style="margin-top:20px;padding:16px;border:1px solid rgba(255,255,255,.1);border-radius:12px;background:rgba(255,255,255,.03);">
+      <div style="font-size:13px;font-weight:900;color:var(--muted);">TODAY ACTION</div>
+      <div id="actionMain" style="margin-top:8px;font-size:20px;font-weight:900;">—</div>
       <div id="actionReason" class="smallMuted" style="margin-top:6px;">—</div>
-      <div id="actionNext" class="smallMuted" style="margin-top:8px;">NEXT UP: —</div>
+      <div id="actionNext" class="smallMuted" style="margin-top:6px;">NEXT UP: —</div>
     </div>
 
-    <div id="mathBox" style="margin-top:12px;padding:14px;border:1px solid rgba(255,255,255,.10);border-radius:12px;background:rgba(0,0,0,.20);">
-      <div style="font-size:13px;font-weight:900;letter-spacing:.2px;color:var(--muted);">MATH ASSIST</div>
-      <div style="margin-top:8px;font-size:13px;font-weight:900;">
-        Drawdown Brake: <span id="mathBrake">—</span>
-        <span class="badge" id="mathDD">—</span>
-      </div>
-      <div style="margin-top:6px;font-size:13px;font-weight:900;">
-        Portfolio Vol (30): <span id="mathVol">—</span>
-        <span class="badge" id="mathSharpe">Sharpe-ish: —</span>
-      </div>
-      <div style="margin-top:6px;font-size:13px;font-weight:900;">
-        Overlap Risk: <span id="mathOverlap">—</span>
-      </div>
-      <div class="smallMuted" id="mathOverlapList" style="margin-top:6px;">Top overlaps: —</div>
-      <div class="smallMuted" style="margin-top:8px;">Note: Overlap uses structural similarity (Role/Bucket/RiskTier) in this stable build.</div>
-    </div>
-
-    <div id="divergenceBanner"></div>
-    <div id="streetDivergence" class="street">🔴 STREET: —</div>
-
-    <div id="weatherLine" style="margin-top:12px;font-size:13px;font-weight:900;">WEATHER: <span id="valWeather" style="color:var(--muted);">—</span></div>
-    <div id="streetWeather" class="street">🔴 STREET: —</div>
-
-    <div id="drawdownLine" style="margin-top:10px;font-size:13px;font-weight:900;">DRAWDOWN: <span id="valDrawdown" style="color:var(--muted);">—</span></div>
-    <div id="streetDrawdown" class="street">🔴 STREET: —</div>
-
-    <div id="leanSignal">LEAN SIGNAL: —<small id="leanSuggestion">—</small></div>
-    <div id="streetLean" class="street">🔴 STREET: —</div>
-
-    <div id="violations">DISCIPLINE: <span id="violationsText">—</span></div>
-    <div id="streetDiscipline" class="street">🔴 STREET: —</div>
-
-    <div id="checklist">TODAY: <span id="checklistText" style="color:var(--muted);">—</span></div>
-    <div id="streetToday" class="street">🔴 STREET: —</div>
-  </div>
-
-  <div class="card">
-    <h2>Data Source</h2>
-    <input id="holdingsUrl" placeholder="HOLDINGS CSV URL">
-    <input id="systemUrl" placeholder="SYSTEM_EXPORT CSV URL">
-    <textarea id="notesBox" placeholder="Notes"></textarea>
-    <button id="saveBtn">Save</button>
-  </div>
-
-  <div class="card">
-    <h2>Holdings</h2>
-    <button id="refreshBtn">Refresh</button>
-    <div style="margin-top:8px">Total: <b id="totalValue">$—</b></div>
-    <table>
-      <thead>
-        <tr>
-          <th>Ticker</th>
-          <th>Role</th>
-          <th>Bucket</th>
-          <th class="right">Shares</th>
-          <th class="right">Price</th>
-          <th class="right">Value</th>
-        </tr>
-      </thead>
-      <tbody id="holdingsBody">
-        <tr><td colspan="6">Waiting for data…</td></tr>
-      </tbody>
-    </table>
   </div>
 
 </div>
 
 <script>
-/* ========= STABLE LEAN TERMINAL BUILD =========
-   - Loads holdings + system CSV
-   - Shows TODAY ACTION as: SELL $X SGOV → BUY $X [Ticker]
-   - Uses simple history for drawdown + basic vol/sharpe-ish
-   - Uses structural overlap (Role/Bucket/RiskTier)
-*/
-
-const LS_HOLDINGS="lean_holdings_csv_url";
-const LS_SYSTEM="lean_system_csv_url";
-const LS_HISTORY="lean_history_v1";
-const LS_LAST_TIER="lean_last_risk_tier";
-const LS_LAST_TICKER="lean_last_added_ticker";
+/* Minimal stable build */
 
 const PHASE="DEPLOY";
 const RAMP_DOLLARS=75;
-const CASH_FLOOR=0.60;
-
-// Elements
-const statusLine=document.getElementById("statusLine");
-const lastUpdated=document.getElementById("lastUpdated");
-const nextRefresh=document.getElementById("nextRefresh");
 
 const valRegime=document.getElementById("valRegime");
 const valDeploy=document.getElementById("valDeploy");
 const valCash=document.getElementById("valCash");
-const valL5=document.getElementById("valL5");
 const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
 const valViol=document.getElementById("valViol");
-
-const valWeather=document.getElementById("valWeather");
-const valDrawdown=document.getElementById("valDrawdown");
-
-const divergenceBanner=document.getElementById("divergenceBanner");
-const streetDivergence=document.getElementById("streetDivergence");
-const streetWeather=document.getElementById("streetWeather");
-const streetDrawdown=document.getElementById("streetDrawdown");
-const leanSignal=document.getElementById("leanSignal");
-const streetLean=document.getElementById("streetLean");
-
-const violationsText=document.getElementById("violationsText");
-const streetDiscipline=document.getElementById("streetDiscipline");
-
-const checklistText=document.getElementById("checklistText");
-const streetToday=document.getElementById("streetToday");
 
 const actionMain=document.getElementById("actionMain");
 const actionReason=document.getElementById("actionReason");
 const actionNext=document.getElementById("actionNext");
 
-const mathBrake=document.getElementById("mathBrake");
-const mathDD=document.getElementById("mathDD");
-const mathVol=document.getElementById("mathVol");
-const mathSharpe=document.getElementById("mathSharpe");
-const mathOverlap=document.getElementById("mathOverlap");
-const mathOverlapList=document.getElementById("mathOverlapList");
-
-const holdingsUrl=document.getElementById("holdingsUrl");
-const systemUrl=document.getElementById("systemUrl");
-const holdingsBody=document.getElementById("holdingsBody");
-const totalValue=document.getElementById("totalValue");
-
-// Runtime
-let holdingsData=[];
-
-// Helpers
-function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
-
-function money(n){
-  if(!isFinite(n)) return "$—";
-  return n.toLocaleString(undefined,{style:"currency",currency:"USD"});
-}
-
-function updateTimestamp(){
-  lastUpdated.textContent="LAST UPDATED: "+new Date().toLocaleTimeString();
-  lastUpdated.style.opacity="0.4";
-  setTimeout(()=>{lastUpdated.style.opacity="1"},200);
-}
-
-async function fetchText(url){
-  const sep=url.includes("?")?"&":"?";
-  const res=await fetch(url+sep+"t="+Date.now(), {cache:"no-store"});
-  if(!res.ok) throw new Error("Fetch failed: "+res.status);
-  return await res.text();
-}
-
-function parseCSV(text){
-  return text.trim().split("\n").map(r=>r.split(","));
-}
-
-function pctToNum(p){
-  if(!p || !p.includes("%")) return NaN;
-  return parseFloat(p.replace("%",""))/100;
-}
-
-function parseCashPct(){
-  const cash=pctToNum(valCash.textContent);
-  return isFinite(cash)?cash:NaN;
-}
-
-function weatherEmoji(status){
-  const w=(status||"").toLowerCase();
-  if(w.includes("storm")) return "⛈";
-  if(w.includes("rain")) return "🌧";
-  if(w.includes("cloud") || w.includes("partly")) return "🌥";
-  if(w.includes("clear") || w.includes("sun")) return "☀️";
-  return "🌤";
-}
-
-// History
-function loadHistory(){
-  try { return JSON.parse(localStorage.getItem(LS_HISTORY) || "[]"); }
-  catch { return []; }
-}
-function saveHistory(arr){
-  localStorage.setItem(LS_HISTORY, JSON.stringify(arr.slice(-250)));
-}
-function recordHistoryPoint(){
-  const totalText=(totalValue.textContent||"").replace(/[^0-9.\-]/g,"");
-  const total=parseFloat(totalText);
-  if(!isFinite(total)) return;
-  const hist=loadHistory();
-  hist.push({ts:Date.now(), total});
-  saveHistory(hist);
-}
-function computeDrawdown(){
-  const hist=loadHistory();
-  if(hist.length<2) return {ddPct:null, peak:null, curr:null};
-  let peak=-Infinity;
-  for(const h of hist){
-    if(isFinite(h.total) && h.total>peak) peak=h.total;
-  }
-  const curr=hist[hist.length-1].total;
-  if(!isFinite(peak) || !isFinite(curr) || peak<=0) return {ddPct:null, peak:null, curr:null};
-  const ddPct=(curr-peak)/peak;
-  return {ddPct, peak, curr};
-}
-function brakeLevel(ddPct){
-  if(!isFinite(ddPct)) return "UNKNOWN";
-  if(ddPct<=-0.10) return "FULL";
-  if(ddPct<=-0.06) return "HARD";
-  if(ddPct<=-0.03) return "SOFT";
-  return "NONE";
-}
-function computeStats(){
-  const hist=loadHistory();
-  if(hist.length<10) return {vol:null, sharpe:null};
-  const rets=[];
-  for(let i=1;i<hist.length;i++){
-    const a=hist[i-1].total, b=hist[i].total;
-    if(isFinite(a)&&isFinite(b)&&a>0) rets.push((b-a)/a);
-  }
-  if(rets.length<10) return {vol:null, sharpe:null};
-  const win=rets.slice(-30);
-  const mean=win.reduce((s,x)=>s+x,0)/win.length;
-  const varr=win.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(win.length-1);
-  const vol=Math.sqrt(Math.max(varr,0));
-  const sharpe=vol>0 ? (mean/vol)*Math.sqrt(252) : null;
-  return {vol, sharpe};
-}
-
-// Rotation
-function normalizeTier(t){
-  const x=safeUpper(t);
-  if(x.startsWith("H")) return "HIGH";
-  if(x.startsWith("M")) return "MED";
-  if(x.startsWith("L")) return "LOW";
-  return "";
-}
-function nextTierFromLast(last){
-  const L=normalizeTier(last);
-  if(L==="HIGH") return "LOW";
-  if(L==="LOW") return "MED";
-  if(L==="MED") return "LOW";
-  return "LOW";
-}
-function pickNextTickerForTier(tier){
-  const t=normalizeTier(tier);
-  const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)==t);
-  if(candidates.length===0) return null;
-  // avoid repeating last ticker if possible
-  const last=(localStorage.getItem(LS_LAST_TICKER)||"").toUpperCase();
-  const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==last) || candidates[0];
-  return (pick.Ticker||"").toUpperCase();
-}
-
-// Structural overlap (simple)
-function structuralVector(h){
-  const role=safeUpper(h.Role||"");
-  const bucket=safeUpper(h.Bucket||"");
-  const tier=safeUpper(h.RiskTier||"");
-  const feats=[];
-  if(role) feats.push("ROLE:"+role);
-  if(bucket) feats.push("BUCKET:"+bucket);
-  if(tier) feats.push("TIER:"+tier);
-  return feats;
-}
-function jaccard(a,b){
-  const A=new Set(a), B=new Set(b);
-  let inter=0;
-  for(const x of A) if(B.has(x)) inter++;
-  const uni=A.size+B.size-inter;
-  if(uni===0) return null;
-  return inter/uni;
-}
-function computeOverlap(){
-  const pairs=[];
-  for(let i=0;i<holdingsData.length;i++){
-    for(let j=i+1;j<holdingsData.length;j++){
-      const a=holdingsData[i], b=holdingsData[j];
-      const s=jaccard(structuralVector(a), structuralVector(b));
-      if(s===null) continue;
-      pairs.push({a:(a.Ticker||"").toUpperCase(), b:(b.Ticker||"").toUpperCase(), s});
-    }
-  }
-  pairs.sort((x,y)=>y.s-x.s);
-  const top=pairs.slice(0,5);
-  const high=pairs.filter(p=>p.s>=0.75).length;
-  let risk="LOW";
-  if(high>=6) risk="HIGH";
-  else if(high>=3) risk="MED";
-  return {risk, top};
-}
-
-// UI “street” helpers (simple)
-function setStreetToday(){
-  const t=safeUpper(checklistText.textContent);
-  if(t.includes("SELL")) streetToday.textContent="🔴 STREET: Execute both legs. No freelancing.";
-  else if(t.includes("BUY")) streetToday.textContent="🔴 STREET: Execute the plan. Small bites.";
-  else streetToday.textContent="🔴 STREET: Hold. Protect patience.";
-}
-
-// Main action logic
-function updateMathAndAction(){
-  // Drawdown + brake
-  const {ddPct}=computeDrawdown();
-  const brake=brakeLevel(ddPct);
-
-  mathBrake.textContent=brake;
-  mathBrake.style.color = (brake==="NONE") ? "var(--green)" : (brake==="SOFT") ? "var(--yellow)" : "var(--red)";
-  mathDD.textContent = isFinite(ddPct) ? `DD: ${(ddPct*100).toFixed(2)}%` : "DD: —";
-
-  const stats=computeStats();
-  mathVol.textContent = (stats.vol!==null) ? `${(stats.vol*100).toFixed(2)}%` : "—";
-  mathSharpe.textContent = `Sharpe-ish: ${(stats.sharpe!==null) ? stats.sharpe.toFixed(2) : "—"}`;
-
-  // Overlap
-  const ov=computeOverlap();
-  const icon = ov.risk==="HIGH" ? "🔴" : ov.risk==="MED" ? "🟡" : "🟢";
-  mathOverlap.textContent = `${icon} ${ov.risk}`;
-  mathOverlap.style.color = ov.risk==="HIGH" ? "var(--red)" : ov.risk==="MED" ? "var(--yellow)" : "var(--green)";
-  mathOverlapList.textContent = ov.top.length
-    ? "Top overlaps: "+ov.top.map(p=>`${p.a}-${p.b} (sim ${(p.s*100).toFixed(0)}%)`).join(" • ")
-    : "Top overlaps: —";
-
-  // Drawdown line display
-  if(isFinite(ddPct)){
-    const ddLabel = ddPct<=-0.10 ? "🔴" : ddPct<=-0.06 ? "🔴" : ddPct<=-0.03 ? "🟡" : "🟢";
-    valDrawdown.textContent = `${ddLabel} ${(ddPct*100).toFixed(2)}% (Brake: ${brake})`;
-  } else {
-    valDrawdown.textContent = "(Run a few scans to build history)";
-  }
-
-  // Decide deploy/hold/defend
-  let mode="DEPLOY";
-  if(PHASE!=="DEPLOY") mode="HOLD";
-  if(brake==="FULL" || brake==="HARD") mode="DEFEND";
-
-  // Rotation target
-  const lastTier=localStorage.getItem(LS_LAST_TIER)||"";
-  const nextTier=nextTierFromLast(lastTier);
-  const nextTicker=pickNextTickerForTier(nextTier);
-
-  if(mode==="DEPLOY"){
-    const line = nextTicker
-      ? `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} ${nextTicker}`
-      : `SELL $${RAMP_DOLLARS} SGOV → BUY $${RAMP_DOLLARS} (Add RiskTier column)`;
-
-    actionMain.textContent=line;
-    actionMain.style.color="var(--yellow)";
-    actionReason.textContent = nextTicker
-      ? `Deploy per ramp. Tier=${nextTier}.`
-      : "Add RiskTier=LOW/MED/HIGH to Holdings CSV to auto-pick tickers.";
-    actionNext.textContent = `NEXT UP: ${nextTier} tier.`;
-
-    checklistText.textContent=line;
-    setStreetToday();
-    return;
-  }
-
-  // DEFEND
-  actionMain.textContent="DEFEND — Brake triggered (pause deployment)";
-  actionMain.style.color="var(--red)";
-  actionReason.textContent=`Brake=${brake}. Wait for stabilization.`;
-  actionNext.textContent="NEXT UP: Resume after brake resets.";
-  checklistText.textContent=actionMain.textContent;
-  setStreetToday();
-}
-
-// Loaders
-async function loadSystem(){
-  if(!systemUrl.value) return;
-
-  const rows=parseCSV(await fetchText(systemUrl.value));
-  const map=new Map();
-  rows.forEach(r=>map.set((r[0]||"").toUpperCase(), (r[1]||"").trim()));
-
-  valRegime.textContent = map.get("MARKET REGIME") || "—";
-  valDeploy.textContent = map.get("DEPLOYMENT SIGNAL") || "—";
-  valCash.textContent = map.get("CASH ANCHOR %") || "—";
-  valL5.textContent = map.get("LEVEL5 TOTAL %") || "—";
-  valLiq.textContent = map.get("LIQUIDITY") || "—";
-  valVol.textContent = map.get("VOLATILITY") || "—";
-  valViol.textContent = map.get("RULE VIOLATIONS") || map.get("VIOLATIONS") || "—";
-
-  const rawWeather =
-    map.get("WEATHER STATUS") ||
-    map.get("WEATHER") ||
-    map.get("WEATHER SYSTEM") ||
-    "—";
-  valWeather.textContent = (rawWeather==="—") ? "—" : `${weatherEmoji(rawWeather)} ${rawWeather}`;
-
-  // Divergence banner
-  divergenceBanner.textContent="";
-  const regimeLower=(valRegime.textContent||"").toLowerCase();
-  if(regimeLower.includes("risk on") && valCash.textContent.includes("%")){
-    const cash=pctToNum(valCash.textContent);
-    if(isFinite(cash) && cash>0.50) divergenceBanner.textContent="⚠ Posture Divergence: Heavy cash in Risk-On regime.";
-  }
-
-  // Simple discipline display
-  const viol=(valViol.textContent||"").trim();
-  if(!viol || viol==="—"){
-    violationsText.textContent="✅ No violations";
-    violationsText.style.color="var(--green)";
-    streetDiscipline.textContent="🔴 STREET: Rules clean. Keep it boring.";
-  } else {
-    violationsText.textContent=viol;
-    violationsText.style.color="var(--yellow)";
-    streetDiscipline.textContent="🔴 STREET: Fix violations first. No freelancing.";
-  }
-
-  streetDivergence.textContent="🔴 STREET: —";
-  streetWeather.textContent="🔴 STREET: —";
-  streetDrawdown.textContent="🔴 STREET: —";
-  streetLean.textContent="🔴 STREET: —";
-  leanSignal.textContent="LEAN SIGNAL: —";
-
-  updateTimestamp();
-}
-
-async function loadHoldings(){
-  if(!holdingsUrl.value) return;
-
-  const rows=parseCSV(await fetchText(holdingsUrl.value));
-  const headers=rows[0];
-  const idx=(h)=>headers.indexOf(h);
-
-  let total=0;
-  const body=[];
-  holdingsData=[];
-
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i];
-    const ticker=r[idx("Ticker")];
-    if(!ticker) continue;
-
-    const value=parseFloat(r[idx("Value")])||0;
-    total+=value;
-
-    holdingsData.push({
-      Ticker: ticker,
-      Role: (idx("Role")>=0 ? (r[idx("Role")]||"") : ""),
-      Bucket: (idx("Bucket")>=0 ? (r[idx("Bucket")]||"") : ""),
-      RiskTier: (idx("RiskTier")>=0 ? (r[idx("RiskTier")]||"") : ""),
-      Value: value
-    });
-
-    body.push(`<tr>
-      <td>${ticker}</td>
-      <td>${idx("Role")>=0 ? (r[idx("Role")]||"") : ""}</td>
-      <td>${idx("Bucket")>=0 ? (r[idx("Bucket")]||"") : ""}</td>
-      <td class="right">${idx("Shares")>=0 ? (r[idx("Shares")]||"") : ""}</td>
-      <td class="right">${idx("Price")>=0 ? (r[idx("Price")]||"") : ""}</td>
-      <td class="right">${money(value)}</td>
-    </tr>`);
-  }
-
-  holdingsBody.innerHTML = body.join("") || `<tr><td colspan="6">No rows.</td></tr>`;
-  totalValue.textContent = money(total);
-
-  recordHistoryPoint();
-  updateMathAndAction();
-  updateTimestamp();
-}
-
-// Buttons + init
-document.getElementById("saveBtn").onclick=()=>{
-  localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
-  localStorage.setItem(LS_SYSTEM, systemUrl.value);
-  Promise.all([loadSystem(), loadHoldings()])
-    .then(()=>{statusLine.textContent="Saved + refreshed.";})
-    .catch(()=>{statusLine.textContent="Saved, but refresh failed (check CSV links).";});
+document.getElementById("runScanBtn").onclick=()=>{
+  // Demo display for now (you can reconnect CSV later)
+  actionMain.textContent = "SELL $75 SGOV → BUY $75 VOO";
+  actionReason.textContent = "Deploy Mode. Core-only. Funding source: SGOV.";
+  actionNext.textContent = "NEXT UP: MED tier.";
 };
-
-document.getElementById("refreshBtn").onclick=()=>{ Promise.all([loadSystem(), loadHoldings()]); };
-document.getElementById("runScanBtn").onclick=()=>{ Promise.all([loadSystem(), loadHoldings()]); };
-
-holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
-systemUrl.value = localStorage.getItem(LS_SYSTEM) || "";
-
-let secondsLeft=60;
-setInterval(()=>{
-  secondsLeft--;
-  if(secondsLeft<=0){
-    secondsLeft=60;
-    statusLine.textContent="Auto-refresh…";
-    Promise.all([loadSystem(), loadHoldings()])
-      .then(()=>{statusLine.textContent="Auto-refresh complete.";})
-      .catch(()=>{statusLine.textContent="Auto-refresh failed (check CSV links).";});
-  }
-  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
-},1000);
-
-Promise.all([loadSystem(), loadHoldings()])
-  .then(()=>{statusLine.textContent="Loaded.";})
-  .catch(()=>{statusLine.textContent="Paste CSV links and click Save.";});
 </script>
 
 </body>
