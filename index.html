@@ -22,7 +22,7 @@ header{padding:24px;border-bottom:1px solid rgba(255,255,255,.08)}
 .pills{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
 .pill{padding:10px 14px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);font-size:13px}
 button{padding:8px 14px;border-radius:8px;background:#1f2937;border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer}
-input,textarea{width:100%;margin-top:6px;padding:10px;background:#111;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px}
+input{width:100%;margin-top:6px;padding:10px;background:#111;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px}
 .small{color:var(--muted);font-size:13px;margin-top:6px}
 table{width:100%;border-collapse:collapse;margin-top:12px}
 th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}
@@ -30,6 +30,7 @@ th{color:var(--muted);text-align:left}
 .right{text-align:right}
 .row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
 .badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.25);font-size:12px;color:var(--muted)}
+.box{margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03)}
 </style>
 </head>
 
@@ -60,9 +61,10 @@ th{color:var(--muted);text-align:left}
       <div class="pill">Liquidity: <span id="valLiq">—</span></div>
       <div class="pill">Volatility: <span id="valVol">—</span></div>
       <div class="pill">Violations: <span id="valViol">—</span></div>
+      <div class="pill">Brake: <span id="valBrake">—</span></div>
     </div>
 
-    <div style="margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+    <div class="box">
       <div class="small" style="font-weight:800;letter-spacing:.2px;">TODAY ACTION</div>
       <div id="actionMain" style="margin-top:8px;font-size:20px;font-weight:900;">—</div>
       <div id="actionReason" class="small">—</div>
@@ -73,6 +75,19 @@ th{color:var(--muted);text-align:left}
       </div>
 
       <div id="actionNext" class="small">NEXT UP: —</div>
+    </div>
+
+    <div class="box">
+      <div class="small" style="font-weight:800;letter-spacing:.2px;">MATH ASSIST</div>
+      <div class="row" style="margin-top:8px;">
+        <span class="badge" id="mathDD">Drawdown: —</span>
+        <span class="badge" id="mathPeak">Peak: —</span>
+        <span class="badge" id="mathVol">Vol(30): —</span>
+        <span class="badge" id="mathSharpe">Sharpe-ish: —</span>
+      </div>
+      <div class="small" id="mathNote" style="margin-top:10px;">
+        Math uses your portfolio total history (from this device). Needs ~10 scans to stabilize.
+      </div>
     </div>
   </div>
 
@@ -110,17 +125,20 @@ th{color:var(--muted);text-align:left}
 </div>
 
 <script>
-/* ========= Lean Terminal — Executed Feature + Market-Condition Control ========= */
+/* ========= Lean Terminal — Executed + Market Gate + Math (History/Drawdown/Vol) ========= */
 
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
 
-// executed-state keys
+// executed-state
 const LS_LAST_EXEC_TICKER="lean_last_exec_ticker";
 const LS_LAST_EXEC_TIER="lean_last_exec_tier";
 const LS_LAST_EXEC_TS="lean_last_exec_ts";
 
-// app settings
+// history (local)
+const LS_HIST="lean_portfolio_hist_v1";
+
+// settings
 const PHASE="DEPLOY";
 const RAMP=75;
 
@@ -135,6 +153,7 @@ const valCash=document.getElementById("valCash");
 const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
 const valViol=document.getElementById("valViol");
+const valBrake=document.getElementById("valBrake");
 
 const actionMain=document.getElementById("actionMain");
 const actionReason=document.getElementById("actionReason");
@@ -144,6 +163,11 @@ const actionMeta=document.getElementById("actionMeta");
 const executedBtn=document.getElementById("executedBtn");
 const lastExecBadge=document.getElementById("lastExecBadge");
 
+const mathDD=document.getElementById("mathDD");
+const mathPeak=document.getElementById("mathPeak");
+const mathVol=document.getElementById("mathVol");
+const mathSharpe=document.getElementById("mathSharpe");
+
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
 const holdingsBody=document.getElementById("holdingsBody");
@@ -151,7 +175,7 @@ const totalValue=document.getElementById("totalValue");
 
 // runtime
 let holdingsData=[];
-let suggested = { tier:null, ticker:null, line:null }; // current recommendation
+let suggested={tier:null,ticker:null,line:null};
 
 function stamp(label){
   const t=new Date().toLocaleTimeString();
@@ -194,45 +218,104 @@ function pickNextTickerForTier(tier){
   const t=normalizeTier(tier);
   const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV");
   if(candidates.length===0) return null;
-
-  // avoid repeating last executed ticker
   const lastExec=(localStorage.getItem(LS_LAST_EXEC_TICKER)||"").toUpperCase();
   const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==lastExec) || candidates[0];
   return (pick.Ticker||"").toUpperCase();
 }
 
+/* ===== Math: history + drawdown + vol + sharpe-ish ===== */
+function loadHist(){
+  try { return JSON.parse(localStorage.getItem(LS_HIST) || "[]"); }
+  catch { return []; }
+}
+function saveHist(arr){
+  localStorage.setItem(LS_HIST, JSON.stringify(arr.slice(-300)));
+}
+function recordTotal(total){
+  if(!isFinite(total) || total<=0) return;
+  const hist=loadHist();
+  hist.push({ts:Date.now(), total});
+  saveHist(hist);
+}
+function computeDrawdown(){
+  const hist=loadHist();
+  if(hist.length<2) return {ddPct:null, peak:null, curr:null};
+  let peak=-Infinity;
+  for(const h of hist) if(isFinite(h.total) && h.total>peak) peak=h.total;
+  const curr=hist[hist.length-1].total;
+  if(!isFinite(peak)||!isFinite(curr)||peak<=0) return {ddPct:null, peak:null, curr:null};
+  return {ddPct:(curr-peak)/peak, peak, curr};
+}
+function brakeLevel(ddPct){
+  if(!isFinite(ddPct)) return "UNKNOWN";
+  if(ddPct<=-0.10) return "FULL";
+  if(ddPct<=-0.06) return "HARD";
+  if(ddPct<=-0.03) return "SOFT";
+  return "NONE";
+}
+function computeStats(){
+  const hist=loadHist();
+  if(hist.length<10) return {vol:null, sharpe:null};
+  const rets=[];
+  for(let i=1;i<hist.length;i++){
+    const a=hist[i-1].total, b=hist[i].total;
+    if(isFinite(a)&&isFinite(b)&&a>0) rets.push((b-a)/a);
+  }
+  if(rets.length<10) return {vol:null, sharpe:null};
+  const win=rets.slice(-30);
+  const mean=win.reduce((s,x)=>s+x,0)/win.length;
+  const varr=win.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(win.length-1);
+  const vol=Math.sqrt(Math.max(varr,0));
+  const sharpe=vol>0 ? (mean/vol)*Math.sqrt(252) : null;
+  return {vol, sharpe};
+}
+function renderMath(){
+  const {ddPct, peak}=computeDrawdown();
+  const brake=brakeLevel(ddPct);
+  valBrake.textContent=brake;
+
+  mathDD.textContent = isFinite(ddPct) ? `Drawdown: ${(ddPct*100).toFixed(2)}%` : "Drawdown: —";
+  mathPeak.textContent = isFinite(peak) ? `Peak: ${money(peak)}` : "Peak: —";
+
+  const stats=computeStats();
+  mathVol.textContent = (stats.vol!==null) ? `Vol(30): ${(stats.vol*100).toFixed(2)}%` : "Vol(30): —";
+  mathSharpe.textContent = (stats.sharpe!==null) ? `Sharpe-ish: ${stats.sharpe.toFixed(2)}` : "Sharpe-ish: —";
+
+  // color brake
+  valBrake.style.color = (brake==="NONE") ? "var(--green)" : (brake==="SOFT") ? "var(--yellow)" : "var(--red)";
+}
+
+/* ===== Market gate now includes brake ===== */
 function marketAllowsDeploy(){
   const regime=safeUpper(valRegime.textContent);
   const vol=safeUpper(valVol.textContent);
   const liq=safeUpper(valLiq.textContent);
 
-  // Simple condition control (you can expand later):
-  // If Defensive OR Hot vol OR Tight liquidity => HOLD
+  const {ddPct}=computeDrawdown();
+  const brake=brakeLevel(ddPct);
+
+  // Brake overrides everything
+  if(brake==="FULL" || brake==="HARD") return { ok:false, why:`Brake ${brake}` };
+  if(brake==="SOFT") return { ok:true, why:"Brake SOFT (deploy small/core-only)" };
+
   if(regime.includes("DEFENSIVE")) return { ok:false, why:"Regime DEFENSIVE" };
   if(vol.includes("HOT") || vol.includes("🔴")) return { ok:false, why:"Volatility HOT" };
   if(liq.includes("TIGHT")) return { ok:false, why:"Liquidity TIGHT" };
 
-  return { ok:true, why:"Conditions OK (Risk-On/Transition + not Hot + Liquid)" };
+  return { ok:true, why:"Conditions OK" };
 }
 
 function updateLastExecBadge(){
   const tkr=localStorage.getItem(LS_LAST_EXEC_TICKER);
   const tier=localStorage.getItem(LS_LAST_EXEC_TIER);
   const ts=localStorage.getItem(LS_LAST_EXEC_TS);
-
-  if(!tkr || !ts){
-    lastExecBadge.textContent="Last executed: —";
-    return;
-  }
-  const when=new Date(parseInt(ts,10)).toLocaleString();
-  lastExecBadge.textContent=`Last executed: ${tkr} (${tier||"—"}) @ ${when}`;
+  if(!tkr || !ts){ lastExecBadge.textContent="Last executed: —"; return; }
+  lastExecBadge.textContent=`Last executed: ${tkr} (${tier||"—"}) @ ${new Date(parseInt(ts,10)).toLocaleString()}`;
 }
 
 function renderAction(){
   updateLastExecBadge();
-
-  // default
-  suggested = { tier:null, ticker:null, line:null };
+  suggested={tier:null,ticker:null,line:null};
 
   if(PHASE!=="DEPLOY"){
     actionMain.textContent="HOLD — Phase not DEPLOY";
@@ -244,20 +327,20 @@ function renderAction(){
 
   const gate=marketAllowsDeploy();
   if(!gate.ok){
-    actionMain.textContent="HOLD — Market conditions say pause";
+    actionMain.textContent="HOLD — Market/math says pause";
     actionReason.textContent=`Reason: ${gate.why}`;
     actionNext.textContent="NEXT UP: Wait for conditions to improve";
     actionMeta.textContent="Tier: — | Ticker: —";
     return;
   }
 
-  const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER) || ""; // advance based on executed tier
+  const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER) || "";
   const tier=nextTierFromLast(lastTier);
   const tkr=pickNextTickerForTier(tier);
 
   if(!tkr){
     actionMain.textContent=`SELL $${RAMP} SGOV → BUY $${RAMP} (Fix RiskTier values)`;
-    actionReason.textContent=`No ticker found for Tier=${tier}. Fill RiskTier=LOW/MED/HIGH for Lean holdings.`;
+    actionReason.textContent=`No ticker found for Tier=${tier}. Fill RiskTier=LOW/MED/HIGH.`;
     actionNext.textContent=`NEXT UP: ${tier} tier`;
     actionMeta.textContent=`Tier: ${tier} | Ticker: —`;
     return;
@@ -269,7 +352,7 @@ function renderAction(){
   actionNext.textContent=`NEXT UP: ${nextTierFromLast(tier)} tier`;
   actionMeta.textContent=`Tier: ${tier} | Ticker: ${tkr}`;
 
-  suggested = { tier, ticker:tkr, line };
+  suggested={tier,ticker:tkr,line};
 }
 
 async function loadSystem(){
@@ -277,7 +360,6 @@ async function loadSystem(){
   const rows=parseCSV(await fetchText(systemUrl.value));
   const map=new Map();
   rows.forEach(r=>map.set((r[0]||"").toUpperCase(), (r[1]||"").trim()));
-
   valRegime.textContent=map.get("MARKET REGIME")||"—";
   valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
   valCash.textContent=map.get("CASH ANCHOR %")||"—";
@@ -288,7 +370,6 @@ async function loadSystem(){
 
 async function loadHoldings(){
   if(!holdingsUrl.value) return;
-
   const text=await fetchText(holdingsUrl.value);
   const rows=parseCSV(text);
   const headers=rows[0];
@@ -325,11 +406,15 @@ async function loadHoldings(){
 
   holdingsBody.innerHTML=out.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
   totalValue.textContent=money(total);
+
+  // Record history from total (this device)
+  recordTotal(total);
 }
 
 async function refreshAll(label){
   try{
     await Promise.all([loadSystem(), loadHoldings()]);
+    renderMath();
     renderAction();
     stamp(label);
   }catch(e){
@@ -337,7 +422,7 @@ async function refreshAll(label){
   }
 }
 
-// Executed ✅ button
+// Executed button records state and advances rotation immediately
 executedBtn.onclick=()=>{
   if(!suggested.ticker || !suggested.tier){
     statusLine.textContent="Nothing to record yet (no valid BUY suggestion).";
@@ -347,7 +432,6 @@ executedBtn.onclick=()=>{
   localStorage.setItem(LS_LAST_EXEC_TIER, suggested.tier);
   localStorage.setItem(LS_LAST_EXEC_TS, String(Date.now()));
   statusLine.textContent=`Recorded executed: ${suggested.ticker} (${suggested.tier}) ✅`;
-  // Re-render to advance rotation immediately
   renderAction();
 };
 
