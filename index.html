@@ -1,177 +1,381 @@
 <!doctype html>
-<html>
+<html lang="en">
 <head>
-<meta charset="utf-8">
-<meta name="viewport" content="width=device-width,initial-scale=1">
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
 <title>Lean Terminal</title>
+
 <style>
-body{margin:0;font-family:system-ui;background:#0b0b0d;color:#f3f4f6}
+:root{
+  --bg:#0b0b0d;
+  --text:#f3f4f6;
+  --muted:#a7aab3;
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+}
+*{box-sizing:border-box}
+body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto;background:var(--bg);color:var(--text)}
+header{padding:24px;border-bottom:1px solid rgba(255,255,255,.08)}
 .wrap{max-width:1100px;margin:auto;padding:24px}
 .card{margin-top:20px;padding:18px;border:1px solid rgba(255,255,255,.08);border-radius:12px;background:rgba(255,255,255,.02)}
 .pills{display:flex;gap:12px;flex-wrap:wrap;justify-content:flex-end;margin-top:12px}
-.pill{padding:8px 14px;border-radius:999px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.3);font-size:13px}
-button{padding:8px 14px;border-radius:8px;background:#1f2937;border:1px solid rgba(255,255,255,.2);color:#fff}
-input{width:100%;margin-top:8px;padding:8px;background:#111;border:1px solid #333;color:#fff}
+.pill{padding:10px 14px;border-radius:999px;background:rgba(0,0,0,.3);border:1px solid rgba(255,255,255,.12);font-size:13px}
+button{padding:8px 14px;border-radius:8px;background:#1f2937;border:1px solid rgba(255,255,255,.2);color:#fff;cursor:pointer}
+input,textarea{width:100%;margin-top:6px;padding:10px;background:#111;border:1px solid rgba(255,255,255,.2);color:#fff;border-radius:10px}
+.small{color:var(--muted);font-size:13px;margin-top:6px}
 table{width:100%;border-collapse:collapse;margin-top:12px}
-th,td{padding:8px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}
-th{color:#aaa;text-align:left}
+th,td{padding:10px;border-bottom:1px solid rgba(255,255,255,.08);font-size:13px}
+th{color:var(--muted);text-align:left}
 .right{text-align:right}
-.small{font-size:12px;color:#aaa;margin-top:4px}
+.row{display:flex;gap:10px;align-items:center;flex-wrap:wrap;margin-top:10px}
+.badge{display:inline-block;padding:4px 10px;border-radius:999px;border:1px solid rgba(255,255,255,.15);background:rgba(0,0,0,.25);font-size:12px;color:var(--muted)}
 </style>
 </head>
+
 <body>
+<header>
+  <div class="wrap">
+    <h1 style="margin:0;">Lean Terminal</h1>
+    <div class="small" id="statusLine">Ready.</div>
+    <div class="small" id="lastUpdated">LAST UPDATED: —</div>
+    <div class="small" id="nextRefresh">Next refresh in: 60s</div>
+  </div>
+</header>
+
 <div class="wrap">
 
-<h1>Lean Terminal</h1>
-<div id="statusLine">Ready.</div>
-<div id="lastUpdated">LAST UPDATED: —</div>
-<div id="nextRefresh">Next refresh in: 60s</div>
+  <div class="card">
+    <h2 style="margin-top:0;">Good Morning</h2>
 
-<div class="card">
-<h2>Good Morning</h2>
-<button id="runScanBtn">Run Scan</button>
+    <div class="row">
+      <button id="runScanBtn">Run Scan</button>
+      <span class="badge" id="lastExecBadge">Last executed: —</span>
+    </div>
 
-<div class="pills">
-<div class="pill">Regime: <span id="valRegime">—</span></div>
-<div class="pill">Cash: <span id="valCash">—</span></div>
-<div class="pill">Liquidity: <span id="valLiq">—</span></div>
-<div class="pill">Volatility: <span id="valVol">—</span></div>
-</div>
+    <div class="pills">
+      <div class="pill">Regime: <span id="valRegime">—</span></div>
+      <div class="pill">Deployment: <span id="valDeploy">—</span></div>
+      <div class="pill">Cash: <span id="valCash">—</span></div>
+      <div class="pill">Liquidity: <span id="valLiq">—</span></div>
+      <div class="pill">Volatility: <span id="valVol">—</span></div>
+      <div class="pill">Violations: <span id="valViol">—</span></div>
+    </div>
 
-<div style="margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:12px;">
-<div class="small">TODAY ACTION</div>
-<div id="actionMain" style="margin-top:6px;font-size:18px;font-weight:700;">—</div>
-<div id="actionNext" class="small">NEXT UP: —</div>
-</div>
-</div>
+    <div style="margin-top:16px;padding:16px;border:1px solid rgba(255,255,255,.12);border-radius:12px;background:rgba(255,255,255,.03);">
+      <div class="small" style="font-weight:800;letter-spacing:.2px;">TODAY ACTION</div>
+      <div id="actionMain" style="margin-top:8px;font-size:20px;font-weight:900;">—</div>
+      <div id="actionReason" class="small">—</div>
 
-<div class="card">
-<h2>Data Source</h2>
-<input id="holdingsUrl" placeholder="Holdings CSV URL (must end with output=csv)">
-<input id="systemUrl" placeholder="System CSV URL (must end with output=csv)">
-<button id="saveBtn" style="margin-top:10px;">Save</button>
-</div>
+      <div class="row">
+        <button id="executedBtn">Executed ✅</button>
+        <span class="badge" id="actionMeta">Tier: — | Ticker: —</span>
+      </div>
 
-<div class="card">
-<h2>Holdings</h2>
-<table>
-<thead>
-<tr>
-<th>Ticker</th>
-<th>RiskTier</th>
-<th class="right">Value</th>
-</tr>
-</thead>
-<tbody id="holdingsBody">
-<tr><td colspan="3">Waiting for data…</td></tr>
-</tbody>
-</table>
-</div>
+      <div id="actionNext" class="small">NEXT UP: —</div>
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Data Source</h2>
+    <div class="small">Holdings CSV URL</div>
+    <input id="holdingsUrl" placeholder="Paste HOLDINGS CSV URL (must end in output=csv)">
+    <div class="small" style="margin-top:10px;">System CSV URL</div>
+    <input id="systemUrl" placeholder="Paste SYSTEM CSV URL (must end in output=csv)">
+    <button id="saveBtn" style="margin-top:12px;">Save</button>
+    <div class="small" id="urlHint" style="margin-top:10px;">
+      Tip: URL must be CSV. Example ends with <b>&output=csv</b> or <b>export?format=csv</b>.
+    </div>
+  </div>
+
+  <div class="card">
+    <h2 style="margin-top:0;">Holdings</h2>
+    <button id="refreshBtn">Refresh</button>
+    <div class="small" style="margin-top:10px;">Total: <b id="totalValue">$—</b></div>
+
+    <table>
+      <thead>
+        <tr>
+          <th>Ticker</th>
+          <th>RiskTier</th>
+          <th class="right">Value</th>
+        </tr>
+      </thead>
+      <tbody id="holdingsBody">
+        <tr><td colspan="3">Waiting for data…</td></tr>
+      </tbody>
+    </table>
+  </div>
 
 </div>
 
 <script>
+/* ========= Lean Terminal — Executed Feature + Market-Condition Control ========= */
 
 const LS_HOLDINGS="lean_holdings_csv_url";
 const LS_SYSTEM="lean_system_csv_url";
+
+// executed-state keys
+const LS_LAST_EXEC_TICKER="lean_last_exec_ticker";
+const LS_LAST_EXEC_TIER="lean_last_exec_tier";
+const LS_LAST_EXEC_TS="lean_last_exec_ts";
+
+// app settings
 const PHASE="DEPLOY";
 const RAMP=75;
 
+// elements
 const statusLine=document.getElementById("statusLine");
 const lastUpdated=document.getElementById("lastUpdated");
 const nextRefresh=document.getElementById("nextRefresh");
 
 const valRegime=document.getElementById("valRegime");
+const valDeploy=document.getElementById("valDeploy");
 const valCash=document.getElementById("valCash");
 const valLiq=document.getElementById("valLiq");
 const valVol=document.getElementById("valVol");
+const valViol=document.getElementById("valViol");
 
 const actionMain=document.getElementById("actionMain");
+const actionReason=document.getElementById("actionReason");
 const actionNext=document.getElementById("actionNext");
+const actionMeta=document.getElementById("actionMeta");
+
+const executedBtn=document.getElementById("executedBtn");
+const lastExecBadge=document.getElementById("lastExecBadge");
 
 const holdingsUrl=document.getElementById("holdingsUrl");
 const systemUrl=document.getElementById("systemUrl");
 const holdingsBody=document.getElementById("holdingsBody");
+const totalValue=document.getElementById("totalValue");
+
+// runtime
+let holdingsData=[];
+let suggested = { tier:null, ticker:null, line:null }; // current recommendation
 
 function stamp(label){
-const t=new Date().toLocaleTimeString();
-lastUpdated.textContent="LAST UPDATED: "+t;
-statusLine.textContent=label+" @ "+t;
+  const t=new Date().toLocaleTimeString();
+  lastUpdated.textContent="LAST UPDATED: "+t;
+  statusLine.textContent=label+" @ "+t;
 }
 
-async function fetchCSV(url){
-if(!url.includes("output=csv") && !url.includes("format=csv")){
-throw new Error("URL must end in output=csv");
+function money(n){
+  return isFinite(n) ? n.toLocaleString(undefined,{style:"currency",currency:"USD"}) : "$—";
 }
-const res=await fetch(url+"&t="+Date.now());
-return await res.text();
+
+async function fetchText(url){
+  const sep=url.includes("?")?"&":"?";
+  const res=await fetch(url+sep+"t="+Date.now(), {cache:"no-store"});
+  if(!res.ok) throw new Error("Fetch failed: "+res.status);
+  return await res.text();
 }
 
 function parseCSV(text){
-if(text.trim().startsWith("<")) throw new Error("URL returned HTML not CSV");
-return text.trim().split("\n").map(r=>r.split(","));
+  if(text.trim().startsWith("<")) throw new Error("URL returned HTML not CSV (add &output=csv)");
+  return text.trim().split("\n").map(r=>r.split(","));
+}
+
+function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
+function normalizeTier(t){
+  const x=safeUpper(t);
+  if(x.startsWith("H")) return "HIGH";
+  if(x.startsWith("M")) return "MED";
+  if(x.startsWith("L")) return "LOW";
+  return "";
+}
+function nextTierFromLast(last){
+  const L=normalizeTier(last);
+  if(L==="HIGH") return "LOW";
+  if(L==="LOW")  return "MED";
+  if(L==="MED")  return "LOW";
+  return "LOW";
+}
+function pickNextTickerForTier(tier){
+  const t=normalizeTier(tier);
+  const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV");
+  if(candidates.length===0) return null;
+
+  // avoid repeating last executed ticker
+  const lastExec=(localStorage.getItem(LS_LAST_EXEC_TICKER)||"").toUpperCase();
+  const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==lastExec) || candidates[0];
+  return (pick.Ticker||"").toUpperCase();
+}
+
+function marketAllowsDeploy(){
+  const regime=safeUpper(valRegime.textContent);
+  const vol=safeUpper(valVol.textContent);
+  const liq=safeUpper(valLiq.textContent);
+
+  // Simple condition control (you can expand later):
+  // If Defensive OR Hot vol OR Tight liquidity => HOLD
+  if(regime.includes("DEFENSIVE")) return { ok:false, why:"Regime DEFENSIVE" };
+  if(vol.includes("HOT") || vol.includes("🔴")) return { ok:false, why:"Volatility HOT" };
+  if(liq.includes("TIGHT")) return { ok:false, why:"Liquidity TIGHT" };
+
+  return { ok:true, why:"Conditions OK (Risk-On/Transition + not Hot + Liquid)" };
+}
+
+function updateLastExecBadge(){
+  const tkr=localStorage.getItem(LS_LAST_EXEC_TICKER);
+  const tier=localStorage.getItem(LS_LAST_EXEC_TIER);
+  const ts=localStorage.getItem(LS_LAST_EXEC_TS);
+
+  if(!tkr || !ts){
+    lastExecBadge.textContent="Last executed: —";
+    return;
+  }
+  const when=new Date(parseInt(ts,10)).toLocaleString();
+  lastExecBadge.textContent=`Last executed: ${tkr} (${tier||"—"}) @ ${when}`;
+}
+
+function renderAction(){
+  updateLastExecBadge();
+
+  // default
+  suggested = { tier:null, ticker:null, line:null };
+
+  if(PHASE!=="DEPLOY"){
+    actionMain.textContent="HOLD — Phase not DEPLOY";
+    actionReason.textContent="Phase not set to DEPLOY.";
+    actionNext.textContent="NEXT UP: —";
+    actionMeta.textContent="Tier: — | Ticker: —";
+    return;
+  }
+
+  const gate=marketAllowsDeploy();
+  if(!gate.ok){
+    actionMain.textContent="HOLD — Market conditions say pause";
+    actionReason.textContent=`Reason: ${gate.why}`;
+    actionNext.textContent="NEXT UP: Wait for conditions to improve";
+    actionMeta.textContent="Tier: — | Ticker: —";
+    return;
+  }
+
+  const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER) || ""; // advance based on executed tier
+  const tier=nextTierFromLast(lastTier);
+  const tkr=pickNextTickerForTier(tier);
+
+  if(!tkr){
+    actionMain.textContent=`SELL $${RAMP} SGOV → BUY $${RAMP} (Fix RiskTier values)`;
+    actionReason.textContent=`No ticker found for Tier=${tier}. Fill RiskTier=LOW/MED/HIGH for Lean holdings.`;
+    actionNext.textContent=`NEXT UP: ${tier} tier`;
+    actionMeta.textContent=`Tier: ${tier} | Ticker: —`;
+    return;
+  }
+
+  const line=`SELL $${RAMP} SGOV → BUY $${RAMP} ${tkr}`;
+  actionMain.textContent=line;
+  actionReason.textContent=`Deploy Mode. Tier=${tier}. Funding source: SGOV. (${gate.why})`;
+  actionNext.textContent=`NEXT UP: ${nextTierFromLast(tier)} tier`;
+  actionMeta.textContent=`Tier: ${tier} | Ticker: ${tkr}`;
+
+  suggested = { tier, ticker:tkr, line };
 }
 
 async function loadSystem(){
-if(!systemUrl.value) return;
-const rows=parseCSV(await fetchCSV(systemUrl.value));
-const map=new Map();
-rows.forEach(r=>map.set((r[0]||"").toUpperCase(),(r[1]||"").trim()));
-valRegime.textContent=map.get("MARKET REGIME")||"—";
-valCash.textContent=map.get("CASH ANCHOR %")||"—";
-valLiq.textContent=map.get("LIQUIDITY")||"—";
-valVol.textContent=map.get("VOLATILITY")||"—";
+  if(!systemUrl.value) return;
+  const rows=parseCSV(await fetchText(systemUrl.value));
+  const map=new Map();
+  rows.forEach(r=>map.set((r[0]||"").toUpperCase(), (r[1]||"").trim()));
+
+  valRegime.textContent=map.get("MARKET REGIME")||"—";
+  valDeploy.textContent=map.get("DEPLOYMENT SIGNAL")||"—";
+  valCash.textContent=map.get("CASH ANCHOR %")||"—";
+  valLiq.textContent=map.get("LIQUIDITY")||"—";
+  valVol.textContent=map.get("VOLATILITY")||"—";
+  valViol.textContent=map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—";
 }
 
 async function loadHoldings(){
-if(!holdingsUrl.value) return;
-const rows=parseCSV(await fetchCSV(holdingsUrl.value));
-const headers=rows[0];
-const idx=(h)=>headers.indexOf(h);
+  if(!holdingsUrl.value) return;
 
-let body="";
-for(let i=1;i<rows.length;i++){
-const r=rows[i];
-body+=`<tr>
-<td>${r[idx("Ticker")]||""}</td>
-<td>${r[idx("RiskTier")]||""}</td>
-<td class="right">${r[idx("Value")]||""}</td>
-</tr>`;
-}
-holdingsBody.innerHTML=body||"<tr><td colspan='3'>No rows.</td></tr>";
+  const text=await fetchText(holdingsUrl.value);
+  const rows=parseCSV(text);
+  const headers=rows[0];
+  const idx=(h)=>headers.indexOf(h);
 
-actionMain.textContent=`SELL $${RAMP} SGOV → BUY $${RAMP} VOO`;
-actionNext.textContent="NEXT UP: MED tier";
+  if(idx("Ticker")<0){
+    holdingsBody.innerHTML=`<tr><td colspan="3">❌ CSV missing "Ticker" column.</td></tr>`;
+    holdingsData=[];
+    totalValue.textContent="$—";
+    return;
+  }
+
+  holdingsData=[];
+  let total=0;
+  const out=[];
+
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i];
+    const ticker=r[idx("Ticker")];
+    if(!ticker) continue;
+
+    const val=idx("Value")>=0 ? (parseFloat(r[idx("Value")])||0) : 0;
+    const tier=idx("RiskTier")>=0 ? (r[idx("RiskTier")]||"") : "";
+
+    total+=val;
+    holdingsData.push({Ticker:ticker, RiskTier:tier, Value:val});
+
+    out.push(`<tr>
+      <td>${ticker}</td>
+      <td>${tier}</td>
+      <td class="right">${money(val)}</td>
+    </tr>`);
+  }
+
+  holdingsBody.innerHTML=out.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
+  totalValue.textContent=money(total);
 }
 
 async function refreshAll(label){
-try{
-await Promise.all([loadSystem(),loadHoldings()]);
-stamp(label);
-}catch(e){
-statusLine.textContent="ERROR: "+e.message;
-}
+  try{
+    await Promise.all([loadSystem(), loadHoldings()]);
+    renderAction();
+    stamp(label);
+  }catch(e){
+    statusLine.textContent="ERROR: "+(e.message||"unknown");
+  }
 }
 
-document.getElementById("saveBtn").onclick=()=>{
-localStorage.setItem(LS_HOLDINGS,holdingsUrl.value);
-localStorage.setItem(LS_SYSTEM,systemUrl.value);
-refreshAll("Saved");
+// Executed ✅ button
+executedBtn.onclick=()=>{
+  if(!suggested.ticker || !suggested.tier){
+    statusLine.textContent="Nothing to record yet (no valid BUY suggestion).";
+    return;
+  }
+  localStorage.setItem(LS_LAST_EXEC_TICKER, suggested.ticker);
+  localStorage.setItem(LS_LAST_EXEC_TIER, suggested.tier);
+  localStorage.setItem(LS_LAST_EXEC_TS, String(Date.now()));
+  statusLine.textContent=`Recorded executed: ${suggested.ticker} (${suggested.tier}) ✅`;
+  // Re-render to advance rotation immediately
+  renderAction();
 };
 
-document.getElementById("runScanBtn").onclick=()=>refreshAll("Scan");
+// Buttons
+document.getElementById("saveBtn").onclick=()=>{
+  localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
+  localStorage.setItem(LS_SYSTEM, systemUrl.value);
+  refreshAll("Saved + refreshed");
+};
+document.getElementById("refreshBtn").onclick=()=>refreshAll("Manual refresh");
+document.getElementById("runScanBtn").onclick=()=>refreshAll("Scan complete");
 
-holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||"";
-systemUrl.value=localStorage.getItem(LS_SYSTEM)||"";
+// Initial
+holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
+systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
 refreshAll("Loaded");
 
-let s=60;
+// Auto refresh
+let secondsLeft=60;
 setInterval(()=>{
-s--;
-nextRefresh.textContent="Next refresh in: "+s+"s";
-if(s<=0){s=60;refreshAll("Auto-refresh");}
+  secondsLeft--;
+  nextRefresh.textContent="Next refresh in: "+secondsLeft+"s";
+  if(secondsLeft<=0){
+    secondsLeft=60;
+    statusLine.textContent="Auto-refresh…";
+    refreshAll("Auto-refresh complete");
+  }
 },1000);
-
 </script>
 
 </body>
