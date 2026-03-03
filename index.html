@@ -1,155 +1,290 @@
 <!doctype html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1" />
-<title>Lean Terminal — Nest Mode</title>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1" />
+  <title>Lean Terminal — Nest Mode (Lean 2.0 / Group A)</title>
 
-<style>
-body {
-  font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-  margin: 0;
-  padding: 20px;
-  background: #0b0b0c;
-  color: #eaeaea;
-}
-.row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin: 10px 0; }
-.pill {
-  padding: 6px 12px;
-  border: 1px solid #333;
-  border-radius: 999px;
-  background:#121214;
-}
-button {
-  padding: 8px 12px;
-  border-radius: 10px;
-  border: 1px solid #333;
-  background:#17171a;
-  color:#eaeaea;
-  cursor:pointer;
-}
-button:hover { background:#1f1f24; }
-.errorBox {
-  margin-top:20px;
-  padding:12px;
-  border:1px solid #550000;
-  background:#1a0000;
-  color:#ff8080;
-  font-family: monospace;
-  white-space: pre-wrap;
-}
-</style>
+  <style>
+    body {
+      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
+      margin: 0;
+      padding: 20px;
+      background: #0b0b0c;
+      color: #eaeaea;
+    }
+    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin: 10px 0; }
+    .pill {
+      padding: 6px 12px;
+      border: 1px solid #333;
+      border-radius: 999px;
+      background:#121214;
+    }
+    button {
+      padding: 8px 12px;
+      border-radius: 10px;
+      border: 1px solid #333;
+      background:#17171a;
+      color:#eaeaea;
+      cursor:pointer;
+    }
+    button:hover { background:#1f1f24; }
+    .errorBox {
+      margin-top:20px;
+      padding:12px;
+      border:1px solid #550000;
+      background:#1a0000;
+      color:#ff8080;
+      font-family: monospace;
+      white-space: pre-wrap;
+    }
+    .subtle { opacity: 0.85; }
+  </style>
 </head>
 
 <body>
 
-<h1>Lean Terminal — Nest Mode</h1>
+  <h1>Lean Terminal — Nest Mode</h1>
+  <div class="subtle">Lean 2.0 / Group A</div>
 
-<div class="row">
-  <div class="pill" id="statusLine">Loaded</div>
-  <div class="pill" id="lastUpdated">LAST UPDATED: —</div>
-  <div class="pill" id="nextRefresh">Next refresh in: —</div>
-</div>
+  <div class="row">
+    <div class="pill" id="statusLine">Loaded</div>
+    <div class="pill" id="lastUpdated">LAST UPDATED: —</div>
+    <div class="pill" id="nextRefresh">Next refresh in: —</div>
+    <div class="pill" id="chatHealth">Chat health: —</div>
+  </div>
 
-<h2>Good Morning</h2>
+  <h2>Good Morning</h2>
 
-<div class="row">
-  <button id="runScanBtn">Run Scan</button>
-  <div class="pill" id="lastExecBadge">Last executed: —</div>
-</div>
+  <div class="row">
+    <button id="runScanBtn">Run Scan</button>
+    <button id="setTierLowBtn">Set Tier LOW</button>
+    <button id="setTierMedBtn">Set Tier MED</button>
+    <button id="setTierHighBtn">Set Tier HIGH</button>
+    <div class="pill" id="lastExecBadge">Last executed: —</div>
+  </div>
 
-<div class="row">
-  <div class="pill">Regime: <span id="valRegime">—</span></div>
-  <div class="pill">Deployment: <span id="valDeploy">—</span></div>
-  <div class="pill">Cash: <span id="valCash">—</span></div>
-  <div class="pill">Liquidity: <span id="valLiq">—</span></div>
-  <div class="pill">Volatility: <span id="valVol">—</span></div>
-  <div class="pill">Violations: <span id="valViol">—</span></div>
-</div>
+  <div class="row">
+    <div class="pill">Regime: <span id="valRegime">—</span></div>
+    <div class="pill">Deployment: <span id="valDeploy">—</span></div>
+    <div class="pill">Cash: <span id="valCash">—</span></div>
+    <div class="pill">Liquidity: <span id="valLiq">—</span></div>
+    <div class="pill">Volatility: <span id="valVol">—</span></div>
+    <div class="pill">Violations: <span id="valViol">—</span></div>
+  </div>
 
-<div id="errorContainer"></div>
+  <div id="errorContainer"></div>
 
-<script>
-/* ===========================
-   SAFE UTILITIES
-=========================== */
+  <script>
+  /* =========================================================
+     Lean Terminal — Nest Mode (Lean 2.0 / Group A)
+     Goal: Never white-screen. Guard every risky edge.
+  ========================================================== */
 
-function safeJSONParse(raw, fallback) {
-  try { return raw ? JSON.parse(raw) : fallback; }
-  catch { return fallback; }
-}
+  /* ===========================
+     SAFE UTILITIES
+  =========================== */
 
-function safeSetText(id, value) {
-  const el = document.getElementById(id);
-  if (el) el.textContent = value ?? "—";
-}
+  function safeJSONParse(raw, fallback) {
+    try { return raw ? JSON.parse(raw) : fallback; }
+    catch { return fallback; }
+  }
 
-function showError(err) {
-  const box = document.createElement("div");
-  box.className = "errorBox";
-  box.textContent = "APP CRASHED:\n\n" + (err?.stack || err);
-  document.getElementById("errorContainer").appendChild(box);
-}
+  function safeSetText(id, value) {
+    const el = document.getElementById(id);
+    if (el) el.textContent = (value === undefined || value === null || value === "") ? "—" : String(value);
+  }
 
-/* ===========================
-   RISK TIER CONFIG
-=========================== */
+  function showError(err) {
+    console.error(err);
+    const box = document.createElement("div");
+    box.className = "errorBox";
+    box.textContent = "APP CRASHED:\n\n" + (err?.stack || err);
+    const container = document.getElementById("errorContainer");
+    if (container) container.innerHTML = "";
+    container?.appendChild(box);
+  }
 
-const RISK_TIERS = {
-  LOW:  { ticker: "VOO", buyUsd: 75 },
-  MED:  { ticker: "QQQ", buyUsd: 75 },
-  HIGH: { ticker: "SMH", buyUsd: 75 }
-};
+  function normalizeTier(t) {
+    return (t ?? "").toString().trim().toUpperCase();
+  }
 
-/* ===========================
-   MAIN APP
-=========================== */
+  function nowTime() {
+    return new Date().toLocaleTimeString();
+  }
 
-window.addEventListener("DOMContentLoaded", () => {
-  try {
+  function setLastUpdated() {
+    safeSetText("lastUpdated", "LAST UPDATED: " + nowTime());
+  }
 
-    // Restore saved state safely
-    const savedState = safeJSONParse(localStorage.getItem("lean_state"), {
-      tier: "LOW",
-      lastExecuted: null
+  /* ===========================
+     CHAT HEALTH METER (simple)
+     - Since we can't measure tokens here, we approximate by:
+       "how many characters are stored in localStorage state"
+  =========================== */
+  function updateChatHealthMeter(state) {
+    try {
+      const approxChars = JSON.stringify(state).length;
+      // very rough heuristic scale
+      let label = "🟢 low";
+      if (approxChars > 4000) label = "🟡 medium";
+      if (approxChars > 12000) label = "🔴 high";
+      safeSetText("chatHealth", "Chat health: " + label + " (" + approxChars + " chars)");
+    } catch {
+      safeSetText("chatHealth", "Chat health: —");
+    }
+  }
+
+  /* ===========================
+     RISK TIER CONFIG (FIXED)
+     - Your earlier crash: Tier=MED had no ticker mapping
+  =========================== */
+
+  const RISK_TIERS = {
+    LOW:  { ticker: "VOO", buyUsd: 75 },
+    MED:  { ticker: "QQQ", buyUsd: 75 },
+    HIGH: { ticker: "SMH", buyUsd: 75 }
+  };
+
+  /* ===========================
+     STATE (safe persistence)
+  =========================== */
+
+  const STORAGE_KEY = "lean_state_v1";
+
+  function loadState() {
+    return safeJSONParse(localStorage.getItem(STORAGE_KEY), {
+      tier: "MED",
+      lastExecuted: null,
+      scan: {
+        regime: "Neutral",
+        cash: null,
+        liquidity: null,
+        volatility: null,
+        violations: 0
+      }
     });
+  }
 
-    const tier = (savedState.tier || "LOW").trim().toUpperCase();
+  function saveState(state) {
+    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
+    updateChatHealthMeter(state);
+  }
+
+  /* ===========================
+     RENDER (never throw)
+  =========================== */
+
+  function render(state) {
+    const tier = normalizeTier(state?.tier) || "MED";
     const tierCfg = RISK_TIERS[tier] || null;
 
     safeSetText("statusLine", "System Online");
-    safeSetText("lastUpdated", "LAST UPDATED: " + new Date().toLocaleTimeString());
     safeSetText("nextRefresh", "Next refresh in: 60s");
 
-    safeSetText("valRegime", "Neutral");
-    safeSetText("valDeploy", tierCfg ? "$" + tierCfg.buyUsd : "N/A");
-    safeSetText("valCash", "—");
-    safeSetText("valLiq", "—");
-    safeSetText("valVol", "—");
-    safeSetText("valViol", "—");
+    // Scan pills
+    safeSetText("valRegime", state?.scan?.regime ?? "Neutral");
+    safeSetText("valCash", state?.scan?.cash ?? "—");
+    safeSetText("valLiq", state?.scan?.liquidity ?? "—");
+    safeSetText("valVol", state?.scan?.volatility ?? "—");
+    safeSetText("valViol", (state?.scan?.violations ?? 0).toString());
 
-    if (tierCfg) {
-      safeSetText("lastExecBadge",
-        "Tier: " + tier + " | Ticker: " + tierCfg.ticker);
+    // Deployment
+    if (!tierCfg?.ticker) {
+      safeSetText("valDeploy", "⚠️ Tier " + tier + " missing mapping");
+      safeSetText("lastExecBadge", "Tier: " + tier + " | Ticker: —");
     } else {
-      safeSetText("lastExecBadge",
-        "Tier " + tier + " missing mapping");
+      safeSetText("valDeploy", "BUY $" + tierCfg.buyUsd + " (" + tierCfg.ticker + ")");
+      safeSetText("lastExecBadge", "Tier: " + tier + " | Ticker: " + tierCfg.ticker);
     }
 
-    document.getElementById("runScanBtn").addEventListener("click", () => {
-      safeSetText("statusLine", "Running Scan...");
-      setTimeout(() => {
-        safeSetText("statusLine", "Scan Complete");
-        safeSetText("lastUpdated",
-          "LAST UPDATED: " + new Date().toLocaleTimeString());
-      }, 800);
-    });
-
-  } catch (err) {
-    showError(err);
+    // Last executed timestamp
+    if (state?.lastExecuted) {
+      safeSetText("statusLine", "Ready • Last run: " + state.lastExecuted);
+    }
   }
-});
-</script>
+
+  /* ===========================
+     SCAN SIMULATOR (placeholder)
+     - Replace later with your real scan engine
+  =========================== */
+
+  function runScan(state) {
+    // Safe: never assume fields exist
+    const next = structuredClone
+      ? structuredClone(state)
+      : JSON.parse(JSON.stringify(state));
+
+    safeSetText("statusLine", "Running Scan...");
+    // simulate scan results
+    setTimeout(() => {
+      try {
+        next.lastExecuted = nowTime();
+        next.scan = next.scan || {};
+        // these are placeholders — swap with real values later
+        next.scan.regime = "Neutral";
+        next.scan.cash = "—";
+        next.scan.liquidity = "—";
+        next.scan.volatility = "—";
+        next.scan.violations = 0;
+
+        saveState(next);
+        setLastUpdated();
+        render(next);
+        safeSetText("statusLine", "Scan Complete");
+      } catch (err) {
+        showError(err);
+      }
+    }, 700);
+  }
+
+  /* ===========================
+     BOOTSTRAP
+  =========================== */
+
+  window.addEventListener("DOMContentLoaded", () => {
+    try {
+      let state = loadState();
+      saveState(state);          // ensures meter is set
+      setLastUpdated();
+      render(state);
+
+      // Buttons
+      document.getElementById("runScanBtn")?.addEventListener("click", () => {
+        state = loadState();
+        runScan(state);
+      });
+
+      document.getElementById("setTierLowBtn")?.addEventListener("click", () => {
+        state = loadState();
+        state.tier = "LOW";
+        saveState(state);
+        render(state);
+      });
+
+      document.getElementById("setTierMedBtn")?.addEventListener("click", () => {
+        state = loadState();
+        state.tier = "MED";
+        saveState(state);
+        render(state);
+      });
+
+      document.getElementById("setTierHighBtn")?.addEventListener("click", () => {
+        state = loadState();
+        state.tier = "HIGH";
+        saveState(state);
+        render(state);
+      });
+
+      // Defensive global error trap (optional, but helps)
+      window.addEventListener("error", (e) => showError(e.error || e.message));
+      window.addEventListener("unhandledrejection", (e) => showError(e.reason));
+
+    } catch (err) {
+      showError(err);
+    }
+  });
+  </script>
 
 </body>
 </html>
