@@ -1,641 +1,470 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1" />
-  <title>Lean Terminal — Nest Mode (Lean 2.0 / Group A)</title>
+<script>
+/* ========= Lean Terminal — Nest Mode (SGOV Locked) =========
+   FIXES:
+   - Runs after DOMContentLoaded (prevents white screen)
+   - Safe element binding + missing-ID warnings (no hard crash)
+   - Robust CSV parsing (supports quotes + commas)
+   - Header matching is case-insensitive + trims spaces
+   - Money parsing handles $ and commas
+   - Skips header rows in SYSTEM sheet
+   - Prevents overlapping refreshAll calls (inFlight lock)
+*/
 
-  <style>
-    body {
-      font-family: system-ui, -apple-system, Segoe UI, Roboto, Arial;
-      margin: 0;
-      padding: 20px;
-      background: #0b0b0c;
-      color: #eaeaea;
-    }
-    .row { display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin: 10px 0; }
-    .pill {
-      padding: 6px 12px;
-      border: 1px solid #333;
-      border-radius: 999px;
-      background:#121214;
-    }
-    button {
-      padding: 8px 12px;
-      border-radius: 10px;
-      border: 1px solid #333;
-      background:#17171a;
-      color:#eaeaea;
-      cursor:pointer;
-    }
-    button:hover { background:#1f1f24; }
-    .errorBox {
-      margin-top: 12px;
-      padding: 12px;
-      border: 1px solid #550000;
-      background: #1a0000;
-      color: #ff8080;
-      font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace;
-      white-space: pre-wrap;
-      border-radius: 12px;
-    }
-    .card {
-      border: 1px solid #222;
-      background: #0f0f11;
-      border-radius: 16px;
-      padding: 14px;
-      margin-top: 14px;
-    }
-    .subtle { opacity: 0.85; }
-    label { display:block; margin: 10px 0 6px; opacity: .9; }
-    input[type="text"] {
-      width: min(980px, 100%);
-      padding: 10px 12px;
-      border-radius: 12px;
-      border: 1px solid #333;
-      background: #121214;
-      color: #eaeaea;
-      outline: none;
-    }
-    input[type="text"]::placeholder { color: #9a9a9a; }
-    .hint { font-size: 12px; opacity: .75; margin-top: 6px; line-height: 1.35; }
-    table {
-      width: 100%;
-      border-collapse: collapse;
-      margin-top: 12px;
-      font-size: 14px;
-    }
-    th, td {
-      padding: 10px 8px;
-      border-bottom: 1px solid #1f1f22;
-      text-align: left;
-      vertical-align: top;
-    }
-    th { opacity: .8; font-weight: 600; }
-    td.right, th.right { text-align: right; }
-    .mono { font-family: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", monospace; }
-    .ok { color: #7CFF9E; }
-    .warn { color: #FFD37C; }
-    .bad { color: #FF8080; }
-  </style>
-</head>
+window.addEventListener("DOMContentLoaded", () => {
 
-<body>
+  // ---------- LocalStorage keys ----------
+  const LS_HOLDINGS="lean_holdings_csv_url";
+  const LS_SYSTEM="lean_system_csv_url";
 
-  <h1>Lean Terminal — Nest Mode</h1>
-  <div class="subtle">Lean 2.0 / Group A</div>
+  const LS_LAST_EXEC_TICKER="lean_last_exec_ticker";
+  const LS_LAST_EXEC_TIER="lean_last_exec_tier";
+  const LS_LAST_EXEC_TS="lean_last_exec_ts";
 
-  <div class="row">
-    <div class="pill" id="statusLine">Loaded</div>
-    <div class="pill" id="lastUpdated">LAST UPDATED: —</div>
-    <div class="pill" id="nextRefresh">Next refresh in: —</div>
-    <div class="pill" id="chatHealth">Chat health: —</div>
-  </div>
+  const LS_HIST="lean_portfolio_hist_v1";
 
-  <h2>Good Morning</h2>
+  // ---------- settings ----------
+  const PHASE="DEPLOY";
+  const RAMP_DEFAULT=75;
+  const RAMP_MAX=100;
+  const SGOV_DAILY=20;
+  const NEST_MODE=true;
 
-  <div class="row">
-    <button id="runScanBtn">Run Scan</button>
-    <button id="setTierLowBtn">Set Tier LOW</button>
-    <button id="setTierMedBtn">Set Tier MED</button>
-    <button id="setTierHighBtn">Set Tier HIGH</button>
-    <div class="pill" id="lastExecBadge">Last executed: —</div>
-  </div>
-
-  <div class="row">
-    <div class="pill">Regime: <span id="valRegime">—</span></div>
-    <div class="pill">Deployment: <span id="valDeploy">—</span></div>
-    <div class="pill">Cash: <span id="valCash">—</span></div>
-    <div class="pill">Liquidity: <span id="valLiq">—</span></div>
-    <div class="pill">Volatility: <span id="valVol">—</span></div>
-    <div class="pill">Violations: <span id="valViol">—</span></div>
-  </div>
-
-  <!-- ✅ NEW: CSV Inputs + Holdings -->
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Data Sources</h3>
-    <div class="subtle">Paste CSV links here. They’ll be saved on this device.</div>
-
-    <label for="holdingsUrl">Holdings CSV URL</label>
-    <input id="holdingsUrl" type="text" placeholder="https://.../holdings.csv  (columns: ticker, shares, cost_basis OPTIONAL)" />
-    <div class="hint">
-      Expected columns (case-insensitive): <span class="mono">ticker</span>, <span class="mono">shares</span>, optional <span class="mono">cost_basis</span> (per-share) or <span class="mono">cost_total</span>.
-    </div>
-
-    <label for="pricesUrl">Prices CSV URL</label>
-    <input id="pricesUrl" type="text" placeholder="https://.../prices.csv  (columns: ticker, price)" />
-    <div class="hint">
-      Expected columns (case-insensitive): <span class="mono">ticker</span>, <span class="mono">price</span>.
-      If your link is a Google Sheet, use a published CSV link (must be CORS-accessible).
-    </div>
-
-    <div class="row" style="margin-top:12px;">
-      <button id="loadDataBtn">Load Holdings</button>
-      <div class="pill" id="dataStatus">Data: —</div>
-    </div>
-
-    <div id="holdingsSummary" class="subtle" style="margin-top:10px;"></div>
-
-    <div style="overflow:auto;">
-      <table id="holdingsTable" aria-label="Holdings table" style="display:none;">
-        <thead>
-          <tr>
-            <th>Ticker</th>
-            <th class="right">Shares</th>
-            <th class="right">Price</th>
-            <th class="right">Value</th>
-            <th class="right">Cost</th>
-            <th class="right">P/L</th>
-          </tr>
-        </thead>
-        <tbody id="holdingsTbody"></tbody>
-      </table>
-    </div>
-
-    <div id="dataError"></div>
-  </div>
-
-  <div id="errorContainer"></div>
-
-  <script>
-  /* =========================================================
-     Lean Terminal — Nest Mode (Lean 2.0 / Group A)
-     Adds: Holdings table + CSV link inputs
-     Goal: Never white-screen. Guard every risky edge.
-  ========================================================== */
-
-  /* ===========================
-     SAFE UTILITIES
-  =========================== */
-  function safeJSONParse(raw, fallback) {
-    try { return raw ? JSON.parse(raw) : fallback; }
-    catch { return fallback; }
-  }
-
-  function safeSetText(id, value) {
-    const el = document.getElementById(id);
-    if (el) el.textContent = (value === undefined || value === null || value === "") ? "—" : String(value);
-  }
-
-  function clearEl(id) {
-    const el = document.getElementById(id);
-    if (el) el.innerHTML = "";
-  }
-
-  function showBox(id, text, kind) {
-    const container = document.getElementById(id);
-    if (!container) return;
-    container.innerHTML = "";
-    if (!text) return;
-    const box = document.createElement("div");
-    box.className = "errorBox";
-    box.style.borderColor = kind === "warn" ? "#554000" : "#550000";
-    box.style.background = kind === "warn" ? "#1a1400" : "#1a0000";
-    box.style.color = kind === "warn" ? "#FFD37C" : "#FF8080";
-    box.textContent = text;
-    container.appendChild(box);
-  }
-
-  function showError(err) {
-    console.error(err);
-    const box = document.createElement("div");
-    box.className = "errorBox";
-    box.textContent = "APP CRASHED:\n\n" + (err?.stack || err);
-    const container = document.getElementById("errorContainer");
-    if (container) container.innerHTML = "";
-    container?.appendChild(box);
-  }
-
-  function normalizeTier(t) {
-    return (t ?? "").toString().trim().toUpperCase();
-  }
-
-  function nowTime() {
-    return new Date().toLocaleTimeString();
-  }
-
-  function setLastUpdated() {
-    safeSetText("lastUpdated", "LAST UPDATED: " + nowTime());
-  }
-
-  function fmtUSD(n) {
-    if (n === null || n === undefined || Number.isNaN(n)) return "—";
-    return n.toLocaleString(undefined, { style: "currency", currency: "USD" });
-  }
-
-  function fmtNum(n, digits=2) {
-    if (n === null || n === undefined || Number.isNaN(n)) return "—";
-    return Number(n).toLocaleString(undefined, { maximumFractionDigits: digits });
-  }
-
-  /* ===========================
-     CHAT HEALTH METER (simple)
-  =========================== */
-  function updateChatHealthMeter(state) {
-    try {
-      const approxChars = JSON.stringify(state).length;
-      let label = "🟢 low";
-      if (approxChars > 4000) label = "🟡 medium";
-      if (approxChars > 12000) label = "🔴 high";
-      safeSetText("chatHealth", "Chat health: " + label + " (" + approxChars + " chars)");
-    } catch {
-      safeSetText("chatHealth", "Chat health: —");
-    }
-  }
-
-  /* ===========================
-     RISK TIER CONFIG (FIXED)
-  =========================== */
-  const RISK_TIERS = {
-    LOW:  { ticker: "VOO", buyUsd: 75 },
-    MED:  { ticker: "QQQ", buyUsd: 75 },
-    HIGH: { ticker: "SMH", buyUsd: 75 }
+  // ---------- Safe element getter ----------
+  const $ = (id) => document.getElementById(id);
+  const must = (id) => {
+    const el = $(id);
+    if (!el) console.warn("Missing element id:", id);
+    return el;
   };
 
-  /* ===========================
-     STATE (safe persistence)
-  =========================== */
-  const STORAGE_KEY = "lean_state_v2";
+  // elements (safe)
+  const statusLine = must("statusLine");
+  const lastUpdated = must("lastUpdated");
+  const nextRefresh = must("nextRefresh");
 
-  function loadState() {
-    return safeJSONParse(localStorage.getItem(STORAGE_KEY), {
-      tier: "MED",
-      lastExecuted: null,
-      scan: {
-        regime: "Neutral",
-        cash: null,
-        liquidity: null,
-        volatility: null,
-        violations: 0
-      },
-      dataSources: {
-        holdingsUrl: "",
-        pricesUrl: ""
-      },
-      holdings: [] // computed, safe
-    });
+  const valRegime = must("valRegime");
+  const valDeploy = must("valDeploy");
+  const valCash = must("valCash");
+  const valLiq = must("valLiq");
+  const valVol = must("valVol");
+  const valViol = must("valViol");
+  const valBrake = must("valBrake");
+
+  const actionMain = must("actionMain");
+  const actionReason = must("actionReason");
+  const actionNext = must("actionNext");
+  const actionMeta = must("actionMeta");
+
+  const executedBtn = must("executedBtn");
+  const lastExecBadge = must("lastExecBadge");
+
+  const mathDD = must("mathDD");
+  const mathPeak = must("mathPeak");
+  const mathVol = must("mathVol");
+  const mathSharpe = must("mathSharpe");
+
+  const holdingsUrl = must("holdingsUrl");
+  const systemUrl = must("systemUrl");
+  const holdingsBody = must("holdingsBody");
+  const totalValue = must("totalValue");
+
+  const saveBtn = must("saveBtn");
+  const refreshBtn = must("refreshBtn");
+  const runScanBtn = must("runScanBtn");
+
+  // runtime
+  let holdingsData = [];
+  let suggested = { tier: null, ticker: null, amount: null };
+  let inFlight = false; // prevents overlapping refreshes
+
+  // ---------- helpers ----------
+  function setText(el, txt) { if (el) el.textContent = txt; }
+  function stamp(label){
+    const t = new Date().toLocaleTimeString();
+    setText(lastUpdated, "LAST UPDATED: " + t);
+    setText(statusLine, label + " @ " + t);
   }
 
-  function saveState(state) {
-    localStorage.setItem(STORAGE_KEY, JSON.stringify(state));
-    updateChatHealthMeter(state);
+  function money(n){
+    return isFinite(n) ? n.toLocaleString(undefined,{style:"currency",currency:"USD"}) : "$—";
   }
 
-  /* ===========================
-     CSV PARSER (simple + safe)
-     - Handles commas, quotes lightly.
-     - For your use-case: standard exported CSV is fine.
-  =========================== */
-  function parseCSV(text) {
-    // Minimal RFC4180-ish parser
+  function coerceNumber(v){
+    if (v === null || v === undefined) return NaN;
+    const s = String(v).replace(/[$,%\s]/g, "").replace(/,/g, "").trim();
+    if (!s) return NaN;
+    return Number(s);
+  }
+
+  async function fetchText(url){
+    const sep = url.includes("?") ? "&" : "?";
+    const res = await fetch(url + sep + "t=" + Date.now(), { cache:"no-store" });
+    if(!res.ok) throw new Error("Fetch failed: " + res.status + " (" + url + ")");
+    const text = await res.text();
+    if (text.trim().startsWith("<")) {
+      throw new Error("URL returned HTML not CSV. Make sure it ends with &output=csv");
+    }
+    return text;
+  }
+
+  // Robust CSV parser (handles quotes + commas)
+  function parseCSV(text){
     const rows = [];
     let row = [];
     let cur = "";
     let inQuotes = false;
 
-    for (let i = 0; i < text.length; i++) {
-      const c = text[i];
-      const n = text[i + 1];
+    const t = text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
 
-      if (inQuotes) {
-        if (c === '"' && n === '"') { cur += '"'; i++; continue; }
-        if (c === '"') { inQuotes = false; continue; }
-        cur += c;
-        continue;
+    for (let i=0; i<t.length; i++){
+      const c = t[i];
+      const n = t[i+1];
+
+      if (inQuotes){
+        if (c === '"' && n === '"'){ cur += '"'; i++; continue; }
+        if (c === '"'){ inQuotes = false; continue; }
+        cur += c; continue;
       }
 
-      if (c === '"') { inQuotes = true; continue; }
-      if (c === ",") { row.push(cur); cur = ""; continue; }
-      if (c === "\r") continue;
-      if (c === "\n") { row.push(cur); rows.push(row); row = []; cur = ""; continue; }
-
+      if (c === '"'){ inQuotes = true; continue; }
+      if (c === ","){ row.push(cur); cur = ""; continue; }
+      if (c === "\n"){ row.push(cur); rows.push(row); row=[]; cur=""; continue; }
       cur += c;
     }
-    if (cur.length || row.length) { row.push(cur); rows.push(row); }
+    if (cur.length || row.length){ row.push(cur); rows.push(row); }
 
-    // Trim empty trailing lines
-    while (rows.length && rows[rows.length - 1].every(x => (x ?? "").trim() === "")) rows.pop();
+    // trim empties
+    while (rows.length && rows[rows.length-1].every(x => (x??"").trim()==="")) rows.pop();
     return rows;
   }
 
-  function rowsToObjects(rows) {
-    if (!rows || rows.length < 2) return [];
-    const headers = rows[0].map(h => (h ?? "").trim().toLowerCase());
-    const out = [];
-    for (let i = 1; i < rows.length; i++) {
-      const r = rows[i];
-      if (!r || r.every(x => (x ?? "").trim() === "")) continue;
-      const obj = {};
-      for (let j = 0; j < headers.length; j++) obj[headers[j]] = (r[j] ?? "").trim();
-      out.push(obj);
+  function safeUpper(s){ return (s||"").toString().trim().toUpperCase(); }
+  function normalizeTier(t){
+    const x=safeUpper(t);
+    if(x.startsWith("H")) return "HIGH";
+    if(x.startsWith("M")) return "MED";
+    if(x.startsWith("L")) return "LOW";
+    return "";
+  }
+
+  function nextTierFromLast(last){
+    const L=normalizeTier(last);
+    if(L==="HIGH") return "LOW";
+    if(L==="LOW")  return "MED";
+    if(L==="MED")  return "LOW";
+    return "LOW";
+  }
+
+  function pickNextTickerForTier(tier){
+    const t=normalizeTier(tier);
+    const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV");
+    if(candidates.length===0) return null;
+
+    const lastExec=(localStorage.getItem(LS_LAST_EXEC_TICKER)||"").toUpperCase();
+    const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==lastExec) || candidates[0];
+    return (pick.Ticker||"").toUpperCase();
+  }
+
+  /* ===== Math: history + drawdown + vol + sharpe-ish ===== */
+  function loadHist(){
+    try { return JSON.parse(localStorage.getItem(LS_HIST) || "[]"); }
+    catch { return []; }
+  }
+  function saveHist(arr){
+    localStorage.setItem(LS_HIST, JSON.stringify(arr.slice(-300)));
+  }
+  function recordTotal(total){
+    if(!isFinite(total) || total<=0) return;
+    const hist=loadHist();
+    hist.push({ts:Date.now(), total});
+    saveHist(hist);
+  }
+  function computeDrawdown(){
+    const hist=loadHist();
+    if(hist.length<2) return {ddPct:null, peak:null, curr:null};
+    let peak=-Infinity;
+    for(const h of hist) if(isFinite(h.total) && h.total>peak) peak=h.total;
+    const curr=hist[hist.length-1].total;
+    if(!isFinite(peak)||!isFinite(curr)||peak<=0) return {ddPct:null, peak:null, curr:null};
+    return {ddPct:(curr-peak)/peak, peak, curr};
+  }
+  function brakeLevel(ddPct){
+    if(!isFinite(ddPct)) return "UNKNOWN";
+    if(ddPct<=-0.10) return "FULL";
+    if(ddPct<=-0.06) return "HARD";
+    if(ddPct<=-0.03) return "SOFT";
+    return "NONE";
+  }
+  function computeStats(){
+    const hist=loadHist();
+    if(hist.length<10) return {vol:null, sharpe:null};
+    const rets=[];
+    for(let i=1;i<hist.length;i++){
+      const a=hist[i-1].total, b=hist[i].total;
+      if(isFinite(a)&&isFinite(b)&&a>0) rets.push((b-a)/a);
     }
-    return out;
+    if(rets.length<10) return {vol:null, sharpe:null};
+    const win=rets.slice(-30);
+    const mean=win.reduce((s,x)=>s+x,0)/win.length;
+    const varr=win.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(win.length-1);
+    const vol=Math.sqrt(Math.max(varr,0));
+    const sharpe=vol>0 ? (mean/vol)*Math.sqrt(252) : null;
+    return {vol, sharpe};
   }
+  function renderMath(){
+    const {ddPct, peak}=computeDrawdown();
+    const brake=brakeLevel(ddPct);
 
-  async function fetchCSV(url) {
-    const res = await fetch(url, { cache: "no-store" });
-    if (!res.ok) throw new Error("Fetch failed (" + res.status + "): " + url);
-    return await res.text();
-  }
-
-  /* ===========================
-     HOLDINGS: load + compute + render
-  =========================== */
-  function coerceNumber(v) {
-    if (v === null || v === undefined) return NaN;
-    const s = String(v).replace(/[$,%]/g, "").trim();
-    if (!s) return NaN;
-    return Number(s);
-  }
-
-  function computeHoldings(holdingsRows, pricesRows) {
-    // holdings: ticker, shares, cost_basis (optional) OR cost_total (optional)
-    // prices: ticker, price
-    const prices = new Map();
-    for (const p of pricesRows) {
-      const t = (p.ticker ?? p.symbol ?? "").toString().trim().toUpperCase();
-      const price = coerceNumber(p.price);
-      if (t && !Number.isNaN(price)) prices.set(t, price);
+    if (valBrake){
+      valBrake.textContent=brake;
+      valBrake.style.color=(brake==="NONE")?"#7CFF9E":(brake==="SOFT")?"#FFD37C":"#FF8080";
     }
 
-    const holdings = [];
-    for (const h of holdingsRows) {
-      const t = (h.ticker ?? h.symbol ?? "").toString().trim().toUpperCase();
-      const shares = coerceNumber(h.shares);
-      if (!t || Number.isNaN(shares)) continue;
+    setText(mathDD, isFinite(ddPct)?`Drawdown: ${(ddPct*100).toFixed(2)}%`:"Drawdown: —");
+    setText(mathPeak, isFinite(peak)?`Peak: ${money(peak)}`:"Peak: —");
 
-      const price = prices.get(t);
-      const value = (price !== undefined) ? price * shares : NaN;
-
-      // Cost rules:
-      // - cost_total if provided
-      // - else cost_basis (per-share) * shares
-      const costTotalRaw = coerceNumber(h.cost_total ?? h.cost);
-      const costBasisRaw = coerceNumber(h.cost_basis ?? h.costbasis ?? h.avg_cost ?? h.average_cost);
-
-      let cost = NaN;
-      if (!Number.isNaN(costTotalRaw)) cost = costTotalRaw;
-      else if (!Number.isNaN(costBasisRaw)) cost = costBasisRaw * shares;
-
-      const pnl = (!Number.isNaN(value) && !Number.isNaN(cost)) ? (value - cost) : NaN;
-
-      holdings.push({ ticker: t, shares, price: price ?? NaN, value, cost, pnl });
-    }
-
-    // Sort: biggest value first (fallback to ticker)
-    holdings.sort((a, b) => {
-      const av = Number.isNaN(a.value) ? -1 : a.value;
-      const bv = Number.isNaN(b.value) ? -1 : b.value;
-      if (bv !== av) return bv - av;
-      return a.ticker.localeCompare(b.ticker);
-    });
-
-    return holdings;
+    const stats=computeStats();
+    setText(mathVol, (stats.vol!==null)?`Vol(30): ${(stats.vol*100).toFixed(2)}%`:"Vol(30): —");
+    setText(mathSharpe, (stats.sharpe!==null)?`Sharpe-ish: ${stats.sharpe.toFixed(2)}`:"Sharpe-ish: —");
   }
 
-  function renderHoldings(holdings) {
-    const table = document.getElementById("holdingsTable");
-    const tbody = document.getElementById("holdingsTbody");
-    const summary = document.getElementById("holdingsSummary");
+  /* ===== Market gate + ramp sizing ===== */
+  function marketAllowsDeploy(){
+    const regime=safeUpper(valRegime?.textContent);
+    const vol=safeUpper(valVol?.textContent);
+    const liq=safeUpper(valLiq?.textContent);
 
-    if (!table || !tbody || !summary) return;
+    const {ddPct}=computeDrawdown();
+    const brake=brakeLevel(ddPct);
 
-    tbody.innerHTML = "";
+    if(brake==="FULL" || brake==="HARD") return { ok:false, why:`Brake ${brake}`, cap:0 };
+    if(regime.includes("DEFENSIVE")) return { ok:false, why:"Regime DEFENSIVE", cap:0 };
+    if(vol.includes("HOT") || vol.includes("🔴")) return { ok:false, why:"Volatility HOT", cap:0 };
+    if(liq.includes("TIGHT")) return { ok:false, why:"Liquidity TIGHT", cap:0 };
 
-    if (!holdings || holdings.length === 0) {
-      table.style.display = "none";
-      summary.textContent = "No holdings loaded yet.";
+    if(brake==="SOFT") return { ok:true, why:"Brake SOFT (core-only)", cap:50 };
+    return { ok:true, why:"Conditions OK", cap:RAMP_MAX };
+  }
+
+  function chooseRampAmount(gate){
+    if(!gate.ok) return 0;
+    if(gate.cap===50) return 50;
+
+    const vol=safeUpper(valVol?.textContent);
+    if(vol.includes("WATCH") || vol.includes("🟡")) return RAMP_DEFAULT;
+    if(vol.includes("CALM") || vol.includes("🟢")) return RAMP_MAX;
+
+    return RAMP_DEFAULT;
+  }
+
+  function updateLastExecBadge(){
+    const tkr=localStorage.getItem(LS_LAST_EXEC_TICKER);
+    const tier=localStorage.getItem(LS_LAST_EXEC_TIER);
+    const ts=localStorage.getItem(LS_LAST_EXEC_TS);
+
+    if(!tkr || !ts){
+      setText(lastExecBadge, "Last executed: —");
+      return;
+    }
+    setText(lastExecBadge, `Last executed: ${tkr} (${tier||"—"}) @ ${new Date(parseInt(ts,10)).toLocaleString()}`);
+  }
+
+  function renderAction(){
+    updateLastExecBadge();
+    suggested={tier:null,ticker:null,amount:null};
+
+    const gate=marketAllowsDeploy();
+    const rampAmt=chooseRampAmount(gate);
+    const sgNote=`SGOV locked (never sell). Daily SGOV buy: $${SGOV_DAILY}. Equity is deposit-funded.`;
+
+    if(PHASE!=="DEPLOY"){
+      setText(actionMain, "HOLD — Phase not DEPLOY");
+      setText(actionReason, "Phase not set to DEPLOY.");
+      setText(actionNext, "NEXT UP: —");
+      setText(actionMeta, "Tier: — | Ticker: —");
       return;
     }
 
-    table.style.display = "";
-    let totalValue = 0;
-    let totalCost = 0;
-    let haveValue = false;
-    let haveCost = false;
-
-    for (const h of holdings) {
-      const tr = document.createElement("tr");
-
-      const tdT = document.createElement("td");
-      tdT.textContent = h.ticker;
-      tdT.className = "mono";
-      tr.appendChild(tdT);
-
-      const tdS = document.createElement("td");
-      tdS.textContent = fmtNum(h.shares, 6);
-      tdS.className = "right";
-      tr.appendChild(tdS);
-
-      const tdP = document.createElement("td");
-      tdP.textContent = Number.isNaN(h.price) ? "—" : fmtUSD(h.price);
-      tdP.className = "right";
-      tr.appendChild(tdP);
-
-      const tdV = document.createElement("td");
-      tdV.textContent = Number.isNaN(h.value) ? "—" : fmtUSD(h.value);
-      tdV.className = "right";
-      tr.appendChild(tdV);
-
-      const tdC = document.createElement("td");
-      tdC.textContent = Number.isNaN(h.cost) ? "—" : fmtUSD(h.cost);
-      tdC.className = "right";
-      tr.appendChild(tdC);
-
-      const tdPL = document.createElement("td");
-      if (Number.isNaN(h.pnl)) {
-        tdPL.textContent = "—";
-      } else {
-        tdPL.textContent = fmtUSD(h.pnl);
-        tdPL.className = "right " + (h.pnl >= 0 ? "ok" : "bad");
-      }
-      tdPL.classList.add("right");
-      tr.appendChild(tdPL);
-
-      tbody.appendChild(tr);
-
-      if (!Number.isNaN(h.value)) { totalValue += h.value; haveValue = true; }
-      if (!Number.isNaN(h.cost))  { totalCost  += h.cost;  haveCost  = true; }
+    if(!gate.ok || rampAmt===0){
+      setText(actionMain, "HOLD — Preserve down payment cash");
+      setText(actionReason, `Reason: ${gate.why}. ${sgNote}`);
+      setText(actionNext, "NEXT UP: Wait for conditions to improve");
+      setText(actionMeta, "Tier: — | Ticker: —");
+      return;
     }
 
-    const totalPL = (haveValue && haveCost) ? (totalValue - totalCost) : NaN;
+    const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER) || "";
+    const tier=nextTierFromLast(lastTier);
+    const tkr=pickNextTickerForTier(tier);
 
-    summary.innerHTML =
-      `<span class="mono">Holdings:</span> ${holdings.length} • ` +
-      `<span class="mono">Total Value:</span> ${haveValue ? fmtUSD(totalValue) : "—"} • ` +
-      `<span class="mono">Total Cost:</span> ${haveCost ? fmtUSD(totalCost) : "—"} • ` +
-      `<span class="mono">Total P/L:</span> ` +
-      (Number.isNaN(totalPL) ? "—" : `<span class="${totalPL >= 0 ? "ok" : "bad"}">${fmtUSD(totalPL)}</span>`);
+    if(!tkr){
+      setText(actionMain, `BUY $${rampAmt} (Fix RiskTier values)`);
+      setText(actionReason, `No ticker found for Tier=${tier}. ${sgNote}`);
+      setText(actionNext, `NEXT UP: ${tier} tier`);
+      setText(actionMeta, `Tier: ${tier} | Ticker: —`);
+      return;
+    }
+
+    setText(actionMain, `BUY $${rampAmt} ${tkr} (Deposit-Funded)`);
+    setText(actionReason, `Rotation: ${tier}. ${gate.why}. ${sgNote}`);
+    setText(actionNext, `NEXT UP: ${nextTierFromLast(tier)} tier`);
+    setText(actionMeta, `Tier: ${tier} | Ticker: ${tkr}`);
+
+    suggested={tier,ticker:tkr,amount:rampAmt};
   }
 
-  async function loadHoldingsFromUrls(state) {
-    clearEl("dataError");
-    safeSetText("dataStatus", "Data: Loading…");
+  // ---------- SYSTEM loader (robust) ----------
+  async function loadSystem(){
+    if(!systemUrl?.value) return;
 
-    const holdingsUrl = (state?.dataSources?.holdingsUrl ?? "").trim();
-    const pricesUrl = (state?.dataSources?.pricesUrl ?? "").trim();
+    const rows=parseCSV(await fetchText(systemUrl.value));
 
-    if (!holdingsUrl || !pricesUrl) {
-      safeSetText("dataStatus", "Data: ⚠️ Missing URL(s)");
-      showBox("dataError",
-        "Missing CSV link(s).\n\nPaste BOTH:\n- Holdings CSV URL\n- Prices CSV URL\n\nThen click “Load Holdings”.",
-        "warn"
-      );
-      return state;
+    // Convert to key/value map, skipping header-like rows
+    const map=new Map();
+    for (const r of rows){
+      const k = safeUpper(r[0]);
+      const v = (r[1] ?? "").toString().trim();
+      if (!k) continue;
+      if (k === "METRIC" || k === "KEY") continue;     // header row
+      if (safeUpper(v) === "VALUE") continue;          // header row
+      map.set(k, v);
     }
 
-    try {
-      const [hText, pText] = await Promise.all([fetchCSV(holdingsUrl), fetchCSV(pricesUrl)]);
-      const hRows = rowsToObjects(parseCSV(hText));
-      const pRows = rowsToObjects(parseCSV(pText));
+    setText(valRegime, map.get("MARKET REGIME")||"—");
+    setText(valDeploy, map.get("DEPLOYMENT SIGNAL")||"—");
+    setText(valCash, map.get("CASH ANCHOR %")||"—");
+    setText(valLiq, map.get("LIQUIDITY")||"—");
+    setText(valVol, map.get("VOLATILITY")||"—");
+    setText(valViol, map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—");
+  }
 
-      const holdings = computeHoldings(hRows, pRows);
+  // ---------- HOLDINGS loader (robust headers + values) ----------
+  function buildHeaderIndex(headers){
+    // map normalized header -> index
+    const map = new Map();
+    headers.forEach((h,i)=>{
+      const k = (h??"").toString().trim().toLowerCase();
+      if (k) map.set(k, i);
+    });
+    return map;
+  }
 
-      state.holdings = holdings;
-      saveState(state);
+  function findHeader(map, candidates){
+    for (const c of candidates){
+      const k = c.toLowerCase();
+      if (map.has(k)) return map.get(k);
+    }
+    return -1;
+  }
 
-      safeSetText("dataStatus", "Data: ✅ Loaded (" + holdings.length + ")");
-      renderHoldings(holdings);
-      return state;
-    } catch (err) {
-      safeSetText("dataStatus", "Data: ❌ Error");
-      showBox("dataError",
-        "Could not load CSV.\n\nMost common reasons:\n1) The link isn’t a direct CSV download\n2) Google Sheet isn’t “published to web” as CSV\n3) CORS blocked the request\n\nError:\n" + (err?.message || err),
-        "warn"
-      );
-      return state;
+  async function loadHoldings(){
+    if(!holdingsUrl?.value) return;
+
+    const rows=parseCSV(await fetchText(holdingsUrl.value));
+    if (!rows.length) throw new Error("Holdings CSV empty");
+
+    const headers=rows[0];
+    const hmap=buildHeaderIndex(headers);
+
+    const iTicker = findHeader(hmap, ["ticker","symbol","tkr"]);
+    const iTier   = findHeader(hmap, ["risktier","risk tier","tier"]);
+    const iValue  = findHeader(hmap, ["value","market value","market_value","mv","value usd","value ($)"]);
+
+    if(iTicker < 0){
+      if (holdingsBody) holdingsBody.innerHTML = `<tr><td colspan="3">❌ CSV missing a Ticker column (ticker/symbol).</td></tr>`;
+      holdingsData=[];
+      setText(totalValue, "$—");
+      return;
+    }
+
+    holdingsData=[];
+    let total=0;
+    const out=[];
+
+    for(let i=1;i<rows.length;i++){
+      const r=rows[i];
+      const tickerRaw = r[iTicker];
+      if(!tickerRaw) continue;
+
+      const ticker = safeUpper(tickerRaw);
+      const tier = (iTier>=0 ? (r[iTier]||"") : "");
+      const val = (iValue>=0 ? coerceNumber(r[iValue]) : NaN);
+
+      if (isFinite(val)) total += val;
+
+      holdingsData.push({Ticker:ticker, RiskTier:tier, Value:isFinite(val)?val:0});
+
+      out.push(`<tr>
+        <td>${ticker}</td>
+        <td>${tier}</td>
+        <td class="right">${isFinite(val) ? money(val) : "$—"}</td>
+      </tr>`);
+    }
+
+    if (holdingsBody) holdingsBody.innerHTML = out.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
+    setText(totalValue, money(total));
+
+    recordTotal(total);
+  }
+
+  /* ✅ system loads FIRST, then holdings, then render */
+  async function refreshAll(label){
+    if (inFlight) return; // prevent overlap
+    inFlight = true;
+    try{
+      await loadSystem();
+      await loadHoldings();
+
+      renderMath();
+      renderAction();
+
+      stamp(label);
+    }catch(e){
+      setText(statusLine, "ERROR: " + (e.message || "unknown"));
+      console.error(e);
+    } finally {
+      inFlight = false;
     }
   }
 
-  /* ===========================
-     RENDER (core header area)
-  =========================== */
-  function renderCore(state) {
-    const tier = normalizeTier(state?.tier) || "MED";
-    const tierCfg = RISK_TIERS[tier] || null;
-
-    safeSetText("statusLine", "System Online");
-    safeSetText("nextRefresh", "Next refresh in: 60s");
-
-    safeSetText("valRegime", state?.scan?.regime ?? "Neutral");
-    safeSetText("valCash", state?.scan?.cash ?? "—");
-    safeSetText("valLiq", state?.scan?.liquidity ?? "—");
-    safeSetText("valVol", state?.scan?.volatility ?? "—");
-    safeSetText("valViol", (state?.scan?.violations ?? 0).toString());
-
-    if (!tierCfg?.ticker) {
-      safeSetText("valDeploy", "⚠️ Tier " + tier + " missing mapping");
-      safeSetText("lastExecBadge", "Tier: " + tier + " | Ticker: —");
-    } else {
-      safeSetText("valDeploy", "BUY $" + tierCfg.buyUsd + " (" + tierCfg.ticker + ")");
-      safeSetText("lastExecBadge", "Tier: " + tier + " | Ticker: " + tierCfg.ticker);
+  // Executed button records state and advances rotation immediately
+  if (executedBtn) executedBtn.onclick = () => {
+    if(!suggested.ticker || !suggested.tier){
+      setText(statusLine, "Nothing to record yet (no valid BUY suggestion).");
+      return;
     }
+    localStorage.setItem(LS_LAST_EXEC_TICKER, suggested.ticker);
+    localStorage.setItem(LS_LAST_EXEC_TIER, suggested.tier);
+    localStorage.setItem(LS_LAST_EXEC_TS, String(Date.now()));
+    setText(statusLine, `Recorded executed: ${suggested.ticker} (${suggested.tier}) ✅`);
+    renderAction();
+  };
 
-    if (state?.lastExecuted) {
-      safeSetText("statusLine", "Ready • Last run: " + state.lastExecuted);
+  // Buttons
+  if (saveBtn) saveBtn.onclick = () => {
+    localStorage.setItem(LS_HOLDINGS, holdingsUrl?.value || "");
+    localStorage.setItem(LS_SYSTEM, systemUrl?.value || "");
+    refreshAll("Saved + refreshed");
+  };
+  if (refreshBtn) refreshBtn.onclick = () => refreshAll("Manual refresh");
+  if (runScanBtn) runScanBtn.onclick = () => refreshAll("Scan complete");
+
+  // Initial
+  if (holdingsUrl) holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || holdingsUrl.value || "";
+  if (systemUrl)   systemUrl.value   = localStorage.getItem(LS_SYSTEM) || systemUrl.value || "";
+  refreshAll("Loaded");
+
+  // Auto refresh
+  let secondsLeft=60;
+  setInterval(()=>{
+    secondsLeft--;
+    setText(nextRefresh, "Next refresh in: " + secondsLeft + "s");
+    if(secondsLeft<=0){
+      secondsLeft=60;
+      setText(statusLine, "Auto-refresh…");
+      refreshAll("Auto-refresh complete");
     }
-  }
+  },1000);
 
-  /* ===========================
-     SCAN SIMULATOR (placeholder)
-  =========================== */
-  function runScan(state) {
-    const next = structuredClone
-      ? structuredClone(state)
-      : JSON.parse(JSON.stringify(state));
-
-    safeSetText("statusLine", "Running Scan…");
-    setTimeout(() => {
-      try {
-        next.lastExecuted = nowTime();
-        next.scan = next.scan || {};
-        next.scan.regime = "Neutral";
-        next.scan.cash = "—";
-        next.scan.liquidity = "—";
-        next.scan.volatility = "—";
-        next.scan.violations = 0;
-
-        saveState(next);
-        setLastUpdated();
-        renderCore(next);
-        safeSetText("statusLine", "Scan Complete");
-      } catch (err) {
-        showError(err);
-      }
-    }, 650);
-  }
-
-  /* ===========================
-     BOOTSTRAP
-  =========================== */
-  window.addEventListener("DOMContentLoaded", () => {
-    try {
-      let state = loadState();
-      saveState(state);
-      setLastUpdated();
-      renderCore(state);
-
-      // restore inputs from saved state
-      const holdingsInput = document.getElementById("holdingsUrl");
-      const pricesInput = document.getElementById("pricesUrl");
-
-      if (holdingsInput) holdingsInput.value = state?.dataSources?.holdingsUrl ?? "";
-      if (pricesInput) pricesInput.value = state?.dataSources?.pricesUrl ?? "";
-
-      // render holdings if we already have them
-      renderHoldings(state.holdings);
-
-      // Buttons
-      document.getElementById("runScanBtn")?.addEventListener("click", () => {
-        state = loadState();
-        runScan(state);
-      });
-
-      document.getElementById("setTierLowBtn")?.addEventListener("click", () => {
-        state = loadState(); state.tier = "LOW"; saveState(state); renderCore(state);
-      });
-      document.getElementById("setTierMedBtn")?.addEventListener("click", () => {
-        state = loadState(); state.tier = "MED"; saveState(state); renderCore(state);
-      });
-      document.getElementById("setTierHighBtn")?.addEventListener("click", () => {
-        state = loadState(); state.tier = "HIGH"; saveState(state); renderCore(state);
-      });
-
-      // Save inputs on change (so they persist)
-      holdingsInput?.addEventListener("change", () => {
-        state = loadState();
-        state.dataSources = state.dataSources || {};
-        state.dataSources.holdingsUrl = holdingsInput.value.trim();
-        saveState(state);
-      });
-      pricesInput?.addEventListener("change", () => {
-        state = loadState();
-        state.dataSources = state.dataSources || {};
-        state.dataSources.pricesUrl = pricesInput.value.trim();
-        saveState(state);
-      });
-
-      // Load holdings button
-      document.getElementById("loadDataBtn")?.addEventListener("click", async () => {
-        state = loadState();
-        // pull latest values from inputs (in case user didn't blur/change)
-        state.dataSources = state.dataSources || {};
-        state.dataSources.holdingsUrl = (holdingsInput?.value ?? "").trim();
-        state.dataSources.pricesUrl = (pricesInput?.value ?? "").trim();
-        saveState(state);
-
-        state = await loadHoldingsFromUrls(state);
-      });
-
-      // Defensive global error traps
-      window.addEventListener("error", (e) => showError(e.error || e.message));
-      window.addEventListener("unhandledrejection", (e) => showError(e.reason));
-
-    } catch (err) {
-      showError(err);
-    }
-  });
-  </script>
-
-</body>
-</html>
+});
+</script>
