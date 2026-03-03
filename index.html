@@ -1,152 +1,24 @@
-<!doctype html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal — Nest Mode (Lean 2.0 / Group A)</title>
+<script>
+/* ========= Lean Terminal — Nest Mode (SGOV Locked) =========
+   COMPLETE SCRIPT (with Executed checkbox indicator)
 
-  <style>
-    :root{
-      --bg:#0b0b0c; --card:#0f0f11; --line:#222; --line2:#333;
-      --text:#eaeaea; --muted:#b9b9b9;
-      --green:#7CFF9E; --yellow:#FFD37C; --red:#FF8080;
-    }
-    body{ margin:0; padding:22px; background:var(--bg); color:var(--text);
-      font-family: system-ui,-apple-system,Segoe UI,Roboto,Arial; }
-    h1{ margin:0 0 6px; }
-    .subtle{ opacity:.85; margin-bottom:12px; }
-    .row{ display:flex; gap:12px; flex-wrap:wrap; align-items:center; margin:10px 0; }
-    .pill{ padding:6px 12px; border:1px solid var(--line2); border-radius:999px; background:#121214; }
-    button{ padding:8px 12px; border-radius:10px; border:1px solid var(--line2);
-      background:#17171a; color:var(--text); cursor:pointer; }
-    button:hover{ background:#1f1f24; }
-    .card{ border:1px solid var(--line); background:var(--card); border-radius:16px; padding:14px; margin-top:14px; }
-    label{ display:block; margin:10px 0 6px; color:var(--muted); }
-    input[type="text"]{ width:min(980px,100%); padding:10px 12px; border-radius:12px;
-      border:1px solid var(--line2); background:#121214; color:var(--text); outline:none; }
-    .hint{ font-size:12px; opacity:.75; margin-top:6px; line-height:1.35; }
-    table{ width:100%; border-collapse:collapse; margin-top:12px; font-size:14px; }
-    th,td{ padding:10px 8px; border-bottom:1px solid #1f1f22; text-align:left; }
-    th{ opacity:.8; font-weight:600; }
-    .right{ text-align:right; }
-    .mono{ font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; }
-    .errorBox{ margin-top:12px; padding:12px; border:1px solid #550000; background:#1a0000;
-      color:var(--red); border-radius:12px; white-space:pre-wrap;
-      font-family: ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace; }
-    .ok{ color:var(--green); } .warn{ color:var(--yellow); } .bad{ color:var(--red); }
-    .grid{ display:grid; grid-template-columns: 1fr; gap:12px; }
-    @media (min-width: 900px){
-      .grid{ grid-template-columns: 1.2fr .8fr; }
-    }
-  </style>
-</head>
+   Requires these element IDs in your HTML:
+   statusLine, lastUpdated, nextRefresh
+   valRegime, valDeploy, valCash, valLiq, valVol, valViol, valBrake
+   actionMain, actionReason, actionNext, actionMeta
+   executedBtn, execIcon, lastExecBadge
+   mathDD, mathPeak, mathVol, mathSharpe
+   holdingsUrl, systemUrl, holdingsBody, totalValue
+   saveBtn, refreshBtn, runScanBtn
 
-<body>
+   Notes:
+   - Executes after DOMContentLoaded (no white screen)
+   - Robust CSV parsing (quotes/commas)
+   - System loads FIRST, then holdings (no regime race)
+   - Executed button shows ⬜/✅ via #execIcon + .done class
+*/
 
-  <h1>Lean Terminal — Nest Mode</h1>
-  <div class="subtle">Lean 2.0 / Group A • Nest Mode (SGOV locked)</div>
-
-  <div class="row">
-    <div class="pill" id="statusLine">Loaded</div>
-    <div class="pill" id="lastUpdated">LAST UPDATED: —</div>
-    <div class="pill" id="nextRefresh">Next refresh in: —</div>
-  </div>
-
-  <div class="grid">
-    <div class="card">
-      <h2 style="margin:0 0 8px;">Good Morning</h2>
-
-      <div class="row">
-        <button id="runScanBtn">Run Scan</button>
-        <button id="refreshBtn">Refresh</button>
-        <button id="saveBtn">Save URLs</button>
-      <button id="executedBtn" class="exec-btn">
-  <span id="execIcon">⬜</span> Executed
-</button>
-        <div class="pill" id="lastExecBadge">Last executed: —</div>
-      </div>
-
-      <div class="row">
-        <div class="pill">Regime: <span id="valRegime">—</span></div>
-        <div class="pill">Deployment: <span id="valDeploy">—</span></div>
-        <div class="pill">Cash: <span id="valCash">—</span></div>
-        <div class="pill">Liquidity: <span id="valLiq">—</span></div>
-        <div class="pill">Volatility: <span id="valVol">—</span></div>
-        <div class="pill">Violations: <span id="valViol">—</span></div>
-        <div class="pill">Brake: <span id="valBrake">—</span></div>
-      </div>
-
-      <div class="card" style="margin-top:12px;">
-        <div class="mono" style="opacity:.8; margin-bottom:6px;">TODAY ACTION (SGOV LOCKED)</div>
-        <div style="font-size:22px; font-weight:700;" id="actionMain">—</div>
-        <div class="subtle" id="actionReason" style="margin-top:6px;">—</div>
-        <div class="subtle" id="actionNext" style="margin-top:6px;">—</div>
-        <div class="pill" id="actionMeta" style="margin-top:10px;">Tier: — | Ticker: —</div>
-      </div>
-    </div>
-
-    <div class="card">
-      <h3 style="margin:0 0 8px;">Math Assist</h3>
-      <div class="row">
-        <div class="pill" id="mathDD">Drawdown: —</div>
-        <div class="pill" id="mathPeak">Peak: —</div>
-        <div class="pill" id="mathVol">Vol(30): —</div>
-        <div class="pill" id="mathSharpe">Sharpe-ish: —</div>
-      </div>
-      <div class="hint">Note: math improves as scans accumulate on this device.</div>
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">CSV Links</h3>
-    <div class="subtle">Paste your published Google Sheets CSV links below.</div>
-
-    <label for="systemUrl">System Report CSV URL</label>
-    <input id="systemUrl" type="text" placeholder="https://docs.google.com/...&output=csv" />
-
-    <label for="holdingsUrl">Holdings CSV URL</label>
-    <input id="holdingsUrl" type="text" placeholder="https://docs.google.com/...&output=csv" />
-
-    <div class="hint">
-      Holdings CSV should include headers like <span class="mono">Ticker</span>, optional <span class="mono">RiskTier</span>, and <span class="mono">Value</span>.<br/>
-      System CSV should be two columns: <span class="mono">Metric</span>, <span class="mono">Value</span>.
-    </div>
-  </div>
-
-  <div class="card">
-    <h3 style="margin:0 0 6px;">Holdings</h3>
-    <div class="row">
-      <div class="pill">Total: <span id="totalValue">$—</span></div>
-    </div>
-
-    <div style="overflow:auto;">
-      <table>
-        <thead>
-          <tr>
-            <th>Ticker</th>
-            <th>RiskTier</th>
-            <th class="right">Value</th>
-          </tr>
-        </thead>
-        <tbody id="holdingsBody">
-          <tr><td colspan="3" class="subtle">No holdings loaded yet.</td></tr>
-        </tbody>
-      </table>
-    </div>
-
-    <div id="errorBoxMount"></div>
-  </div>
-
-  <script>
-  /* ========= Lean Terminal — Nest Mode (SGOV Locked) =========
-     FIXES:
-     - DOM-safe (no white screen)
-     - Robust CSV parsing
-     - Header matching tolerant
-     - Value parsing tolerant ($, commas)
-     - System-first loading
-     - Prevent overlapping refreshes
-  */
+window.addEventListener("DOMContentLoaded", () => {
 
   // ---------- LocalStorage keys ----------
   const LS_HOLDINGS="lean_holdings_csv_url";
@@ -166,102 +38,102 @@
   const NEST_MODE=true;
 
   // ---------- elements ----------
-  const $ = (id)=>document.getElementById(id);
-  const statusLine=$("statusLine");
-  const lastUpdated=$("lastUpdated");
-  const nextRefresh=$("nextRefresh");
+  const $ = (id) => document.getElementById(id);
+  const statusLine = $("statusLine");
+  const lastUpdated = $("lastUpdated");
+  const nextRefresh = $("nextRefresh");
 
-  const valRegime=$("valRegime");
-  const valDeploy=$("valDeploy");
-  const valCash=$("valCash");
-  const valLiq=$("valLiq");
-  const valVol=$("valVol");
-  const valViol=$("valViol");
-  const valBrake=$("valBrake");
+  const valRegime = $("valRegime");
+  const valDeploy = $("valDeploy");
+  const valCash = $("valCash");
+  const valLiq = $("valLiq");
+  const valVol = $("valVol");
+  const valViol = $("valViol");
+  const valBrake = $("valBrake");
 
-  const actionMain=$("actionMain");
-  const actionReason=$("actionReason");
-  const actionNext=$("actionNext");
-  const actionMeta=$("actionMeta");
+  const actionMain = $("actionMain");
+  const actionReason = $("actionReason");
+  const actionNext = $("actionNext");
+  const actionMeta = $("actionMeta");
 
-  const executedBtn=$("executedBtn");
-  const lastExecBadge=$("lastExecBadge");
+  const executedBtn = $("executedBtn");
+  const execIcon = $("execIcon");          // <-- required for checkbox indicator
+  const lastExecBadge = $("lastExecBadge");
 
-  const mathDD=$("mathDD");
-  const mathPeak=$("mathPeak");
-  const mathVol=$("mathVol");
-  const mathSharpe=$("mathSharpe");
+  const mathDD = $("mathDD");
+  const mathPeak = $("mathPeak");
+  const mathVol = $("mathVol");
+  const mathSharpe = $("mathSharpe");
 
-  const holdingsUrl=$("holdingsUrl");
-  const systemUrl=$("systemUrl");
-  const holdingsBody=$("holdingsBody");
-  const totalValue=$("totalValue");
+  const holdingsUrl = $("holdingsUrl");
+  const systemUrl = $("systemUrl");
+  const holdingsBody = $("holdingsBody");
+  const totalValue = $("totalValue");
 
-  const saveBtn=$("saveBtn");
-  const refreshBtn=$("refreshBtn");
-  const runScanBtn=$("runScanBtn");
-  const errorBoxMount=$("errorBoxMount");
+  const saveBtn = $("saveBtn");
+  const refreshBtn = $("refreshBtn");
+  const runScanBtn = $("runScanBtn");
 
   // runtime
-  let holdingsData=[];
-  let suggested={tier:null,ticker:null,amount:null};
-  let inFlight=false;
+  let holdingsData = [];
+  let suggested = { tier: null, ticker: null, amount: null };
+  let inFlight = false;
 
-  // ---------- UI helpers ----------
-  function setText(el, txt){ if(el) el.textContent = txt; }
+  // ---------- helpers ----------
+  function setText(el, txt) { if (el) el.textContent = txt; }
   function stamp(label){
-    const t=new Date().toLocaleTimeString();
-    setText(lastUpdated,"LAST UPDATED: "+t);
-    setText(statusLine,label+" @ "+t);
-  }
-  function showError(msg){
-    console.error(msg);
-    if(!errorBoxMount) return;
-    errorBoxMount.innerHTML = "";
-    const box=document.createElement("div");
-    box.className="errorBox";
-    box.textContent=String(msg?.stack || msg);
-    errorBoxMount.appendChild(box);
+    const t = new Date().toLocaleTimeString();
+    setText(lastUpdated, "LAST UPDATED: " + t);
+    setText(statusLine, label + " @ " + t);
   }
 
   function money(n){
     return isFinite(n) ? n.toLocaleString(undefined,{style:"currency",currency:"USD"}) : "$—";
   }
+
   function coerceNumber(v){
-    if(v===null||v===undefined) return NaN;
-    const s=String(v).replace(/[$,%\s]/g,"").replace(/,/g,"").trim();
-    if(!s) return NaN;
+    if (v === null || v === undefined) return NaN;
+    const s = String(v).replace(/[$,%\s]/g, "").replace(/,/g, "").trim();
+    if (!s) return NaN;
     return Number(s);
   }
 
   async function fetchText(url){
-    const sep=url.includes("?")?"&":"?";
-    const res=await fetch(url+sep+"t="+Date.now(),{cache:"no-store"});
-    if(!res.ok) throw new Error("Fetch failed: "+res.status+" ("+url+")");
-    const text=await res.text();
-    if(text.trim().startsWith("<")) throw new Error("URL returned HTML not CSV. Ensure &output=csv");
+    const sep = url.includes("?") ? "&" : "?";
+    const res = await fetch(url + sep + "t=" + Date.now(), { cache:"no-store" });
+    if(!res.ok) throw new Error("Fetch failed: " + res.status + " (" + url + ")");
+    const text = await res.text();
+    if (text.trim().startsWith("<")) throw new Error("URL returned HTML not CSV. Ensure &output=csv");
     return text;
   }
 
   // Robust CSV parser (quotes + commas)
   function parseCSV(text){
-    const rows=[];
-    let row=[], cur="", inQuotes=false;
-    const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
-    for(let i=0;i<t.length;i++){
-      const c=t[i], n=t[i+1];
-      if(inQuotes){
-        if(c==='"' && n==='"'){ cur+='"'; i++; continue; }
-        if(c==='"'){ inQuotes=false; continue; }
-        cur+=c; continue;
+    const rows = [];
+    let row = [];
+    let cur = "";
+    let inQuotes = false;
+
+    const t = text.replace(/\r\n/g,"\n").replace(/\r/g,"\n");
+
+    for (let i=0; i<t.length; i++){
+      const c = t[i];
+      const n = t[i+1];
+
+      if (inQuotes){
+        if (c === '"' && n === '"'){ cur += '"'; i++; continue; }
+        if (c === '"'){ inQuotes = false; continue; }
+        cur += c; continue;
       }
-      if(c==='"'){ inQuotes=true; continue; }
-      if(c===','){ row.push(cur); cur=""; continue; }
-      if(c==='\n'){ row.push(cur); rows.push(row); row=[]; cur=""; continue; }
-      cur+=c;
+
+      if (c === '"'){ inQuotes = true; continue; }
+      if (c === ","){ row.push(cur); cur = ""; continue; }
+      if (c === "\n"){ row.push(cur); rows.push(row); row=[]; cur=""; continue; }
+      cur += c;
     }
-    if(cur.length||row.length){ row.push(cur); rows.push(row); }
-    while(rows.length && rows[rows.length-1].every(x => (x??"").trim()==="")) rows.pop();
+    if (cur.length || row.length){ row.push(cur); rows.push(row); }
+
+    while (rows.length && rows[rows.length-1].every(x => (x??"").trim()==="")) rows.pop();
     return rows;
   }
 
@@ -273,6 +145,7 @@
     if(x.startsWith("L")) return "LOW";
     return "";
   }
+
   function nextTierFromLast(last){
     const L=normalizeTier(last);
     if(L==="HIGH") return "LOW";
@@ -280,21 +153,30 @@
     if(L==="MED")  return "LOW";
     return "LOW";
   }
+
   function pickNextTickerForTier(tier){
     const t=normalizeTier(tier);
     const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV");
-    if(!candidates.length) return null;
+    if(candidates.length===0) return null;
+
     const lastExec=(localStorage.getItem(LS_LAST_EXEC_TICKER)||"").toUpperCase();
     const pick=candidates.find(h=>(h.Ticker||"").toUpperCase()!==lastExec) || candidates[0];
     return (pick.Ticker||"").toUpperCase();
   }
 
-  /* ===== Math ===== */
-  function loadHist(){ try { return JSON.parse(localStorage.getItem(LS_HIST)||"[]"); } catch { return []; } }
-  function saveHist(arr){ localStorage.setItem(LS_HIST, JSON.stringify(arr.slice(-300))); }
+  /* ===== Math: history + drawdown + vol + sharpe-ish ===== */
+  function loadHist(){
+    try { return JSON.parse(localStorage.getItem(LS_HIST) || "[]"); }
+    catch { return []; }
+  }
+  function saveHist(arr){
+    localStorage.setItem(LS_HIST, JSON.stringify(arr.slice(-300)));
+  }
   function recordTotal(total){
     if(!isFinite(total) || total<=0) return;
-    const hist=loadHist(); hist.push({ts:Date.now(), total}); saveHist(hist);
+    const hist=loadHist();
+    hist.push({ts:Date.now(), total});
+    saveHist(hist);
   }
   function computeDrawdown(){
     const hist=loadHist();
@@ -331,36 +213,46 @@
   function renderMath(){
     const {ddPct, peak}=computeDrawdown();
     const brake=brakeLevel(ddPct);
-    setText(valBrake, brake);
-    if(valBrake) valBrake.style.color=(brake==="NONE")?"var(--green)":(brake==="SOFT")?"var(--yellow)":"var(--red)";
+
+    if (valBrake){
+      valBrake.textContent=brake;
+      valBrake.style.color=(brake==="NONE")?"#7CFF9E":(brake==="SOFT")?"#FFD37C":"#FF8080";
+    }
+
     setText(mathDD, isFinite(ddPct)?`Drawdown: ${(ddPct*100).toFixed(2)}%`:"Drawdown: —");
     setText(mathPeak, isFinite(peak)?`Peak: ${money(peak)}`:"Peak: —");
+
     const stats=computeStats();
     setText(mathVol, (stats.vol!==null)?`Vol(30): ${(stats.vol*100).toFixed(2)}%`:"Vol(30): —");
-    setText(mathSharpe,(stats.sharpe!==null)?`Sharpe-ish: ${stats.sharpe.toFixed(2)}`:"Sharpe-ish: —");
+    setText(mathSharpe, (stats.sharpe!==null)?`Sharpe-ish: ${stats.sharpe.toFixed(2)}`:"Sharpe-ish: —");
   }
 
-  /* ===== Gate + ramp ===== */
+  /* ===== Market gate + ramp sizing ===== */
   function marketAllowsDeploy(){
     const regime=safeUpper(valRegime?.textContent);
     const vol=safeUpper(valVol?.textContent);
     const liq=safeUpper(valLiq?.textContent);
+
     const {ddPct}=computeDrawdown();
     const brake=brakeLevel(ddPct);
 
-    if(brake==="FULL"||brake==="HARD") return {ok:false, why:`Brake ${brake}`, cap:0};
-    if(regime.includes("DEFENSIVE")) return {ok:false, why:"Regime DEFENSIVE", cap:0};
-    if(vol.includes("HOT")||vol.includes("🔴")) return {ok:false, why:"Volatility HOT", cap:0};
-    if(liq.includes("TIGHT")) return {ok:false, why:"Liquidity TIGHT", cap:0};
-    if(brake==="SOFT") return {ok:true, why:"Brake SOFT (core-only)", cap:50};
-    return {ok:true, why:"Conditions OK", cap:RAMP_MAX};
+    if(brake==="FULL" || brake==="HARD") return { ok:false, why:`Brake ${brake}`, cap:0 };
+    if(regime.includes("DEFENSIVE")) return { ok:false, why:"Regime DEFENSIVE", cap:0 };
+    if(vol.includes("HOT") || vol.includes("🔴")) return { ok:false, why:"Volatility HOT", cap:0 };
+    if(liq.includes("TIGHT")) return { ok:false, why:"Liquidity TIGHT", cap:0 };
+
+    if(brake==="SOFT") return { ok:true, why:"Brake SOFT (core-only)", cap:50 };
+    return { ok:true, why:"Conditions OK", cap:RAMP_MAX };
   }
+
   function chooseRampAmount(gate){
     if(!gate.ok) return 0;
     if(gate.cap===50) return 50;
+
     const vol=safeUpper(valVol?.textContent);
-    if(vol.includes("WATCH")||vol.includes("🟡")) return RAMP_DEFAULT;
-    if(vol.includes("CALM")||vol.includes("🟢")) return RAMP_MAX;
+    if(vol.includes("WATCH") || vol.includes("🟡")) return RAMP_DEFAULT;
+    if(vol.includes("CALM") || vol.includes("🟢")) return RAMP_MAX;
+
     return RAMP_DEFAULT;
   }
 
@@ -368,8 +260,29 @@
     const tkr=localStorage.getItem(LS_LAST_EXEC_TICKER);
     const tier=localStorage.getItem(LS_LAST_EXEC_TIER);
     const ts=localStorage.getItem(LS_LAST_EXEC_TS);
-    if(!tkr||!ts){ setText(lastExecBadge,"Last executed: —"); return; }
+
+    if(!tkr || !ts){
+      setText(lastExecBadge, "Last executed: —");
+      return;
+    }
     setText(lastExecBadge, `Last executed: ${tkr} (${tier||"—"}) @ ${new Date(parseInt(ts,10)).toLocaleString()}`);
+  }
+
+  // ✅ Executed checkbox indicator
+  function updateExecutedVisual(){
+    const tkr = localStorage.getItem(LS_LAST_EXEC_TICKER);
+    const ts  = localStorage.getItem(LS_LAST_EXEC_TS);
+
+    if (!executedBtn || !execIcon) return;
+
+    if (!tkr || !ts){
+      executedBtn.classList.remove("done");
+      execIcon.textContent = "⬜";
+      return;
+    }
+
+    executedBtn.classList.add("done");
+    execIcon.textContent = "✅";
   }
 
   function renderAction(){
@@ -381,18 +294,18 @@
     const sgNote=`SGOV locked (never sell). Daily SGOV buy: $${SGOV_DAILY}. Equity is deposit-funded.`;
 
     if(PHASE!=="DEPLOY"){
-      setText(actionMain,"HOLD — Phase not DEPLOY");
-      setText(actionReason,"Phase not set to DEPLOY.");
-      setText(actionNext,"NEXT UP: —");
-      setText(actionMeta,"Tier: — | Ticker: —");
+      setText(actionMain, "HOLD — Phase not DEPLOY");
+      setText(actionReason, "Phase not set to DEPLOY.");
+      setText(actionNext, "NEXT UP: —");
+      setText(actionMeta, "Tier: — | Ticker: —");
       return;
     }
 
     if(!gate.ok || rampAmt===0){
-      setText(actionMain,"HOLD — Preserve down payment cash");
-      setText(actionReason,`Reason: ${gate.why}. ${sgNote}`);
-      setText(actionNext,"NEXT UP: Wait for conditions to improve");
-      setText(actionMeta,"Tier: — | Ticker: —");
+      setText(actionMain, "HOLD — Preserve down payment cash");
+      setText(actionReason, `Reason: ${gate.why}. ${sgNote}`);
+      setText(actionNext, "NEXT UP: Wait for conditions to improve");
+      setText(actionMeta, "Tier: — | Ticker: —");
       return;
     }
 
@@ -401,72 +314,80 @@
     const tkr=pickNextTickerForTier(tier);
 
     if(!tkr){
-      setText(actionMain,`BUY $${rampAmt} (Fix RiskTier values)`);
-      setText(actionReason,`No ticker found for Tier=${tier}. ${sgNote}`);
-      setText(actionNext,`NEXT UP: ${tier} tier`);
-      setText(actionMeta,`Tier: ${tier} | Ticker: —`);
+      setText(actionMain, `BUY $${rampAmt} (Fix RiskTier values)`);
+      setText(actionReason, `No ticker found for Tier=${tier}. ${sgNote}`);
+      setText(actionNext, `NEXT UP: ${tier} tier`);
+      setText(actionMeta, `Tier: ${tier} | Ticker: —`);
       return;
     }
 
-    setText(actionMain,`BUY $${rampAmt} ${tkr} (Deposit-Funded)`);
-    setText(actionReason,`Rotation: ${tier}. ${gate.why}. ${sgNote}`);
-    setText(actionNext,`NEXT UP: ${nextTierFromLast(tier)} tier`);
-    setText(actionMeta,`Tier: ${tier} | Ticker: ${tkr}`);
+    setText(actionMain, `BUY $${rampAmt} ${tkr} (Deposit-Funded)`);
+    setText(actionReason, `Rotation: ${tier}. ${gate.why}. ${sgNote}`);
+    setText(actionNext, `NEXT UP: ${nextTierFromLast(tier)} tier`);
+    setText(actionMeta, `Tier: ${tier} | Ticker: ${tkr}`);
 
     suggested={tier,ticker:tkr,amount:rampAmt};
   }
 
+  // ---------- SYSTEM loader ----------
   async function loadSystem(){
     if(!systemUrl?.value) return;
+
     const rows=parseCSV(await fetchText(systemUrl.value));
     const map=new Map();
-    for(const r of rows){
-      const k=safeUpper(r[0]);
-      const v=(r[1]??"").toString().trim();
-      if(!k) continue;
-      if(k==="METRIC"||k==="KEY") continue;
-      if(safeUpper(v)==="VALUE") continue;
-      map.set(k,v);
+    for (const r of rows){
+      const k = safeUpper(r[0]);
+      const v = (r[1] ?? "").toString().trim();
+      if (!k) continue;
+      if (k === "METRIC" || k === "KEY") continue;
+      if (safeUpper(v) === "VALUE") continue;
+      map.set(k, v);
     }
-    setText(valRegime,map.get("MARKET REGIME")||"—");
-    setText(valDeploy,map.get("DEPLOYMENT SIGNAL")||"—");
-    setText(valCash,map.get("CASH ANCHOR %")||"—");
-    setText(valLiq,map.get("LIQUIDITY")||"—");
-    setText(valVol,map.get("VOLATILITY")||"—");
-    setText(valViol,map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—");
+
+    setText(valRegime, map.get("MARKET REGIME")||"—");
+    setText(valDeploy, map.get("DEPLOYMENT SIGNAL")||"—");
+    setText(valCash, map.get("CASH ANCHOR %")||"—");
+    setText(valLiq, map.get("LIQUIDITY")||"—");
+    setText(valVol, map.get("VOLATILITY")||"—");
+    setText(valViol, map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—");
   }
 
+  // ---------- HOLDINGS loader ----------
   function buildHeaderIndex(headers){
-    const map=new Map();
+    const map = new Map();
     headers.forEach((h,i)=>{
-      const k=(h??"").toString().trim().toLowerCase();
-      if(k) map.set(k,i);
+      const k = (h??"").toString().trim().toLowerCase();
+      if (k) map.set(k, i);
     });
     return map;
   }
-  function findHeader(map,cands){
-    for(const c of cands){
-      const k=c.toLowerCase();
-      if(map.has(k)) return map.get(k);
+
+  function findHeader(map, candidates){
+    for (const c of candidates){
+      const k = c.toLowerCase();
+      if (map.has(k)) return map.get(k);
     }
     return -1;
   }
 
   async function loadHoldings(){
     if(!holdingsUrl?.value) return;
+
     const rows=parseCSV(await fetchText(holdingsUrl.value));
-    if(!rows.length) throw new Error("Holdings CSV empty");
+    if (!rows.length) throw new Error("Holdings CSV empty");
 
     const headers=rows[0];
     const hmap=buildHeaderIndex(headers);
 
-    const iTicker=findHeader(hmap,["ticker","symbol","tkr","Ticker","Symbol"]);
-    const iTier=findHeader(hmap,["risktier","risk tier","tier","RiskTier","Risk Tier"]);
-    const iValue=findHeader(hmap,["value","market value","market_value","mv","value usd","value ($)","Value","Market Value"]);
+    const iTicker = findHeader(hmap, ["ticker","symbol","tkr"]);
+    const iTier   = findHeader(hmap, ["risktier","risk tier","tier"]);
+    const iValue  = findHeader(hmap, ["value","market value","market_value","mv","value usd","value ($)"]);
 
-    if(iTicker<0){
-      holdingsBody.innerHTML=`<tr><td colspan="3">❌ CSV missing a Ticker column.</td></tr>`;
-      holdingsData=[]; setText(totalValue,"$—"); return;
+    if(iTicker < 0){
+      if (holdingsBody) holdingsBody.innerHTML = `<tr><td colspan="3">❌ CSV missing a Ticker column.</td></tr>`;
+      holdingsData=[];
+      setText(totalValue, "$—");
+      return;
     }
 
     holdingsData=[];
@@ -475,84 +396,90 @@
 
     for(let i=1;i<rows.length;i++){
       const r=rows[i];
-      const tickerRaw=r[iTicker];
+      const tickerRaw = r[iTicker];
       if(!tickerRaw) continue;
 
-      const ticker=safeUpper(tickerRaw);
-      const tier=(iTier>=0 ? (r[iTier]||"") : "");
-      const val=(iValue>=0 ? coerceNumber(r[iValue]) : NaN);
+      const ticker = safeUpper(tickerRaw);
+      const tier = (iTier>=0 ? (r[iTier]||"") : "");
+      const val = (iValue>=0 ? coerceNumber(r[iValue]) : NaN);
 
-      if(isFinite(val)) total+=val;
+      if (isFinite(val)) total += val;
+
       holdingsData.push({Ticker:ticker, RiskTier:tier, Value:isFinite(val)?val:0});
 
       out.push(`<tr>
         <td class="mono">${ticker}</td>
         <td>${tier}</td>
-        <td class="right">${isFinite(val)?money(val):"$—"}</td>
+        <td class="right">${isFinite(val) ? money(val) : "$—"}</td>
       </tr>`);
     }
 
-    holdingsBody.innerHTML = out.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
+    if (holdingsBody) holdingsBody.innerHTML = out.join("") || `<tr><td colspan="3">No rows.</td></tr>`;
     setText(totalValue, money(total));
+
     recordTotal(total);
   }
 
+  /* ✅ system loads FIRST, then holdings, then render */
   async function refreshAll(label){
-    if(inFlight) return;
-    inFlight=true;
+    if (inFlight) return;
+    inFlight = true;
     try{
       await loadSystem();
       await loadHoldings();
+
       renderMath();
       renderAction();
+      updateExecutedVisual();
+
       stamp(label);
     }catch(e){
-      setText(statusLine,"ERROR: "+(e.message||"unknown"));
-      showError(e);
-    }finally{
-      inFlight=false;
+      setText(statusLine, "ERROR: " + (e.message || "unknown"));
+      console.error(e);
+    } finally {
+      inFlight = false;
     }
   }
 
-  // Wire buttons
-  executedBtn.onclick=()=>{
+  // Executed button records state
+  if (executedBtn) executedBtn.onclick = () => {
     if(!suggested.ticker || !suggested.tier){
-      setText(statusLine,"Nothing to record yet (no valid BUY suggestion).");
+      setText(statusLine, "Nothing to record yet (no valid BUY suggestion).");
       return;
     }
     localStorage.setItem(LS_LAST_EXEC_TICKER, suggested.ticker);
     localStorage.setItem(LS_LAST_EXEC_TIER, suggested.tier);
     localStorage.setItem(LS_LAST_EXEC_TS, String(Date.now()));
-    setText(statusLine,`Recorded executed: ${suggested.ticker} (${suggested.tier}) ✅`);
+    setText(statusLine, `Recorded executed: ${suggested.ticker} (${suggested.tier}) ✅`);
+    updateExecutedVisual();
     renderAction();
   };
 
-  saveBtn.onclick=()=>{
-    localStorage.setItem(LS_HOLDINGS, holdingsUrl.value);
-    localStorage.setItem(LS_SYSTEM, systemUrl.value);
+  // Buttons
+  if (saveBtn) saveBtn.onclick = () => {
+    localStorage.setItem(LS_HOLDINGS, holdingsUrl?.value || "");
+    localStorage.setItem(LS_SYSTEM, systemUrl?.value || "");
     refreshAll("Saved + refreshed");
   };
-  refreshBtn.onclick=()=>refreshAll("Manual refresh");
-  runScanBtn.onclick=()=>refreshAll("Scan complete");
+  if (refreshBtn) refreshBtn.onclick = () => refreshAll("Manual refresh");
+  if (runScanBtn) runScanBtn.onclick = () => refreshAll("Scan complete");
 
-  // Initial load
-  holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || "";
-  systemUrl.value   = localStorage.getItem(LS_SYSTEM) || "";
-
+  // Initial
+  if (holdingsUrl) holdingsUrl.value = localStorage.getItem(LS_HOLDINGS) || holdingsUrl.value || "";
+  if (systemUrl)   systemUrl.value   = localStorage.getItem(LS_SYSTEM) || systemUrl.value || "";
   refreshAll("Loaded");
 
   // Auto refresh
   let secondsLeft=60;
   setInterval(()=>{
     secondsLeft--;
-    setText(nextRefresh,"Next refresh in: "+secondsLeft+"s");
+    setText(nextRefresh, "Next refresh in: " + secondsLeft + "s");
     if(secondsLeft<=0){
       secondsLeft=60;
-      setText(statusLine,"Auto-refresh…");
+      setText(statusLine, "Auto-refresh…");
       refreshAll("Auto-refresh complete");
     }
   },1000);
-  </script>
 
-</body>
-</html>
+});
+</script>
