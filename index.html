@@ -106,8 +106,8 @@ function stamp(label){
 
 function money(n){
   return isFinite(n)
-  ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
-  : "$—"
+    ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
+    : "$—"
 }
 
 function safeUpper(s){
@@ -127,6 +127,48 @@ function coerceNumber(v){
   const s=String(v).replace(/[$,%\s]/g,"").replace(/,/g,"").trim()
   if(!s) return NaN
   return Number(s)
+}
+
+function clamp(n,min,max){
+  return Math.max(min,Math.min(max,n))
+}
+
+function mean(arr){
+  if(!arr.length) return null
+  return arr.reduce((s,x)=>s+x,0)/arr.length
+}
+
+function stdDev(arr){
+  if(arr.length<2) return null
+  const m=mean(arr)
+  const variance=arr.reduce((s,x)=>s+Math.pow(x-m,2),0)/(arr.length-1)
+  return Math.sqrt(variance)
+}
+
+function percentile(arr,p){
+  if(!arr.length) return null
+  const s=[...arr].sort((a,b)=>a-b)
+  const idx=(s.length-1)*p
+  const lo=Math.floor(idx)
+  const hi=Math.ceil(idx)
+  if(lo===hi) return s[lo]
+  return s[lo]+(s[hi]-s[lo])*(idx-lo)
+}
+
+function fmtPct(n,d=1){
+  return isFinite(n) ? `${(n*100).toFixed(d)}%` : "—"
+}
+
+function toBadge(label,color){
+  return `<span style="display:inline-block;padding:4px 8px;border-radius:999px;background:${color.bg};color:${color.fg};font-weight:700;font-size:12px">${label}</span>`
+}
+
+const C={
+  green:{bg:"rgba(16,185,129,.14)",fg:"#34d399"},
+  yellow:{bg:"rgba(245,158,11,.14)",fg:"#fbbf24"},
+  red:{bg:"rgba(239,68,68,.14)",fg:"#f87171"},
+  blue:{bg:"rgba(59,130,246,.14)",fg:"#60a5fa"},
+  gray:{bg:"rgba(255,255,255,.08)",fg:"#d1d5db"}
 }
 
 
@@ -179,6 +221,8 @@ function parseCSV(text){
 let holdingsData=[]
 let suggested={tier:null,ticker:null,amount:null}
 let inFlight=false
+let lastTotalValue=NaN
+let lastThemeRows=[]
 
 
 /* ============================
@@ -222,7 +266,7 @@ function brakeLevel(ddPct){
 
 function computeStats(){
   const hist=loadHist()
-  if(hist.length<10)return{vol:null,sharpe:null}
+  if(hist.length<10)return{vol:null,sharpe:null,rets:[]}
 
   const rets=[]
   for(let i=1;i<hist.length;i++){
@@ -231,13 +275,15 @@ function computeStats(){
   }
 
   const win=rets.slice(-30)
-  const mean=win.reduce((s,x)=>s+x,0)/win.length
-  const varr=win.reduce((s,x)=>s+(x-mean)*(x-mean),0)/(win.length-1)
+  if(win.length<2) return {vol:null,sharpe:null,rets}
 
-  const vol=Math.sqrt(varr)
-  const sharpe=vol>0?(mean/vol)*Math.sqrt(252):null
+  const m=mean(win)
+  const sd=stdDev(win)
 
-  return{vol,sharpe}
+  const vol=sd
+  const sharpe=vol>0?(m/vol)*Math.sqrt(252):null
+
+  return{vol,sharpe,rets}
 }
 
 function renderMath(){
@@ -357,6 +403,7 @@ async function loadHoldings(){
   holdingsBody.innerHTML=out.join("")
   setText(totalValue,money(total))
 
+  lastTotalValue=total
   recordTotal(total)
 }
 
@@ -366,65 +413,441 @@ async function loadHoldings(){
 ============================ */
 
 const THEME_MAP={
-SGOV:"Cash",
-VOO:"Core",
-SPY:"Core",
-IVV:"Core",
-QQQ:"Tech",
-SMH:"Tech",
-ARKQ:"Innovation",
-CRWV:"Innovation",
-XLE:"Energy",
-VXUS:"International",
-MSOS:"Cannabis",
-TLRY:"Cannabis",
-CGC:"Cannabis",
-HYFM:"Cannabis",
-FIX:"Industrials",
-CRH:"Industrials",
-RVI:"Industrials"
+  SGOV:"Cash",
+  VOO:"Core",
+  SPY:"Core",
+  IVV:"Core",
+  QQQ:"Tech",
+  SMH:"Tech",
+  ARKQ:"Innovation",
+  CRWV:"Innovation",
+  XLE:"Energy",
+  VXUS:"International",
+  MSOS:"Cannabis",
+  TLRY:"Cannabis",
+  CGC:"Cannabis",
+  HYFM:"Cannabis",
+  FIX:"Industrials",
+  CRH:"Industrials",
+  RVI:"Industrials"
+}
+
+function getThemeRows(){
+  const totals=new Map()
+  let grand=0
+
+  for(const h of holdingsData){
+    const theme=THEME_MAP[safeUpper(h.Ticker)]||"Other"
+    const val=Number(h.Value||0)
+    if(!isFinite(val))continue
+    totals.set(theme,(totals.get(theme)||0)+val)
+    grand+=val
+  }
+
+  const rows=[...totals.entries()]
+    .map(([theme,val])=>({theme,val,pct:grand>0?val/grand:0}))
+    .sort((a,b)=>b.val-a.val)
+
+  return rows
 }
 
 function renderHeatmap(){
+  if(!heatmapMount)return
 
-if(!heatmapMount)return
+  const rows=getThemeRows()
+  lastThemeRows=rows
 
-const totals=new Map()
-let grand=0
+  heatmapMount.innerHTML=rows.map(r=>{
+    const width=Math.round(r.pct*100)
 
-for(const h of holdingsData){
+    let color="var(--green)"
+    if(r.pct>0.30)color="var(--yellow)"
+    if(r.pct>0.60)color="var(--red)"
 
-const theme=THEME_MAP[h.Ticker]||"Other"
-const val=Number(h.Value||0)
-
-if(!isFinite(val))continue
-
-totals.set(theme,(totals.get(theme)||0)+val)
-grand+=val
-}
-
-const rows=[...totals.entries()]
-.map(([theme,val])=>({theme,val,pct:val/grand}))
-.sort((a,b)=>b.val-a.val)
-
-heatmapMount.innerHTML=rows.map(r=>{
-
-const width=Math.round(r.pct*100)
-
-let color="var(--green)"
-if(r.pct>0.30)color="var(--yellow)"
-if(r.pct>0.60)color="var(--red)"
-
-return`
+    return`
 <div style="display:grid;grid-template-columns:120px 1fr 60px;gap:10px;margin:8px 0">
-<div>${r.theme}</div>
-<div style="background:#111;border-radius:10px;overflow:hidden">
-<div style="width:${width}%;height:12px;background:${color}"></div>
-</div>
-<div style="text-align:right">${(r.pct*100).toFixed(1)}%</div>
+  <div>${r.theme}</div>
+  <div style="background:#111;border-radius:10px;overflow:hidden">
+    <div style="width:${width}%;height:12px;background:${color}"></div>
+  </div>
+  <div style="text-align:right">${(r.pct*100).toFixed(1)}%</div>
 </div>
 `
-}).join("")
+  }).join("")
+}
+
+
+/* ============================
+   Lean 2.0 upgrade panel
+============================ */
+
+function ensureUpgradeStyles(){
+  if(document.getElementById("leanUpgradeStyles")) return
+  const style=document.createElement("style")
+  style.id="leanUpgradeStyles"
+  style.textContent=`
+    .lean-upgrade-wrap{
+      margin-top:16px;
+      display:grid;
+      grid-template-columns:repeat(auto-fit,minmax(270px,1fr));
+      gap:12px;
+    }
+    .lean-upgrade-card{
+      background:#0f172a;
+      border:1px solid rgba(255,255,255,.08);
+      border-radius:14px;
+      padding:14px;
+      box-shadow:0 8px 20px rgba(0,0,0,.18);
+    }
+    .lean-upgrade-card h3{
+      margin:0 0 8px 0;
+      font-size:15px;
+      color:#f8fafc;
+    }
+    .lean-upgrade-sub{
+      color:#94a3b8;
+      font-size:12px;
+      margin-bottom:10px;
+      line-height:1.45;
+    }
+    .lean-upgrade-row{
+      display:flex;
+      justify-content:space-between;
+      align-items:center;
+      gap:8px;
+      padding:6px 0;
+      border-bottom:1px solid rgba(255,255,255,.06);
+      color:#e5e7eb;
+      font-size:13px;
+    }
+    .lean-upgrade-row:last-child{
+      border-bottom:none;
+    }
+    .lean-meter{
+      width:100%;
+      height:12px;
+      background:#111827;
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:8px;
+    }
+    .lean-meter-fill{
+      height:100%;
+      border-radius:999px;
+    }
+    .lean-mini-note{
+      color:#94a3b8;
+      font-size:12px;
+      margin-top:8px;
+      line-height:1.45;
+    }
+    .lean-cone-track{
+      position:relative;
+      width:100%;
+      height:12px;
+      background:#111827;
+      border-radius:999px;
+      overflow:hidden;
+      margin-top:8px;
+    }
+    .lean-cone-wide{
+      position:absolute;
+      top:0;
+      bottom:0;
+      background:rgba(96,165,250,.35);
+      border-radius:999px;
+    }
+    .lean-cone-mid{
+      position:absolute;
+      top:0;
+      bottom:0;
+      background:rgba(96,165,250,.8);
+      border-radius:999px;
+    }
+    .lean-upgrade-list{
+      display:grid;
+      gap:8px;
+    }
+    .lean-mono{
+      font-family:ui-monospace,SFMono-Regular,Menlo,Monaco,Consolas,"Liberation Mono","Courier New",monospace;
+    }
+  `
+  document.head.appendChild(style)
+}
+
+function ensureUpgradeMount(){
+  let mount=document.getElementById("leanUpgradeMount")
+  if(mount) return mount
+
+  const anchor=heatmapMount?.parentElement || document.body
+  mount=document.createElement("div")
+  mount.id="leanUpgradeMount"
+  mount.className="lean-upgrade-wrap"
+  anchor.appendChild(mount)
+  return mount
+}
+
+function getPortfolioReturns(){
+  const hist=loadHist()
+  if(hist.length<2) return []
+  const rets=[]
+  for(let i=1;i<hist.length;i++){
+    const a=hist[i-1].total
+    const b=hist[i].total
+    if(a>0 && isFinite(a) && isFinite(b)){
+      rets.push((b-a)/a)
+    }
+  }
+  return rets
+}
+
+function computePortfolioCone(days=20,runs=800){
+  const rets=getPortfolioReturns().slice(-120)
+  if(!rets.length || !isFinite(lastTotalValue) || lastTotalValue<=0){
+    return {p10:lastTotalValue,p25:lastTotalValue,p50:lastTotalValue,p75:lastTotalValue,p90:lastTotalValue}
+  }
+
+  const endVals=[]
+  for(let r=0;r<runs;r++){
+    let value=lastTotalValue
+    for(let d=0;d<days;d++){
+      const pick=rets[Math.floor(Math.random()*rets.length)] || 0
+      value*=1+pick
+    }
+    endVals.push(value)
+  }
+
+  return {
+    p10:percentile(endVals,0.10),
+    p25:percentile(endVals,0.25),
+    p50:percentile(endVals,0.50),
+    p75:percentile(endVals,0.75),
+    p90:percentile(endVals,0.90)
+  }
+}
+
+function classifyVolState(){
+  const rets=getPortfolioReturns()
+  const recent=rets.slice(-20)
+  const base=rets.slice(-90)
+
+  if(recent.length<5 || base.length<10){
+    return {label:"🟡 Limited data", color:C.yellow, ratio:null}
+  }
+
+  const rv=stdDev(recent)
+  const bv=stdDev(base)
+
+  if(!isFinite(rv) || !isFinite(bv) || bv<=0){
+    return {label:"🟡 Limited data", color:C.yellow, ratio:null}
+  }
+
+  const ratio=rv/bv
+
+  if(ratio<0.85) return {label:"🟢 Quiet", color:C.green, ratio}
+  if(ratio<1.25) return {label:"🟡 Normal", color:C.yellow, ratio}
+  return {label:"🔴 Hot", color:C.red, ratio}
+}
+
+function computeConsensus(){
+  let score=50
+
+  const regime=safeUpper(valRegime?.textContent)
+  const deploy=safeUpper(valDeploy?.textContent)
+  const liq=safeUpper(valLiq?.textContent)
+  const vol=safeUpper(valVol?.textContent)
+  const viol=safeUpper(valViol?.textContent)
+  const brake=safeUpper(valBrake?.textContent)
+
+  if(regime.includes("RISK ON") || regime.includes("BULL") || regime.includes("FAVORABLE")) score+=12
+  if(regime.includes("MIXED") || regime.includes("NEUTRAL")) score+=0
+  if(regime.includes("DEFENSIVE")) score-=18
+
+  if(deploy.includes("ON") || deploy.includes("YES") || deploy.includes("GO")) score+=10
+  if(deploy.includes("OFF") || deploy.includes("NO")) score-=12
+
+  if(liq.includes("GOOD") || liq.includes("HIGH") || liq.includes("STRONG")) score+=8
+  if(liq.includes("TIGHT") || liq.includes("LOW") || liq.includes("WEAK")) score-=8
+
+  if(vol.includes("QUIET") || vol.includes("LOW")) score+=8
+  if(vol.includes("NORMAL")) score+=0
+  if(vol.includes("HOT") || vol.includes("HIGH")) score-=12
+
+  if(viol.includes("0") || viol.includes("NONE")) score+=6
+  else if(viol && viol!=="—") score-=10
+
+  if(brake==="NONE") score+=8
+  if(brake==="SOFT") score-=5
+  if(brake==="HARD") score-=12
+  if(brake==="FULL") score-=20
+
+  const bayes=Math.round(bayesPOk()*100)
+  score += Math.round((bayes-50)*0.35)
+
+  score=clamp(score,0,100)
+
+  if(score>=67) return {score,label:"🟢 Go",color:C.green}
+  if(score<=33) return {score,label:"🔴 Caution",color:C.red}
+  return {score,label:"🟡 Mixed",color:C.yellow}
+}
+
+function computeRegimePanel(){
+  const volState=classifyVolState()
+  const dd=computeDrawdown()
+  const brake=brakeLevel(dd.ddPct)
+  const regime=safeUpper(valRegime?.textContent)
+
+  let label="🟡 Mixed"
+  let color=C.yellow
+
+  if(regime.includes("DEFENSIVE") || brake==="FULL" || brake==="HARD" || volState.label.includes("Hot")){
+    label="🔴 Defensive"
+    color=C.red
+  }else if((regime.includes("RISK") || regime.includes("BULL") || regime.includes("FAVORABLE")) && brake==="NONE" && !volState.label.includes("Hot")){
+    label="🟢 Risk-On"
+    color=C.green
+  }
+
+  return {
+    label,
+    color,
+    ddPct:dd.ddPct,
+    peak:dd.peak,
+    brake,
+    volState
+  }
+}
+
+function computeOverlapRead(){
+  const rows=lastThemeRows.length ? lastThemeRows : getThemeRows()
+  const top=rows.slice(0,4)
+
+  let concentrationScore=0
+  if(top[0]?.pct) concentrationScore+=top[0].pct
+  if(top[1]?.pct) concentrationScore+=top[1].pct*0.75
+  if(top[2]?.pct) concentrationScore+=top[2].pct*0.5
+
+  let label="🟢 Diversified"
+  let color=C.green
+  if(concentrationScore>0.90){
+    label="🔴 Concentrated"
+    color=C.red
+  }else if(concentrationScore>0.65){
+    label="🟡 Moderate overlap"
+    color=C.yellow
+  }
+
+  return {rows:top,label,color,concentrationScore}
+}
+
+function renderUpgradePanel(){
+  ensureUpgradeStyles()
+  const mount=ensureUpgradeMount()
+
+  const cone=computePortfolioCone(20,1000)
+  const regime=computeRegimePanel()
+  const consensus=computeConsensus()
+  const overlap=computeOverlapRead()
+  const stats=computeStats()
+
+  const coneMin=Math.min(cone.p10||0,lastTotalValue||0)
+  const coneMax=Math.max(cone.p90||0,lastTotalValue||0)
+  const range=Math.max(1,coneMax-coneMin)
+
+  const left10=((cone.p10-coneMin)/range)*100
+  const left25=((cone.p25-coneMin)/range)*100
+  const right75=((cone.p75-coneMin)/range)*100
+  const right90=((cone.p90-coneMin)/range)*100
+
+  const topHoldings=[...holdingsData]
+    .filter(h=>isFinite(h.Value))
+    .sort((a,b)=>b.Value-a.Value)
+    .slice(0,5)
+
+  mount.innerHTML=`
+    <div class="lean-upgrade-card">
+      <h3>Probability Cone</h3>
+      <div class="lean-upgrade-sub">20-step portfolio range estimate from your own account history.</div>
+
+      <div class="lean-upgrade-row"><span>Current</span><strong class="lean-mono">${money(lastTotalValue)}</strong></div>
+      <div class="lean-upgrade-row"><span>10th percentile</span><span class="lean-mono">${money(cone.p10)}</span></div>
+      <div class="lean-upgrade-row"><span>Median</span><span class="lean-mono">${money(cone.p50)}</span></div>
+      <div class="lean-upgrade-row"><span>90th percentile</span><span class="lean-mono">${money(cone.p90)}</span></div>
+
+      <div class="lean-cone-track">
+        <div class="lean-cone-wide" style="left:${clamp(left10,0,100)}%;width:${clamp(right90-left10,2,100)}%"></div>
+        <div class="lean-cone-mid" style="left:${clamp(left25,0,100)}%;width:${clamp(right75-left25,2,100)}%"></div>
+      </div>
+
+      <div class="lean-mini-note">This is a range forecast, not a promise. Wide cone = more uncertainty.</div>
+    </div>
+
+    <div class="lean-upgrade-card">
+      <h3>Regime Detection</h3>
+      <div class="lean-upgrade-sub">Combines system regime, drawdown brake, and realized portfolio volatility.</div>
+
+      <div class="lean-upgrade-row"><span>Regime read</span><span>${toBadge(regime.label,regime.color)}</span></div>
+      <div class="lean-upgrade-row"><span>Vol state</span><span>${toBadge(regime.volState.label,regime.volState.color)}</span></div>
+      <div class="lean-upgrade-row"><span>Brake</span><strong>${regime.brake}</strong></div>
+      <div class="lean-upgrade-row"><span>Drawdown</span><span>${fmtPct(regime.ddPct,2)}</span></div>
+      <div class="lean-upgrade-row"><span>Peak</span><span class="lean-mono">${money(regime.peak)}</span></div>
+    </div>
+
+    <div class="lean-upgrade-card">
+      <h3>Signal Consensus Meter</h3>
+      <div class="lean-upgrade-sub">Blends system regime, deployment signal, volatility, violations, brake, and Bayes confidence.</div>
+
+      <div class="lean-upgrade-row"><span>Consensus</span><span>${toBadge(consensus.label,consensus.color)}</span></div>
+      <div class="lean-upgrade-row"><span>Score</span><strong>${consensus.score}/100</strong></div>
+
+      <div class="lean-meter">
+        <div class="lean-meter-fill" style="width:${consensus.score}%;background:${consensus.color.fg}"></div>
+      </div>
+
+      <div class="lean-mini-note">Use this as posture guidance, not as a blind buy signal.</div>
+    </div>
+
+    <div class="lean-upgrade-card">
+      <h3>Overlap Scan</h3>
+      <div class="lean-upgrade-sub">Current approximation uses theme concentration from your holdings file.</div>
+
+      <div class="lean-upgrade-row"><span>Portfolio read</span><span>${toBadge(overlap.label,overlap.color)}</span></div>
+      ${overlap.rows.map(r=>`
+        <div class="lean-upgrade-row">
+          <span>${r.theme}</span>
+          <span>${(r.pct*100).toFixed(1)}%</span>
+        </div>
+      `).join("")}
+
+      <div class="lean-mini-note">Next upgrade later: true ticker correlation once you add price-history input.</div>
+    </div>
+
+    <div class="lean-upgrade-card">
+      <h3>Top Position Pressure</h3>
+      <div class="lean-upgrade-sub">Largest current holdings by value. Good for checking crowding and branch size.</div>
+
+      <div class="lean-upgrade-list">
+        ${topHoldings.length ? topHoldings.map(h=>`
+          <div class="lean-upgrade-row">
+            <span><strong>${safeUpper(h.Ticker)}</strong> <span style="opacity:.7">(${normalizeTier(h.RiskTier)||"—"})</span></span>
+            <span class="lean-mono">${money(h.Value)}</span>
+          </div>
+        `).join("") : `<div class="lean-mini-note">No holdings loaded.</div>`}
+      </div>
+    </div>
+
+    <div class="lean-upgrade-card">
+      <h3>Math Snapshot</h3>
+      <div class="lean-upgrade-sub">Quick path-quality panel for Lean 2.0 posture checks.</div>
+
+      <div class="lean-upgrade-row"><span>Portfolio vol</span><span>${stats.vol?fmtPct(stats.vol,2):"—"}</span></div>
+      <div class="lean-upgrade-row"><span>Sharpe</span><span>${stats.sharpe?stats.sharpe.toFixed(2):"—"}</span></div>
+      <div class="lean-upgrade-row"><span>Bayes confidence</span><span>${Math.round(bayesPOk()*100)}%</span></div>
+      <div class="lean-upgrade-row"><span>Phase</span><span>${PHASE}</span></div>
+
+      <div class="lean-mini-note">This version uses only your current system + holdings + account history inputs.</div>
+    </div>
+  `
 }
 
 
@@ -433,82 +856,79 @@ return`
 ============================ */
 
 function marketAllowsDeploy(){
+  const regime=safeUpper(valRegime.textContent)
+  const vol=safeUpper(valVol.textContent)
 
-const regime=safeUpper(valRegime.textContent)
-const vol=safeUpper(valVol.textContent)
+  if(regime.includes("DEFENSIVE"))return{ok:false,why:"Defensive"}
+  if(vol.includes("HOT"))return{ok:false,why:"Volatility"}
 
-if(regime.includes("DEFENSIVE"))return{ok:false,why:"Defensive"}
-
-if(vol.includes("HOT"))return{ok:false,why:"Volatility"}
-
-return{ok:true,why:"Conditions OK"}
+  return{ok:true,why:"Conditions OK"}
 }
 
 function chooseRampAmount(gate){
+  if(!gate.ok)return 0
 
-if(!gate.ok)return 0
+  const base=RAMP_DEFAULT
+  const scaled=Math.round(base*(0.75+(bayesPOk()-0.5)*0.5))
 
-const base=RAMP_DEFAULT
-const scaled=Math.round(base*(0.75+(bayesPOk()-0.5)*0.5))
-
-return Math.max(25,scaled)
+  return Math.max(25,Math.min(RAMP_MAX,scaled))
 }
 
 function nextTierFromLast(last){
+  const L=normalizeTier(last)
 
-const L=normalizeTier(last)
+  if(L==="HIGH")return"LOW"
+  if(L==="LOW")return"MED"
+  if(L==="MED")return"LOW"
 
-if(L==="HIGH")return"LOW"
-if(L==="LOW")return"MED"
-if(L==="MED")return"LOW"
-
-return"LOW"
+  return"LOW"
 }
 
 function pickNextTickerForTier(tier){
+  const t=normalizeTier(tier)
 
-const t=normalizeTier(tier)
+  const candidates=holdingsData.filter(
+    h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV"
+  )
 
-const candidates=holdingsData.filter(
-h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV"
-)
+  if(!candidates.length)return null
 
-if(!candidates.length)return null
-
-return safeUpper(candidates[0].Ticker)
+  return safeUpper(candidates[0].Ticker)
 }
 
 function renderAction(){
+  suggested={tier:null,ticker:null,amount:null}
 
-suggested={tier:null,ticker:null,amount:null}
+  const gate=marketAllowsDeploy()
+  const amt=chooseRampAmount(gate)
 
-const gate=marketAllowsDeploy()
-const amt=chooseRampAmount(gate)
+  if(!gate.ok){
+    setText(actionMain,"HOLD")
+    setText(actionReason,gate.why)
+    setText(actionNext,"—")
+    setText(actionMeta,"Gate closed")
+    return
+  }
 
-if(!gate.ok){
+  const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER)||""
 
-setText(actionMain,"HOLD")
-setText(actionReason,gate.why)
-return
-}
+  const tier=nextTierFromLast(lastTier)
+  const tkr=pickNextTickerForTier(tier)
 
-const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER)||""
+  if(!tkr){
+    setText(actionMain,"No ticker found")
+    setText(actionReason,"No matching tier candidate")
+    setText(actionNext,"—")
+    setText(actionMeta,`Tier ${tier}`)
+    return
+  }
 
-const tier=nextTierFromLast(lastTier)
-const tkr=pickNextTickerForTier(tier)
+  setText(actionMain,`BUY $${amt} ${tkr}`)
+  setText(actionReason,gate.why)
+  setText(actionNext,`Next ${nextTierFromLast(tier)}`)
+  setText(actionMeta,`Tier ${tier} | ${tkr}`)
 
-if(!tkr){
-
-setText(actionMain,"No ticker found")
-return
-}
-
-setText(actionMain,`BUY $${amt} ${tkr}`)
-setText(actionReason,gate.why)
-setText(actionNext,`Next ${nextTierFromLast(tier)}`)
-setText(actionMeta,`Tier ${tier} | ${tkr}`)
-
-suggested={tier,ticker:tkr,amount:amt}
+  suggested={tier,ticker:tkr,amount:amt}
 }
 
 
@@ -517,31 +937,26 @@ suggested={tier,ticker:tkr,amount:amt}
 ============================ */
 
 async function refreshAll(label){
+  if(inFlight)return
+  inFlight=true
 
-if(inFlight)return
-inFlight=true
+  try{
+    await loadSystem()
+    await loadHoldings()
 
-try{
+    renderHeatmap()
+    renderMath()
+    renderConfidence()
+    renderAction()
+    renderUpgradePanel()
 
-await loadSystem()
-await loadHoldings()
-
-renderHeatmap()
-renderMath()
-renderConfidence()
-renderAction()
-
-stamp(label)
-
-}catch(e){
-
-setText(statusLine,"ERROR")
-crash("ENGINE",e)
-
-}finally{
-inFlight=false
-}
-
+    stamp(label)
+  }catch(e){
+    setText(statusLine,"ERROR")
+    crash("ENGINE",e)
+  }finally{
+    inFlight=false
+  }
 }
 
 
@@ -550,22 +965,22 @@ inFlight=false
 ============================ */
 
 executedBtn.onclick=()=>{
+  if(!suggested.ticker)return
 
-if(!suggested.ticker)return
+  localStorage.setItem(LS_LAST_EXEC_TICKER,suggested.ticker)
+  localStorage.setItem(LS_LAST_EXEC_TIER,suggested.tier)
+  localStorage.setItem(LS_LAST_EXEC_TS,String(Date.now()))
 
-localStorage.setItem(LS_LAST_EXEC_TICKER,suggested.ticker)
-localStorage.setItem(LS_LAST_EXEC_TIER,suggested.tier)
-localStorage.setItem(LS_LAST_EXEC_TS,String(Date.now()))
+  execIcon.textContent="✅"
 
-execIcon.textContent="✅"
-
-renderAction()
+  renderAction()
+  renderUpgradePanel()
 }
 
 saveBtn.onclick=()=>{
-localStorage.setItem(LS_SYSTEM,systemUrl.value)
-localStorage.setItem(LS_HOLDINGS,holdingsUrl.value)
-refreshAll("Saved")
+  localStorage.setItem(LS_SYSTEM,systemUrl.value)
+  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value)
+  refreshAll("Saved")
 }
 
 refreshBtn.onclick=()=>refreshAll("Refresh")
@@ -585,12 +1000,12 @@ refreshAll("Loaded")
 let seconds=60
 
 setInterval(()=>{
-seconds--
-setText(nextRefresh,"Next refresh in "+seconds+"s")
-if(seconds<=0){
-seconds=60
-refreshAll("Auto refresh")
-}
+  seconds--
+  setText(nextRefresh,"Next refresh in "+seconds+"s")
+  if(seconds<=0){
+    seconds=60
+    refreshAll("Auto refresh")
+  }
 },1000)
 
 })
