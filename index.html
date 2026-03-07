@@ -98,6 +98,10 @@ function setText(el, txt){
   if(el) el.textContent = txt
 }
 
+function setHTML(el, html){
+  if(el) el.innerHTML = html
+}
+
 function stamp(label){
   const t=new Date().toLocaleTimeString()
   setText(lastUpdated,"LAST UPDATED: "+t)
@@ -250,7 +254,9 @@ function computeDrawdown(){
   if(hist.length<2)return{ddPct:null,peak:null}
 
   let peak=-Infinity
-  for(const h of hist) if(h.total>peak) peak=h.total
+  for(const h of hist){
+    if(h.total>peak) peak=h.total
+  }
 
   const curr=hist[hist.length-1].total
   return{ddPct:(curr-peak)/peak,peak}
@@ -271,7 +277,7 @@ function computeStats(){
   const rets=[]
   for(let i=1;i<hist.length;i++){
     const a=hist[i-1].total,b=hist[i].total
-    if(a>0)rets.push((b-a)/a)
+    if(a>0) rets.push((b-a)/a)
   }
 
   const win=rets.slice(-30)
@@ -313,7 +319,9 @@ function loadBayes(){
   return{a:3,b:3}
 }
 
-function saveBayes(b){localStorage.setItem(LS_BAYES,JSON.stringify(b))}
+function saveBayes(b){
+  localStorage.setItem(LS_BAYES,JSON.stringify(b))
+}
 
 function bayesPOk(){
   const{a,b}=loadBayes()
@@ -337,7 +345,7 @@ function renderConfidence(){
 ============================ */
 
 async function loadSystem(){
-  if(!systemUrl.value)return
+  if(!systemUrl || !systemUrl.value) return
 
   const rows=parseCSV(await fetchText(systemUrl.value))
   const map=new Map()
@@ -363,10 +371,12 @@ async function loadSystem(){
 ============================ */
 
 async function loadHoldings(){
-  if(!holdingsUrl.value)return
+  if(!holdingsUrl || !holdingsUrl.value) return
 
   const rows=parseCSV(await fetchText(holdingsUrl.value))
-  const headers=rows[0]
+  if(!rows.length) return
+
+  const headers=rows[0] || []
 
   const idx=h=>headers.findIndex(x=>safeUpper(x)==safeUpper(h))
 
@@ -376,31 +386,30 @@ async function loadHoldings(){
 
   holdingsData=[]
   let total=0
-
   const out=[]
 
   for(let i=1;i<rows.length;i++){
     const r=rows[i]
-    const ticker=r[iTicker]
+    const ticker=iTicker>=0 ? r[iTicker] : ""
     if(!ticker)continue
 
     const tier=iTier>=0?r[iTier]:""
     const val=iValue>=0?coerceNumber(r[iValue]):NaN
 
-    if(isFinite(val))total+=val
+    if(isFinite(val)) total+=val
 
     holdingsData.push({Ticker:ticker,RiskTier:tier,Value:val})
 
     out.push(`
       <tr>
         <td class="mono">${ticker}</td>
-        <td>${tier}</td>
+        <td>${tier || "—"}</td>
         <td class="right">${money(val)}</td>
       </tr>
     `)
   }
 
-  holdingsBody.innerHTML=out.join("")
+  setHTML(holdingsBody,out.join(""))
   setText(totalValue,money(total))
 
   lastTotalValue=total
@@ -444,27 +453,25 @@ function getThemeRows(){
     grand+=val
   }
 
-  const rows=[...totals.entries()]
+  return [...totals.entries()]
     .map(([theme,val])=>({theme,val,pct:grand>0?val/grand:0}))
     .sort((a,b)=>b.val-a.val)
-
-  return rows
 }
 
 function renderHeatmap(){
-  if(!heatmapMount)return
+  if(!heatmapMount) return
 
   const rows=getThemeRows()
   lastThemeRows=rows
 
-  heatmapMount.innerHTML=rows.map(r=>{
+  setHTML(heatmapMount,rows.map(r=>{
     const width=Math.round(r.pct*100)
 
     let color="var(--green)"
     if(r.pct>0.30)color="var(--yellow)"
     if(r.pct>0.60)color="var(--red)"
 
-    return`
+    return `
 <div style="display:grid;grid-template-columns:120px 1fr 60px;gap:10px;margin:8px 0">
   <div>${r.theme}</div>
   <div style="background:#111;border-radius:10px;overflow:hidden">
@@ -473,7 +480,7 @@ function renderHeatmap(){
   <div style="text-align:right">${(r.pct*100).toFixed(1)}%</div>
 </div>
 `
-  }).join("")
+  }).join(""))
 }
 
 
@@ -579,7 +586,7 @@ function ensureUpgradeMount(){
   let mount=document.getElementById("leanUpgradeMount")
   if(mount) return mount
 
-  const anchor=heatmapMount?.parentElement || document.body
+  const anchor = heatmapMount && heatmapMount.parentElement ? heatmapMount.parentElement : document.body
   mount=document.createElement("div")
   mount.id="leanUpgradeMount"
   mount.className="lean-upgrade-wrap"
@@ -652,15 +659,14 @@ function classifyVolState(){
 function computeConsensus(){
   let score=50
 
-  const regime=safeUpper(valRegime?.textContent)
-  const deploy=safeUpper(valDeploy?.textContent)
-  const liq=safeUpper(valLiq?.textContent)
-  const vol=safeUpper(valVol?.textContent)
-  const viol=safeUpper(valViol?.textContent)
-  const brake=safeUpper(valBrake?.textContent)
+  const regime=safeUpper(valRegime && valRegime.textContent)
+  const deploy=safeUpper(valDeploy && valDeploy.textContent)
+  const liq=safeUpper(valLiq && valLiq.textContent)
+  const vol=safeUpper(valVol && valVol.textContent)
+  const viol=safeUpper(valViol && valViol.textContent)
+  const brake=safeUpper(valBrake && valBrake.textContent)
 
   if(regime.includes("RISK ON") || regime.includes("BULL") || regime.includes("FAVORABLE")) score+=12
-  if(regime.includes("MIXED") || regime.includes("NEUTRAL")) score+=0
   if(regime.includes("DEFENSIVE")) score-=18
 
   if(deploy.includes("ON") || deploy.includes("YES") || deploy.includes("GO")) score+=10
@@ -670,7 +676,6 @@ function computeConsensus(){
   if(liq.includes("TIGHT") || liq.includes("LOW") || liq.includes("WEAK")) score-=8
 
   if(vol.includes("QUIET") || vol.includes("LOW")) score+=8
-  if(vol.includes("NORMAL")) score+=0
   if(vol.includes("HOT") || vol.includes("HIGH")) score-=12
 
   if(viol.includes("0") || viol.includes("NONE")) score+=6
@@ -695,15 +700,15 @@ function computeRegimePanel(){
   const volState=classifyVolState()
   const dd=computeDrawdown()
   const brake=brakeLevel(dd.ddPct)
-  const regime=safeUpper(valRegime?.textContent)
+  const regime=safeUpper(valRegime && valRegime.textContent)
 
   let label="🟡 Mixed"
   let color=C.yellow
 
-  if(regime.includes("DEFENSIVE") || brake==="FULL" || brake==="HARD" || volState.label.includes("Hot")){
+  if(regime.includes("DEFENSIVE") || brake==="FULL" || brake==="HARD" || volState.label.indexOf("Hot")>=0){
     label="🔴 Defensive"
     color=C.red
-  }else if((regime.includes("RISK") || regime.includes("BULL") || regime.includes("FAVORABLE")) && brake==="NONE" && !volState.label.includes("Hot")){
+  }else if((regime.includes("RISK") || regime.includes("BULL") || regime.includes("FAVORABLE")) && brake==="NONE" && volState.label.indexOf("Hot")<0){
     label="🟢 Risk-On"
     color=C.green
   }
@@ -723,9 +728,9 @@ function computeOverlapRead(){
   const top=rows.slice(0,4)
 
   let concentrationScore=0
-  if(top[0]?.pct) concentrationScore+=top[0].pct
-  if(top[1]?.pct) concentrationScore+=top[1].pct*0.75
-  if(top[2]?.pct) concentrationScore+=top[2].pct*0.5
+  if(top[0] && top[0].pct) concentrationScore+=top[0].pct
+  if(top[1] && top[1].pct) concentrationScore+=top[1].pct*0.75
+  if(top[2] && top[2].pct) concentrationScore+=top[2].pct*0.5
 
   let label="🟢 Diversified"
   let color=C.green
@@ -741,8 +746,8 @@ function computeOverlapRead(){
 }
 
 function renderUpgradePanel(){
-  ensureUpgradeStyles()
   const mount=ensureUpgradeMount()
+  ensureUpgradeStyles()
 
   const cone=computePortfolioCone(20,1000)
   const regime=computeRegimePanel()
@@ -750,8 +755,8 @@ function renderUpgradePanel(){
   const overlap=computeOverlapRead()
   const stats=computeStats()
 
-  const coneMin=Math.min(cone.p10||0,lastTotalValue||0)
-  const coneMax=Math.max(cone.p90||0,lastTotalValue||0)
+  const coneMin=Math.min(isFinite(cone.p10)?cone.p10:0,isFinite(lastTotalValue)?lastTotalValue:0)
+  const coneMax=Math.max(isFinite(cone.p90)?cone.p90:0,isFinite(lastTotalValue)?lastTotalValue:0)
   const range=Math.max(1,coneMax-coneMin)
 
   const left10=((cone.p10-coneMin)/range)*100
@@ -764,28 +769,24 @@ function renderUpgradePanel(){
     .sort((a,b)=>b.Value-a.Value)
     .slice(0,5)
 
-  mount.innerHTML=`
+  setHTML(mount,`
     <div class="lean-upgrade-card">
       <h3>Probability Cone</h3>
       <div class="lean-upgrade-sub">20-step portfolio range estimate from your own account history.</div>
-
       <div class="lean-upgrade-row"><span>Current</span><strong class="lean-mono">${money(lastTotalValue)}</strong></div>
       <div class="lean-upgrade-row"><span>10th percentile</span><span class="lean-mono">${money(cone.p10)}</span></div>
       <div class="lean-upgrade-row"><span>Median</span><span class="lean-mono">${money(cone.p50)}</span></div>
       <div class="lean-upgrade-row"><span>90th percentile</span><span class="lean-mono">${money(cone.p90)}</span></div>
-
       <div class="lean-cone-track">
         <div class="lean-cone-wide" style="left:${clamp(left10,0,100)}%;width:${clamp(right90-left10,2,100)}%"></div>
         <div class="lean-cone-mid" style="left:${clamp(left25,0,100)}%;width:${clamp(right75-left25,2,100)}%"></div>
       </div>
-
-      <div class="lean-mini-note">This is a range forecast, not a promise. Wide cone = more uncertainty.</div>
+      <div class="lean-mini-note">This is a range forecast, not a promise.</div>
     </div>
 
     <div class="lean-upgrade-card">
       <h3>Regime Detection</h3>
       <div class="lean-upgrade-sub">Combines system regime, drawdown brake, and realized portfolio volatility.</div>
-
       <div class="lean-upgrade-row"><span>Regime read</span><span>${toBadge(regime.label,regime.color)}</span></div>
       <div class="lean-upgrade-row"><span>Vol state</span><span>${toBadge(regime.volState.label,regime.volState.color)}</span></div>
       <div class="lean-upgrade-row"><span>Brake</span><strong>${regime.brake}</strong></div>
@@ -796,21 +797,17 @@ function renderUpgradePanel(){
     <div class="lean-upgrade-card">
       <h3>Signal Consensus Meter</h3>
       <div class="lean-upgrade-sub">Blends system regime, deployment signal, volatility, violations, brake, and Bayes confidence.</div>
-
       <div class="lean-upgrade-row"><span>Consensus</span><span>${toBadge(consensus.label,consensus.color)}</span></div>
       <div class="lean-upgrade-row"><span>Score</span><strong>${consensus.score}/100</strong></div>
-
       <div class="lean-meter">
         <div class="lean-meter-fill" style="width:${consensus.score}%;background:${consensus.color.fg}"></div>
       </div>
-
       <div class="lean-mini-note">Use this as posture guidance, not as a blind buy signal.</div>
     </div>
 
     <div class="lean-upgrade-card">
       <h3>Overlap Scan</h3>
       <div class="lean-upgrade-sub">Current approximation uses theme concentration from your holdings file.</div>
-
       <div class="lean-upgrade-row"><span>Portfolio read</span><span>${toBadge(overlap.label,overlap.color)}</span></div>
       ${overlap.rows.map(r=>`
         <div class="lean-upgrade-row">
@@ -818,14 +815,12 @@ function renderUpgradePanel(){
           <span>${(r.pct*100).toFixed(1)}%</span>
         </div>
       `).join("")}
-
       <div class="lean-mini-note">Next upgrade later: true ticker correlation once you add price-history input.</div>
     </div>
 
     <div class="lean-upgrade-card">
       <h3>Top Position Pressure</h3>
-      <div class="lean-upgrade-sub">Largest current holdings by value. Good for checking crowding and branch size.</div>
-
+      <div class="lean-upgrade-sub">Largest current holdings by value.</div>
       <div class="lean-upgrade-list">
         ${topHoldings.length ? topHoldings.map(h=>`
           <div class="lean-upgrade-row">
@@ -839,15 +834,13 @@ function renderUpgradePanel(){
     <div class="lean-upgrade-card">
       <h3>Math Snapshot</h3>
       <div class="lean-upgrade-sub">Quick path-quality panel for Lean 2.0 posture checks.</div>
-
       <div class="lean-upgrade-row"><span>Portfolio vol</span><span>${stats.vol?fmtPct(stats.vol,2):"—"}</span></div>
       <div class="lean-upgrade-row"><span>Sharpe</span><span>${stats.sharpe?stats.sharpe.toFixed(2):"—"}</span></div>
       <div class="lean-upgrade-row"><span>Bayes confidence</span><span>${Math.round(bayesPOk()*100)}%</span></div>
       <div class="lean-upgrade-row"><span>Phase</span><span>${PHASE}</span></div>
-
-      <div class="lean-mini-note">This version uses only your current system + holdings + account history inputs.</div>
+      <div class="lean-mini-note">This version uses your current system + holdings + account history inputs.</div>
     </div>
-  `
+  `)
 }
 
 
@@ -856,8 +849,8 @@ function renderUpgradePanel(){
 ============================ */
 
 function marketAllowsDeploy(){
-  const regime=safeUpper(valRegime.textContent)
-  const vol=safeUpper(valVol.textContent)
+  const regime=safeUpper(valRegime && valRegime.textContent)
+  const vol=safeUpper(valVol && valVol.textContent)
 
   if(regime.includes("DEFENSIVE"))return{ok:false,why:"Defensive"}
   if(vol.includes("HOT"))return{ok:false,why:"Volatility"}
@@ -911,7 +904,6 @@ function renderAction(){
   }
 
   const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER)||""
-
   const tier=nextTierFromLast(lastTier)
   const tkr=pickNextTickerForTier(tier)
 
@@ -964,35 +956,44 @@ async function refreshAll(label){
    Buttons
 ============================ */
 
-executedBtn.onclick=()=>{
-  if(!suggested.ticker)return
+if(executedBtn){
+  executedBtn.onclick=()=>{
+    if(!suggested.ticker)return
 
-  localStorage.setItem(LS_LAST_EXEC_TICKER,suggested.ticker)
-  localStorage.setItem(LS_LAST_EXEC_TIER,suggested.tier)
-  localStorage.setItem(LS_LAST_EXEC_TS,String(Date.now()))
+    localStorage.setItem(LS_LAST_EXEC_TICKER,suggested.ticker)
+    localStorage.setItem(LS_LAST_EXEC_TIER,suggested.tier)
+    localStorage.setItem(LS_LAST_EXEC_TS,String(Date.now()))
 
-  execIcon.textContent="✅"
+    if(execIcon) execIcon.textContent="✅"
 
-  renderAction()
-  renderUpgradePanel()
+    renderAction()
+    renderUpgradePanel()
+  }
 }
 
-saveBtn.onclick=()=>{
-  localStorage.setItem(LS_SYSTEM,systemUrl.value)
-  localStorage.setItem(LS_HOLDINGS,holdingsUrl.value)
-  refreshAll("Saved")
+if(saveBtn){
+  saveBtn.onclick=()=>{
+    localStorage.setItem(LS_SYSTEM,systemUrl ? systemUrl.value : "")
+    localStorage.setItem(LS_HOLDINGS,holdingsUrl ? holdingsUrl.value : "")
+    refreshAll("Saved")
+  }
 }
 
-refreshBtn.onclick=()=>refreshAll("Refresh")
-runScanBtn.onclick=()=>refreshAll("Scan")
+if(refreshBtn){
+  refreshBtn.onclick=()=>refreshAll("Refresh")
+}
+
+if(runScanBtn){
+  runScanBtn.onclick=()=>refreshAll("Scan")
+}
 
 
 /* ============================
    Init
 ============================ */
 
-systemUrl.value=localStorage.getItem(LS_SYSTEM)||""
-holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||""
+if(systemUrl) systemUrl.value=localStorage.getItem(LS_SYSTEM)||""
+if(holdingsUrl) holdingsUrl.value=localStorage.getItem(LS_HOLDINGS)||""
 
 renderConfidence()
 refreshAll("Loaded")
