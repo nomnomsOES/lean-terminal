@@ -3,12 +3,11 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal</title>
+  <title>Lean Terminal 1.1</title>
   <style>
     :root{
       --bg:#0b1020;
       --panel:#121a2b;
-      --panel2:#0f172a;
       --text:#e5e7eb;
       --muted:#94a3b8;
       --green:#22c55e;
@@ -16,111 +15,185 @@
       --red:#ef4444;
       --blue:#3b82f6;
       --line:rgba(255,255,255,.08);
+      --pill:#111827;
     }
+
     *{box-sizing:border-box}
+
     body{
       margin:0;
       font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
       background:var(--bg);
       color:var(--text);
     }
+
     .wrap{
-      max-width:1200px;
+      max-width:1280px;
       margin:0 auto;
-      padding:16px;
+      padding:14px;
     }
+
     .topbar{
       display:flex;
       flex-wrap:wrap;
       gap:10px;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      margin-bottom:16px;
+      margin-bottom:12px;
     }
+
     .title{
       font-size:24px;
       font-weight:800;
+      line-height:1.1;
     }
+
     .sub{
       color:var(--muted);
       font-size:12px;
+      margin-top:2px;
     }
+
+    .status{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      align-items:center;
+      justify-content:flex-end;
+    }
+
+    .metaPill{
+      background:var(--pill);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:12px;
+      line-height:1.1;
+      white-space:nowrap;
+    }
+
+    .commandBar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .cmdPill{
+      background:var(--pill);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:8px 12px;
+      min-height:38px;
+      display:inline-flex;
+      align-items:center;
+      gap:8px;
+      font-size:13px;
+      font-weight:700;
+      white-space:nowrap;
+    }
+
+    .cmdPill .label{
+      opacity:.9;
+      font-size:12px;
+      font-weight:800;
+      letter-spacing:.3px;
+    }
+
+    .cmdGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
+    .cmdYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
+    .cmdRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
+    .cmdBlue{ color:#bfdbfe; border-color:rgba(59,130,246,.24); }
+    .cmdGray{ color:#d1d5db; }
+
     .grid{
       display:grid;
       grid-template-columns:repeat(auto-fit,minmax(260px,1fr));
-      gap:12px;
+      gap:10px;
     }
+
+    .gridTop{
+      grid-template-columns:240px 1fr 1fr 250px;
+      align-items:start;
+    }
+
     .card{
       background:var(--panel);
       border:1px solid var(--line);
       border-radius:14px;
-      padding:14px;
+      padding:12px;
     }
+
     .card h3{
       margin:0 0 10px 0;
       font-size:15px;
+      display:flex;
+      align-items:center;
+      gap:6px;
     }
+
     .row{
       display:flex;
       justify-content:space-between;
+      align-items:flex-start;
       gap:10px;
       padding:6px 0;
       border-bottom:1px solid var(--line);
     }
+
     .row:last-child{border-bottom:none}
-    .muted{color:var(--muted)}
+
     .mono{
       font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;
     }
+
     .right{text-align:right}
+
     .controls{
       display:grid;
       grid-template-columns:1fr 1fr;
-      gap:10px;
+      gap:8px;
     }
+
     .controls .full{grid-column:1 / -1}
+
     input{
       width:100%;
-      padding:10px 12px;
+      padding:8px 10px;
       border-radius:10px;
       border:1px solid var(--line);
       background:#0a1220;
       color:var(--text);
+      font-size:13px;
     }
+
     button{
-      padding:10px 12px;
+      padding:9px 10px;
       border:none;
       border-radius:10px;
       background:var(--blue);
       color:white;
       font-weight:700;
       cursor:pointer;
+      font-size:13px;
     }
+
     button.secondary{background:#1f2937}
     button.success{background:#166534}
+
     table{
       width:100%;
       border-collapse:collapse;
       font-size:14px;
     }
+
     th,td{
       padding:10px 8px;
       border-bottom:1px solid var(--line);
     }
+
     th{text-align:left;color:var(--muted)}
-    .status{
-      display:flex;
-      flex-wrap:wrap;
-      gap:10px;
-      margin-bottom:12px;
-    }
-    .pill{
-      background:#111827;
-      border:1px solid var(--line);
-      border-radius:999px;
-      padding:8px 10px;
-      font-size:12px;
-    }
+
     .errorBox{
       white-space:pre-wrap;
       background:#2a0f14;
@@ -130,6 +203,207 @@
       border-radius:12px;
       margin-bottom:12px;
     }
+
+    .heatRow{
+      display:grid;
+      grid-template-columns:100px 1fr 54px;
+      gap:10px;
+      align-items:center;
+      margin:8px 0;
+    }
+
+    .heatTrack{
+      background:#111;
+      border-radius:999px;
+      overflow:hidden;
+      height:14px;
+    }
+
+    .heatFill{
+      height:14px;
+      border-radius:999px;
+    }
+
+    .mathPillBar{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-bottom:12px;
+    }
+
+    .mathPill{
+      background:var(--pill);
+      border:1px solid var(--line);
+      border-radius:999px;
+      padding:7px 10px;
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      font-size:12px;
+      font-weight:800;
+      white-space:nowrap;
+    }
+
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:999px;
+      display:inline-block;
+      flex:0 0 auto;
+    }
+
+    .dotGreen{ background:var(--green); }
+    .dotYellow{ background:var(--yellow); }
+    .dotRed{ background:var(--red); }
+    .dotBlue{ background:var(--blue); }
+    .dotGray{ background:#6b7280; }
+
+    .smallMuted{
+      color:var(--muted);
+      font-size:12px;
+      line-height:1.4;
+    }
+
+    .infoWrap{
+      position:relative;
+      display:inline-flex;
+      align-items:center;
+    }
+
+    .infoBtn{
+      width:16px;
+      height:16px;
+      border-radius:999px;
+      border:1px solid rgba(255,255,255,.16);
+      background:#0f172a;
+      color:#93c5fd;
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      font-size:11px;
+      font-weight:700;
+      cursor:pointer;
+      padding:0;
+      line-height:1;
+    }
+
+    .tooltip{
+      position:absolute;
+      left:20px;
+      top:22px;
+      width:220px;
+      background:#0f172a;
+      color:#e5e7eb;
+      border:1px solid rgba(255,255,255,.10);
+      border-radius:10px;
+      padding:8px 10px;
+      font-size:12px;
+      line-height:1.4;
+      box-shadow:0 10px 30px rgba(0,0,0,.28);
+      display:none;
+      z-index:50;
+    }
+
+    .infoWrap.show .tooltip{
+      display:block;
+    }
+
+    .perfLegend{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+      margin:8px 0 10px 0;
+      font-size:12px;
+    }
+
+    .legendItem{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      color:var(--muted);
+    }
+
+    .legendSwatch{
+      width:12px;
+      height:12px;
+      border-radius:999px;
+      display:inline-block;
+    }
+
+    .chartWrap{
+      width:100%;
+      overflow:hidden;
+      border:1px solid var(--line);
+      border-radius:12px;
+      background:#0a1220;
+      padding:10px;
+    }
+
+    .chartMeta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+      margin-top:8px;
+      font-size:12px;
+      color:var(--muted);
+    }
+
+    .chartMeta .metaPill{
+      padding:5px 9px;
+    }
+
+    #perfSvg{
+      width:100%;
+      height:auto;
+      display:block;
+    }
+
+    .axisLabel{
+      fill:#94a3b8;
+      font-size:11px;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+
+    .gridLine{
+      stroke:rgba(255,255,255,.08);
+      stroke-width:1;
+    }
+
+    .lineLean{ stroke:#22c55e; }
+    .lineSpy{ stroke:#3b82f6; }
+    .lineQqq{ stroke:#f59e0b; }
+    .lineSgov{ stroke:#a78bfa; }
+
+    .seriesLine{
+      fill:none;
+      stroke-width:2.5;
+      vector-effect:non-scaling-stroke;
+    }
+
+    .seriesDot{
+      stroke:none;
+    }
+
+    @media (max-width:1100px){
+      .gridTop{
+        grid-template-columns:1fr 1fr;
+      }
+    }
+
+    @media (max-width:700px){
+      .gridTop{
+        grid-template-columns:1fr;
+      }
+
+      .tooltip{
+        left:0;
+        width:200px;
+      }
+
+      .heatRow{
+        grid-template-columns:85px 1fr 50px;
+      }
+    }
   </style>
 </head>
 <body>
@@ -138,27 +412,64 @@
 
     <div class="topbar">
       <div>
-        <div class="title">Lean Terminal</div>
-        <div class="sub">Deploy engine + portfolio monitor</div>
+        <div class="title">Lean Terminal 1.1</div>
+        <div class="sub">Lean 2.0 cockpit • math &gt; emotions</div>
       </div>
       <div class="status">
-        <div class="pill" id="statusLine">Loading…</div>
-        <div class="pill" id="lastUpdated">LAST UPDATED: —</div>
-        <div class="pill" id="nextRefresh">Next refresh in 60s</div>
+        <div class="metaPill" id="statusLine">Loading…</div>
+        <div class="metaPill" id="lastUpdated">LAST UPDATED: —</div>
+        <div class="metaPill" id="nextRefresh">Next refresh in 60s</div>
       </div>
     </div>
 
-    <div class="grid">
+    <div class="commandBar">
+      <div class="cmdPill cmdGray" id="readyPill">
+        <span class="label">READY</span>
+        <span id="readyValue">—%</span>
+      </div>
+      <div class="cmdPill cmdGray" id="riskPill">
+        <span class="label">RISK</span>
+        <span id="riskValue">—%</span>
+      </div>
+      <div class="cmdPill cmdBlue" id="valuePill">
+        <span class="label">VALUE</span>
+        <span id="valueValue">$—</span>
+      </div>
+      <div class="cmdPill cmdGray" id="lastPill">
+        <span class="label">LAST</span>
+        <span id="lastValue">—</span>
+      </div>
+    </div>
+
+    <div class="mathPillBar" id="mathPillBar">
+      <div class="mathPill"><span class="dot dotGray"></span>REGIME</div>
+      <div class="mathPill"><span class="dot dotGray"></span>VOL</div>
+      <div class="mathPill"><span class="dot dotGray"></span>DD</div>
+      <div class="mathPill"><span class="dot dotGray"></span>BRAKE</div>
+      <div class="mathPill"><span class="dot dotGray"></span>MC</div>
+      <div class="mathPill"><span class="dot dotGray"></span>CORR</div>
+      <div class="mathPill"><span class="dot dotGray"></span>CVAR</div>
+      <div class="mathPill"><span class="dot dotGray"></span>BAYES</div>
+    </div>
+
+    <div class="grid gridTop">
       <div class="card">
-        <h3>Data Sources</h3>
+        <h3>
+          Data Sources
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">These are the live CSV feeds powering the terminal. Save stores them in your browser.</span>
+          </span>
+        </h3>
+
         <div class="controls">
           <div class="full">
-            <div class="sub">System CSV URL</div>
-            <input id="systemUrl" placeholder="Paste system CSV URL" />
+            <div class="smallMuted">System CSV URL</div>
+            <input id="systemUrl" placeholder="System CSV URL" />
           </div>
           <div class="full">
-            <div class="sub">Holdings CSV URL</div>
-            <input id="holdingsUrl" placeholder="Paste holdings CSV URL" />
+            <div class="smallMuted">Holdings CSV URL</div>
+            <input id="holdingsUrl" placeholder="Holdings CSV URL" />
           </div>
           <button id="saveBtn">Save</button>
           <button class="secondary" id="refreshBtn">Refresh</button>
@@ -167,7 +478,14 @@
       </div>
 
       <div class="card">
-        <h3>System State</h3>
+        <h3>
+          System State
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Reads your system sheet and shows market posture, liquidity, volatility, and rule checks.</span>
+          </span>
+        </h3>
+
         <div class="row"><span>Market Regime</span><strong id="valRegime">—</strong></div>
         <div class="row"><span>Deployment</span><strong id="valDeploy">—</strong></div>
         <div class="row"><span>Cash Anchor</span><strong id="valCash">—</strong></div>
@@ -179,20 +497,35 @@
       </div>
 
       <div class="card">
-        <h3>Action Engine</h3>
+        <h3>
+          Action Engine
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">This is the current Lean 2.0 action output based on gates, tiers, and confidence.</span>
+          </span>
+        </h3>
+
         <div class="row"><span>Main</span><strong id="actionMain">—</strong></div>
         <div class="row"><span>Reason</span><span id="actionReason">—</span></div>
         <div class="row"><span>Next</span><span id="actionNext">—</span></div>
         <div class="row"><span>Meta</span><span id="actionMeta">—</span></div>
-        <div style="display:flex;gap:10px;margin-top:12px">
+
+        <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
           <button class="success" id="executedBtn">Mark Executed</button>
-          <div class="pill"><span id="execIcon">⏳</span></div>
-          <div class="pill" id="lastExecBadge">Last exec: —</div>
+          <div class="metaPill"><span id="execIcon">⏳</span></div>
+          <div class="metaPill" id="lastExecBadge">Last exec: —</div>
         </div>
       </div>
 
       <div class="card">
-        <h3>Math</h3>
+        <h3>
+          Math Snapshot
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Quick path-quality checks from local portfolio history.</span>
+          </span>
+        </h3>
+
         <div class="row"><span>Drawdown</span><span id="mathDD">—</span></div>
         <div class="row"><span>Peak</span><span id="mathPeak">—</span></div>
         <div class="row"><span>Vol</span><span id="mathVol">—</span></div>
@@ -200,14 +533,58 @@
       </div>
     </div>
 
-    <div class="grid" style="margin-top:12px">
+    <div class="grid" style="margin-top:10px">
       <div class="card">
-        <h3>Portfolio Heatmap</h3>
+        <h3>
+          Performance
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Normalized chart. Lean uses your actual tracked history. SPY, QQQ, and SGOV are benchmark lines over the same date span.</span>
+          </span>
+        </h3>
+
+        <div class="perfLegend">
+          <div class="legendItem"><span class="legendSwatch" style="background:#22c55e"></span>Lean</div>
+          <div class="legendItem"><span class="legendSwatch" style="background:#3b82f6"></span>SPY</div>
+          <div class="legendItem"><span class="legendSwatch" style="background:#f59e0b"></span>QQQ</div>
+          <div class="legendItem"><span class="legendSwatch" style="background:#a78bfa"></span>SGOV</div>
+        </div>
+
+        <div class="chartWrap">
+          <svg id="perfSvg" viewBox="0 0 980 360" preserveAspectRatio="none"></svg>
+        </div>
+
+        <div class="chartMeta">
+          <div class="metaPill" id="perfWindow">Window: —</div>
+          <div class="metaPill" id="perfLean">Lean: —</div>
+          <div class="metaPill" id="perfSpy">SPY: —</div>
+          <div class="metaPill" id="perfQqq">QQQ: —</div>
+          <div class="metaPill" id="perfSgov">SGOV: —</div>
+        </div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:10px">
+      <div class="card">
+        <h3>
+          Portfolio Heatmap
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Shows how much of the account sits in each mapped theme bucket.</span>
+          </span>
+        </h3>
         <div id="heatmapMount"></div>
       </div>
 
       <div class="card">
-        <h3>Holdings</h3>
+        <h3>
+          Holdings
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Reads the holdings sheet and totals all rows with valid ticker and value data.</span>
+          </span>
+        </h3>
+
         <div class="row"><span>Total Value</span><strong id="totalValue">$—</strong></div>
         <table>
           <thead>
@@ -243,7 +620,6 @@ function crash(label, err){
 window.addEventListener("error", e => crash("CRASH:", e.error || e.message))
 window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason))
 
-
 /* ============================
    Local storage keys
 ============================ */
@@ -254,9 +630,7 @@ const LS_LAST_EXEC_TICKER="lean_last_exec_ticker"
 const LS_LAST_EXEC_TIER="lean_last_exec_tier"
 const LS_LAST_EXEC_TS="lean_last_exec_ts"
 const LS_HIST="lean_portfolio_hist_v1"
-
 const LS_BAYES="lean_bayes_v1"
-
 
 /* ============================
    Defaults
@@ -268,7 +642,6 @@ const DEFAULT_SYSTEM =
 const DEFAULT_HOLDINGS =
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv"
 
-
 /* ============================
    Settings
 ============================ */
@@ -276,7 +649,6 @@ const DEFAULT_HOLDINGS =
 const PHASE="DEPLOY"
 const RAMP_DEFAULT=75
 const RAMP_MAX=100
-
 
 /* ============================
    Elements
@@ -316,13 +688,30 @@ const holdingsUrl=$("holdingsUrl")
 
 const holdingsBody=$("holdingsBody")
 const totalValue=$("totalValue")
+const heatmapMount=$("heatmapMount")
 
 const saveBtn=$("saveBtn")
 const refreshBtn=$("refreshBtn")
 const runScanBtn=$("runScanBtn")
 
-const heatmapMount=$("heatmapMount")
+const readyPill=$("readyPill")
+const riskPill=$("riskPill")
+const valuePill=$("valuePill")
+const lastPill=$("lastPill")
 
+const readyValue=$("readyValue")
+const riskValue=$("riskValue")
+const valueValue=$("valueValue")
+const lastValue=$("lastValue")
+
+const mathPillBar=$("mathPillBar")
+
+const perfSvg=$("perfSvg")
+const perfWindow=$("perfWindow")
+const perfLean=$("perfLean")
+const perfSpy=$("perfSpy")
+const perfQqq=$("perfQqq")
+const perfSgov=$("perfSgov")
 
 /* ============================
    Utilities
@@ -334,18 +723,6 @@ function setText(el, txt){
 
 function setHTML(el, html){
   if(el) el.innerHTML = html
-}
-
-function stamp(label){
-  const t=new Date().toLocaleTimeString()
-  setText(lastUpdated,"LAST UPDATED: "+t)
-  setText(statusLine,label+" @ "+t)
-}
-
-function money(n){
-  return isFinite(n)
-    ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
-    : "$—"
 }
 
 function safeUpper(s){
@@ -361,7 +738,7 @@ function normalizeTier(t){
 }
 
 function coerceNumber(v){
-  if(v===null||v===undefined) return NaN
+  if(v===null || v===undefined) return NaN
   const s=String(v).replace(/[$,%\s]/g,"").replace(/,/g,"").trim()
   if(!s) return NaN
   return Number(s)
@@ -383,6 +760,67 @@ function stdDev(arr){
   return Math.sqrt(variance)
 }
 
+function percentile(arr,p){
+  if(!arr.length) return null
+  const s=[...arr].sort((a,b)=>a-b)
+  const idx=(s.length-1)*p
+  const lo=Math.floor(idx)
+  const hi=Math.ceil(idx)
+  if(lo===hi) return s[lo]
+  return s[lo]+(s[hi]-s[lo])*(idx-lo)
+}
+
+function money(n){
+  return isFinite(n)
+    ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
+    : "$—"
+}
+
+function pct1(n){
+  return isFinite(n) ? `${(n*100).toFixed(1)}%` : "—"
+}
+
+function pct2(n){
+  return isFinite(n) ? `${(n*100).toFixed(2)}%` : "—"
+}
+
+function stamp(label){
+  const t=new Date().toLocaleTimeString()
+  setText(lastUpdated,"LAST UPDATED: "+t)
+  setText(statusLine,label+" @ "+t)
+}
+
+function pillClassForPercent(v, inverse=false){
+  if(!isFinite(v)) return "cmdGray"
+  if(!inverse){
+    if(v >= 65) return "cmdGreen"
+    if(v >= 35) return "cmdYellow"
+    return "cmdRed"
+  }
+  if(v >= 65) return "cmdRed"
+  if(v >= 35) return "cmdYellow"
+  return "cmdGreen"
+}
+
+function dotClass(color){
+  if(color==="green") return "dotGreen"
+  if(color==="yellow") return "dotYellow"
+  if(color==="red") return "dotRed"
+  if(color==="blue") return "dotBlue"
+  return "dotGray"
+}
+
+function escapeAttr(s){
+  return String(s||"").replace(/"/g,"&quot;")
+}
+
+function dateKeyFromTs(ts){
+  const d=new Date(ts)
+  const y=d.getFullYear()
+  const m=String(d.getMonth()+1).padStart(2,"0")
+  const day=String(d.getDate()).padStart(2,"0")
+  return `${y}-${m}-${day}`
+}
 
 /* ============================
    CSV parsing
@@ -400,7 +838,6 @@ async function fetchText(url){
 function parseCSV(text){
   const rows=[]
   let row=[],cur="",inQuotes=false
-
   const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n")
 
   for(let i=0;i<t.length;i++){
@@ -416,15 +853,12 @@ function parseCSV(text){
     if(c=='"'){inQuotes=true;continue}
     if(c==","){row.push(cur);cur="";continue}
     if(c=="\n"){row.push(cur);rows.push(row);row=[];cur="";continue}
-
     cur+=c
   }
 
-  if(cur.length||row.length){row.push(cur);rows.push(row)}
-
+  if(cur.length || row.length){row.push(cur);rows.push(row)}
   return rows
 }
-
 
 /* ============================
    Runtime state
@@ -433,7 +867,9 @@ function parseCSV(text){
 let holdingsData=[]
 let suggested={tier:null,ticker:null,amount:null}
 let inFlight=false
-
+let currentTotal=NaN
+let lastHeatRows=[]
+let benchmarkCache={}
 
 /* ============================
    History / drawdown
@@ -449,7 +885,7 @@ function saveHist(arr){
 }
 
 function recordTotal(total){
-  if(!isFinite(total)||total<=0)return
+  if(!isFinite(total) || total<=0) return
   const hist=loadHist()
   hist.push({ts:Date.now(),total})
   saveHist(hist)
@@ -457,7 +893,7 @@ function recordTotal(total){
 
 function computeDrawdown(){
   const hist=loadHist()
-  if(hist.length<2)return{ddPct:null,peak:null}
+  if(hist.length<2) return {ddPct:null,peak:null}
 
   let peak=-Infinity
   for(const h of hist){
@@ -465,53 +901,64 @@ function computeDrawdown(){
   }
 
   const curr=hist[hist.length-1].total
-  return{ddPct:(curr-peak)/peak,peak}
+  return {ddPct:(curr-peak)/peak,peak}
 }
 
 function brakeLevel(ddPct){
-  if(!isFinite(ddPct))return"UNKNOWN"
-  if(ddPct<=-0.10)return"FULL"
-  if(ddPct<=-0.06)return"HARD"
-  if(ddPct<=-0.03)return"SOFT"
-  return"NONE"
+  if(!isFinite(ddPct)) return "UNKNOWN"
+  if(ddPct<=-0.10) return "FULL"
+  if(ddPct<=-0.06) return "HARD"
+  if(ddPct<=-0.03) return "SOFT"
+  return "NONE"
 }
 
-function computeStats(){
+function getReturns(){
   const hist=loadHist()
-  if(hist.length<10)return{vol:null,sharpe:null}
-
+  if(hist.length<2) return []
   const rets=[]
   for(let i=1;i<hist.length;i++){
     const a=hist[i-1].total,b=hist[i].total
-    if(a>0)rets.push((b-a)/a)
+    if(a>0) rets.push((b-a)/a)
   }
+  return rets
+}
 
+function computeStats(){
+  const rets=getReturns()
+  if(rets.length<10) return {vol:null,sharpe:null}
   const win=rets.slice(-30)
-  if(win.length<2)return{vol:null,sharpe:null}
+  if(win.length<2) return {vol:null,sharpe:null}
 
   const m=mean(win)
   const sd=stdDev(win)
-
   const vol=sd
-  const sharpe=vol>0?(m/vol)*Math.sqrt(252):null
+  const sharpe=vol>0 ? (m/vol)*Math.sqrt(252) : null
+  return {vol,sharpe}
+}
 
-  return{vol,sharpe}
+function computeLastChange(){
+  const hist=loadHist()
+  if(hist.length<2) return {amount:null,pct:null}
+  const curr=hist[hist.length-1].total
+  const prev=hist[hist.length-2].total
+  if(!isFinite(curr) || !isFinite(prev) || prev<=0) return {amount:null,pct:null}
+  return {
+    amount: curr-prev,
+    pct: (curr-prev)/prev
+  }
 }
 
 function renderMath(){
-  const{ddPct,peak}=computeDrawdown()
+  const {ddPct,peak}=computeDrawdown()
   const brake=brakeLevel(ddPct)
+  const stats=computeStats()
 
   setText(valBrake,brake)
   setText(mathDD,isFinite(ddPct)?`Drawdown ${(ddPct*100).toFixed(2)}%`:"—")
   setText(mathPeak,isFinite(peak)?money(peak):"—")
-
-  const stats=computeStats()
-
   setText(mathVol,stats.vol?`Vol ${(stats.vol*100).toFixed(2)}%`:"—")
   setText(mathSharpe,stats.sharpe?stats.sharpe.toFixed(2):"—")
 }
-
 
 /* ============================
    Bayesian confidence
@@ -522,32 +969,29 @@ function loadBayes(){
     const o=JSON.parse(localStorage.getItem(LS_BAYES))
     if(o && o.a && o.b) return o
   }catch{}
-  return{a:3,b:3}
+  return {a:3,b:3}
 }
 
 function bayesPOk(){
-  const{a,b}=loadBayes()
+  const {a,b}=loadBayes()
   return a/(a+b)
 }
 
 function renderConfidence(){
   const p=bayesPOk()
   const pct=Math.round(p*100)
-
   let emoji="🟡"
-  if(p>0.65)emoji="🟢"
-  if(p<0.45)emoji="🔴"
-
+  if(p>0.65) emoji="🟢"
+  if(p<0.45) emoji="🔴"
   setText(valConf,`${emoji} ${pct}%`)
 }
-
 
 /* ============================
    Load system
 ============================ */
 
 async function loadSystem(){
-  if(!systemUrl || !systemUrl.value)return
+  if(!systemUrl || !systemUrl.value) return
 
   const rows=parseCSV(await fetchText(systemUrl.value))
   const map=new Map()
@@ -555,7 +999,7 @@ async function loadSystem(){
   for(const r of rows){
     const k=safeUpper(r[0])
     const v=(r[1]||"").trim()
-    if(!k)continue
+    if(!k) continue
     map.set(k,v)
   }
 
@@ -567,23 +1011,22 @@ async function loadSystem(){
   setText(valViol,map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—")
 }
 
-
 /* ============================
    Load holdings
 ============================ */
 
 async function loadHoldings(){
-  if(!holdingsUrl || !holdingsUrl.value)return
+  if(!holdingsUrl || !holdingsUrl.value) return
 
   const rows=parseCSV(await fetchText(holdingsUrl.value))
-  if(!rows.length)return
+  if(!rows.length) return
 
   const headers=rows[0] || []
 
   const idx = names => {
     for(const name of names){
       const hit=headers.findIndex(x=>safeUpper(x)===safeUpper(name))
-      if(hit>=0)return hit
+      if(hit>=0) return hit
     }
     return -1
   }
@@ -594,18 +1037,17 @@ async function loadHoldings(){
 
   holdingsData=[]
   let total=0
-
   const out=[]
 
   for(let i=1;i<rows.length;i++){
     const r=rows[i]
     const ticker=iTicker>=0 ? r[iTicker] : ""
-    if(!ticker)continue
+    if(!ticker) continue
 
     const tier=iTier>=0 ? r[iTier] : ""
     const val=iValue>=0 ? coerceNumber(r[iValue]) : NaN
 
-    if(isFinite(val))total+=val
+    if(isFinite(val)) total+=val
 
     holdingsData.push({Ticker:ticker,RiskTier:tier,Value:val})
 
@@ -618,15 +1060,14 @@ async function loadHoldings(){
     `)
   }
 
+  currentTotal=total
   setHTML(holdingsBody,out.join(""))
   setText(totalValue,money(total))
-
   recordTotal(total)
 }
 
-
 /* ============================
-   Portfolio Heatmap
+   Heatmap
 ============================ */
 
 const THEME_MAP={
@@ -649,45 +1090,467 @@ const THEME_MAP={
   RVI:"Industrials"
 }
 
-function renderHeatmap(){
-  if(!heatmapMount)return
-
+function buildHeatRows(){
   const totals=new Map()
   let grand=0
 
   for(const h of holdingsData){
-    const theme=THEME_MAP[safeUpper(h.Ticker)]||"Other"
+    const theme=THEME_MAP[safeUpper(h.Ticker)] || "Other"
     const val=Number(h.Value||0)
-
-    if(!isFinite(val))continue
-
+    if(!isFinite(val)) continue
     totals.set(theme,(totals.get(theme)||0)+val)
     grand+=val
   }
 
-  const rows=[...totals.entries()]
+  return [...totals.entries()]
     .map(([theme,val])=>({theme,val,pct:grand>0?val/grand:0}))
     .sort((a,b)=>b.val-a.val)
+}
+
+function renderHeatmap(){
+  if(!heatmapMount) return
+  const rows=buildHeatRows()
+  lastHeatRows=rows
 
   setHTML(heatmapMount, rows.map(r=>{
-    const width=Math.round(r.pct*100)
-
     let color="var(--green)"
-    if(r.pct>0.30)color="var(--yellow)"
-    if(r.pct>0.60)color="var(--red)"
+    if(r.pct>0.30) color="var(--yellow)"
+    if(r.pct>0.60) color="var(--red)"
 
     return `
-      <div style="display:grid;grid-template-columns:120px 1fr 60px;gap:10px;margin:8px 0">
+      <div class="heatRow">
         <div>${r.theme}</div>
-        <div style="background:#111;border-radius:10px;overflow:hidden">
-          <div style="width:${width}%;height:12px;background:${color}"></div>
+        <div class="heatTrack">
+          <div class="heatFill" style="width:${Math.round(r.pct*100)}%;background:${color}"></div>
         </div>
-        <div style="text-align:right">${(r.pct*100).toFixed(1)}%</div>
+        <div class="right">${(r.pct*100).toFixed(1)}%</div>
       </div>
     `
   }).join(""))
 }
 
+/* ============================
+   Lean 2.0 scores
+============================ */
+
+function parsePercentLoose(txt){
+  const n=coerceNumber(txt)
+  if(!isFinite(n)) return null
+  return n>1 ? n/100 : n
+}
+
+function regimeState(){
+  const regime=safeUpper(valRegime && valRegime.textContent)
+  if(regime.includes("RISK ON") || regime.includes("BULL") || regime.includes("FAVORABLE")) return {score:85,color:"green",label:"Supportive"}
+  if(regime.includes("DEFENSIVE") || regime.includes("RISK OFF")) return {score:20,color:"red",label:"Defensive"}
+  return {score:50,color:"yellow",label:"Mixed"}
+}
+
+function volState(){
+  const vol=safeUpper(valVol && valVol.textContent)
+  if(vol.includes("LOW") || vol.includes("QUIET")) return {score:20,color:"green",label:"Calm"}
+  if(vol.includes("HOT") || vol.includes("HIGH")) return {score:82,color:"red",label:"Hot"}
+  return {score:50,color:"yellow",label:"Normal"}
+}
+
+function ddState(){
+  const {ddPct}=computeDrawdown()
+  if(!isFinite(ddPct)) return {score:50,color:"yellow",label:"Limited"}
+  if(ddPct<=-0.10) return {score:90,color:"red",label:"Deep"}
+  if(ddPct<=-0.06) return {score:70,color:"red",label:"Heavy"}
+  if(ddPct<=-0.03) return {score:45,color:"yellow",label:"Manageable"}
+  return {score:15,color:"green",label:"Contained"}
+}
+
+function brakeState(){
+  const brake=brakeLevel(computeDrawdown().ddPct)
+  if(brake==="FULL") return {score:95,color:"red",label:"Full"}
+  if(brake==="HARD") return {score:78,color:"red",label:"Hard"}
+  if(brake==="SOFT") return {score:50,color:"yellow",label:"Soft"}
+  if(brake==="NONE") return {score:15,color:"green",label:"None"}
+  return {score:50,color:"yellow",label:"Unknown"}
+}
+
+function mcState(){
+  const rets=getReturns().slice(-120)
+  if(rets.length<10) return {score:50,color:"yellow",label:"Limited",rangeText:"—"}
+  const total=isFinite(currentTotal) ? currentTotal : null
+  if(!isFinite(total) || total<=0) return {score:50,color:"yellow",label:"Limited",rangeText:"—"}
+
+  const outcomes=[]
+  const runs=300
+  const days=20
+
+  for(let i=0;i<runs;i++){
+    let v=total
+    for(let d=0;d<days;d++){
+      const pick=rets[Math.floor(Math.random()*rets.length)] || 0
+      v*=1+pick
+    }
+    outcomes.push(v)
+  }
+
+  const p10=percentile(outcomes,0.10)
+  const p90=percentile(outcomes,0.90)
+  const width=(p90-p10)/total
+
+  let color="green", score=20, label="Tight"
+  if(width>0.12){ color="red"; score=85; label="Wide" }
+  else if(width>0.06){ color="yellow"; score=55; label="Mixed" }
+
+  return {
+    score,
+    color,
+    label,
+    rangeText: isFinite(p10)&&isFinite(p90) ? `${money(p10)} → ${money(p90)}` : "—"
+  }
+}
+
+function corrState(){
+  const rows=lastHeatRows.length ? lastHeatRows : buildHeatRows()
+  const top=rows.slice(0,3)
+  let crowd=0
+  if(top[0]?.pct) crowd += top[0].pct
+  if(top[1]?.pct) crowd += top[1].pct*0.75
+  if(top[2]?.pct) crowd += top[2].pct*0.5
+
+  if(crowd>0.90) return {score:85,color:"red",label:"Crowded"}
+  if(crowd>0.65) return {score:55,color:"yellow",label:"Moderate"}
+  return {score:20,color:"green",label:"Spread"}
+}
+
+function cvarState(){
+  const rets=getReturns().slice(-90)
+  if(rets.length<15) return {score:50,color:"yellow",label:"Limited",tail:"—"}
+
+  const sorted=[...rets].sort((a,b)=>a-b)
+  const tailCount=Math.max(1,Math.floor(sorted.length*0.1))
+  const tail=sorted.slice(0,tailCount)
+  const cvar=mean(tail)
+
+  if(!isFinite(cvar)) return {score:50,color:"yellow",label:"Limited",tail:"—"}
+  if(cvar<=-0.020) return {score:86,color:"red",label:"Heavy",tail:pct2(cvar)}
+  if(cvar<=-0.010) return {score:58,color:"yellow",label:"Moderate",tail:pct2(cvar)}
+  return {score:20,color:"green",label:"Contained",tail:pct2(cvar)}
+}
+
+function bayesState(){
+  const p=bayesPOk()
+  if(p>=0.65) return {score:20,color:"green",label:`${Math.round(p*100)}%`}
+  if(p>=0.45) return {score:50,color:"yellow",label:`${Math.round(p*100)}%`}
+  return {score:82,color:"red",label:`${Math.round(p*100)}%`}
+}
+
+function computeReadyRisk(){
+  const r=regimeState()
+  const v=volState()
+  const dd=ddState()
+  const b=brakeState()
+  const mc=mcState()
+  const corr=corrState()
+  const cv=cvarState()
+  const by=bayesState()
+
+  const cashAnchor=parsePercentLoose(valCash && valCash.textContent)
+  let cashPenalty=0
+  if(isFinite(cashAnchor)){
+    if(cashAnchor>0.80) cashPenalty=18
+    else if(cashAnchor>0.60) cashPenalty=10
+    else if(cashAnchor>0.40) cashPenalty=4
+  }
+
+  const violationText=safeUpper(valViol && valViol.textContent)
+  let violationPenalty=0
+  if(violationText && violationText!=="—" && !violationText.includes("NONE") && !violationText.includes("0")){
+    violationPenalty=12
+  }
+
+  const liquidityText=safeUpper(valLiq && valLiq.textContent)
+  let liquidityBoost=0
+  if(liquidityText.includes("GOOD") || liquidityText.includes("LIQUID") || liquidityText.includes("STRONG")) liquidityBoost=8
+  if(liquidityText.includes("TIGHT") || liquidityText.includes("WEAK") || liquidityText.includes("LOW")) liquidityBoost=-8
+
+  let ready =
+    r.score*0.24 +
+    (100-v.score)*0.18 +
+    (100-dd.score)*0.12 +
+    (100-b.score)*0.14 +
+    (100-mc.score)*0.10 +
+    (100-corr.score)*0.08 +
+    (100-cv.score)*0.08 +
+    (100-by.score)*0.06
+
+  ready = ready + liquidityBoost - cashPenalty - violationPenalty
+  ready = Math.round(clamp(ready,0,100))
+
+  let risk =
+    v.score*0.26 +
+    dd.score*0.14 +
+    b.score*0.14 +
+    mc.score*0.12 +
+    corr.score*0.12 +
+    cv.score*0.12 +
+    (100-r.score)*0.05 +
+    by.score*0.05
+
+  if(cashPenalty) risk += Math.round(cashPenalty*0.4)
+  if(violationPenalty) risk += violationPenalty
+  risk = Math.round(clamp(risk,0,100))
+
+  return {
+    ready,
+    risk,
+    components:{r,v,dd,b,mc,corr,cv,by}
+  }
+}
+
+function renderTopPills(){
+  const scores=computeReadyRisk()
+  const last=computeLastChange()
+
+  if(readyPill){
+    readyPill.className=`cmdPill ${pillClassForPercent(scores.ready,false)}`
+    setText(readyValue,`${scores.ready}%`)
+  }
+
+  if(riskPill){
+    riskPill.className=`cmdPill ${pillClassForPercent(scores.risk,true)}`
+    setText(riskValue,`${scores.risk}%`)
+  }
+
+  if(valuePill){
+    valuePill.className="cmdPill cmdBlue"
+    setText(valueValue,money(currentTotal))
+  }
+
+  if(lastPill){
+    let cls="cmdGray"
+    if(isFinite(last.amount)){
+      cls = last.amount>0 ? "cmdGreen" : last.amount<0 ? "cmdRed" : "cmdGray"
+      const sign=last.amount>0?"+":last.amount<0?"":""
+      setText(lastValue,`${sign}${money(last.amount)} / ${sign}${pct2(last.pct)}`)
+    }else{
+      setText(lastValue,"—")
+    }
+    lastPill.className=`cmdPill ${cls}`
+  }
+}
+
+function renderMathPills(){
+  if(!mathPillBar) return
+  const {components}=computeReadyRisk()
+
+  const items=[
+    { key:"REGIME", state:components.r, tip:"Market neighborhood. Supportive regime helps deployment." },
+    { key:"VOL", state:components.v, tip:"How jumpy the environment is right now." },
+    { key:"DD", state:components.dd, tip:"Current damage from the recent portfolio high." },
+    { key:"BRAKE", state:components.b, tip:"How much Lean 2.0 should restrain action." },
+    { key:"MC", state:components.mc, tip:`Monte Carlo path width. ${components.mc.rangeText ? "20-step band: " + components.mc.rangeText : ""}` },
+    { key:"CORR", state:components.corr, tip:"Crowding / overlap approximation from theme concentration." },
+    { key:"CVAR", state:components.cv, tip:`Worst-tail pressure from recent returns. Tail: ${components.cv.tail || "—"}` },
+    { key:"BAYES", state:components.by, tip:"How much trust the system has earned from past outcomes." }
+  ]
+
+  setHTML(mathPillBar, items.map(item=>`
+    <div class="mathPill" title="${escapeAttr(item.tip)}">
+      <span class="dot ${dotClass(item.state.color)}"></span>
+      <span>${item.key}</span>
+    </div>
+  `).join(""))
+}
+
+/* ============================
+   Performance chart
+============================ */
+
+function proxyCsv(url){
+  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
+}
+
+async function fetchBenchmarkSeries(symbol){
+  if(benchmarkCache[symbol]) return benchmarkCache[symbol]
+
+  const stooq=`https://stooq.com/q/d/l/?s=${symbol.toLowerCase()}.us&i=d`
+  const text=await fetchText(proxyCsv(stooq))
+  const rows=parseCSV(text)
+  if(rows.length<2) throw new Error(`No benchmark data for ${symbol}`)
+
+  const out=[]
+  for(let i=1;i<rows.length;i++){
+    const r=rows[i]
+    const date=(r[0]||"").trim()
+    const close=coerceNumber(r[4])
+    if(date && isFinite(close)){
+      out.push({date,close})
+    }
+  }
+
+  benchmarkCache[symbol]=out
+  return out
+}
+
+function buildLeanDailySeries(){
+  const hist=loadHist()
+  const byDay=new Map()
+
+  for(const h of hist){
+    if(!isFinite(h.total)) continue
+    byDay.set(dateKeyFromTs(h.ts), h.total)
+  }
+
+  return [...byDay.entries()]
+    .map(([date,close])=>({date,close}))
+    .sort((a,b)=>a.date.localeCompare(b.date))
+}
+
+function normalizeSeries(series){
+  if(!series || !series.length) return []
+  const first=series[0].close
+  if(!isFinite(first) || first<=0) return []
+  return series.map(x=>({date:x.date, value:(x.close/first)*100}))
+}
+
+function sliceBenchmarkToWindow(series, startDate, endDate){
+  return series.filter(x=>x.date>=startDate && x.date<=endDate)
+}
+
+function alignSeries(masterDates, series){
+  const map=new Map(series.map(x=>[x.date,x.value]))
+  const out=[]
+  let last=null
+
+  for(const d of masterDates){
+    if(map.has(d)) last=map.get(d)
+    if(last!==null && isFinite(last)){
+      out.push({date:d,value:last})
+    }
+  }
+  return out
+}
+
+function buildPolylinePoints(series, x0, y0, w, h, minY, maxY, dateIndex){
+  if(!series.length) return ""
+  const span=Math.max(1, maxY-minY)
+  return series.map(p=>{
+    const x = x0 + (dateIndex.get(p.date)/(Math.max(1,dateIndex.size-1)))*w
+    const y = y0 + h - ((p.value-minY)/span)*h
+    return `${x.toFixed(2)},${y.toFixed(2)}`
+  }).join(" ")
+}
+
+function latestReturnFromNormalized(series){
+  if(!series.length) return null
+  const last=series[series.length-1].value
+  return isFinite(last) ? (last/100)-1 : null
+}
+
+async function renderPerformanceChart(){
+  if(!perfSvg) return
+
+  try{
+    const leanRaw=buildLeanDailySeries()
+    if(leanRaw.length<2){
+      setHTML(perfSvg, `
+        <text x="40" y="80" class="axisLabel">Need more Lean history to draw the performance chart.</text>
+      `)
+      setText(perfWindow,"Window: Limited")
+      setText(perfLean,"Lean: —")
+      setText(perfSpy,"SPY: —")
+      setText(perfQqq,"QQQ: —")
+      setText(perfSgov,"SGOV: —")
+      return
+    }
+
+    const startDate=leanRaw[0].date
+    const endDate=leanRaw[leanRaw.length-1].date
+
+    const [spyRaw, qqqRaw, sgovRaw] = await Promise.all([
+      fetchBenchmarkSeries("spy"),
+      fetchBenchmarkSeries("qqq"),
+      fetchBenchmarkSeries("sgov")
+    ])
+
+    const leanNorm=normalizeSeries(leanRaw)
+    const spyNorm=normalizeSeries(sliceBenchmarkToWindow(spyRaw,startDate,endDate))
+    const qqqNorm=normalizeSeries(sliceBenchmarkToWindow(qqqRaw,startDate,endDate))
+    const sgovNorm=normalizeSeries(sliceBenchmarkToWindow(sgovRaw,startDate,endDate))
+
+    const masterDates=leanNorm.map(x=>x.date)
+    const alignedLean=alignSeries(masterDates, leanNorm)
+    const alignedSpy=alignSeries(masterDates, spyNorm)
+    const alignedQqq=alignSeries(masterDates, qqqNorm)
+    const alignedSgov=alignSeries(masterDates, sgovNorm)
+
+    const allValues=[
+      ...alignedLean.map(x=>x.value),
+      ...alignedSpy.map(x=>x.value),
+      ...alignedQqq.map(x=>x.value),
+      ...alignedSgov.map(x=>x.value)
+    ].filter(v=>isFinite(v))
+
+    if(!allValues.length){
+      setHTML(perfSvg, `<text x="40" y="80" class="axisLabel">Unable to build benchmark chart data.</text>`)
+      return
+    }
+
+    let minY=Math.min(...allValues)
+    let maxY=Math.max(...allValues)
+    const pad=(maxY-minY||10)*0.12
+    minY=minY-pad
+    maxY=maxY+pad
+
+    const x0=56, y0=18, w=884, h=280
+    const dateIndex=new Map(masterDates.map((d,i)=>[d,i]))
+
+    const gridVals=5
+    let gridHtml=""
+    for(let i=0;i<gridVals;i++){
+      const y=y0 + (h/(gridVals-1))*i
+      const value=maxY - ((maxY-minY)/(gridVals-1))*i
+      gridHtml += `
+        <line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" class="gridLine"></line>
+        <text x="8" y="${y+4}" class="axisLabel">${value.toFixed(0)}</text>
+      `
+    }
+
+    const bottomLeft=masterDates[0] || "—"
+    const bottomRight=masterDates[masterDates.length-1] || "—"
+
+    const leanPts=buildPolylinePoints(alignedLean,x0,y0,w,h,minY,maxY,dateIndex)
+    const spyPts=buildPolylinePoints(alignedSpy,x0,y0,w,h,minY,maxY,dateIndex)
+    const qqqPts=buildPolylinePoints(alignedQqq,x0,y0,w,h,minY,maxY,dateIndex)
+    const sgovPts=buildPolylinePoints(alignedSgov,x0,y0,w,h,minY,maxY,dateIndex)
+
+    setHTML(perfSvg, `
+      ${gridHtml}
+      <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" class="gridLine"></line>
+      <text x="${x0}" y="${y0+h+24}" class="axisLabel">${bottomLeft}</text>
+      <text x="${x0+w-72}" y="${y0+h+24}" class="axisLabel">${bottomRight}</text>
+
+      ${sgovPts ? `<polyline points="${sgovPts}" class="seriesLine lineSgov"></polyline>` : ""}
+      ${spyPts ? `<polyline points="${spyPts}" class="seriesLine lineSpy"></polyline>` : ""}
+      ${qqqPts ? `<polyline points="${qqqPts}" class="seriesLine lineQqq"></polyline>` : ""}
+      ${leanPts ? `<polyline points="${leanPts}" class="seriesLine lineLean"></polyline>` : ""}
+    `)
+
+    setText(perfWindow, `Window: ${startDate} → ${endDate}`)
+    setText(perfLean, `Lean: ${pct2(latestReturnFromNormalized(alignedLean))}`)
+    setText(perfSpy, `SPY: ${pct2(latestReturnFromNormalized(alignedSpy))}`)
+    setText(perfQqq, `QQQ: ${pct2(latestReturnFromNormalized(alignedQqq))}`)
+    setText(perfSgov, `SGOV: ${pct2(latestReturnFromNormalized(alignedSgov))}`)
+  }catch(err){
+    console.error("Performance chart error", err)
+    setHTML(perfSvg, `
+      <text x="40" y="80" class="axisLabel">Performance chart unavailable right now.</text>
+      <text x="40" y="100" class="axisLabel">Benchmark fetch may be blocked temporarily.</text>
+    `)
+    setText(perfWindow,"Window: Lean only")
+    setText(perfLean,"Lean: —")
+    setText(perfSpy,"SPY: —")
+    setText(perfQqq,"QQQ: —")
+    setText(perfSgov,"SGOV: —")
+  }
+}
 
 /* ============================
    Action engine
@@ -697,29 +1560,25 @@ function marketAllowsDeploy(){
   const regime=safeUpper(valRegime && valRegime.textContent)
   const vol=safeUpper(valVol && valVol.textContent)
 
-  if(regime.includes("DEFENSIVE"))return{ok:false,why:"Defensive"}
-  if(vol.includes("HOT"))return{ok:false,why:"Volatility"}
+  if(regime.includes("DEFENSIVE")) return {ok:false,why:"Defensive"}
+  if(vol.includes("HOT")) return {ok:false,why:"Volatility"}
 
-  return{ok:true,why:"Conditions OK"}
+  return {ok:true,why:"Conditions OK"}
 }
 
 function chooseRampAmount(gate){
-  if(!gate.ok)return 0
-
+  if(!gate.ok) return 0
   const base=RAMP_DEFAULT
   const scaled=Math.round(base*(0.75+(bayesPOk()-0.5)*0.5))
-
   return Math.max(25,Math.min(RAMP_MAX,scaled))
 }
 
 function nextTierFromLast(last){
   const L=normalizeTier(last)
-
-  if(L==="HIGH")return"LOW"
-  if(L==="LOW")return"MED"
-  if(L==="MED")return"LOW"
-
-  return"LOW"
+  if(L==="HIGH") return "LOW"
+  if(L==="LOW") return "MED"
+  if(L==="MED") return "LOW"
+  return "LOW"
 }
 
 function pickNextTickerForTier(tier){
@@ -729,8 +1588,7 @@ function pickNextTickerForTier(tier){
     h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV"
   )
 
-  if(!candidates.length)return null
-
+  if(!candidates.length) return null
   return safeUpper(candidates[0].Ticker)
 }
 
@@ -768,13 +1626,37 @@ function renderAction(){
   suggested={tier,ticker:tkr,amount:amt}
 }
 
+/* ============================
+   Tooltips
+============================ */
+
+function wireTooltips(){
+  document.querySelectorAll(".infoBtn").forEach(btn=>{
+    btn.addEventListener("click", e=>{
+      e.preventDefault()
+      e.stopPropagation()
+      const wrap=btn.closest(".infoWrap")
+      if(!wrap) return
+
+      document.querySelectorAll(".infoWrap.show").forEach(x=>{
+        if(x!==wrap) x.classList.remove("show")
+      })
+
+      wrap.classList.toggle("show")
+    })
+  })
+
+  document.addEventListener("click", ()=>{
+    document.querySelectorAll(".infoWrap.show").forEach(x=>x.classList.remove("show"))
+  })
+}
 
 /* ============================
    Refresh pipeline
 ============================ */
 
 async function refreshAll(label){
-  if(inFlight)return
+  if(inFlight) return
   inFlight=true
 
   try{
@@ -785,6 +1667,9 @@ async function refreshAll(label){
     renderMath()
     renderConfidence()
     renderAction()
+    renderTopPills()
+    renderMathPills()
+    await renderPerformanceChart()
 
     stamp(label)
   }catch(e){
@@ -795,14 +1680,13 @@ async function refreshAll(label){
   }
 }
 
-
 /* ============================
    Buttons
 ============================ */
 
 if(executedBtn){
   executedBtn.onclick=()=>{
-    if(!suggested.ticker)return
+    if(!suggested.ticker) return
 
     localStorage.setItem(LS_LAST_EXEC_TICKER,suggested.ticker)
     localStorage.setItem(LS_LAST_EXEC_TIER,suggested.tier)
@@ -831,7 +1715,6 @@ if(runScanBtn){
   runScanBtn.onclick=()=>refreshAll("Scan")
 }
 
-
 /* ============================
    Init
 ============================ */
@@ -839,11 +1722,11 @@ if(runScanBtn){
 if(systemUrl) systemUrl.value=localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM
 if(holdingsUrl) holdingsUrl.value=localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS
 
+wireTooltips()
 renderConfidence()
 refreshAll("Loaded")
 
 let seconds=60
-
 setInterval(()=>{
   seconds--
   setText(nextRefresh,"Next refresh in "+seconds+"s")
