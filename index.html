@@ -369,19 +369,14 @@
       stroke-width:1;
     }
 
-    .lineLean{ stroke:#22c55e; }
-    .lineSpy{ stroke:#3b82f6; }
-    .lineQqq{ stroke:#f59e0b; }
-    .lineSgov{ stroke:#a78bfa; }
+    .lineLean{
+      stroke:#22c55e;
+    }
 
     .seriesLine{
       fill:none;
-      stroke-width:2.5;
+      stroke-width:2.6;
       vector-effect:non-scaling-stroke;
-    }
-
-    .seriesDot{
-      stroke:none;
     }
 
     @media (max-width:1100px){
@@ -539,15 +534,12 @@
           Performance
           <span class="infoWrap">
             <button class="infoBtn">i</button>
-            <span class="tooltip">Normalized chart. Lean uses your actual tracked history. SPY, QQQ, and SGOV are benchmark lines over the same date span.</span>
+            <span class="tooltip">Normalized Lean-only chart from your actual tracked local history. Benchmark lines come next after this is stable.</span>
           </span>
         </h3>
 
         <div class="perfLegend">
           <div class="legendItem"><span class="legendSwatch" style="background:#22c55e"></span>Lean</div>
-          <div class="legendItem"><span class="legendSwatch" style="background:#3b82f6"></span>SPY</div>
-          <div class="legendItem"><span class="legendSwatch" style="background:#f59e0b"></span>QQQ</div>
-          <div class="legendItem"><span class="legendSwatch" style="background:#a78bfa"></span>SGOV</div>
         </div>
 
         <div class="chartWrap">
@@ -557,9 +549,7 @@
         <div class="chartMeta">
           <div class="metaPill" id="perfWindow">Window: —</div>
           <div class="metaPill" id="perfLean">Lean: —</div>
-          <div class="metaPill" id="perfSpy">SPY: —</div>
-          <div class="metaPill" id="perfQqq">QQQ: —</div>
-          <div class="metaPill" id="perfSgov">SGOV: —</div>
+          <div class="metaPill">Benchmarks: next</div>
         </div>
       </div>
     </div>
@@ -709,9 +699,6 @@ const mathPillBar=$("mathPillBar")
 const perfSvg=$("perfSvg")
 const perfWindow=$("perfWindow")
 const perfLean=$("perfLean")
-const perfSpy=$("perfSpy")
-const perfQqq=$("perfQqq")
-const perfSgov=$("perfSgov")
 
 /* ============================
    Utilities
@@ -774,10 +761,6 @@ function money(n){
   return isFinite(n)
     ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
     : "$—"
-}
-
-function pct1(n){
-  return isFinite(n) ? `${(n*100).toFixed(1)}%` : "—"
 }
 
 function pct2(n){
@@ -869,7 +852,6 @@ let suggested={tier:null,ticker:null,amount:null}
 let inFlight=false
 let currentTotal=NaN
 let lastHeatRows=[]
-let benchmarkCache={}
 
 /* ============================
    History / drawdown
@@ -1346,7 +1328,7 @@ function renderMathPills(){
     { key:"DD", state:components.dd, tip:"Current damage from the recent portfolio high." },
     { key:"BRAKE", state:components.b, tip:"How much Lean 2.0 should restrain action." },
     { key:"MC", state:components.mc, tip:`Monte Carlo path width. ${components.mc.rangeText ? "20-step band: " + components.mc.rangeText : ""}` },
-    { key:"CORR", state:components.corr, tip:"Crowding / overlap approximation from theme concentration." },
+    { key:"CORR", state:components.corr, tip:"Current overlap approximation from concentration, not true rolling ticker correlation yet." },
     { key:"CVAR", state:components.cv, tip:`Worst-tail pressure from recent returns. Tail: ${components.cv.tail || "—"}` },
     { key:"BAYES", state:components.by, tip:"How much trust the system has earned from past outcomes." }
   ]
@@ -1360,34 +1342,8 @@ function renderMathPills(){
 }
 
 /* ============================
-   Performance chart
+   Performance chart (Lean-only)
 ============================ */
-
-function proxyCsv(url){
-  return `https://api.allorigins.win/raw?url=${encodeURIComponent(url)}`
-}
-
-async function fetchBenchmarkSeries(symbol){
-  if(benchmarkCache[symbol]) return benchmarkCache[symbol]
-
-  const stooq=`https://stooq.com/q/d/l/?s=${symbol.toLowerCase()}.us&i=d`
-  const text=await fetchText(proxyCsv(stooq))
-  const rows=parseCSV(text)
-  if(rows.length<2) throw new Error(`No benchmark data for ${symbol}`)
-
-  const out=[]
-  for(let i=1;i<rows.length;i++){
-    const r=rows[i]
-    const date=(r[0]||"").trim()
-    const close=coerceNumber(r[4])
-    if(date && isFinite(close)){
-      out.push({date,close})
-    }
-  }
-
-  benchmarkCache[symbol]=out
-  return out
-}
 
 function buildLeanDailySeries(){
   const hist=loadHist()
@@ -1410,146 +1366,73 @@ function normalizeSeries(series){
   return series.map(x=>({date:x.date, value:(x.close/first)*100}))
 }
 
-function sliceBenchmarkToWindow(series, startDate, endDate){
-  return series.filter(x=>x.date>=startDate && x.date<=endDate)
-}
-
-function alignSeries(masterDates, series){
-  const map=new Map(series.map(x=>[x.date,x.value]))
-  const out=[]
-  let last=null
-
-  for(const d of masterDates){
-    if(map.has(d)) last=map.get(d)
-    if(last!==null && isFinite(last)){
-      out.push({date:d,value:last})
-    }
-  }
-  return out
-}
-
-function buildPolylinePoints(series, x0, y0, w, h, minY, maxY, dateIndex){
-  if(!series.length) return ""
-  const span=Math.max(1, maxY-minY)
-  return series.map(p=>{
-    const x = x0 + (dateIndex.get(p.date)/(Math.max(1,dateIndex.size-1)))*w
-    const y = y0 + h - ((p.value-minY)/span)*h
-    return `${x.toFixed(2)},${y.toFixed(2)}`
-  }).join(" ")
-}
-
 function latestReturnFromNormalized(series){
   if(!series.length) return null
   const last=series[series.length-1].value
   return isFinite(last) ? (last/100)-1 : null
 }
 
-async function renderPerformanceChart(){
+function buildPolylinePoints(series, x0, y0, w, h, minY, maxY){
+  if(!series.length) return ""
+  const span=Math.max(1, maxY-minY)
+  const n=Math.max(1, series.length-1)
+
+  return series.map((p,i)=>{
+    const x = x0 + (i/n)*w
+    const y = y0 + h - ((p.value-minY)/span)*h
+    return `${x.toFixed(2)},${y.toFixed(2)}`
+  }).join(" ")
+}
+
+function renderPerformanceChart(){
   if(!perfSvg) return
 
-  try{
-    const leanRaw=buildLeanDailySeries()
-    if(leanRaw.length<2){
-      setHTML(perfSvg, `
-        <text x="40" y="80" class="axisLabel">Need more Lean history to draw the performance chart.</text>
-      `)
-      setText(perfWindow,"Window: Limited")
-      setText(perfLean,"Lean: —")
-      setText(perfSpy,"SPY: —")
-      setText(perfQqq,"QQQ: —")
-      setText(perfSgov,"SGOV: —")
-      return
-    }
+  const leanRaw=buildLeanDailySeries()
+  const leanNorm=normalizeSeries(leanRaw)
 
-    const startDate=leanRaw[0].date
-    const endDate=leanRaw[leanRaw.length-1].date
-
-    const [spyRaw, qqqRaw, sgovRaw] = await Promise.all([
-      fetchBenchmarkSeries("spy"),
-      fetchBenchmarkSeries("qqq"),
-      fetchBenchmarkSeries("sgov")
-    ])
-
-    const leanNorm=normalizeSeries(leanRaw)
-    const spyNorm=normalizeSeries(sliceBenchmarkToWindow(spyRaw,startDate,endDate))
-    const qqqNorm=normalizeSeries(sliceBenchmarkToWindow(qqqRaw,startDate,endDate))
-    const sgovNorm=normalizeSeries(sliceBenchmarkToWindow(sgovRaw,startDate,endDate))
-
-    const masterDates=leanNorm.map(x=>x.date)
-    const alignedLean=alignSeries(masterDates, leanNorm)
-    const alignedSpy=alignSeries(masterDates, spyNorm)
-    const alignedQqq=alignSeries(masterDates, qqqNorm)
-    const alignedSgov=alignSeries(masterDates, sgovNorm)
-
-    const allValues=[
-      ...alignedLean.map(x=>x.value),
-      ...alignedSpy.map(x=>x.value),
-      ...alignedQqq.map(x=>x.value),
-      ...alignedSgov.map(x=>x.value)
-    ].filter(v=>isFinite(v))
-
-    if(!allValues.length){
-      setHTML(perfSvg, `<text x="40" y="80" class="axisLabel">Unable to build benchmark chart data.</text>`)
-      return
-    }
-
-    let minY=Math.min(...allValues)
-    let maxY=Math.max(...allValues)
-    const pad=(maxY-minY||10)*0.12
-    minY=minY-pad
-    maxY=maxY+pad
-
-    const x0=56, y0=18, w=884, h=280
-    const dateIndex=new Map(masterDates.map((d,i)=>[d,i]))
-
-    const gridVals=5
-    let gridHtml=""
-    for(let i=0;i<gridVals;i++){
-      const y=y0 + (h/(gridVals-1))*i
-      const value=maxY - ((maxY-minY)/(gridVals-1))*i
-      gridHtml += `
-        <line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" class="gridLine"></line>
-        <text x="8" y="${y+4}" class="axisLabel">${value.toFixed(0)}</text>
-      `
-    }
-
-    const bottomLeft=masterDates[0] || "—"
-    const bottomRight=masterDates[masterDates.length-1] || "—"
-
-    const leanPts=buildPolylinePoints(alignedLean,x0,y0,w,h,minY,maxY,dateIndex)
-    const spyPts=buildPolylinePoints(alignedSpy,x0,y0,w,h,minY,maxY,dateIndex)
-    const qqqPts=buildPolylinePoints(alignedQqq,x0,y0,w,h,minY,maxY,dateIndex)
-    const sgovPts=buildPolylinePoints(alignedSgov,x0,y0,w,h,minY,maxY,dateIndex)
-
+  if(leanNorm.length<2){
     setHTML(perfSvg, `
-      ${gridHtml}
-      <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" class="gridLine"></line>
-      <text x="${x0}" y="${y0+h+24}" class="axisLabel">${bottomLeft}</text>
-      <text x="${x0+w-72}" y="${y0+h+24}" class="axisLabel">${bottomRight}</text>
-
-      ${sgovPts ? `<polyline points="${sgovPts}" class="seriesLine lineSgov"></polyline>` : ""}
-      ${spyPts ? `<polyline points="${spyPts}" class="seriesLine lineSpy"></polyline>` : ""}
-      ${qqqPts ? `<polyline points="${qqqPts}" class="seriesLine lineQqq"></polyline>` : ""}
-      ${leanPts ? `<polyline points="${leanPts}" class="seriesLine lineLean"></polyline>` : ""}
+      <text x="40" y="80" class="axisLabel">Need more daily Lean history to draw the chart.</text>
+      <text x="40" y="102" class="axisLabel">Run the terminal across multiple days and it will build itself.</text>
     `)
-
-    setText(perfWindow, `Window: ${startDate} → ${endDate}`)
-    setText(perfLean, `Lean: ${pct2(latestReturnFromNormalized(alignedLean))}`)
-    setText(perfSpy, `SPY: ${pct2(latestReturnFromNormalized(alignedSpy))}`)
-    setText(perfQqq, `QQQ: ${pct2(latestReturnFromNormalized(alignedQqq))}`)
-    setText(perfSgov, `SGOV: ${pct2(latestReturnFromNormalized(alignedSgov))}`)
-  }catch(err){
-    console.error("Performance chart error", err)
-    setHTML(perfSvg, `
-      <text x="40" y="80" class="axisLabel">Performance chart unavailable right now.</text>
-      <text x="40" y="100" class="axisLabel">Benchmark fetch may be blocked temporarily.</text>
-    `)
-    setText(perfWindow,"Window: Lean only")
+    setText(perfWindow,"Window: Limited")
     setText(perfLean,"Lean: —")
-    setText(perfSpy,"SPY: —")
-    setText(perfQqq,"QQQ: —")
-    setText(perfSgov,"SGOV: —")
+    return
   }
+
+  let minY=Math.min(...leanNorm.map(x=>x.value))
+  let maxY=Math.max(...leanNorm.map(x=>x.value))
+  const pad=(maxY-minY || 6)*0.18
+  minY=minY-pad
+  maxY=maxY+pad
+
+  const x0=56, y0=18, w=884, h=280
+
+  let gridHtml=""
+  const gridVals=5
+  for(let i=0;i<gridVals;i++){
+    const y=y0 + (h/(gridVals-1))*i
+    const value=maxY - ((maxY-minY)/(gridVals-1))*i
+    gridHtml += `
+      <line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" class="gridLine"></line>
+      <text x="8" y="${y+4}" class="axisLabel">${value.toFixed(0)}</text>
+    `
+  }
+
+  const leftDate=leanNorm[0].date
+  const rightDate=leanNorm[leanNorm.length-1].date
+  const pts=buildPolylinePoints(leanNorm,x0,y0,w,h,minY,maxY)
+
+  setHTML(perfSvg, `
+    ${gridHtml}
+    <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" class="gridLine"></line>
+    <text x="${x0}" y="${y0+h+24}" class="axisLabel">${leftDate}</text>
+    <text x="${x0+w-72}" y="${y0+h+24}" class="axisLabel">${rightDate}</text>
+    <polyline points="${pts}" class="seriesLine lineLean"></polyline>
+  `)
+
+  setText(perfWindow, `Window: ${leftDate} → ${rightDate}`)
+  setText(perfLean, `Lean: ${pct2(latestReturnFromNormalized(leanNorm))}`)
 }
 
 /* ============================
@@ -1669,7 +1552,7 @@ async function refreshAll(label){
     renderAction()
     renderTopPills()
     renderMathPills()
-    await renderPerformanceChart()
+    renderPerformanceChart()
 
     stamp(label)
   }catch(e){
