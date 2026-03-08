@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal 1.1</title>
+  <title>Lean Terminal 1.2</title>
   <style>
     :root{
       --bg:#0b1020;
@@ -379,6 +379,24 @@
       vector-effect:non-scaling-stroke;
     }
 
+    .badge{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:12px;
+      font-weight:700;
+      background:#111827;
+      border:1px solid var(--line);
+    }
+
+    .badgeGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
+    .badgeYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
+    .badgeRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
+    .badgeBlue{ color:#bfdbfe; border-color:rgba(59,130,246,.24); }
+    .badgeGray{ color:#d1d5db; }
+
     @media (max-width:1100px){
       .gridTop{
         grid-template-columns:1fr 1fr;
@@ -407,7 +425,7 @@
 
     <div class="topbar">
       <div>
-        <div class="title">Lean Terminal 1.1</div>
+        <div class="title">Lean Terminal 1.2</div>
         <div class="sub">Lean 2.0 cockpit • math &gt; emotions</div>
       </div>
       <div class="status">
@@ -496,7 +514,7 @@
           Action Engine
           <span class="infoWrap">
             <button class="infoBtn">i</button>
-            <span class="tooltip">This is the current Lean 2.0 action output based on gates, tiers, and confidence.</span>
+            <span class="tooltip">This is the current Lean 2.0 action output based on gates, tiers, and confidence. Risk-sized buy uses a tier-vol proxy for now, not true ticker vol yet.</span>
           </span>
         </h3>
 
@@ -504,6 +522,7 @@
         <div class="row"><span>Reason</span><span id="actionReason">—</span></div>
         <div class="row"><span>Next</span><span id="actionNext">—</span></div>
         <div class="row"><span>Meta</span><span id="actionMeta">—</span></div>
+        <div class="row"><span>Risk-Sized Buy</span><strong id="riskSizedBuy">—</strong></div>
 
         <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
           <button class="success" id="executedBtn">Mark Executed</button>
@@ -525,6 +544,25 @@
         <div class="row"><span>Peak</span><span id="mathPeak">—</span></div>
         <div class="row"><span>Vol</span><span id="mathVol">—</span></div>
         <div class="row"><span>Sharpe</span><span id="mathSharpe">—</span></div>
+      </div>
+    </div>
+
+    <div class="grid" style="margin-top:10px">
+      <div class="card">
+        <h3>
+          Exposure & Guardrails
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Separates the SGOV nest from active Lean participation. This is the first step toward hedge-style exposure budgeting.</span>
+          </span>
+        </h3>
+
+        <div class="row"><span>SGOV Nest</span><strong id="sgovNestPct">—</strong></div>
+        <div class="row"><span>Active Exposure</span><strong id="activeExposurePct">—</strong></div>
+        <div class="row"><span>Lean Capital</span><strong id="leanCapitalValue">—</strong></div>
+        <div class="row"><span>Lean Participation</span><strong id="leanParticipationPct">—</strong></div>
+        <div class="row"><span>Primary Blocker</span><span id="primaryBlocker">—</span></div>
+        <div class="row"><span>Blocker Severity</span><span id="blockerBadge" class="badge badgeGray">—</span></div>
       </div>
     </div>
 
@@ -663,6 +701,7 @@ const actionMain=$("actionMain")
 const actionReason=$("actionReason")
 const actionNext=$("actionNext")
 const actionMeta=$("actionMeta")
+const riskSizedBuy=$("riskSizedBuy")
 
 const executedBtn=$("executedBtn")
 const execIcon=$("execIcon")
@@ -699,6 +738,13 @@ const mathPillBar=$("mathPillBar")
 const perfSvg=$("perfSvg")
 const perfWindow=$("perfWindow")
 const perfLean=$("perfLean")
+
+const sgovNestPct=$("sgovNestPct")
+const activeExposurePct=$("activeExposurePct")
+const leanCapitalValue=$("leanCapitalValue")
+const leanParticipationPct=$("leanParticipationPct")
+const primaryBlocker=$("primaryBlocker")
+const blockerBadge=$("blockerBadge")
 
 /* ============================
    Utilities
@@ -793,6 +839,14 @@ function dotClass(color){
   return "dotGray"
 }
 
+function badgeClass(color){
+  if(color==="green") return "badge badgeGreen"
+  if(color==="yellow") return "badge badgeYellow"
+  if(color==="red") return "badge badgeRed"
+  if(color==="blue") return "badge badgeBlue"
+  return "badge badgeGray"
+}
+
 function escapeAttr(s){
   return String(s||"").replace(/"/g,"&quot;")
 }
@@ -848,7 +902,7 @@ function parseCSV(text){
 ============================ */
 
 let holdingsData=[]
-let suggested={tier:null,ticker:null,amount:null}
+let suggested={tier:null,ticker:null,amount:null,riskSizedAmount:null}
 let inFlight=false
 let currentTotal=NaN
 let lastHeatRows=[]
@@ -1112,6 +1166,36 @@ function renderHeatmap(){
 }
 
 /* ============================
+   SGOV-aware exposure
+============================ */
+
+function getSgovValue(){
+  return holdingsData
+    .filter(h=>safeUpper(h.Ticker)==="SGOV")
+    .reduce((s,h)=>s+(isFinite(h.Value)?h.Value:0),0)
+}
+
+function computeExposureSplit(){
+  const total=isFinite(currentTotal)?currentTotal:0
+  const sgov=getSgovValue()
+  const active=Math.max(0,total-sgov)
+  const leanCapital=Math.max(0,total-sgov)
+  const nestPct=total>0 ? sgov/total : null
+  const activePct=total>0 ? active/total : null
+  const leanParticipation=leanCapital>0 ? active/leanCapital : null
+
+  return {total,sgov,active,leanCapital,nestPct,activePct,leanParticipation}
+}
+
+function renderExposureSplit(){
+  const x=computeExposureSplit()
+  setText(sgovNestPct,pct2(x.nestPct))
+  setText(activeExposurePct,pct2(x.activePct))
+  setText(leanCapitalValue,money(x.leanCapital))
+  setText(leanParticipationPct,pct2(x.leanParticipation))
+}
+
+/* ============================
    Lean 2.0 scores
 ============================ */
 
@@ -1328,7 +1412,7 @@ function renderMathPills(){
     { key:"DD", state:components.dd, tip:"Current damage from the recent portfolio high." },
     { key:"BRAKE", state:components.b, tip:"How much Lean 2.0 should restrain action." },
     { key:"MC", state:components.mc, tip:`Monte Carlo path width. ${components.mc.rangeText ? "20-step band: " + components.mc.rangeText : ""}` },
-    { key:"CORR", state:components.corr, tip:"Current overlap approximation from concentration, not true rolling ticker correlation yet." },
+    { key:"CORR", state:components.corr, tip:"Current overlap approximation from concentration and crowding, not true rolling ticker correlation yet." },
     { key:"CVAR", state:components.cv, tip:`Worst-tail pressure from recent returns. Tail: ${components.cv.tail || "—"}` },
     { key:"BAYES", state:components.by, tip:"How much trust the system has earned from past outcomes." }
   ]
@@ -1339,6 +1423,66 @@ function renderMathPills(){
       <span>${item.key}</span>
     </div>
   `).join(""))
+}
+
+/* ============================
+   Blockers
+============================ */
+
+function computePrimaryBlocker(){
+  const regime=safeUpper(valRegime && valRegime.textContent)
+  const vol=safeUpper(valVol && valVol.textContent)
+  const violations=safeUpper(valViol && valViol.textContent)
+  const dd=computeDrawdown().ddPct
+  const corr=corrState()
+  const cash=parsePercentLoose(valCash && valCash.textContent)
+
+  if(vol.includes("HOT") || vol.includes("HIGH")){
+    return {label:"Volatility", color:"red"}
+  }
+  if(regime.includes("DEFENSIVE") || regime.includes("RISK OFF")){
+    return {label:"Regime", color:"red"}
+  }
+  if(isFinite(dd) && dd<=-0.06){
+    return {label:"Drawdown Brake", color:"red"}
+  }
+  if(violations && violations!=="—" && !violations.includes("NONE") && !violations.includes("0")){
+    return {label:"Rule Violation", color:"yellow"}
+  }
+  if(isFinite(cash) && cash>0.80){
+    return {label:"Cash Anchor", color:"yellow"}
+  }
+  if(corr.score>=55){
+    return {label:"Overlap / Crowd", color:"yellow"}
+  }
+  return {label:"None", color:"green"}
+}
+
+function renderBlocker(){
+  const b=computePrimaryBlocker()
+  setText(primaryBlocker,b.label)
+  if(blockerBadge){
+    blockerBadge.className=badgeClass(b.color)
+    setText(blockerBadge, b.color==="green" ? "Contained" : b.color==="yellow" ? "Moderate" : "High")
+  }
+}
+
+/* ============================
+   Hedge-style risk sizing
+============================ */
+
+function tierRiskProxy(tier){
+  const t=normalizeTier(tier)
+  if(t==="HIGH") return 1.6
+  if(t==="MED") return 1.0
+  if(t==="LOW") return 0.7
+  return 1.1
+}
+
+function computeRiskSizedAmount(baseAmount, tier){
+  const proxy=tierRiskProxy(tier)
+  const raw=baseAmount/proxy
+  return Math.round(clamp(raw,25,RAMP_MAX))
 }
 
 /* ============================
@@ -1476,7 +1620,7 @@ function pickNextTickerForTier(tier){
 }
 
 function renderAction(){
-  suggested={tier:null,ticker:null,amount:null}
+  suggested={tier:null,ticker:null,amount:null,riskSizedAmount:null}
 
   const gate=marketAllowsDeploy()
   const amt=chooseRampAmount(gate)
@@ -1486,6 +1630,7 @@ function renderAction(){
     setText(actionReason,gate.why)
     setText(actionNext,"—")
     setText(actionMeta,"Gate closed")
+    setText(riskSizedBuy,"—")
     return
   }
 
@@ -1498,15 +1643,19 @@ function renderAction(){
     setText(actionReason,"No matching tier candidate")
     setText(actionNext,"—")
     setText(actionMeta,`Tier ${tier}`)
+    setText(riskSizedBuy,"—")
     return
   }
+
+  const riskAmt=computeRiskSizedAmount(amt,tier)
 
   setText(actionMain,`BUY $${amt} ${tkr}`)
   setText(actionReason,gate.why)
   setText(actionNext,`Next ${nextTierFromLast(tier)}`)
   setText(actionMeta,`Tier ${tier} | ${tkr}`)
+  setText(riskSizedBuy,`$${riskAmt} ${tkr}`)
 
-  suggested={tier,ticker:tkr,amount:amt}
+  suggested={tier,ticker:tkr,amount:amt,riskSizedAmount:riskAmt}
 }
 
 /* ============================
@@ -1552,6 +1701,8 @@ async function refreshAll(label){
     renderAction()
     renderTopPills()
     renderMathPills()
+    renderExposureSplit()
+    renderBlocker()
     renderPerformanceChart()
 
     stamp(label)
