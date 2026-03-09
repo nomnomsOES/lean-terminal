@@ -1,243 +1,277 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-  <meta charset="utf-8" />
-  <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal 1.3</title>
-  <style>
-    :root{
-      --bg:#0b1020;
-      --panel:#121a2b;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
-      --green:#22c55e;
-      --yellow:#f59e0b;
-      --red:#ef4444;
-      --blue:#3b82f6;
-      --line:rgba(255,255,255,.08);
-      --pill:#111827;
+LEAN TERMINAL 1.3 PATCH
+Default CSV links + Auto-load + Auto-scan starter patch
+======================================================
+
+Use this patch inside your current script.
+
+WHAT THIS DOES
+---------------
+1. Hard-wires your System CSV and Holdings CSV into the code
+2. Auto-fills the input boxes on startup
+3. Saves the defaults into localStorage if nothing is stored yet
+4. Runs the scan automatically on startup
+5. Keeps the manual Save / Refresh / Run Scan flow available
+
+======================================================
+PATCH 1 — ADD DEFAULT CSV CONSTANTS
+======================================================
+
+Find this section:
+
+const LS_HOLDINGS="lean_holdings_csv_url"
+const LS_SYSTEM="lean_system_csv_url"
+
+Place this DIRECTLY BELOW it:
+
+/* ============================
+   Default CSV Sources
+============================ */
+
+const DEFAULT_SYSTEM_CSV =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1626144660&single=true&output=csv"
+
+const DEFAULT_HOLDINGS_CSV =
+"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=969785901&single=true&output=csv"
+
+
+======================================================
+PATCH 2 — LOAD DEFAULTS WHEN LOCAL STORAGE IS EMPTY
+======================================================
+
+Find code that looks similar to this:
+
+const systemURL = localStorage.getItem(LS_SYSTEM)
+const holdingsURL = localStorage.getItem(LS_HOLDINGS)
+
+Replace with:
+
+const systemURL =
+  localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM_CSV
+
+const holdingsURL =
+  localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS_CSV
+
+
+======================================================
+PATCH 3 — AUTO-FILL THE INPUT BOXES ON PAGE LOAD
+======================================================
+
+Find where your input elements are defined.
+It may look something like this:
+
+const systemInput = document.getElementById("systemCsvUrl")
+const holdingsInput = document.getElementById("holdingsCsvUrl")
+
+After those lines, add:
+
+if (systemInput && !systemInput.value) {
+  systemInput.value = localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM_CSV
+}
+
+if (holdingsInput && !holdingsInput.value) {
+  holdingsInput.value = localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS_CSV
+}
+
+
+======================================================
+PATCH 4 — SAVE DEFAULTS INTO LOCAL STORAGE ON STARTUP
+======================================================
+
+Somewhere after your local-storage key section, add this helper:
+
+function ensureDefaultCsvSources(){
+  if(!localStorage.getItem(LS_SYSTEM)){
+    localStorage.setItem(LS_SYSTEM, DEFAULT_SYSTEM_CSV)
+  }
+  if(!localStorage.getItem(LS_HOLDINGS)){
+    localStorage.setItem(LS_HOLDINGS, DEFAULT_HOLDINGS_CSV)
+  }
+}
+
+Then call it during startup:
+
+ensureDefaultCsvSources()
+
+
+======================================================
+PATCH 5 — AUTO-RUN THE SCAN ON STARTUP
+======================================================
+
+Find your main startup/init area near the bottom of the script.
+You likely have something like:
+
+window.addEventListener("DOMContentLoaded", () => {
+  ...
+})
+
+Inside that startup block, after your DOM elements are wired up, add:
+
+setTimeout(() => {
+  try {
+    if (typeof runScan === "function") runScan()
+  } catch (err) {
+    crash("AUTO START SCAN FAILED:", err)
+  }
+}, 250)
+
+IMPORTANT:
+- If your scan function is not named runScan, replace runScan() with your actual scan function name.
+- If your button click handler contains the full scan logic inline, move that logic into a named function first.
+
+
+======================================================
+PATCH 6 — OPTIONAL AUTO-REFRESH EVERY 60 SECONDS
+======================================================
+
+Only add this if you want the app to rescan automatically.
+
+let autoRefreshHandle = null
+
+function startAutoRefresh(){
+  if(autoRefreshHandle) clearInterval(autoRefreshHandle)
+  autoRefreshHandle = setInterval(() => {
+    try {
+      if (typeof runScan === "function") runScan()
+    } catch (err) {
+      crash("AUTO REFRESH FAILED:", err)
     }
-    *{box-sizing:border-box}
-    body{margin:0;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;background:var(--bg);color:var(--text);}
-    .wrap{max-width:1280px;margin:0 auto;padding:14px;}
-    .topbar{display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;justify-content:space-between;margin-bottom:12px;}
-    .title{font-size:24px;font-weight:800;line-height:1.1;}
-    .sub{color:var(--muted);font-size:12px;margin-top:2px;}
-    .status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;}
-    .metaPill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:6px 10px;font-size:12px;line-height:1.1;white-space:nowrap;}
-    .commandBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-    .cmdPill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:8px 12px;min-height:38px;display:inline-flex;align-items:center;gap:8px;font-size:13px;font-weight:700;white-space:nowrap;}
-    .cmdPill .label{opacity:.9;font-size:12px;font-weight:800;letter-spacing:.3px;}
-    .cmdGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
-    .cmdYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
-    .cmdRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
-    .cmdBlue{ color:#bfdbfe; border-color:rgba(59,130,246,.24); }
-    .cmdGray{ color:#d1d5db; }
-    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;}
-    .gridTop{grid-template-columns:240px 1fr 1fr 250px;align-items:start;}
-    .card{background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;}
-    .card h3{margin:0 0 10px 0;font-size:15px;display:flex;align-items:center;gap:6px;}
-    .row{display:flex;justify-content:space-between;align-items:flex-start;gap:10px;padding:6px 0;border-bottom:1px solid var(--line);}
-    .row:last-child{border-bottom:none}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
-    .right{text-align:right}
-    .controls{display:grid;grid-template-columns:1fr 1fr;gap:8px;}
-    .controls .full{grid-column:1 / -1}
-    input{width:100%;padding:8px 10px;border-radius:10px;border:1px solid var(--line);background:#0a1220;color:var(--text);font-size:13px;}
-    button{padding:9px 10px;border:none;border-radius:10px;background:var(--blue);color:white;font-weight:700;cursor:pointer;font-size:13px;}
-    button.secondary{background:#1f2937}
-    button.success{background:#166534}
-    table{width:100%;border-collapse:collapse;font-size:14px;}
-    th,td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
-    th{text-align:left;color:var(--muted)}
-    .errorBox{white-space:pre-wrap;background:#2a0f14;border:1px solid rgba(239,68,68,.35);color:#fecaca;padding:12px;border-radius:12px;margin-bottom:12px;}
-    .heatRow{display:grid;grid-template-columns:100px 1fr 54px;gap:10px;align-items:center;margin:8px 0;}
-    .heatTrack{background:#111;border-radius:999px;overflow:hidden;height:14px;}
-    .heatFill{height:14px;border-radius:999px;}
-    .mathPillBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
-    .mathPill{background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:7px 10px;display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;white-space:nowrap;}
-    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;flex:0 0 auto;}
-    .dotGreen{ background:var(--green); }
-    .dotYellow{ background:var(--yellow); }
-    .dotRed{ background:var(--red); }
-    .dotBlue{ background:var(--blue); }
-    .dotGray{ background:#6b7280; }
-    .smallMuted{color:var(--muted);font-size:12px;line-height:1.4;}
-    .infoWrap{position:relative;display:inline-flex;align-items:center;}
-    .infoBtn{width:16px;height:16px;border-radius:999px;border:1px solid rgba(255,255,255,.16);background:#0f172a;color:#93c5fd;display:inline-flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;cursor:pointer;padding:0;line-height:1;}
-    .tooltip{position:absolute;left:20px;top:22px;width:220px;background:#0f172a;color:#e5e7eb;border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px 10px;font-size:12px;line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:50;}
-    .infoWrap.show .tooltip{display:block;}
-    .perfLegend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px 0;font-size:12px;}
-    .legendItem{display:inline-flex;align-items:center;gap:6px;color:var(--muted);}
-    .legendSwatch{width:12px;height:12px;border-radius:999px;display:inline-block;}
-    .chartWrap{width:100%;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#0a1220;padding:10px;}
-    .chartMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);}
-    .chartMeta .metaPill{padding:5px 9px;}
-    #perfSvg{width:100%;height:auto;display:block;}
-    .axisLabel{fill:#94a3b8;font-size:11px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;}
-    .gridLine{stroke:rgba(255,255,255,.08);stroke-width:1;}
-    .lineLean{stroke:#22c55e;}
-    .seriesLine{fill:none;stroke-width:2.6;vector-effect:non-scaling-stroke;}
-    .badge{display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;font-size:12px;font-weight:700;background:#111827;border:1px solid var(--line);}
-    .badgeGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
-    .badgeYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
-    .badgeRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
-    .badgeBlue{ color:#bfdbfe; border-color:rgba(59,130,246,.24); }
-    .badgeGray{ color:#d1d5db; }
-    @media (max-width:1100px){ .gridTop{grid-template-columns:1fr 1fr;} }
-    @media (max-width:700px){
-      .gridTop{grid-template-columns:1fr;}
-      .tooltip{left:0;width:200px;}
-      .heatRow{grid-template-columns:85px 1fr 50px;}
+  }, 60000)
+}
+
+Then call:
+
+startAutoRefresh()
+
+You can place that right after the startup auto-run block.
+
+======================================================
+PATCH 7 — SAFE SAVE BUTTON LOGIC
+======================================================
+
+If your Save button stores the input values, keep or update it like this:
+
+if (saveBtn) {
+  saveBtn.addEventListener("click", () => {
+    try {
+      const systemURL = (systemInput?.value || "").trim() || DEFAULT_SYSTEM_CSV
+      const holdingsURL = (holdingsInput?.value || "").trim() || DEFAULT_HOLDINGS_CSV
+
+      localStorage.setItem(LS_SYSTEM, systemURL)
+      localStorage.setItem(LS_HOLDINGS, holdingsURL)
+
+      if (systemInput) systemInput.value = systemURL
+      if (holdingsInput) holdingsInput.value = holdingsURL
+    } catch (err) {
+      crash("SAVE FAILED:", err)
     }
-  </style>
-</head>
-<body>
-  <div class="wrap">
-    <div id="errorBoxMount"></div>
-    <div class="topbar">
-      <div>
-        <div class="title">Lean Terminal 1.3</div>
-        <div class="sub">Lean 2.0 cockpit • math &gt; emotions</div>
-      </div>
-      <div class="status">
-        <div class="metaPill" id="statusLine">Loading…</div>
-        <div class="metaPill" id="lastUpdated">LAST UPDATED: —</div>
-        <div class="metaPill" id="nextRefresh">Next refresh in 60s</div>
-      </div>
-    </div>
+  })
+}
 
-    <div class="commandBar">
-      <div class="cmdPill cmdGray" id="readyPill"><span class="label">READY</span><span id="readyValue">—%</span></div>
-      <div class="cmdPill cmdGray" id="riskPill"><span class="label">RISK</span><span id="riskValue">—%</span></div>
-      <div class="cmdPill cmdBlue" id="valuePill"><span class="label">VALUE</span><span id="valueValue">$—</span></div>
-      <div class="cmdPill cmdGray" id="lastPill"><span class="label">LAST</span><span id="lastValue">—</span></div>
-    </div>
 
-    <div class="mathPillBar" id="mathPillBar">
-      <div class="mathPill"><span class="dot dotGray"></span>REGIME</div>
-      <div class="mathPill"><span class="dot dotGray"></span>VOL</div>
-      <div class="mathPill"><span class="dot dotGray"></span>DD</div>
-      <div class="mathPill"><span class="dot dotGray"></span>BRAKE</div>
-      <div class="mathPill"><span class="dot dotGray"></span>MC</div>
-      <div class="mathPill"><span class="dot dotGray"></span>CORR</div>
-      <div class="mathPill"><span class="dot dotGray"></span>CVAR</div>
-      <div class="mathPill"><span class="dot dotGray"></span>BAYES</div>
-    </div>
+======================================================
+PATCH 8 — STRONGER VERSION (DROP-IN STARTUP BLOCK)
+======================================================
 
-    <div class="grid gridTop">
-      <div class="card">
-        <h3>Data Sources <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">These are the live CSV feeds powering the terminal. Save stores them in your browser.</span></span></h3>
-        <div class="controls">
-          <div class="full"><div class="smallMuted">System CSV URL</div><input id="systemUrl" placeholder="System CSV URL" /></div>
-          <div class="full"><div class="smallMuted">Holdings CSV URL</div><input id="holdingsUrl" placeholder="Holdings CSV URL" /></div>
-          <button id="saveBtn">Save</button>
-          <button class="secondary" id="refreshBtn">Refresh</button>
-          <button class="full" id="runScanBtn">Run Scan</button>
-        </div>
-      </div>
+If you want a cleaner startup section, use this pattern:
 
-      <div class="card">
-        <h3>System State <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Reads your system sheet and shows market posture, liquidity, volatility, and rule checks.</span></span></h3>
-        <div class="row"><span>Market Regime</span><strong id="valRegime">—</strong></div>
-        <div class="row"><span>Deployment</span><strong id="valDeploy">—</strong></div>
-        <div class="row"><span>Cash Anchor</span><strong id="valCash">—</strong></div>
-        <div class="row"><span>Liquidity</span><strong id="valLiq">—</strong></div>
-        <div class="row"><span>Volatility</span><strong id="valVol">—</strong></div>
-        <div class="row"><span>Violations</span><strong id="valViol">—</strong></div>
-        <div class="row"><span>Brake</span><strong id="valBrake">—</strong></div>
-        <div class="row"><span>Confidence</span><strong id="valConf">—</strong></div>
-      </div>
+window.addEventListener("DOMContentLoaded", () => {
+  try {
 
-      <div class="card">
-        <h3>Action Engine <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">This is the current Lean 2.0 action output based on gates, tiers, and confidence. Risk-sized buy uses a tier-vol proxy for now, not true ticker vol yet.</span></span></h3>
-        <div class="row"><span>Main</span><strong id="actionMain">—</strong></div>
-        <div class="row"><span>Reason</span><span id="actionReason">—</span></div>
-        <div class="row"><span>Next</span><span id="actionNext">—</span></div>
-        <div class="row"><span>Meta</span><span id="actionMeta">—</span></div>
-        <div class="row"><span>Risk-Sized Buy</span><strong id="riskSizedBuy">—</strong></div>
-        <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
-          <button class="success" id="executedBtn">Mark Executed</button>
-          <div class="metaPill"><span id="execIcon">⏳</span></div>
-          <div class="metaPill" id="lastExecBadge">Last exec: —</div>
-        </div>
-      </div>
+    ensureDefaultCsvSources()
 
-      <div class="card">
-        <h3>Math Snapshot <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Quick path-quality checks from local portfolio history.</span></span></h3>
-        <div class="row"><span>Drawdown</span><span id="mathDD">—</span></div>
-        <div class="row"><span>Peak</span><span id="mathPeak">—</span></div>
-        <div class="row"><span>Vol</span><span id="mathVol">—</span></div>
-        <div class="row"><span>Sharpe</span><span id="mathSharpe">—</span></div>
-      </div>
-    </div>
+    const systemInput = document.getElementById("systemCsvUrl")
+    const holdingsInput = document.getElementById("holdingsCsvUrl")
+    const saveBtn = document.getElementById("saveBtn")
 
-    <div class="grid" style="margin-top:10px">
-      <div class="card">
-        <h3>News Pulse Control <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Reads NewsSources, NewsThemes, and NewsSettings. This is the control layer for the future automated scanner.</span></span></h3>
-        <div class="row"><span>Scan Mode</span><strong id="newsScanMode">—</strong></div>
-        <div class="row"><span>Max Sources</span><strong id="newsMaxSources">—</strong></div>
-        <div class="row"><span>Hours Lookback</span><strong id="newsLookback">—</strong></div>
-        <div class="row"><span>Region Focus</span><strong id="newsRegionFocus">—</strong></div>
-        <div class="row"><span>Auto Promote Red</span><strong id="newsAutoPromote">—</strong></div>
-        <div class="row"><span>Two-Source Rule</span><strong id="newsTwoSourceRule">—</strong></div>
-        <div class="row"><span>Enabled Sources</span><strong id="newsSourceCount">—</strong></div>
-        <div class="row"><span>Enabled Themes</span><strong id="newsThemeCount">—</strong></div>
-      </div>
+    if (systemInput) {
+      systemInput.value = localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM_CSV
+    }
 
-      <div class="card">
-        <h3>Global Shock Radar <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Sheet-driven news overlay. This panel does not override Lean math; it feeds radar context into the terminal.</span></span></h3>
-        <table>
-          <thead><tr><th>Theme</th><th>Shock</th><th>Status</th><th>Sources</th><th>Reason</th></tr></thead>
-          <tbody id="shockRadarBody"></tbody>
-        </table>
-        <div class="chartMeta" style="margin-top:10px"><div class="metaPill" id="shockRadarStamp">Shock Radar: —</div></div>
-      </div>
-    </div>
+    if (holdingsInput) {
+      holdingsInput.value = localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS_CSV
+    }
 
-    <div class="grid" style="margin-top:10px">
-      <div class="card">
-        <h3>Exposure & Guardrails <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Separates the SGOV nest from active Lean participation. This is the first step toward hedge-style exposure budgeting.</span></span></h3>
-        <div class="row"><span>SGOV Nest</span><strong id="sgovNestPct">—</strong></div>
-        <div class="row"><span>Active Exposure</span><strong id="activeExposurePct">—</strong></div>
-        <div class="row"><span>Lean Capital</span><strong id="leanCapitalValue">—</strong></div>
-        <div class="row"><span>Lean Participation</span><strong id="leanParticipationPct">—</strong></div>
-        <div class="row"><span>Primary Blocker</span><span id="primaryBlocker">—</span></div>
-        <div class="row"><span>Blocker Severity</span><span id="blockerBadge" class="badge badgeGray">—</span></div>
-      </div>
-    </div>
+    if (saveBtn) {
+      saveBtn.addEventListener("click", () => {
+        try {
+          const systemURL = (systemInput?.value || "").trim() || DEFAULT_SYSTEM_CSV
+          const holdingsURL = (holdingsInput?.value || "").trim() || DEFAULT_HOLDINGS_CSV
 
-    <div class="grid" style="margin-top:10px">
-      <div class="card">
-        <h3>Performance <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Normalized Lean-only chart from your actual tracked local history. Benchmark lines come next after this is stable.</span></span></h3>
-        <div class="perfLegend"><div class="legendItem"><span class="legendSwatch" style="background:#22c55e"></span>Lean</div></div>
-        <div class="chartWrap"><svg id="perfSvg" viewBox="0 0 980 360" preserveAspectRatio="none"></svg></div>
-        <div class="chartMeta">
-          <div class="metaPill" id="perfWindow">Window: —</div>
-          <div class="metaPill" id="perfLean">Lean: —</div>
-          <div class="metaPill">Benchmarks: next</div>
-        </div>
-      </div>
-    </div>
+          localStorage.setItem(LS_SYSTEM, systemURL)
+          localStorage.setItem(LS_HOLDINGS, holdingsURL)
 
-    <div class="grid" style="margin-top:10px">
-      <div class="card">
-        <h3>Portfolio Heatmap <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Shows how much of the account sits in each mapped theme bucket.</span></span></h3>
-        <div id="heatmapMount"></div>
-      </div>
+          if (systemInput) systemInput.value = systemURL
+          if (holdingsInput) holdingsInput.value = holdingsURL
+        } catch (err) {
+          crash("SAVE FAILED:", err)
+        }
+      })
+    }
 
-      <div class="card">
-        <h3>Holdings <span class="infoWrap"><button class="infoBtn">i</button><span class="tooltip">Reads the holdings sheet and totals all rows with valid ticker and value data.</span></span></h3>
-        <div class="row"><span>Total Value</span><strong id="totalValue">$—</strong></div>
-        <table>
-          <thead><tr><th>Ticker</th><th>Tier</th><th class="right">Value</th></tr></thead>
-          <tbody id="holdingsBody"></tbody>
-        </table>
-      </div>
-    </div>
-  </div>
+    setTimeout(() => {
+      try {
+        if (typeof runScan === "function") runScan()
+      } catch (err) {
+        crash("AUTO START SCAN FAILED:", err)
+      }
+    }, 250)
 
-  <!-- The JavaScript portion continues in the current chat thread's latest script version.
-       If you want, ask for "part 2 txt" and I’ll generate the JS-only continuation as a second text file. -->
-</body>
-</html>
+    startAutoRefresh()
+
+  } catch (err) {
+    crash("STARTUP FAILED:", err)
+  }
+})
+
+
+======================================================
+PATCH 9 — THIRD SHEET PLACEHOLDER (NEXT STEP)
+======================================================
+
+For the future weather engine, you can add:
+
+const LS_MARKET="lean_market_csv_url"
+const DEFAULT_MARKET_CSV="PASTE_YOUR_MARKET_SHEET_CSV_HERE"
+
+That would allow:
+- SPY
+- QQQ
+- VIX
+- breadth
+- weather state (clear / cloudy / rain / storm)
+
+We can wire that next.
+
+======================================================
+IMPORTANT NOTES
+======================================================
+
+1. Your current screen is GOOD.
+   The layout is rendering correctly.
+   The only missing piece is auto data loading.
+
+2. If the app still shows blanks after these patches:
+   - verify the Google Sheet is published
+   - verify the CSV URLs open in a browser
+   - verify your scan function name is correct
+   - verify the input element IDs match your HTML
+
+3. If you want, the next file I can build for you should be:
+   - a full merged index.txt
+   - with your links already embedded
+   - plus market weather engine starter hooks
+
+======================================================
+QUICK CHECKLIST
+======================================================
+
+[ ] Added DEFAULT_SYSTEM_CSV
+[ ] Added DEFAULT_HOLDINGS_CSV
+[ ] Added ensureDefaultCsvSources()
+[ ] Called ensureDefaultCsvSources() on startup
+[ ] Auto-filled the input boxes
+[ ] Replaced localStorage-only URL loading with fallback defaults
+[ ] Added auto-start runScan()
+[ ] Added optional 60-second auto refresh
+
+End of patch file.
