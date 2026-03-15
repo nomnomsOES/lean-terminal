@@ -1,255 +1,2192 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lean Terminal 1.7 Data Engine</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a2b;
+      --text:#e5e7eb;
+      --muted:#94a3b8;
+      --green:#22c55e;
+      --yellow:#f59e0b;
+      --red:#ef4444;
+      --blue:#3b82f6;
+      --line:rgba(255,255,255,.08);
+      --pill:#111827;
+    }
+
+    *{box-sizing:border-box}
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
+    .wrap{max-width:1400px;margin:0 auto;padding:14px;}
+    .topbar{
+      display:flex;flex-wrap:wrap;gap:10px;align-items:flex-start;
+      justify-content:space-between;margin-bottom:12px;
+    }
+    .title{font-size:24px;font-weight:800;line-height:1.1;}
+    .sub{color:var(--muted);font-size:12px;margin-top:2px;}
+    .status{display:flex;flex-wrap:wrap;gap:8px;align-items:center;justify-content:flex-end;}
+    .metaPill{
+      background:var(--pill);border:1px solid var(--line);border-radius:999px;
+      padding:6px 10px;font-size:12px;line-height:1.1;white-space:nowrap;
+    }
+
+    .commandBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+    .cmdPill{
+      background:var(--pill);border:1px solid var(--line);border-radius:999px;
+      padding:8px 12px;min-height:38px;display:inline-flex;align-items:center;
+      gap:8px;font-size:13px;font-weight:700;white-space:nowrap;
+    }
+    .cmdPill .labelWrap{display:inline-flex;align-items:center;gap:6px;}
+    .cmdPill .label{opacity:.9;font-size:12px;font-weight:800;letter-spacing:.3px;}
+    .cmdGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
+    .cmdYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
+    .cmdRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
+    .cmdBlue{ color:#bfdbfe; border-color:rgba(59,130,246,.24); }
+    .cmdGray{ color:#d1d5db; }
+
+    .grid{display:grid;grid-template-columns:repeat(auto-fit,minmax(260px,1fr));gap:10px;}
+    .gridTop{grid-template-columns:1fr 1fr 1fr;align-items:start;}
+    .gridHeatExposure{
+      grid-template-columns:minmax(560px,2fr) minmax(280px,1fr);
+      gap:10px;
+      align-items:start;
+    }
+    .gridTwo{grid-template-columns:1fr 1fr;align-items:start;}
+    .gridThree{grid-template-columns:1fr 1fr 1fr;align-items:start;}
+    .gridHoldings{grid-template-columns:1fr;}
+    .card{
+      background:var(--panel);border:1px solid var(--line);border-radius:14px;padding:12px;
+      min-width:0;
+    }
+    .heatmapCard{max-width:100%;justify-self:start;}
+    .exposureCard{max-width:380px;justify-self:start;}
+    .systemSized{min-height:286px;}
+    .card h3{
+      margin:0 0 10px 0;font-size:15px;display:flex;align-items:center;gap:6px;
+      justify-content:space-between;
+    }
+    .titleLeft{display:flex;align-items:center;gap:6px;}
+    .row{
+      display:flex;justify-content:space-between;align-items:flex-start;gap:10px;
+      padding:4px 0;border-bottom:1px solid var(--line);font-size:13px;
+    }
+    .row:last-child{border-bottom:none}
+
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace;}
+    .right{text-align:right}
+    .smallMuted{color:var(--muted);font-size:12px;line-height:1.4;}
+    .tinyMuted{color:var(--muted);font-size:11px;line-height:1.3;}
+
+    button{
+      padding:9px 10px;border:none;border-radius:10px;background:var(--blue);
+      color:white;font-weight:700;cursor:pointer;font-size:13px;
+    }
+    button.success{background:#166534}
+
+    table{width:100%;border-collapse:collapse;font-size:14px;}
+    th,td{padding:10px 8px;border-bottom:1px solid var(--line);vertical-align:top;}
+    th{text-align:left;color:var(--muted)}
+
+    .miniTable{width:100%;border-collapse:collapse;font-size:12px;}
+    .miniTable th,.miniTable td{padding:7px 6px;border-bottom:1px solid var(--line);text-align:center;}
+    .miniTable th:first-child,.miniTable td:first-child{text-align:left;}
+    .miniTableWrap{overflow:auto;max-width:100%;}
+
+    .errorBox{
+      white-space:pre-wrap;background:#2a0f14;border:1px solid rgba(239,68,68,.35);
+      color:#fecaca;padding:12px;border-radius:12px;margin-bottom:12px;
+    }
+
+    .heatRow{
+      display:grid;grid-template-columns:90px 1fr 50px;gap:8px;align-items:center;margin:6px 0;
+      font-size:12px;
+    }
+    .heatTrack{background:#111;border-radius:999px;overflow:hidden;height:10px;}
+    .heatFill{height:10px;border-radius:999px;}
+
+    .mathPillBar{display:flex;flex-wrap:wrap;gap:8px;margin-bottom:12px;}
+    .mathPill{
+      background:var(--pill);border:1px solid var(--line);border-radius:999px;padding:7px 10px;
+      display:inline-flex;align-items:center;gap:6px;font-size:12px;font-weight:800;white-space:nowrap;
+    }
+    .dot{width:10px;height:10px;border-radius:999px;display:inline-block;flex:0 0 auto;}
+    .dotGreen{ background:var(--green); }
+    .dotYellow{ background:var(--yellow); }
+    .dotRed{ background:var(--red); }
+    .dotBlue{ background:var(--blue); }
+    .dotGray{ background:#6b7280; }
+
+    .infoWrap{position:relative;display:inline-flex;align-items:center;}
+    .infoBtn{
+      width:16px;height:16px;border-radius:999px;border:1px solid rgba(255,255,255,.16);
+      background:#0f172a;color:#93c5fd;display:inline-flex;align-items:center;justify-content:center;
+      font-size:11px;font-weight:700;cursor:pointer;padding:0;line-height:1;
+    }
+    .tooltip{
+      position:absolute;left:20px;top:22px;width:240px;background:#0f172a;color:#e5e7eb;
+      border:1px solid rgba(255,255,255,.10);border-radius:10px;padding:8px 10px;font-size:12px;
+      line-height:1.4;box-shadow:0 10px 30px rgba(0,0,0,.28);display:none;z-index:50;
+    }
+    .infoWrap.show .tooltip{display:block;}
+
+    .perfLegend{display:flex;flex-wrap:wrap;gap:10px;margin:8px 0 10px 0;font-size:12px;}
+    .legendItem{display:inline-flex;align-items:center;gap:6px;color:var(--muted);}
+    .legendSwatch{width:12px;height:12px;border-radius:999px;display:inline-block;}
+    .chartWrap{
+      width:100%;overflow:hidden;border:1px solid var(--line);border-radius:12px;background:#0a1220;padding:10px;
+    }
+    .chartMeta{display:flex;flex-wrap:wrap;gap:8px;margin-top:8px;font-size:12px;color:var(--muted);}
+    .chartMeta .metaPill{padding:5px 9px;}
+    #perfSvg,#corrSvg,#mcSvg{width:100%;height:auto;display:block;}
+    .axisLabel{
+      fill:#94a3b8;font-size:11px;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+    }
+    .gridLine{stroke:rgba(255,255,255,.08);stroke-width:1;}
+    .lineLean{stroke:#22c55e;}
+    .lineAlt{stroke:#60a5fa;}
+    .seriesLine{fill:none;stroke-width:2.6;vector-effect:non-scaling-stroke;}
+
+    .badge{
+      display:inline-flex;align-items:center;gap:6px;border-radius:999px;padding:4px 8px;
+      font-size:12px;font-weight:700;background:#111827;border:1px solid var(--line);
+    }
+    .badgeGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
+    .badgeYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
+    .badgeRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
+    .badgeBlue{ color:#bfdbfe; border-color:rgba(59,130,246,.24); }
+    .badgeGray{ color:#d1d5db; }
+
+    .actionBanner{
+      margin-top:10px;padding:8px 10px;border-radius:10px;border:1px solid var(--line);
+      background:#0a1220;font-size:12px;color:var(--muted);
+    }
+
+    .shockRow{
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      margin-bottom:10px;
+      background:#0d1424;
+    }
+    .shockTop{
+      display:flex;
+      justify-content:space-between;
+      align-items:flex-start;
+      gap:10px;
+      margin-bottom:6px;
+    }
+    .shockTheme{
+      font-weight:800;
+      font-size:14px;
+    }
+    .shockPills{
+      display:flex;
+      flex-wrap:wrap;
+      gap:6px;
+      justify-content:flex-end;
+    }
+    .shockReason{
+      font-size:12px;
+      color:var(--muted);
+      line-height:1.4;
+      margin-bottom:6px;
+    }
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:11px;
+      font-weight:700;
+      background:#111827;
+      border:1px solid var(--line);
+      white-space:nowrap;
+    }
+    .pillGreen{ color:#bbf7d0; border-color:rgba(34,197,94,.24); }
+    .pillYellow{ color:#fde68a; border-color:rgba(245,158,11,.24); }
+    .pillRed{ color:#fecaca; border-color:rgba(239,68,68,.24); }
+
+    .corrStrong{background:rgba(34,197,94,.20);}
+    .corrMed{background:rgba(59,130,246,.16);}
+    .corrFlat{background:rgba(148,163,184,.12);}
+    .corrNeg{background:rgba(245,158,11,.18);}
+    .corrNegStrong{background:rgba(239,68,68,.20);}
+
+    @media (max-width:1100px){
+      .gridTop{grid-template-columns:1fr 1fr;}
+      .gridHeatExposure,.gridTwo,.gridThree{grid-template-columns:1fr;}
+      .heatmapCard,.exposureCard{max-width:none;}
+      .systemSized{min-height:auto;}
+    }
+    @media (max-width:700px){
+      .gridTop{grid-template-columns:1fr;}
+      .tooltip{left:0;width:200px;}
+      .heatRow{grid-template-columns:78px 1fr 44px;}
+    }
+  </style>
+</head>
+<body>
+  <div class="wrap">
+    <div id="errorBoxMount"></div>
+
+    <div class="topbar">
+      <div>
+        <div class="title">Lean Terminal 1.7 Data Engine</div>
+        <div class="sub">Lean 2.0 cockpit • math &gt; emotions • macro + radar wired in</div>
+      </div>
+      <div class="status">
+        <div class="metaPill" id="statusLine">Loading…</div>
+        <div class="metaPill" id="lastUpdated">LAST UPDATED: —</div>
+        <div class="metaPill" id="nextRefresh">Next refresh in 60s</div>
+      </div>
+    </div>
+
+    <div class="commandBar">
+      <div class="cmdPill cmdGray" id="readyPill">
+        <span class="labelWrap">
+          <span class="label">READY</span>
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">This is your green-light meter. Higher means the setup looks more ready to roll.</span>
+          </span>
+        </span>
+        <span id="readyValue">—%</span>
+      </div>
+
+      <div class="cmdPill cmdGray" id="riskPill">
+        <span class="labelWrap">
+          <span class="label">RISK</span>
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">This is the danger meter. Higher means more chop, more heat, more chance the system tells you to chill.</span>
+          </span>
+        </span>
+        <span id="riskValue">—%</span>
+      </div>
+
+      <div class="cmdPill cmdBlue" id="valuePill">
+        <span class="labelWrap">
+          <span class="label">VALUE</span>
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">This is the whole pile. Straight-up total account value from the holdings sheet.</span>
+          </span>
+        </span>
+        <span id="valueValue">$—</span>
+      </div>
+
+      <div class="cmdPill cmdGray" id="lastPill">
+        <span class="labelWrap">
+          <span class="label">LAST</span>
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Quick peek at the last portfolio move from the saved history in your browser.</span>
+          </span>
+        </span>
+        <span id="lastValue">—</span>
+      </div>
+
+      <div class="cmdPill cmdGray" id="volLightPill">
+        <span class="labelWrap">
+          <span class="label">VOL LIGHT</span>
+          <span class="infoWrap">
+            <button class="infoBtn">i</button>
+            <span class="tooltip">Market acting calm, shaky, or crazy. That’s all this is.</span>
+          </span>
+        </span>
+        <span id="volLightValue">—</span>
+      </div>
+    </div>
+
+    <div class="mathPillBar" id="mathPillBar">
+      <div class="mathPill">REGIME</div>
+      <div class="mathPill">VOL</div>
+      <div class="mathPill">DD</div>
+      <div class="mathPill">BRAKE</div>
+      <div class="mathPill">MC</div>
+      <div class="mathPill">CORR</div>
+      <div class="mathPill">CVAR</div>
+      <div class="mathPill">BAYES</div>
+    </div>
+
+    <div class="grid gridTop">
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>System State</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the market vibe check. It reads the system sheet and tells you if the road looks clean or sketchy.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Market Regime</span><strong id="valRegime">—</strong></div>
+        <div class="row"><span>Deployment</span><strong id="valDeploy">—</strong></div>
+        <div class="row"><span>Cash Anchor</span><strong id="valCash">—</strong></div>
+        <div class="row"><span>Liquidity</span><strong id="valLiq">—</strong></div>
+        <div class="row"><span>Volatility</span><strong id="valVol">—</strong></div>
+        <div class="row"><span>Violations</span><strong id="valViol">—</strong></div>
+        <div class="row"><span>Brake</span><strong id="valBrake">—</strong></div>
+        <div class="row"><span>Confidence</span><strong id="valConf">—</strong></div>
+      </div>
+
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Action Engine</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the move caller. It tells you what to do today, what happens if you hit execute, and what lines up for the next trading day.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Today</span><strong id="actionMain">—</strong></div>
+        <div class="row"><span>Reason</span><span id="actionReason">—</span></div>
+        <div class="row"><span>If Executed</span><span id="actionIfExecuted">—</span></div>
+        <div class="row"><span>Next Trading Day</span><span id="actionNext">—</span></div>
+        <div class="row"><span>Strength Check</span><span id="strengthCheck">—</span></div>
+        <div class="row"><span>Radar Overlay</span><span id="radarOverlay">—</span></div>
+        <div class="row"><span>Meta</span><span id="actionMeta">—</span></div>
+        <div class="row"><span>Risk-Sized Buy</span><strong id="riskSizedBuy">—</strong></div>
+        <div style="display:flex;gap:10px;margin-top:12px;align-items:center;flex-wrap:wrap">
+          <button class="success" id="executedBtn">Mark Executed</button>
+          <div class="metaPill"><span id="execIcon">⏳</span></div>
+          <div class="metaPill" id="lastExecBadge">Last exec: —</div>
+        </div>
+        <div class="actionBanner" id="actionBanner">Daily sequence engine loading…</div>
+      </div>
+
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Math Snapshot</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the scoreboard. It shows if the ride has been smooth, sloppy, or straight-up rough.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Drawdown</span><span id="mathDD">—</span></div>
+        <div class="row"><span>Peak</span><span id="mathPeak">—</span></div>
+        <div class="row"><span>Vol</span><span id="mathVol">—</span></div>
+        <div class="row"><span>Sharpe</span><span id="mathSharpe">—</span></div>
+      </div>
+    </div>
+
+    <div class="grid gridHeatExposure" style="margin-top:10px">
+      <div class="card heatmapCard">
+        <h3>
+          <span class="titleLeft">
+            <span>Portfolio Heatmap</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">Quick look at where your money is bunched up. Big bars mean you’re leaning heavy there.</span>
+            </span>
+          </span>
+        </h3>
+        <div id="heatmapMount"></div>
+      </div>
+
+      <div class="card exposureCard">
+        <h3>
+          <span class="titleLeft">
+            <span>Exposure & Guardrails</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This shows how much of your pile is parked safe versus actually in the fight.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>SGOV Nest</span><strong id="sgovNestPct">—</strong></div>
+        <div class="row"><span>Active Exposure</span><strong id="activeExposurePct">—</strong></div>
+        <div class="row"><span>Lean Capital</span><strong id="leanCapitalValue">—</strong></div>
+        <div class="row"><span>Lean Participation</span><strong id="leanParticipationPct">—</strong></div>
+        <div class="row"><span>Primary Blocker</span><span id="primaryBlocker">—</span></div>
+        <div class="row"><span>Blocker Severity</span><span id="blockerBadge" class="badge badgeGray">—</span></div>
+      </div>
+    </div>
+
+    <div class="grid gridTwo" style="margin-top:10px">
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Performance</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is your path chart. It shows how the whole setup has been moving over time, not just today’s noise.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="perfLegend"><div class="legendItem"><span class="legendSwatch" style="background:#22c55e"></span>Lean</div></div>
+        <div class="chartWrap"><svg id="perfSvg" viewBox="0 0 980 360" preserveAspectRatio="none"></svg></div>
+        <div class="chartMeta">
+          <div class="metaPill" id="perfWindow">Window: —</div>
+          <div class="metaPill" id="perfLean">Lean: —</div>
+          <div class="metaPill">Benchmarks: next</div>
+        </div>
+      </div>
+
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Monte Carlo Panel</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the rough range panel. It shows where the pile could drift if the recent path keeps rhyming.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Best Case</span><strong id="mcBest">—</strong></div>
+        <div class="row"><span>Average</span><strong id="mcAvg">—</strong></div>
+        <div class="row"><span>Worst Case</span><strong id="mcWorst">—</strong></div>
+        <div class="chartWrap" style="margin-top:10px"><svg id="mcSvg" viewBox="0 0 980 220" preserveAspectRatio="none"></svg></div>
+      </div>
+    </div>
+
+    <div class="grid gridTwo" style="margin-top:10px">
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Recent Moves</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">These are the last punches you threw.</span>
+            </span>
+          </span>
+        </h3>
+        <table>
+          <thead><tr><th>Date</th><th>Ticker</th><th class="right">Amount</th></tr></thead>
+          <tbody id="recentMovesBody"></tbody>
+        </table>
+      </div>
+
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Warnings</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the watch-out box. If you’re leaning too hard somewhere, it shows up here.</span>
+            </span>
+          </span>
+        </h3>
+        <div id="warningsMount" class="smallMuted">Loading warnings…</div>
+      </div>
+    </div>
+
+    <div class="grid gridTwo" style="margin-top:10px">
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Position History</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This tracks if a position is pulling its weight or just taking up space.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Ticker</span><span id="posHistoryTicker">—</span></div>
+        <div class="row"><span>Window</span><span id="posHistoryWindow">—</span></div>
+        <div class="row"><span>Start</span><span id="posHistoryStart">—</span></div>
+        <div class="row"><span>End</span><span id="posHistoryEnd">—</span></div>
+      </div>
+
+      <div class="card systemSized">
+        <h3>
+          <span class="titleLeft">
+            <span>Pair Correlation View</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This lets you see if two names are riding the same roller coaster.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Pair</span><span id="corrPair">—</span></div>
+        <div class="row"><span>Reading</span><span id="corrReading">—</span></div>
+        <div class="chartWrap" style="margin-top:10px"><svg id="corrSvg" viewBox="0 0 980 260" preserveAspectRatio="none"></svg></div>
+      </div>
+    </div>
+
+    <div class="grid gridThree" style="margin-top:10px">
+      <div class="card">
+        <h3>
+          <span class="titleLeft">
+            <span>Macro Snapshot</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">Weekend macro row from your spreadsheet: yields, dollar, oil, gold, and fear gauge.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Date</span><strong id="macroDate">—</strong></div>
+        <div class="row"><span>10Y</span><strong id="macro10Y">—</strong></div>
+        <div class="row"><span>2Y</span><strong id="macro2Y">—</strong></div>
+        <div class="row"><span>Curve</span><strong id="macroCurve">—</strong></div>
+        <div class="row"><span>DXY</span><strong id="macroDxy">—</strong></div>
+        <div class="row"><span>Oil</span><strong id="macroOil">—</strong></div>
+        <div class="row"><span>Gold</span><strong id="macroGold">—</strong></div>
+        <div class="row"><span>VIX</span><strong id="macroVix">—</strong></div>
+      </div>
+
+      <div class="card">
+        <h3>
+          <span class="titleLeft">
+            <span>History Snapshot</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">Last saved spreadsheet snapshot so you can compare the browser history with the sheet history.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Date</span><strong id="histDate">—</strong></div>
+        <div class="row"><span>Portfolio</span><strong id="histPortfolio">—</strong></div>
+        <div class="row"><span>SPY</span><strong id="histSpy">—</strong></div>
+        <div class="row"><span>Notes</span><span id="histNotes">—</span></div>
+      </div>
+
+      <div class="card">
+        <h3>
+          <span class="titleLeft">
+            <span>Shock Radar</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">Theme radar from your spreadsheet. Score drives level, level drives urgency.</span>
+            </span>
+          </span>
+        </h3>
+        <div id="shockRadarMount" class="smallMuted">Loading radar…</div>
+      </div>
+    </div>
+
+    <div class="grid gridTwo" style="margin-top:10px">
+      <div class="card">
+        <h3>
+          <span class="titleLeft">
+            <span>Correlation Matrix</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the spreadsheet correlation grid. Use it to spot hidden overlap and hedges.</span>
+            </span>
+          </span>
+        </h3>
+        <div id="corrMatrixMount" class="miniTableWrap smallMuted">Loading correlation matrix…</div>
+      </div>
+
+      <div class="card">
+        <h3>
+          <span class="titleLeft">
+            <span>Radar Summary</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">Quick count of what the radar says is stable, on watch, or active.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Red</span><strong id="radarRedCount">—</strong></div>
+        <div class="row"><span>Yellow</span><strong id="radarYellowCount">—</strong></div>
+        <div class="row"><span>Green</span><strong id="radarGreenCount">—</strong></div>
+        <div class="row"><span>Top Theme</span><strong id="radarTopTheme">—</strong></div>
+      </div>
+    </div>
+
+    <div class="grid gridHoldings" style="margin-top:10px">
+      <div class="card">
+        <h3>
+          <span class="titleLeft">
+            <span>Holdings</span>
+            <span class="infoWrap">
+              <button class="infoBtn">i</button>
+              <span class="tooltip">This is the raw list. Straight from the sheet — ticker, tier, and dollar size.</span>
+            </span>
+          </span>
+        </h3>
+        <div class="row"><span>Total Value</span><strong id="totalValue">$—</strong></div>
+        <table>
+          <thead>
+            <tr>
+              <th>Ticker</th>
+              <th>Tier</th>
+              <th class="right">Value</th>
+            </tr>
+          </thead>
+          <tbody id="holdingsBody"></tbody>
+        </table>
+      </div>
+    </div>
+  </div>
+
 <script>
 window.addEventListener("DOMContentLoaded", () => {
+  const errorBoxMount = document.getElementById("errorBoxMount")
 
-/* ============================
-   Crash protection
-============================ */
-
-const errorBoxMount = document.getElementById("errorBoxMount")
-
-function crash(label, err){
-  const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err)
-  if(errorBoxMount){
-    errorBoxMount.innerHTML = `<div class="errorBox">${label}\n\n${msg}</div>`
+  function crash(label, err){
+    const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err)
+    if(errorBoxMount){
+      errorBoxMount.innerHTML = `<div class="errorBox">${label}\n\n${msg}</div>`
+    }
+    console.error(label, err)
   }
-  console.error(label, err)
-}
 
-window.addEventListener("error", e => crash("CRASH:", e.error || e.message))
-window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason))
+  window.addEventListener("error", e => crash("CRASH:", e.error || e.message))
+  window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason))
 
+  const LS_LAST_EXEC_TICKER="lean_last_exec_ticker"
+  const LS_LAST_EXEC_TIER="lean_last_exec_tier"
+  const LS_LAST_EXEC_TS="lean_last_exec_ts"
+  const LS_HIST="lean_portfolio_hist_v1"
+  const LS_BAYES="lean_bayes_v1"
+  const LS_EXEC_LOG="lean_exec_log_v1"
+  const LS_POSITION_HISTORY="lean_position_history_v1"
+  const LS_DAY_STATE="lean_day_state_v1"
 
-/* ============================
-   SPREADSHEET DATA SOURCES
-============================ */
+  const DEFAULT_SYSTEM =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=824917531&single=true&output=csv"
 
-/* EXISTING SHEETS */
+  const DEFAULT_HOLDINGS =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv"
 
-const DEFAULT_SYSTEM =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=824917531&single=true&output=csv"
+  const DEFAULT_MACRO =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1415413978&single=true&output=csv"
 
-const DEFAULT_HOLDINGS =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv"
+  const DEFAULT_CORRELATION =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=364290076&single=true&output=csv"
 
-const DEFAULT_MACRO =
-"PASTE_YOUR_MACRO_CSV_URL_HERE"
+  const DEFAULT_SHOCK =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=636185618&single=true&output=csv"
 
-const DEFAULT_CORRELATION =
-"PASTE_YOUR_CORRELATION_CSV_URL_HERE"
+  const DEFAULT_HISTORY =
+  "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=688580356&single=true&output=csv"
 
-const DEFAULT_SHOCK =
-"PASTE_YOUR_SHOCK_RADAR_CSV_URL_HERE"
+  const RAMP_DEFAULT=75
+  const RAMP_MAX=100
+  const AUTO_REFRESH_SECONDS=60
 
-const DEFAULT_HISTORY =
-"PASTE_YOUR_HISTORY_CSV_URL_HERE"
+  const $ = id => document.getElementById(id)
 
+  const statusLine=$("statusLine")
+  const lastUpdated=$("lastUpdated")
+  const nextRefresh=$("nextRefresh")
 
-/* NEW SHEETS YOU BUILT */
+  const valRegime=$("valRegime")
+  const valDeploy=$("valDeploy")
+  const valCash=$("valCash")
+  const valLiq=$("valLiq")
+  const valVol=$("valVol")
+  const valViol=$("valViol")
+  const valBrake=$("valBrake")
+  const valConf=$("valConf")
 
-const MACRO_CSV =
-"https://docs.google.com/spreadsheets/d/e/YOUR_MACRO_SHEET_ID/pub?gid=MACRO_GID&single=true&output=csv"
+  const actionMain=$("actionMain")
+  const actionReason=$("actionReason")
+  const actionIfExecuted=$("actionIfExecuted")
+  const actionNext=$("actionNext")
+  const actionMeta=$("actionMeta")
+  const actionBanner=$("actionBanner")
+  const riskSizedBuy=$("riskSizedBuy")
+  const strengthCheck=$("strengthCheck")
+  const radarOverlay=$("radarOverlay")
 
-const CORRELATION_CSV =
-"https://docs.google.com/spreadsheets/d/e/YOUR_CORRELATION_SHEET_ID/pub?gid=CORR_GID&single=true&output=csv"
+  const executedBtn=$("executedBtn")
+  const execIcon=$("execIcon")
+  const lastExecBadge=$("lastExecBadge")
 
-const SHOCK_RADAR_CSV =
-"https://docs.google.com/spreadsheets/d/e/YOUR_SHOCK_SHEET_ID/pub?gid=SHOCK_GID&single=true&output=csv"
+  const mathDD=$("mathDD")
+  const mathPeak=$("mathPeak")
+  const mathVol=$("mathVol")
+  const mathSharpe=$("mathSharpe")
 
-const HISTORY_CSV =
-"https://docs.google.com/spreadsheets/d/e/YOUR_HISTORY_SHEET_ID/pub?gid=HISTORY_GID&single=true&output=csv"
+  const holdingsBody=$("holdingsBody")
+  const totalValue=$("totalValue")
+  const heatmapMount=$("heatmapMount")
 
+  const readyPill=$("readyPill")
+  const riskPill=$("riskPill")
+  const valuePill=$("valuePill")
+  const lastPill=$("lastPill")
+  const volLightPill=$("volLightPill")
 
-/* ============================
-   SETTINGS
-============================ */
+  const readyValue=$("readyValue")
+  const riskValue=$("riskValue")
+  const valueValue=$("valueValue")
+  const lastValue=$("lastValue")
+  const volLightValue=$("volLightValue")
 
-const RAMP_DEFAULT = 75
-const RAMP_MAX = 100
-const AUTO_REFRESH_SECONDS = 60
+  const mathPillBar=$("mathPillBar")
 
+  const perfSvg=$("perfSvg")
+  const perfWindow=$("perfWindow")
+  const perfLean=$("perfLean")
+  const mcSvg=$("mcSvg")
+  const mcBest=$("mcBest")
+  const mcAvg=$("mcAvg")
+  const mcWorst=$("mcWorst")
+  const recentMovesBody=$("recentMovesBody")
+  const warningsMount=$("warningsMount")
+  const posHistoryTicker=$("posHistoryTicker")
+  const posHistoryWindow=$("posHistoryWindow")
+  const posHistoryStart=$("posHistoryStart")
+  const posHistoryEnd=$("posHistoryEnd")
+  const corrPair=$("corrPair")
+  const corrReading=$("corrReading")
+  const corrSvg=$("corrSvg")
 
-/* ============================
-   BASIC HELPERS
-============================ */
+  const sgovNestPct=$("sgovNestPct")
+  const activeExposurePct=$("activeExposurePct")
+  const leanCapitalValue=$("leanCapitalValue")
+  const leanParticipationPct=$("leanParticipationPct")
+  const primaryBlocker=$("primaryBlocker")
+  const blockerBadge=$("blockerBadge")
 
-const $ = id => document.getElementById(id)
+  const macroDate=$("macroDate")
+  const macro10Y=$("macro10Y")
+  const macro2Y=$("macro2Y")
+  const macroCurve=$("macroCurve")
+  const macroDxy=$("macroDxy")
+  const macroOil=$("macroOil")
+  const macroGold=$("macroGold")
+  const macroVix=$("macroVix")
 
-function safeUpper(s){
-  return (s || "").toString().trim().toUpperCase()
-}
+  const histDate=$("histDate")
+  const histPortfolio=$("histPortfolio")
+  const histSpy=$("histSpy")
+  const histNotes=$("histNotes")
 
-function coerceNumber(v){
-  if(v===null || v===undefined) return NaN
-  const s=String(v).replace(/[$,%\s]/g,"").replace(/,/g,"").trim()
-  if(!s) return NaN
-  return Number(s)
-}
+  const shockRadarMount=$("shockRadarMount")
+  const corrMatrixMount=$("corrMatrixMount")
+  const radarRedCount=$("radarRedCount")
+  const radarYellowCount=$("radarYellowCount")
+  const radarGreenCount=$("radarGreenCount")
+  const radarTopTheme=$("radarTopTheme")
 
-function money(n){
-  return isFinite(n)
-    ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
-    : "$—"
-}
+  let holdingsData=[]
+  let currentPlan=null
+  let inFlight=false
+  let currentTotal=NaN
+  let lastHeatRows=[]
 
-function pct2(n){
-  return isFinite(n) ? `${(n*100).toFixed(2)}%` : "—"
-}
+  let macroRows=[]
+  let shockRows=[]
+  let corrMatrixRows=[]
+  let historyRows=[]
+  let currentSystemMap=new Map()
 
+  function setText(el, txt){ if(el) el.textContent = txt }
+  function setHTML(el, html){ if(el) el.innerHTML = html }
+  function safeUpper(s){ return (s||"").toString().trim().toUpperCase() }
 
-/* ============================
-   CSV LOADER
-============================ */
+  function normalizeTier(t){
+    const x=safeUpper(t)
+    if(x.includes("HIGH") || x==="H" || x==="1" || x==="T1") return "HIGH"
+    if(x.includes("MED") || x.includes("MID") || x==="M" || x==="2" || x==="T2") return "MED"
+    if(x.includes("LOW") || x==="L" || x==="3" || x==="T3") return "LOW"
+    return ""
+  }
 
-async function fetchText(url){
-  if(!url) return ""
-  const sep=url.includes("?")?"&":"?"
-  const res=await fetch(url+sep+"t="+Date.now(),{cache:"no-store"})
-  if(!res.ok) throw new Error("Fetch failed: "+res.status)
-  const text=await res.text()
-  return text
-}
+  function coerceNumber(v){
+    if(v===null || v===undefined) return NaN
+    const s=String(v).replace(/[$,%\s]/g,"").replace(/,/g,"").trim()
+    if(!s) return NaN
+    return Number(s)
+  }
 
-function parseCSV(text){
-  const rows=[]
-  let row=[],cur="",inQuotes=false
-  const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n")
-  for(let i=0;i<t.length;i++){
-    const c=t[i],n=t[i+1]
-    if(inQuotes){
-      if(c=='"' && n=='"'){cur+='"';i++;continue}
-      if(c=='"'){inQuotes=false;continue}
+  function clamp(n,min,max){ return Math.max(min,Math.min(max,n)) }
+  function mean(arr){ return arr.length ? arr.reduce((s,x)=>s+x,0)/arr.length : null }
+
+  function stdDev(arr){
+    if(arr.length<2) return null
+    const m=mean(arr)
+    const variance=arr.reduce((s,x)=>s+Math.pow(x-m,2),0)/(arr.length-1)
+    return Math.sqrt(variance)
+  }
+
+  function percentile(arr,p){
+    if(!arr.length) return null
+    const s=[...arr].sort((a,b)=>a-b)
+    const idx=(s.length-1)*p
+    const lo=Math.floor(idx)
+    const hi=Math.ceil(idx)
+    if(lo===hi) return s[lo]
+    return s[lo]+(s[hi]-s[lo])*(idx-lo)
+  }
+
+  function money(n){
+    return isFinite(n)
+      ? n.toLocaleString(undefined,{style:"currency",currency:"USD"})
+      : "$—"
+  }
+
+  function pct2(n){ return isFinite(n) ? `${(n*100).toFixed(2)}%` : "—" }
+
+  function stamp(label){
+    const t=new Date().toLocaleTimeString()
+    setText(lastUpdated,"LAST UPDATED: "+t)
+    setText(statusLine,label+" @ "+t)
+  }
+
+  function pillClassForPercent(v, inverse=false){
+    if(!isFinite(v)) return "cmdGray"
+    if(!inverse){
+      if(v >= 65) return "cmdGreen"
+      if(v >= 35) return "cmdYellow"
+      return "cmdRed"
+    }
+    if(v >= 65) return "cmdRed"
+    if(v >= 35) return "cmdYellow"
+    return "cmdGreen"
+  }
+
+  function dotClass(color){
+    if(color==="green") return "dotGreen"
+    if(color==="yellow") return "dotYellow"
+    if(color==="red") return "dotRed"
+    if(color==="blue") return "dotBlue"
+    return "dotGray"
+  }
+
+  function badgeClass(color){
+    if(color==="green") return "badge badgeGreen"
+    if(color==="yellow") return "badge badgeYellow"
+    if(color==="red") return "badge badgeRed"
+    if(color==="blue") return "badge badgeBlue"
+    return "badge badgeGray"
+  }
+
+  function escapeAttr(s){ return String(s||"").replace(/"/g,"&quot;") }
+
+  function dateKeyFromTs(ts){
+    const d=new Date(ts)
+    const y=d.getFullYear()
+    const m=String(d.getMonth()+1).padStart(2,"0")
+    const day=String(d.getDate()).padStart(2,"0")
+    return `${y}-${m}-${day}`
+  }
+
+  function isWeekend(d){
+    const day=d.getDay()
+    return day===0 || day===6
+  }
+
+  function nextTradingDayKey(fromDate=new Date()){
+    const d=new Date(fromDate)
+    d.setHours(12,0,0,0)
+    do{
+      d.setDate(d.getDate()+1)
+    }while(isWeekend(d))
+    return dateKeyFromTs(d.getTime())
+  }
+
+  function todayKey(){
+    return dateKeyFromTs(Date.now())
+  }
+
+  function loadJson(key, fallback){
+    try{
+      const v=JSON.parse(localStorage.getItem(key))
+      return v ?? fallback
+    }catch{
+      return fallback
+    }
+  }
+
+  function saveJson(key, value){
+    localStorage.setItem(key, JSON.stringify(value))
+  }
+
+  async function fetchText(url){
+    if(!url) return ""
+    const sep=url.includes("?")?"&":"?"
+    const res=await fetch(url+sep+"t="+Date.now(),{cache:"no-store"})
+    if(!res.ok) throw new Error("Fetch failed: "+res.status)
+    const text=await res.text()
+    if(text.trim().startsWith("<")) throw new Error("URL returned HTML not CSV")
+    return text
+  }
+
+  function parseCSV(text){
+    const rows=[]
+    let row=[],cur="",inQuotes=false
+    const t=text.replace(/\r\n/g,"\n").replace(/\r/g,"\n")
+    for(let i=0;i<t.length;i++){
+      const c=t[i],n=t[i+1]
+      if(inQuotes){
+        if(c=='"' && n=='"'){cur+='"';i++;continue}
+        if(c=='"'){inQuotes=false;continue}
+        cur+=c
+        continue
+      }
+      if(c=='"'){inQuotes=true;continue}
+      if(c==","){row.push(cur);cur="";continue}
+      if(c=="\n"){row.push(cur);rows.push(row);row=[];cur="";continue}
       cur+=c
-      continue
     }
-    if(c=='"'){inQuotes=true;continue}
-    if(c==","){row.push(cur);cur="";continue}
-    if(c=="\n"){row.push(cur);rows.push(row);row=[];cur="";continue}
-    cur+=c
-  }
-  if(cur.length || row.length){row.push(cur);rows.push(row)}
-  return rows
-}
-
-
-/* ============================
-   MACRO PANEL
-============================ */
-
-async function loadMacro(){
-
-  try{
-
-    const rows=parseCSV(await fetchText(MACRO_CSV))
-    if(rows.length<2) return
-
-    const headers=rows[0]
-    const data=rows[rows.length-1]
-
-    const idx=(name)=>headers.findIndex(h=>safeUpper(h)===safeUpper(name))
-
-    const get=(name)=>{
-      const i=idx(name)
-      return i>=0 ? data[i] : "—"
-    }
-
-    $("macroDate").textContent=get("Date")
-    $("macro10Y").textContent=get("10Y_Treasury")
-    $("macro2Y").textContent=get("2Y_Treasury")
-    $("macroCurve").textContent=get("YieldCurve")
-    $("macroDxy").textContent=get("DXY")
-    $("macroOil").textContent=get("Oil")
-    $("macroGold").textContent=get("Gold")
-    $("macroVix").textContent=get("VIX")
-
-  }catch(e){
-    console.warn("Macro load failed",e)
+    if(cur.length || row.length){row.push(cur);rows.push(row)}
+    return rows
   }
 
-}
+  function csvToObjects(text){
+    const rows=parseCSV(text)
+    if(!rows.length) return []
+    const headers=(rows[0]||[]).map(x=>(x||"").trim())
+    return rows.slice(1)
+      .filter(r=>r.some(x=>String(x||"").trim()!==""))
+      .map(r=>{
+        const o={}
+        headers.forEach((h,i)=> o[h]= (r[i]||"").trim() )
+        return o
+      })
+  }
 
+  function normalizeObjectKeys(obj){
+    const out={}
+    Object.keys(obj||{}).forEach(k=>{
+      out[String(k).trim().toLowerCase()] = obj[k]
+    })
+    return out
+  }
 
-/* ============================
-   SHOCK RADAR
-============================ */
+  function latestObjectRow(rows){
+    if(!rows.length) return null
+    return rows[rows.length-1]
+  }
 
-async function loadShockRadar(){
+  function formatMaybeDate(v){
+    if(!v) return "—"
+    const d=new Date(v)
+    if(!Number.isNaN(d.getTime())) return d.toLocaleDateString()
+    return String(v)
+  }
 
-  try{
+  function loadHist(){ return loadJson(LS_HIST, []) }
+  function saveHist(arr){ saveJson(LS_HIST, arr.slice(-300)) }
 
-    const rows=parseCSV(await fetchText(SHOCK_RADAR_CSV))
-    if(rows.length<2) return
+  function recordTotal(total){
+    if(!isFinite(total) || total<=0) return
+    const hist=loadHist()
+    hist.push({ts:Date.now(),total})
+    saveHist(hist)
+  }
 
-    const headers=rows[0]
+  function loadExecLog(){ return loadJson(LS_EXEC_LOG, []) }
+  function saveExecLog(arr){ saveJson(LS_EXEC_LOG, arr.slice(-500)) }
 
-    const idx=(name)=>headers.findIndex(h=>safeUpper(h)===safeUpper(name))
+  function logExecution(plan){
+    const log=loadExecLog()
+    log.push({
+      ts:Date.now(),
+      date:todayKey(),
+      ticker:plan.ticker,
+      tier:plan.tier,
+      amount:plan.amount,
+      riskSizedAmount:plan.riskSizedAmount,
+      totalSnapshot:currentTotal
+    })
+    saveExecLog(log)
+  }
 
-    const iTheme=idx("Theme")
-    const iLevel=idx("ShockLevel")
-    const iStatus=idx("Status")
-    const iReason=idx("Reason")
-    const iScore=idx("SignalScore")
+  function recordPositionSnapshot(){
+    const hist=loadJson(LS_POSITION_HISTORY, [])
+    hist.push({
+      ts:Date.now(),
+      date:todayKey(),
+      total:currentTotal,
+      positions:holdingsData.map(h=>({
+        ticker:h.Ticker,
+        tier:h.RiskTier,
+        value:h.Value
+      }))
+    })
+    saveJson(LS_POSITION_HISTORY, hist.slice(-180))
+  }
 
-    const body=[]
+  function computeDrawdown(){
+    const hist=loadHist()
+    if(hist.length<2) return {ddPct:null,peak:null}
+    let peak=-Infinity
+    for(const h of hist) if(h.total>peak) peak=h.total
+    const curr=hist[hist.length-1].total
+    return {ddPct:(curr-peak)/peak,peak}
+  }
+
+  function brakeLevel(ddPct){
+    if(!isFinite(ddPct)) return "UNKNOWN"
+    if(ddPct<=-0.10) return "FULL"
+    if(ddPct<=-0.06) return "HARD"
+    if(ddPct<=-0.03) return "SOFT"
+    return "NONE"
+  }
+
+  function getReturns(){
+    const hist=loadHist()
+    if(hist.length<2) return []
+    const rets=[]
+    for(let i=1;i<hist.length;i++){
+      const a=hist[i-1].total,b=hist[i].total
+      if(a>0) rets.push((b-a)/a)
+    }
+    return rets
+  }
+
+  function computeStats(){
+    const rets=getReturns()
+    if(rets.length<10) return {vol:null,sharpe:null}
+    const win=rets.slice(-30)
+    if(win.length<2) return {vol:null,sharpe:null}
+    const m=mean(win)
+    const sd=stdDev(win)
+    const vol=sd
+    const sharpe=vol>0 ? (m/vol)*Math.sqrt(252) : null
+    return {vol,sharpe}
+  }
+
+  function computeLastChange(){
+    const hist=loadHist()
+    if(hist.length<2) return {amount:null,pct:null}
+    const curr=hist[hist.length-1].total
+    const prev=hist[hist.length-2].total
+    if(!isFinite(curr) || !isFinite(prev) || prev<=0) return {amount:null,pct:null}
+    return { amount: curr-prev, pct: (curr-prev)/prev }
+  }
+
+  function renderMath(){
+    const {ddPct,peak}=computeDrawdown()
+    const brake=brakeLevel(ddPct)
+    const stats=computeStats()
+    setText(valBrake,brake)
+    setText(mathDD,isFinite(ddPct)?`Drawdown ${(ddPct*100).toFixed(2)}%`:"—")
+    setText(mathPeak,isFinite(peak)?money(peak):"—")
+    setText(mathVol,stats.vol?`Vol ${(stats.vol*100).toFixed(2)}%`:"—")
+    setText(mathSharpe,stats.sharpe?stats.sharpe.toFixed(2):"—")
+  }
+
+  function loadBayes(){ return loadJson(LS_BAYES, {a:3,b:3}) }
+  function bayesPOk(){
+    const {a,b}=loadBayes()
+    return a/(a+b)
+  }
+
+  function renderConfidence(){
+    const p=bayesPOk()
+    const pct=Math.round(p*100)
+    let emoji="🟡"
+    if(p>0.65) emoji="🟢"
+    if(p<0.45) emoji="🔴"
+    setText(valConf,`${emoji} ${pct}%`)
+  }
+
+  async function loadSystem(){
+    const rows=parseCSV(await fetchText(DEFAULT_SYSTEM))
+    const map=new Map()
+    for(const r of rows){
+      const k=safeUpper(r[0])
+      const v=(r[1]||"").trim()
+      if(k) map.set(k,v)
+    }
+    currentSystemMap=map
+    setText(valRegime,map.get("MARKET REGIME")||"—")
+    setText(valDeploy,map.get("DEPLOYMENT SIGNAL")||"—")
+    setText(valCash,map.get("CASH ANCHOR %")||"—")
+    setText(valLiq,map.get("LIQUIDITY")||"—")
+    setText(valVol,map.get("VOLATILITY")||"—")
+    setText(valViol,map.get("RULE VIOLATIONS")||map.get("VIOLATIONS")||"—")
+  }
+
+  async function loadHoldings(){
+    const rows=parseCSV(await fetchText(DEFAULT_HOLDINGS))
+    if(!rows.length) return
+    const headers=rows[0] || []
+
+    const idx = names => {
+      for(const name of names){
+        const hit=headers.findIndex(x=>safeUpper(x)===safeUpper(name))
+        if(hit>=0) return hit
+      }
+      return -1
+    }
+
+    const iTicker=idx(["Ticker","Symbol"])
+    const iTier=idx(["RiskTier","Tier","Risk Tier"])
+    const iValue=idx(["Value","Amount","Position","Market Value"])
+
+    holdingsData=[]
+    let total=0
+    const out=[]
 
     for(let i=1;i<rows.length;i++){
-
       const r=rows[i]
+      const ticker=iTicker>=0 ? r[iTicker] : ""
+      if(!ticker) continue
+      const tier=iTier>=0 ? r[iTier] : ""
+      const val=iValue>=0 ? coerceNumber(r[iValue]) : NaN
+      if(isFinite(val)) total+=val
+      holdingsData.push({Ticker:ticker,RiskTier:tier,Value:val})
+      out.push(`
+        <tr>
+          <td class="mono">${ticker}</td>
+          <td>${tier || "—"}</td>
+          <td class="right">${money(val)}</td>
+        </tr>
+      `)
+    }
 
-      const theme=r[iTheme]||"—"
-      const level=r[iLevel]||"—"
-      const status=r[iStatus]||"—"
-      const reason=r[iReason]||"—"
-      const score=r[iScore]||"—"
+    currentTotal=total
+    setHTML(holdingsBody,out.join(""))
+    setText(totalValue,money(total))
+    recordTotal(total)
+    recordPositionSnapshot()
+  }
 
-      body.push(`
+  async function loadMacroData(){
+    try{
+      const text=await fetchText(DEFAULT_MACRO)
+      macroRows=csvToObjects(text)
+      renderMacroPanel()
+    }catch(e){
+      console.warn("MACRO_DATA load failed",e)
+      macroRows=[]
+      renderMacroPanel()
+    }
+  }
+
+  async function loadShockData(){
+    try{
+      const text=await fetchText(DEFAULT_SHOCK)
+      shockRows=csvToObjects(text)
+      renderShockRadarPanel()
+    }catch(e){
+      console.warn("SHOCK_RADAR load failed",e)
+      shockRows=[]
+      renderShockRadarPanel()
+    }
+  }
+
+  async function loadCorrelationData(){
+    try{
+      const text=await fetchText(DEFAULT_CORRELATION)
+      corrMatrixRows=csvToObjects(text)
+      renderCorrelationMatrixPanel()
+    }catch(e){
+      console.warn("CORRELATION load failed",e)
+      corrMatrixRows=[]
+      renderCorrelationMatrixPanel()
+    }
+  }
+
+  async function loadHistoryData(){
+    try{
+      const text=await fetchText(DEFAULT_HISTORY)
+      historyRows=csvToObjects(text)
+      renderHistorySheetPanel()
+    }catch(e){
+      console.warn("HISTORY load failed",e)
+      historyRows=[]
+      renderHistorySheetPanel()
+    }
+  }
+
+  const THEME_MAP={
+    SGOV:"Cash", VOO:"Core", SPY:"Core", IVV:"Core",
+    QQQ:"Tech", SMH:"Tech",
+    ARKQ:"Innovation", CRWV:"Innovation",
+    XLE:"Energy", VXUS:"International",
+    MSOS:"Cannabis", TLRY:"Cannabis", CGC:"Cannabis", HYFM:"Cannabis",
+    FIX:"Industrials", CRH:"Industrials", RVI:"Industrials"
+  }
+
+  function buildHeatRows(){
+    const totals=new Map()
+    let grand=0
+    for(const h of holdingsData){
+      const theme=THEME_MAP[safeUpper(h.Ticker)] || "Other"
+      const val=Number(h.Value||0)
+      if(!isFinite(val)) continue
+      totals.set(theme,(totals.get(theme)||0)+val)
+      grand+=val
+    }
+    return [...totals.entries()]
+      .map(([theme,val])=>({theme,val,pct:grand>0?val/grand:0}))
+      .sort((a,b)=>b.val-a.val)
+      .slice(0,8)
+  }
+
+  function renderHeatmap(){
+    const rows=buildHeatRows()
+    lastHeatRows=rows
+    setHTML(heatmapMount, rows.map(r=>{
+      let color="var(--green)"
+      if(r.pct>0.30) color="var(--yellow)"
+      if(r.pct>0.60) color="var(--red)"
+      return `
+        <div class="heatRow">
+          <div>${r.theme}</div>
+          <div class="heatTrack">
+            <div class="heatFill" style="width:${Math.round(r.pct*100)}%;background:${color}"></div>
+          </div>
+          <div class="right">${(r.pct*100).toFixed(1)}%</div>
+        </div>
+      `
+    }).join(""))
+  }
+
+  function getSgovValue(){
+    return holdingsData
+      .filter(h=>safeUpper(h.Ticker)==="SGOV")
+      .reduce((s,h)=>s+(isFinite(h.Value)?h.Value:0),0)
+  }
+
+  function computeExposureSplit(){
+    const total=isFinite(currentTotal)?currentTotal:0
+    const sgov=getSgovValue()
+    const active=Math.max(0,total-sgov)
+    const leanCapital=Math.max(0,total-sgov)
+    const nestPct=total>0 ? sgov/total : null
+    const activePct=total>0 ? active/total : null
+    const leanParticipation=leanCapital>0 ? active/leanCapital : null
+    return {total,sgov,active,leanCapital,nestPct,activePct,leanParticipation}
+  }
+
+  function renderExposureSplit(){
+    const x=computeExposureSplit()
+    setText(sgovNestPct,pct2(x.nestPct))
+    setText(activeExposurePct,pct2(x.activePct))
+    setText(leanCapitalValue,money(x.leanCapital))
+    setText(leanParticipationPct,pct2(x.leanParticipation))
+  }
+
+  function parsePercentLoose(txt){
+    const n=coerceNumber(txt)
+    if(!isFinite(n)) return null
+    return n>1 ? n/100 : n
+  }
+
+  function regimeState(){
+    const regime=safeUpper(valRegime && valRegime.textContent)
+    if(regime.includes("RISK ON") || regime.includes("BULL") || regime.includes("FAVORABLE")) return {score:85,color:"green",label:"Supportive"}
+    if(regime.includes("DEFENSIVE") || regime.includes("RISK OFF")) return {score:20,color:"red",label:"Defensive"}
+    return {score:50,color:"yellow",label:"Mixed"}
+  }
+
+  function volState(){
+    const vol=safeUpper(valVol && valVol.textContent)
+    if(vol.includes("LOW") || vol.includes("QUIET")) return {score:20,color:"green",label:"Calm"}
+    if(vol.includes("HOT") || vol.includes("HIGH")) return {score:82,color:"red",label:"Hot"}
+    return {score:50,color:"yellow",label:"Normal"}
+  }
+
+  function ddState(){
+    const {ddPct}=computeDrawdown()
+    if(!isFinite(ddPct)) return {score:50,color:"yellow",label:"Limited"}
+    if(ddPct<=-0.10) return {score:90,color:"red",label:"Deep"}
+    if(ddPct<=-0.06) return {score:70,color:"red",label:"Heavy"}
+    if(ddPct<=-0.03) return {score:45,color:"yellow",label:"Manageable"}
+    return {score:15,color:"green",label:"Contained"}
+  }
+
+  function brakeState(){
+    const brake=brakeLevel(computeDrawdown().ddPct)
+    if(brake==="FULL") return {score:95,color:"red",label:"Full"}
+    if(brake==="HARD") return {score:78,color:"red",label:"Hard"}
+    if(brake==="SOFT") return {score:50,color:"yellow",label:"Soft"}
+    if(brake==="NONE") return {score:15,color:"green",label:"None"}
+    return {score:50,color:"yellow",label:"Unknown"}
+  }
+
+  function mcState(){
+    const rets=getReturns().slice(-120)
+    if(rets.length<10) return {score:50,color:"yellow",label:"Limited",rangeText:"—"}
+    const total=isFinite(currentTotal) ? currentTotal : null
+    if(!isFinite(total) || total<=0) return {score:50,color:"yellow",label:"Limited",rangeText:"—"}
+    const outcomes=[]
+    const runs=300
+    const days=20
+    for(let i=0;i<runs;i++){
+      let v=total
+      for(let d=0;d<days;d++){
+        const pick=rets[Math.floor(Math.random()*rets.length)] || 0
+        v*=1+pick
+      }
+      outcomes.push(v)
+    }
+    const p10=percentile(outcomes,0.10)
+    const p90=percentile(outcomes,0.90)
+    const width=(p90-p10)/total
+    let color="green", score=20, label="Tight"
+    if(width>0.12){ color="red"; score=85; label="Wide" }
+    else if(width>0.06){ color="yellow"; score=55; label="Mixed" }
+    return { score, color, label, rangeText: isFinite(p10)&&isFinite(p90) ? `${money(p10)} → ${money(p90)}` : "—", p10, p90, outcomes }
+  }
+
+  function corrState(){
+    const rows=lastHeatRows.length ? lastHeatRows : buildHeatRows()
+    const top=rows.slice(0,3)
+    let crowd=0
+    if(top[0]?.pct) crowd += top[0].pct
+    if(top[1]?.pct) crowd += top[1].pct*0.75
+    if(top[2]?.pct) crowd += top[2].pct*0.5
+    if(crowd>0.90) return {score:85,color:"red",label:"Crowded"}
+    if(crowd>0.65) return {score:55,color:"yellow",label:"Moderate"}
+    return {score:20,color:"green",label:"Spread"}
+  }
+
+  function cvarState(){
+    const rets=getReturns().slice(-90)
+    if(rets.length<15) return {score:50,color:"yellow",label:"Limited",tail:"—"}
+    const sorted=[...rets].sort((a,b)=>a-b)
+    const tailCount=Math.max(1,Math.floor(sorted.length*0.1))
+    const tail=sorted.slice(0,tailCount)
+    const cvar=mean(tail)
+    if(!isFinite(cvar)) return {score:50,color:"yellow",label:"Limited",tail:"—"}
+    if(cvar<=-0.020) return {score:86,color:"red",label:"Heavy",tail:pct2(cvar)}
+    if(cvar<=-0.010) return {score:58,color:"yellow",label:"Moderate",tail:pct2(cvar)}
+    return {score:20,color:"green",label:"Contained",tail:pct2(cvar)}
+  }
+
+  function bayesState(){
+    const p=bayesPOk()
+    if(p>=0.65) return {score:20,color:"green",label:`${Math.round(p*100)}%`}
+    if(p>=0.45) return {score:50,color:"yellow",label:`${Math.round(p*100)}%`}
+    return {score:82,color:"red",label:`${Math.round(p*100)}%`}
+  }
+
+  function computeReadyRisk(){
+    const r=regimeState()
+    const v=volState()
+    const dd=ddState()
+    const b=brakeState()
+    const mc=mcState()
+    const corr=corrState()
+    const cv=cvarState()
+    const by=bayesState()
+
+    const cashAnchor=parsePercentLoose(valCash && valCash.textContent)
+    let cashPenalty=0
+    if(isFinite(cashAnchor)){
+      if(cashAnchor>0.80) cashPenalty=18
+      else if(cashAnchor>0.60) cashPenalty=10
+      else if(cashAnchor>0.40) cashPenalty=4
+    }
+
+    const violationText=safeUpper(valViol && valViol.textContent)
+    let violationPenalty=0
+    if(violationText && violationText!=="—" && !violationText.includes("NONE") && !violationText.includes("0")){
+      violationPenalty=12
+    }
+
+    const liquidityText=safeUpper(valLiq && valLiq.textContent)
+    let liquidityBoost=0
+    if(liquidityText.includes("GOOD") || liquidityText.includes("LIQUID") || liquidityText.includes("STRONG")) liquidityBoost=8
+    if(liquidityText.includes("TIGHT") || liquidityText.includes("WEAK") || liquidityText.includes("LOW")) liquidityBoost=-8
+
+    let ready =
+      r.score*0.24 +
+      (100-v.score)*0.18 +
+      (100-dd.score)*0.12 +
+      (100-b.score)*0.14 +
+      (100-mc.score)*0.10 +
+      (100-corr.score)*0.08 +
+      (100-cv.score)*0.08 +
+      (100-by.score)*0.06
+
+    ready = ready + liquidityBoost - cashPenalty - violationPenalty
+    ready = Math.round(clamp(ready,0,100))
+
+    let risk =
+      v.score*0.26 +
+      dd.score*0.14 +
+      b.score*0.14 +
+      mc.score*0.12 +
+      corr.score*0.12 +
+      cv.score*0.12 +
+      (100-r.score)*0.05 +
+      by.score*0.05
+
+    if(cashPenalty) risk += Math.round(cashPenalty*0.4)
+    if(violationPenalty) risk += violationPenalty
+    risk = Math.round(clamp(risk,0,100))
+
+    return { ready, risk, components:{r,v,dd,b,mc,corr,cv,by} }
+  }
+
+  function renderTopPills(){
+    const scores=computeReadyRisk()
+    const last=computeLastChange()
+    const volText=safeUpper(valVol && valVol.textContent)
+
+    readyPill.className=`cmdPill ${pillClassForPercent(scores.ready,false)}`
+    setText(readyValue,`${scores.ready}%`)
+
+    riskPill.className=`cmdPill ${pillClassForPercent(scores.risk,true)}`
+    setText(riskValue,`${scores.risk}%`)
+
+    valuePill.className="cmdPill cmdBlue"
+    setText(valueValue,money(currentTotal))
+
+    let cls="cmdGray"
+    if(isFinite(last.amount)){
+      cls = last.amount>0 ? "cmdGreen" : last.amount<0 ? "cmdRed" : "cmdGray"
+      const sign=last.amount>0?"+":last.amount<0?"":""
+      setText(lastValue,`${sign}${money(last.amount)} / ${sign}${pct2(last.pct)}`)
+    }else{
+      setText(lastValue,"—")
+    }
+    lastPill.className=`cmdPill ${cls}`
+
+    let volStateLabel="🟡 wobbly"
+    let volClass="cmdYellow"
+    if(volText.includes("LOW") || volText.includes("QUIET")){ volStateLabel="🟢 calm"; volClass="cmdGreen" }
+    if(volText.includes("HOT") || volText.includes("HIGH")){ volStateLabel="🔴 wild"; volClass="cmdRed" }
+    volLightPill.className=`cmdPill ${volClass}`
+    setText(volLightValue, volStateLabel)
+  }
+
+  function renderMathPills(){
+    const {components}=computeReadyRisk()
+    const pillTips={
+      REGIME:"This tells you the market neighborhood. Friendly means easier driving. Hostile means potholes everywhere.",
+      VOL:"This is how jumpy things are. Calm is smooth. Hot means the market is acting wild.",
+      DD:"How far the account is off the high-water mark. Bigger drop means more caution.",
+      BRAKE:"How hard the system should hit the brakes right now.",
+      MC:"A rough what-could-happen range based on recent path behavior.",
+      CORR:"A quick overlap check so you don’t crowd too much into the same type of bet.",
+      CVAR:"A peek at the ugly tail risk — basically how nasty the bad days have been.",
+      BAYES:"How much trust the system has earned from past outcomes."
+    }
+    const items=[
+      { key:"REGIME", state:components.r },
+      { key:"VOL", state:components.v },
+      { key:"DD", state:components.dd },
+      { key:"BRAKE", state:components.b },
+      { key:"MC", state:components.mc },
+      { key:"CORR", state:components.corr },
+      { key:"CVAR", state:components.cv },
+      { key:"BAYES", state:components.by }
+    ]
+    setHTML(mathPillBar, items.map(item=>`
+      <div class="mathPill">
+        <span class="dot ${dotClass(item.state.color)}"></span>
+        <span>${item.key}</span>
+        <span class="infoWrap">
+          <button class="infoBtn">i</button>
+          <span class="tooltip">${escapeAttr(pillTips[item.key])}</span>
+        </span>
+      </div>
+    `).join(""))
+  }
+
+  function computePrimaryBlocker(){
+    const regime=safeUpper(valRegime && valRegime.textContent)
+    const vol=safeUpper(valVol && valVol.textContent)
+    const violations=safeUpper(valViol && valViol.textContent)
+    const dd=computeDrawdown().ddPct
+    const corr=corrState()
+    const cash=parsePercentLoose(valCash && valCash.textContent)
+
+    if(vol.includes("HOT") || vol.includes("HIGH")) return {label:"Volatility", color:"red"}
+    if(regime.includes("DEFENSIVE") || regime.includes("RISK OFF")) return {label:"Regime", color:"red"}
+    if(isFinite(dd) && dd<=-0.06) return {label:"Drawdown Brake", color:"red"}
+    if(violations && violations!=="—" && !violations.includes("NONE") && !violations.includes("0")) return {label:"Rule Violation", color:"yellow"}
+    if(isFinite(cash) && cash>0.80) return {label:"Cash Anchor", color:"yellow"}
+    if(corr.score>=55) return {label:"Overlap / Crowd", color:"yellow"}
+    return {label:"None", color:"green"}
+  }
+
+  function renderBlocker(){
+    const b=computePrimaryBlocker()
+    setText(primaryBlocker,b.label)
+    blockerBadge.className=badgeClass(b.color)
+    setText(blockerBadge, b.color==="green" ? "Contained" : b.color==="yellow" ? "Moderate" : "High")
+  }
+
+  function tierRiskProxy(tier){
+    const t=normalizeTier(tier)
+    if(t==="HIGH") return 1.6
+    if(t==="MED") return 1.0
+    if(t==="LOW") return 0.7
+    return 1.1
+  }
+
+  function computeRiskSizedAmount(baseAmount, tier){
+    const proxy=tierRiskProxy(tier)
+    const raw=baseAmount/proxy
+    return Math.round(clamp(raw,25,RAMP_MAX))
+  }
+
+  function pseudoMomentumScore(ticker){
+    const base = safeUpper(ticker).split("").reduce((s,ch)=>s+ch.charCodeAt(0),0)
+    return ((base % 27) - 8) / 100
+  }
+
+  function benchmarkReturn(){
+    return 0.03
+  }
+
+  function radarScoreForTicker(ticker){
+    const t=safeUpper(ticker)
+    const themes=safeUpper([
+      currentSystemMap.get("RADAR"),
+      currentSystemMap.get("NEWS"),
+      currentSystemMap.get("TAILWIND"),
+      currentSystemMap.get("HEADWIND")
+    ].filter(Boolean).join(" "))
+    if(!themes) return {label:"Neutral", score:0}
+    if((t.includes("SMH") || t.includes("QQQ")) && themes.includes("AI")) return {label:"Tailwind", score:1}
+    if((t.includes("XLE")) && themes.includes("OIL")) return {label:"Tailwind", score:1}
+    if(themes.includes("HEADWIND")) return {label:"Headwind", score:-1}
+    return {label:"Neutral", score:0}
+  }
+
+  function buildLeanDailySeries(){
+    const hist=loadHist()
+    const byDay=new Map()
+    for(const h of hist){
+      if(!isFinite(h.total)) continue
+      byDay.set(dateKeyFromTs(h.ts), h.total)
+    }
+    return [...byDay.entries()].map(([date,close])=>({date,close})).sort((a,b)=>a.date.localeCompare(b.date))
+  }
+
+  function normalizeSeries(series){
+    if(!series || !series.length) return []
+    const first=series[0].close
+    if(!isFinite(first) || first<=0) return []
+    return series.map(x=>({date:x.date, value:(x.close/first)*100}))
+  }
+
+  function latestReturnFromNormalized(series){
+    if(!series.length) return null
+    const last=series[series.length-1].value
+    return isFinite(last) ? (last/100)-1 : null
+  }
+
+  function buildPolylinePoints(series, x0, y0, w, h, minY, maxY){
+    if(!series.length) return ""
+    const span=Math.max(1, maxY-minY)
+    const n=Math.max(1, series.length-1)
+    return series.map((p,i)=>{
+      const x = x0 + (i/n)*w
+      const y = y0 + h - ((p.value-minY)/span)*h
+      return `${x.toFixed(2)},${y.toFixed(2)}`
+    }).join(" ")
+  }
+
+  function renderPerformanceChart(){
+    const leanRaw=buildLeanDailySeries()
+    const leanNorm=normalizeSeries(leanRaw)
+
+    if(leanNorm.length<2){
+      setHTML(perfSvg, `
+        <text x="40" y="80" class="axisLabel">Need more daily Lean history to draw the chart.</text>
+        <text x="40" y="102" class="axisLabel">Run the terminal across multiple days and it will build itself.</text>
+      `)
+      setText(perfWindow,"Window: Limited")
+      setText(perfLean,"Lean: —")
+      return
+    }
+
+    let minY=Math.min(...leanNorm.map(x=>x.value))
+    let maxY=Math.max(...leanNorm.map(x=>x.value))
+    const pad=(maxY-minY || 6)*0.18
+    minY=minY-pad
+    maxY=maxY+pad
+
+    const x0=56, y0=18, w=884, h=280
+
+    let gridHtml=""
+    const gridVals=5
+    for(let i=0;i<gridVals;i++){
+      const y=y0 + (h/(gridVals-1))*i
+      const value=maxY - ((maxY-minY)/(gridVals-1))*i
+      gridHtml += `
+        <line x1="${x0}" y1="${y}" x2="${x0+w}" y2="${y}" class="gridLine"></line>
+        <text x="8" y="${y+4}" class="axisLabel">${value.toFixed(0)}</text>
+      `
+    }
+
+    const leftDate=leanNorm[0].date
+    const rightDate=leanNorm[leanNorm.length-1].date
+    const pts=buildPolylinePoints(leanNorm,x0,y0,w,h,minY,maxY)
+
+    setHTML(perfSvg, `
+      ${gridHtml}
+      <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" class="gridLine"></line>
+      <text x="${x0}" y="${y0+h+24}" class="axisLabel">${leftDate}</text>
+      <text x="${x0+w-72}" y="${y0+h+24}" class="axisLabel">${rightDate}</text>
+      <polyline points="${pts}" class="seriesLine lineLean"></polyline>
+    `)
+
+    setText(perfWindow, `Window: ${leftDate} → ${rightDate}`)
+    setText(perfLean, `Lean: ${pct2(latestReturnFromNormalized(leanNorm))}`)
+  }
+
+  function renderMonteCarloPanel(){
+    const mc=mcState()
+    if(!isFinite(mc.p10) || !isFinite(mc.p90)){
+      setText(mcBest,"—")
+      setText(mcAvg,"—")
+      setText(mcWorst,"—")
+      setHTML(mcSvg, `<text x="40" y="80" class="axisLabel">Need more history for Monte Carlo.</text>`)
+      return
+    }
+
+    const avg=mean(mc.outcomes)
+    setText(mcBest,money(Math.max(...mc.outcomes)))
+    setText(mcAvg,money(avg))
+    setText(mcWorst,money(Math.min(...mc.outcomes)))
+
+    const vals=[Math.min(...mc.outcomes), avg, Math.max(...mc.outcomes)]
+    const labels=["Worst","Avg","Best"]
+    const max=Math.max(...vals,1)
+    const x0=80, y0=20, w=820, h=150
+    const barW=160
+    const gap=90
+
+    let svg=`<line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" class="gridLine"></line>`
+    vals.forEach((v,i)=>{
+      const x=x0 + i*(barW+gap)
+      const bh=(v/max)*(h-20)
+      const y=y0+h-bh
+      svg += `<rect x="${x}" y="${y}" width="${barW}" height="${bh}" fill="rgba(59,130,246,.55)" rx="8"></rect>`
+      svg += `<text x="${x+50}" y="${y0+h+22}" class="axisLabel">${labels[i]}</text>`
+      svg += `<text x="${x+20}" y="${y-8}" class="axisLabel">${money(v)}</text>`
+    })
+    setHTML(mcSvg, svg)
+  }
+
+  function marketAllowsDeploy(){
+    const regime=safeUpper(valRegime && valRegime.textContent)
+    const vol=safeUpper(valVol && valVol.textContent)
+    if(regime.includes("DEFENSIVE")) return {ok:false,why:"Defensive"}
+    if(vol.includes("HOT")) return {ok:false,why:"Volatility"}
+    return {ok:true,why:"Conditions OK"}
+  }
+
+  function chooseRampAmount(gate){
+    if(!gate.ok) return 0
+    const base=RAMP_DEFAULT
+    const scaled=Math.round(base*(0.75+(bayesPOk()-0.5)*0.5))
+    return Math.max(25,Math.min(RAMP_MAX,scaled))
+  }
+
+  function nextTierFromLast(last){
+    const L=normalizeTier(last)
+    if(L==="HIGH") return "LOW"
+    if(L==="LOW") return "MED"
+    if(L==="MED") return "LOW"
+    return "LOW"
+  }
+
+  function selectCandidateForTier(tier){
+    const t=normalizeTier(tier)
+    const candidates=holdingsData.filter(h=>normalizeTier(h.RiskTier)===t && safeUpper(h.Ticker)!=="SGOV")
+    const pool = candidates.length ? candidates : holdingsData.filter(h=>safeUpper(h.Ticker)!=="SGOV")
+    if(!pool.length) return null
+
+    const bench=benchmarkReturn()
+    const scored=pool.map(h=>{
+      const momentum=pseudoMomentumScore(h.Ticker)
+      const relative=momentum-bench
+      const radar=radarScoreForTicker(h.Ticker)
+      const score=(momentum*100)+(relative*100)+radar.score
+      return {
+        ticker:safeUpper(h.Ticker),
+        tier:t || normalizeTier(h.RiskTier) || "LOW",
+        momentum,
+        relative,
+        radar,
+        score
+      }
+    }).sort((a,b)=>b.score-a.score)
+
+    return scored[0]
+  }
+
+  function getDayState(){ return loadJson(LS_DAY_STATE, {}) }
+  function saveDayState(state){ saveJson(LS_DAY_STATE, state) }
+
+  function computeBasePlan(){
+    const lastTier=localStorage.getItem(LS_LAST_EXEC_TIER)||""
+    const desiredTier=nextTierFromLast(lastTier)
+    const candidate=selectCandidateForTier(desiredTier)
+    const gate=marketAllowsDeploy()
+    if(!candidate){
+      return {date:todayKey(),ticker:null,tier:desiredTier,amount:0,riskSizedAmount:null,gateOk:gate.ok,reason:gate.why}
+    }
+    const amount=gate.ok ? chooseRampAmount(gate) : Math.max(25, Math.min(RAMP_MAX, RAMP_DEFAULT))
+    const riskSizedAmount=computeRiskSizedAmount(amount, candidate.tier)
+    return {
+      date: todayKey(),
+      tier: candidate.tier,
+      ticker: candidate.ticker,
+      amount,
+      riskSizedAmount,
+      gateOk: gate.ok,
+      reason: gate.why,
+      momentum: candidate.momentum,
+      relative: candidate.relative,
+      radar: candidate.radar.label
+    }
+  }
+
+  function ensureDayPlans(){
+    const state=getDayState()
+    const today=todayKey()
+    const nextDay=nextTradingDayKey()
+
+    if(!state.todayPlan || state.todayPlan.date !== today){
+      state.todayPlan = computeBasePlan()
+      state.executedToday = false
+    }
+
+    if(!state.nextPlan || state.nextPlan.date !== nextDay){
+      const sourceTier = state.executedToday && state.todayPlan ? state.todayPlan.tier : state.todayPlan?.tier || ""
+      const tier = nextTierFromLast(sourceTier)
+      const candidate = selectCandidateForTier(tier)
+      const gate=marketAllowsDeploy()
+      if(candidate){
+        const amount = gate.ok ? chooseRampAmount(gate) : Math.max(25, Math.min(RAMP_MAX, RAMP_DEFAULT))
+        state.nextPlan = {
+          date: nextDay,
+          tier: candidate.tier,
+          ticker: candidate.ticker,
+          amount,
+          riskSizedAmount: computeRiskSizedAmount(amount, candidate.tier),
+          momentum: candidate.momentum,
+          relative: candidate.relative,
+          radar: candidate.radar.label
+        }
+      } else {
+        state.nextPlan = {date:nextDay,ticker:null,tier:tier,amount:0,riskSizedAmount:null}
+      }
+    }
+
+    saveDayState(state)
+    return state
+  }
+
+  function renderAction(){
+    const state=ensureDayPlans()
+    const plan=state.todayPlan
+    const nextPlan=state.nextPlan
+    currentPlan=plan
+
+    if(!plan || !plan.ticker){
+      setText(actionMain,"No ticker found")
+      setText(actionReason,"No usable holdings candidate")
+      setText(actionIfExecuted,"Check tier labels in holdings sheet")
+      setText(actionNext,"—")
+      setText(actionMeta,"Tier map issue")
+      setText(riskSizedBuy,"—")
+      setText(strengthCheck,"—")
+      setText(radarOverlay,"—")
+      setText(actionBanner,"The engine is up, but it needs a usable ticker in the holdings list.")
+      return
+    }
+
+    const strengthLabel = isFinite(plan.relative)
+      ? `${plan.ticker} vs SPY: ${(plan.relative*100).toFixed(1)}% ${plan.relative>=0 ? "✅" : "⚠️"}`
+      : "—"
+    setText(strengthCheck, strengthLabel)
+    setText(radarOverlay, plan.radar || "Neutral")
+
+    if(state.executedToday){
+      setText(actionMain,`DONE: ${plan.ticker}`)
+      setText(actionReason,"Today already marked executed")
+      setText(actionIfExecuted,"Already advanced")
+      setText(actionNext, nextPlan?.ticker ? `${nextPlan.date}: BUY $${nextPlan.amount} ${nextPlan.ticker}` : "—")
+      setText(actionMeta,`Today ${plan.tier} | Next ${nextPlan?.tier || "—"}`)
+      setText(riskSizedBuy, nextPlan?.riskSizedAmount ? `$${nextPlan.riskSizedAmount} ${nextPlan.ticker}` : "—")
+      setText(actionBanner,`You already checked off today. Next live move is staged for ${nextPlan?.date || "the next trading day"}.`)
+      return
+    }
+
+    if(!plan.gateOk || (isFinite(plan.relative) && plan.relative < 0)){
+      const why = !plan.gateOk ? plan.reason : "Strength filter failed"
+      setText(actionMain,"chill")
+      setText(actionReason,why)
+      setText(actionIfExecuted,`If market behaves: buy ${plan.ticker}`)
+      setText(actionNext, nextPlan?.ticker ? `${nextPlan.date}: ${nextPlan.ticker} lined up` : "—")
+      setText(actionMeta,`Staged ${plan.tier} | ${plan.ticker}`)
+      setText(riskSizedBuy,`$${plan.riskSizedAmount} ${plan.ticker}`)
+      setText(actionBanner,"Today is a hold, but the engine still staged the next move so you’re not waking up blind.")
+      return
+    }
+
+    setText(actionMain,`buy ${plan.ticker}`)
+    setText(actionReason,plan.reason)
+    setText(actionIfExecuted,`rotate to ${nextPlan?.tier || "next"} tier`)
+    setText(actionNext, nextPlan?.ticker ? `${nextPlan.date}: ${nextPlan.ticker} lined up` : "—")
+    setText(actionMeta,`Today ${plan.tier} | Next ${nextPlan?.tier || "—"}`)
+    setText(riskSizedBuy,`$${plan.riskSizedAmount} ${plan.ticker}`)
+    setText(actionBanner,"This is today’s live move. Hit Mark Executed after you make the move and the terminal will advance to the next trading day.")
+  }
+
+  function renderRecentMoves(){
+    const log=loadExecLog().slice(-5).reverse()
+    if(!log.length){
+      setHTML(recentMovesBody, `<tr><td colspan="3" class="smallMuted">No moves logged yet.</td></tr>`)
+      return
+    }
+    setHTML(recentMovesBody, log.map(x=>`
+      <tr>
+        <td>${x.date}</td>
+        <td class="mono">${x.ticker}</td>
+        <td class="right">${money(x.amount)}</td>
+      </tr>
+    `).join(""))
+  }
+
+  function renderWarnings(){
+    const warnings=[]
+    const rows=buildHeatRows()
+    if(rows[0] && rows[0].pct > 0.45) warnings.push(`Heavy lean: ${rows[0].theme} at ${(rows[0].pct*100).toFixed(1)}%`)
+    const blocker=computePrimaryBlocker()
+    if(blocker.label !== "None") warnings.push(`Main blocker: ${blocker.label}`)
+    const vol=safeUpper(valVol.textContent)
+    if(vol.includes("HOT") || vol.includes("HIGH")) warnings.push("Volatility is running hot")
+
+    const activeRadar=(shockRows||[]).map(normalizeObjectKeys).filter(r=>String(r["status"]||"").toLowerCase()==="active")
+    if(activeRadar.length) warnings.push(`Radar active: ${activeRadar[0]["theme"] || "Event"}`)
+
+    if(!warnings.length) warnings.push("No major warning lights right now.")
+    setHTML(warningsMount, warnings.map(w=>`<div class="row"><span>${w}</span></div>`).join(""))
+  }
+
+  function renderPositionHistoryPanel(){
+    const hist=loadJson(LS_POSITION_HISTORY, [])
+    if(!hist.length || !holdingsData.length){
+      setText(posHistoryTicker,"—")
+      setText(posHistoryWindow,"Limited")
+      setText(posHistoryStart,"—")
+      setText(posHistoryEnd,"—")
+      return
+    }
+
+    const ticker = safeUpper(holdingsData.find(h=>safeUpper(h.Ticker)!=="SGOV")?.Ticker || holdingsData[0].Ticker)
+    const filtered = hist.map(x=>{
+      const p=(x.positions||[]).find(p=>safeUpper(p.ticker)===ticker)
+      return {date:x.date, value:isFinite(p?.value) ? p.value : null}
+    }).filter(x=>isFinite(x.value)).slice(-10)
+
+    setText(posHistoryTicker,ticker)
+    setText(posHistoryWindow, filtered.length ? `${filtered.length} snapshots` : "Limited")
+    setText(posHistoryStart, filtered[0]?.value != null ? money(filtered[0].value) : "—")
+    setText(posHistoryEnd, filtered[filtered.length-1]?.value != null ? money(filtered[filtered.length-1].value) : "—")
+  }
+
+  function renderCorrelationPanel(){
+    const nonCash = holdingsData.filter(h=>safeUpper(h.Ticker)!=="SGOV")
+    const a = safeUpper(nonCash[0]?.Ticker || "SMH")
+    const b = safeUpper(nonCash[1]?.Ticker || nonCash[0]?.Ticker || "VOO")
+    setText(corrPair, `${a} vs ${b}`)
+
+    const hist=loadHist()
+    const series = hist.slice(-20).map((h,i)=>{
+      const base=100
+      return {
+        a: base * (1 + pseudoMomentumScore(a) * (i/20)),
+        b: base * (1 + pseudoMomentumScore(b) * (i/20))
+      }
+    })
+    const aVals=series.map(x=>x.a)
+    const bVals=series.map(x=>x.b)
+    const correlation = correlationOf(aVals,bVals)
+    setText(corrReading, isFinite(correlation) ? correlation.toFixed(2) : "—")
+
+    if(series.length < 2){
+      setHTML(corrSvg, `<text x="40" y="80" class="axisLabel">Need more history for pair view.</text>`)
+      return
+    }
+
+    const pointsA=normalizeSimpleSeries(aVals)
+    const pointsB=normalizeSimpleSeries(bVals)
+    const minY=Math.min(...pointsA,...pointsB)-2
+    const maxY=Math.max(...pointsA,...pointsB)+2
+    const x0=56, y0=18, w=884, h=180
+
+    const ptsA=buildPolylinePoints(pointsA.map((v)=>({value:v})),x0,y0,w,h,minY,maxY)
+    const ptsB=buildPolylinePoints(pointsB.map((v)=>({value:v})),x0,y0,w,h,minY,maxY)
+
+    setHTML(corrSvg, `
+      <line x1="${x0}" y1="${y0+h}" x2="${x0+w}" y2="${y0+h}" class="gridLine"></line>
+      <polyline points="${ptsA}" class="seriesLine lineLean"></polyline>
+      <polyline points="${ptsB}" class="seriesLine lineAlt"></polyline>
+    `)
+  }
+
+  function normalizeSimpleSeries(arr){
+    if(!arr.length) return []
+    const first=arr[0] || 1
+    return arr.map(v => (v/first)*100)
+  }
+
+  function correlationOf(a,b){
+    if(a.length !== b.length || a.length < 2) return null
+    const ma=mean(a), mb=mean(b)
+    let num=0, da=0, db=0
+    for(let i=0;i<a.length;i++){
+      const xa=a[i]-ma
+      const xb=b[i]-mb
+      num += xa*xb
+      da += xa*xa
+      db += xb*xb
+    }
+    const den=Math.sqrt(da*db)
+    return den ? num/den : null
+  }
+
+  function renderMacroPanel(){
+    if(!macroRows.length){
+      setText(macroDate,"No CSV")
+      setText(macro10Y,"—")
+      setText(macro2Y,"—")
+      setText(macroCurve,"—")
+      setText(macroDxy,"—")
+      setText(macroOil,"—")
+      setText(macroGold,"—")
+      setText(macroVix,"—")
+      return
+    }
+    const raw=normalizeObjectKeys(latestObjectRow(macroRows))
+    setText(macroDate, formatMaybeDate(raw["date"]))
+    setText(macro10Y, raw["10y_treasury"] || raw["10y treasury"] || raw["10y"] || "—")
+    setText(macro2Y, raw["2y_treasury"] || raw["2y treasury"] || raw["2y"] || "—")
+    setText(macroCurve, raw["yieldcurve"] || raw["yield_curve"] || raw["curve"] || "—")
+    setText(macroDxy, raw["dxy"] || "—")
+    setText(macroOil, raw["oil"] || "—")
+    setText(macroGold, raw["gold"] || "—")
+    setText(macroVix, raw["vix"] || "—")
+  }
+
+  function shockPillClass(level){
+    const x=safeUpper(level)
+    if(x==="RED") return "pill pillRed"
+    if(x==="YELLOW") return "pill pillYellow"
+    if(x==="GREEN") return "pill pillGreen"
+    return "pill"
+  }
+
+  function renderShockRadarPanel(){
+    if(!shockRows.length){
+      setHTML(shockRadarMount, `<div class="smallMuted">No SHOCK_RADAR CSV loaded.</div>`)
+      setText(radarRedCount,"0")
+      setText(radarYellowCount,"0")
+      setText(radarGreenCount,"0")
+      setText(radarTopTheme,"—")
+      return
+    }
+
+    const rows=shockRows.map(normalizeObjectKeys)
+    const red=rows.filter(r=>safeUpper(r["shocklevel"])==="RED").length
+    const yellow=rows.filter(r=>safeUpper(r["shocklevel"])==="YELLOW").length
+    const green=rows.filter(r=>safeUpper(r["shocklevel"])==="GREEN").length
+    setText(radarRedCount,String(red))
+    setText(radarYellowCount,String(yellow))
+    setText(radarGreenCount,String(green))
+
+    const sorted=[...rows].sort((a,b)=> (coerceNumber(b["signalscore"])||0) - (coerceNumber(a["signalscore"])||0))
+    setText(radarTopTheme, sorted[0]?.theme || "—")
+
+    const top=sorted.slice(0,6)
+    setHTML(shockRadarMount, top.map(r=>{
+      const theme=r["theme"] || "—"
+      const level=r["shocklevel"] || "—"
+      const status=r["status"] || "—"
+      const reason=r["reason"] || "—"
+      const sources=r["sourcecount"] || "0"
+      const updated=r["lastupdated"] || "—"
+      const score=r["signalscore"] || "0"
+      return `
         <div class="shockRow">
           <div class="shockTop">
             <div class="shockTheme">${theme}</div>
             <div class="shockPills">
-              <span class="pill">${level}</span>
+              <span class="${shockPillClass(level)}">${level}</span>
               <span class="pill">${status}</span>
               <span class="pill">Score ${score}</span>
             </div>
           </div>
           <div class="shockReason">${reason}</div>
+          <div class="tinyMuted">Sources: ${sources} • Updated: ${formatMaybeDate(updated)}</div>
         </div>
-      `)
+      `
+    }).join(""))
+  }
+
+  function corrClass(v){
+    const n=coerceNumber(v)
+    if(!isFinite(n)) return ""
+    if(n >= 0.7) return "corrStrong"
+    if(n >= 0.3) return "corrMed"
+    if(n > -0.3) return "corrFlat"
+    if(n > -0.7) return "corrNeg"
+    return "corrNegStrong"
+  }
+
+  function renderCorrelationMatrixPanel(){
+    if(!corrMatrixRows.length){
+      setHTML(corrMatrixMount, `<div class="smallMuted">No CORRELATION CSV loaded.</div>`)
+      return
+    }
+    const headers=Object.keys(corrMatrixRows[0])
+    if(!headers.length){
+      setHTML(corrMatrixMount, `<div class="smallMuted">Correlation data empty.</div>`)
+      return
     }
 
-    $("shockRadarMount").innerHTML=body.join("")
+    const rowLabel=headers[0]
+    const cols=headers.slice(1)
 
-  }catch(e){
-    console.warn("Shock radar load failed",e)
+    let html=`<table class="miniTable"><thead><tr><th>${rowLabel}</th>${cols.map(h=>`<th>${h}</th>`).join("")}</tr></thead><tbody>`
+    corrMatrixRows.forEach(r=>{
+      html += `<tr>`
+      html += `<td>${r[rowLabel] || "—"}</td>`
+      cols.forEach(c=>{
+        html += `<td class="${corrClass(r[c])}">${r[c] || "—"}</td>`
+      })
+      html += `</tr>`
+    })
+    html += `</tbody></table>`
+    setHTML(corrMatrixMount, html)
   }
 
-}
-
-
-/* ============================
-   REFRESH ENGINE
-============================ */
-
-async function refreshAll(label){
-
-  try{
-
-    await Promise.all([
-      loadMacro(),
-      loadShockRadar()
-    ])
-
-  }catch(e){
-    crash("ENGINE",e)
+  function renderHistorySheetPanel(){
+    if(!historyRows.length){
+      setText(histDate,"No CSV")
+      setText(histPortfolio,"—")
+      setText(histSpy,"—")
+      setText(histNotes,"—")
+      return
+    }
+    const raw=normalizeObjectKeys(latestObjectRow(historyRows))
+    setText(histDate, formatMaybeDate(raw["date"]))
+    setText(histPortfolio, raw["portfoliovalue"] ? money(coerceNumber(raw["portfoliovalue"])) : (raw["portfolio value"] || "—"))
+    setText(histSpy, raw["spy"] || "—")
+    setText(histNotes, raw["notes"] || "—")
   }
 
-}
+  function wireTooltips(){
+    document.querySelectorAll(".infoBtn").forEach(btn=>{
+      if(btn.dataset.wired==="1") return
+      btn.dataset.wired="1"
+      btn.addEventListener("click", e=>{
+        e.preventDefault()
+        e.stopPropagation()
+        const wrap=btn.closest(".infoWrap")
+        if(!wrap) return
+        document.querySelectorAll(".infoWrap.show").forEach(x=>{
+          if(x!==wrap) x.classList.remove("show")
+        })
+        wrap.classList.toggle("show")
+      })
+    })
 
+    document.addEventListener("click", ()=>{
+      document.querySelectorAll(".infoWrap.show").forEach(x=>x.classList.remove("show"))
+    }, { once:false })
+  }
 
-refreshAll("Loaded")
+  async function refreshAll(label){
+    if(inFlight) return
+    inFlight=true
+    try{
+      await Promise.all([
+        loadSystem(),
+        loadHoldings(),
+        loadMacroData(),
+        loadShockData(),
+        loadCorrelationData(),
+        loadHistoryData()
+      ])
 
-setInterval(()=>{
-  refreshAll("Auto refresh")
-}, AUTO_REFRESH_SECONDS*1000)
+      renderHeatmap()
+      renderMath()
+      renderConfidence()
+      renderAction()
+      renderTopPills()
+      renderMathPills()
+      renderExposureSplit()
+      renderBlocker()
+      renderPerformanceChart()
+      renderMonteCarloPanel()
+      renderRecentMoves()
+      renderWarnings()
+      renderPositionHistoryPanel()
+      renderCorrelationPanel()
 
+      const dayState=getDayState()
+      if(dayState.executedToday && dayState.todayPlan){
+        execIcon.textContent="✅"
+        setText(lastExecBadge,`Last exec: ${dayState.todayPlan.ticker}`)
+      } else {
+        execIcon.textContent="⏳"
+        setText(lastExecBadge,"Last exec: —")
+      }
+
+      stamp(label)
+      wireTooltips()
+    }catch(e){
+      setText(statusLine,"ERROR")
+      crash("ENGINE",e)
+    }finally{
+      inFlight=false
+    }
+  }
+
+  if(executedBtn){
+    executedBtn.onclick=()=>{
+      const state=ensureDayPlans()
+      const plan=state.todayPlan
+      if(!plan || !plan.ticker || state.executedToday) return
+
+      localStorage.setItem(LS_LAST_EXEC_TICKER,plan.ticker)
+      localStorage.setItem(LS_LAST_EXEC_TIER,plan.tier)
+      localStorage.setItem(LS_LAST_EXEC_TS,String(Date.now()))
+
+      logExecution(plan)
+
+      state.executedToday=true
+      const nextCandidate=selectCandidateForTier(nextTierFromLast(plan.tier))
+      state.nextPlan = nextCandidate ? {
+        date: nextTradingDayKey(),
+        tier: nextCandidate.tier,
+        ticker: nextCandidate.ticker,
+        amount: Math.max(25, Math.min(RAMP_MAX, RAMP_DEFAULT)),
+        riskSizedAmount: computeRiskSizedAmount(Math.max(25, Math.min(RAMP_MAX, RAMP_DEFAULT)), nextCandidate.tier),
+        momentum: nextCandidate.momentum,
+        relative: nextCandidate.relative,
+        radar: nextCandidate.radar.label
+      } : {date: nextTradingDayKey(), ticker:null, tier: nextTierFromLast(plan.tier), amount:0, riskSizedAmount:null}
+      saveDayState(state)
+
+      execIcon.textContent="✅"
+      setText(lastExecBadge,`Last exec: ${plan.ticker}`)
+      renderAction()
+      renderRecentMoves()
+    }
+  }
+
+  wireTooltips()
+  renderConfidence()
+  refreshAll("Loaded")
+
+  let seconds=AUTO_REFRESH_SECONDS
+  setInterval(()=>{
+    seconds--
+    setText(nextRefresh,"Next refresh in "+seconds+"s")
+    if(seconds<=0){
+      seconds=AUTO_REFRESH_SECONDS
+      refreshAll("Auto refresh")
+    }
+  },1000)
 })
 </script>
+</body>
+</html>
