@@ -25,11 +25,23 @@ window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.r
 
 /* EXISTING SHEETS */
 
-const SYSTEM_CSV =
+const DEFAULT_SYSTEM =
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=824917531&single=true&output=csv"
 
-const HOLDINGS_CSV =
+const DEFAULT_HOLDINGS =
 "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv"
+
+const DEFAULT_MACRO =
+"PASTE_YOUR_MACRO_CSV_URL_HERE"
+
+const DEFAULT_CORRELATION =
+"PASTE_YOUR_CORRELATION_CSV_URL_HERE"
+
+const DEFAULT_SHOCK =
+"PASTE_YOUR_SHOCK_RADAR_CSV_URL_HERE"
+
+const DEFAULT_HISTORY =
+"PASTE_YOUR_HISTORY_CSV_URL_HERE"
 
 
 /* NEW SHEETS YOU BUILT */
