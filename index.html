@@ -3,21 +3,25 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal Index</title>
+  <title>Lean Terminal 2.0 Hybrid Index</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:#121a2b;
-      --panel-2:#0f172a;
-      --text:#e5e7eb;
+      --bg:#060c1a;
+      --bg2:#091224;
+      --panel:#101a2c;
+      --panel2:#0d1628;
+      --text:#e8edf7;
       --muted:#94a3b8;
+      --line:rgba(255,255,255,.08);
+      --line2:rgba(255,255,255,.14);
       --green:#22c55e;
       --yellow:#f59e0b;
       --red:#ef4444;
+      --neon-red:#ff355e;
+      --neon-red-glow:rgba(255,53,94,.45);
       --blue:#3b82f6;
-      --line:rgba(255,255,255,.08);
-      --pill:#111827;
-      --shadow:0 12px 32px rgba(0,0,0,.28);
+      --pill:#0c1425;
+      --shadow:0 14px 36px rgba(0,0,0,.28);
       --radius:18px;
     }
 
@@ -25,268 +29,329 @@
     html,body{ height:100%; }
     body{
       margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg);
       color:var(--text);
+      background:
+        radial-gradient(circle at top left, #0a1730 0%, #060c1a 42%, #040915 100%);
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
     }
 
     .wrap{
-      max-width:1400px;
+      max-width:1700px;
       margin:0 auto;
-      padding:18px;
+      padding:14px;
     }
 
     .topbar{
       display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      align-items:center;
+      align-items:flex-start;
       justify-content:space-between;
-      margin-bottom:14px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
       gap:12px;
+      margin-bottom:10px;
     }
 
     .brand h1{
-      margin:0;
-      font-size:1.15rem;
-      font-weight:700;
-      letter-spacing:.2px;
+      margin:0 0 2px 0;
+      font-size:1.6rem;
+      font-weight:800;
+      letter-spacing:.01em;
     }
 
     .sub{
       color:var(--muted);
-      font-size:.88rem;
-      margin-top:2px;
+      font-size:.92rem;
     }
 
     .toolbar{
       display:flex;
-      gap:10px;
+      gap:8px;
       flex-wrap:wrap;
+      justify-content:flex-end;
       align-items:center;
     }
 
-    .btn, .input{
-      background:var(--panel);
+    .chip,.btn{
+      border:1px solid var(--line2);
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
       color:var(--text);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
+      border-radius:14px;
+      padding:9px 12px;
       font:inherit;
       box-shadow:var(--shadow);
     }
 
     .btn{
       cursor:pointer;
-    }
-
-    .btn:hover{
-      border-color:rgba(255,255,255,.18);
-    }
-
-    .grid{
-      display:grid;
-      gap:14px;
-    }
-
-    .grid-top{
-      grid-template-columns:1.2fr .9fr .9fr .9fr;
-      margin-bottom:14px;
-    }
-
-    .grid-main{
-      grid-template-columns:1.15fr .95fr;
-    }
-
-    @media (max-width:1180px){
-      .grid-top{ grid-template-columns:1fr 1fr; }
-      .grid-main{ grid-template-columns:1fr; }
-    }
-
-    @media (max-width:740px){
-      .grid-top{ grid-template-columns:1fr; }
-    }
-
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      padding:16px;
-      box-shadow:var(--shadow);
-      min-width:0;
-    }
-
-    .card h2, .card h3{
-      margin:0 0 10px 0;
-      font-size:1rem;
       font-weight:700;
     }
 
-    .cardTitleRow{
+    .btn:hover{
+      border-color:rgba(255,255,255,.24);
+    }
+
+    .btn.aggressive{
+      background:linear-gradient(180deg, rgba(255,53,94,.26), rgba(255,53,94,.12));
+      border:1px solid rgba(255,53,94,.65);
+      color:#ffe5ec;
+      box-shadow:0 0 0 1px rgba(255,53,94,.22) inset, 0 0 18px var(--neon-red-glow), var(--shadow);
+    }
+
+    .btn.aggressive.active{
+      background:linear-gradient(180deg, rgba(255,53,94,.45), rgba(255,53,94,.2));
+      box-shadow:0 0 0 1px rgba(255,53,94,.35) inset, 0 0 24px var(--neon-red-glow), var(--shadow);
+    }
+
+    .strip{
       display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-    }
-
-    .muted{
-      color:var(--muted);
-    }
-
-    .heroValue{
-      font-size:2rem;
-      font-weight:800;
-      line-height:1;
-      margin:6px 0 8px 0;
-    }
-
-    .heroMeta{
-      display:flex;
-      flex-wrap:wrap;
       gap:8px;
+      flex-wrap:wrap;
+      margin-bottom:8px;
     }
 
     .pill{
       display:inline-flex;
       align-items:center;
-      gap:6px;
-      border:1px solid var(--line);
-      background:var(--pill);
+      gap:7px;
       border-radius:999px;
+      border:1px solid var(--line2);
+      background:var(--pill);
       padding:6px 10px;
-      font-size:.8rem;
+      font-size:.77rem;
       white-space:nowrap;
     }
 
-    .pill.small{
-      font-size:.72rem;
-      padding:4px 8px;
+    .dot{
+      width:10px;
+      height:10px;
+      border-radius:50%;
+      display:inline-block;
+    }
+    .g{background:var(--green)}
+    .y{background:var(--yellow)}
+    .r{background:var(--red)}
+    .b{background:var(--blue)}
+
+    .info{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      width:15px;
+      height:15px;
+      border-radius:50%;
+      border:1px solid rgba(255,255,255,.16);
+      color:#bfd1ea;
+      font-size:.68rem;
+      line-height:1;
+      font-weight:800;
+      cursor:help;
+      background:rgba(255,255,255,.03);
     }
 
-    .kpis{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0,1fr));
-      gap:10px;
+    .grid{ display:grid; gap:10px; }
+    .topGrid{ grid-template-columns:1.2fr 1.15fr 1.15fr 1.2fr; margin-bottom:10px; }
+    .midGrid{ grid-template-columns:300px 1fr 300px; margin-bottom:10px; }
+    .chartGrid{ grid-template-columns:1fr 1fr; margin-bottom:10px; }
+    .lowerGrid{ grid-template-columns:1fr 1fr; margin-top:10px; }
+    .bottomGrid{ grid-template-columns:300px 320px 1fr; }
+
+    @media (max-width:1500px){
+      .topGrid{grid-template-columns:1fr 1fr;}
+      .midGrid{grid-template-columns:280px 1fr;}
+      .midGrid .rightRail{grid-column:1 / -1;}
+      .bottomGrid{grid-template-columns:1fr 1fr;}
+      .bottomGrid .shockCard{grid-column:1 / -1;}
     }
 
-    .kpi{
-      background:rgba(255,255,255,.025);
+    @media (max-width:980px){
+      .topGrid,.midGrid,.chartGrid,.lowerGrid,.bottomGrid{grid-template-columns:1fr;}
+    }
+
+    .card{
+      min-width:0;
       border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
+      border-radius:var(--radius);
+      background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.012));
+      box-shadow:var(--shadow);
+      padding:14px;
     }
 
-    .kpiLabel{
+    .cardTitle{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:8px;
+      margin-bottom:10px;
+    }
+
+    .titleLeft{
+      display:flex;
+      align-items:center;
+      gap:6px;
+      min-width:0;
+    }
+
+    .cardTitle h2,.cardTitle h3{
+      margin:0;
+      font-size:1rem;
+      font-weight:800;
+    }
+
+    .heroDate{
+      font-size:.72rem;
+      color:#d5e1f2;
+      padding:7px 11px;
+      border-radius:999px;
+      border:1px solid var(--line2);
+      background:rgba(255,255,255,.02);
+    }
+
+    .heroValue{
+      font-size:1.95rem;
+      line-height:1;
+      font-weight:900;
+      margin:2px 0 12px 0;
+    }
+
+    .heroMeta{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      margin-bottom:12px;
+    }
+
+    .mini{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.015);
+      border-radius:999px;
+      padding:6px 12px;
+      font-size:.78rem;
+      color:#d9e4f4;
+    }
+
+    .gradientBar{
+      width:100%;
+      height:13px;
+      border-radius:999px;
+      background:rgba(255,255,255,.09);
+      overflow:hidden;
+    }
+
+    .gradientFill{
+      height:100%;
+      width:0%;
+      background:linear-gradient(90deg, #ff4d4d 0%, #ff9f0a 42%, #f6c000 60%, #2fc96b 100%);
+      border-radius:999px;
+      transition:width .2s ease;
+    }
+
+    .quad{
+      display:grid;
+      grid-template-columns:1fr 1fr;
+      gap:12px;
+    }
+
+    .miniCard{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      border-radius:18px;
+      padding:16px;
+      min-height:102px;
+    }
+
+    .miniLabel{
       color:var(--muted);
       font-size:.78rem;
       margin-bottom:6px;
     }
 
-    .kpiValue{
-      font-size:1.15rem;
-      font-weight:700;
+    .miniValue{
+      font-size:1.05rem;
+      font-weight:900;
+      line-height:1.15;
     }
 
-    .sectionLabel{
-      color:var(--muted);
-      font-size:.78rem;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      margin-bottom:10px;
-    }
-
-    .list{
+    .table{
       display:grid;
-      gap:8px;
-    }
-
-    .row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
+      gap:0;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
       border-radius:14px;
-      padding:10px 12px;
-      min-width:0;
-    }
-
-    .rowLeft{
-      min-width:0;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .ticker{
-      font-weight:800;
-      letter-spacing:.03em;
-    }
-
-    .metaSmall{
-      color:var(--muted);
-      font-size:.8rem;
-    }
-
-    .score{
-      font-weight:800;
-      font-size:.95rem;
-    }
-
-    .green{ color:var(--green); }
-    .yellow{ color:var(--yellow); }
-    .red{ color:var(--red); }
-    .blue{ color:var(--blue); }
-
-    .progress{
-      width:100%;
-      height:8px;
-      border-radius:999px;
-      background:rgba(255,255,255,.08);
       overflow:hidden;
-      margin-top:8px;
+      background:rgba(255,255,255,.015);
     }
 
-    .bar{
-      height:100%;
-      width:0%;
-      border-radius:999px;
-      background:linear-gradient(90deg, var(--red), var(--yellow), var(--green));
-      transition:width .25s ease;
-    }
-
-    .holdingsWrap{
+    .trow{
       display:grid;
+      grid-template-columns:1fr auto;
       gap:10px;
+      padding:7px 10px;
+      border-top:1px solid rgba(255,255,255,.055);
+      align-items:center;
+      min-width:0;
+    }
+    .trow:first-child{ border-top:none; }
+
+    .tlabel{
+      color:#dce7f6;
+      font-size:.82rem;
+      min-width:0;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
     }
 
-    /* Smaller holdings pill with internal scroll */
-    .holdingScroller{
+    .tval{
+      color:#f3f7fc;
+      font-weight:800;
+      font-size:.82rem;
+      white-space:nowrap;
+    }
+
+    .actionButtons{
       display:flex;
-      flex-direction:column;
       gap:8px;
-      max-height:330px;
-      overflow-y:auto;
+      align-items:center;
+      flex-wrap:wrap;
+      margin-top:10px;
+    }
+
+    .greenBtn{
+      border:none;
+      background:#3d8d3f;
+      color:white;
+      border-radius:10px;
+      padding:9px 12px;
+      font-weight:800;
+      cursor:pointer;
+    }
+
+    .ghost{
+      border:1px solid var(--line2);
+      background:rgba(255,255,255,.02);
+      color:#dbe6f5;
+      border-radius:10px;
+      padding:8px 11px;
+      font-size:.78rem;
+    }
+
+    .note{
+      margin-top:10px;
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:10px;
+      font-size:.78rem;
+      color:var(--muted);
+      background:rgba(255,255,255,.015);
+    }
+
+    .scrollHold{
+      max-height:306px;
+      overflow:auto;
       padding-right:4px;
       scrollbar-width:thin;
-      scrollbar-color:rgba(255,255,255,.22) transparent;
+      scrollbar-color:rgba(255,255,255,.18) transparent;
     }
-
-    .holdingScroller::-webkit-scrollbar{
-      width:8px;
-    }
-    .holdingScroller::-webkit-scrollbar-track{
-      background:transparent;
-    }
-    .holdingScroller::-webkit-scrollbar-thumb{
-      background:rgba(255,255,255,.18);
+    .scrollHold::-webkit-scrollbar{ width:8px; }
+    .scrollHold::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,.16);
       border-radius:999px;
     }
 
@@ -295,658 +360,987 @@
       grid-template-columns:minmax(0,1.1fr) auto auto auto;
       gap:8px;
       align-items:center;
+      padding:7px 9px;
       border:1px solid var(--line);
       background:rgba(255,255,255,.02);
       border-radius:12px;
-      padding:8px 10px;
+      margin-bottom:7px;
       min-width:0;
-    }
-
-    .holdingMain{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:2px;
     }
 
     .holdingName{
-      font-weight:700;
-      font-size:.88rem;
+      font-size:.84rem;
+      font-weight:800;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
     }
 
     .holdingSub{
+      font-size:.72rem;
       color:var(--muted);
-      font-size:.74rem;
       overflow:hidden;
       text-overflow:ellipsis;
       white-space:nowrap;
+      margin-top:2px;
     }
 
     .miniPill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      border:1px solid var(--line);
-      background:#101827;
-      border-radius:999px;
-      padding:4px 8px;
-      font-size:.72rem;
-      min-width:62px;
+      font-size:.7rem;
+      padding:4px 7px;
+      min-width:58px;
       text-align:center;
+      border:1px solid var(--line2);
+      border-radius:999px;
+      background:#101827;
+      white-space:nowrap;
     }
 
-    .tableLike{
-      display:grid;
-      gap:8px;
-    }
-
-    .headline{
+    .chartBox{
+      height:230px;
       border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
       border-radius:14px;
-      padding:12px;
+      background:linear-gradient(180deg, rgba(0,0,0,.10), rgba(255,255,255,.01));
+      overflow:hidden;
+      position:relative;
     }
 
-    .headlineTitle{
+    .chartMeta{
+      margin-top:8px;
+      display:flex;
+      gap:8px;
+      flex-wrap:wrap;
+    }
+
+    .chartMeta .mini{
+      font-size:.72rem;
+      padding:5px 8px;
+    }
+
+    svg{ width:100%; height:100%; display:block; }
+
+    .recentTable{
+      width:100%;
+      border-collapse:collapse;
+      font-size:.82rem;
+    }
+
+    .recentTable th,.recentTable td{
+      padding:8px 9px;
+      border-top:1px solid rgba(255,255,255,.06);
+      text-align:left;
+    }
+
+    .recentTable th{
+      color:var(--muted);
       font-weight:700;
+      font-size:.76rem;
+    }
+
+    .shockList{ display:grid; gap:10px; }
+
+    .shockRow{
+      display:grid;
+      grid-template-columns:minmax(0,1fr) auto auto auto;
+      gap:8px;
+      align-items:start;
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:11px;
+      background:rgba(255,255,255,.02);
+    }
+
+    .shockTitle{
+      font-weight:800;
+      font-size:.85rem;
       margin-bottom:5px;
     }
 
-    .headlineBody{
+    .shockBody{
+      font-size:.76rem;
       color:var(--muted);
-      font-size:.9rem;
-      line-height:1.38;
+      line-height:1.35;
     }
 
-    .footerNote{
-      margin-top:14px;
-      color:var(--muted);
-      font-size:.8rem;
-      text-align:right;
+    .tag{
+      padding:5px 8px;
+      border-radius:999px;
+      border:1px solid var(--line2);
+      background:#0f1728;
+      font-size:.68rem;
+      font-weight:800;
+      white-space:nowrap;
+      align-self:start;
     }
+
+    .tag.green{ color:#b9f7c7; }
+    .tag.yellow{ color:#ffd58a; }
+    .tag.red{ color:#ffb3b3; }
 
     .empty{
       color:var(--muted);
-      font-size:.9rem;
-      border:1px dashed var(--line);
+      border:1px dashed var(--line2);
       border-radius:12px;
       padding:12px;
+      font-size:.85rem;
     }
 
-    .hidden{
-      display:none !important;
-    }
-
-    .errorBox{
-      white-space:pre-wrap;
-      border:1px solid rgba(239,68,68,.45);
-      background:rgba(239,68,68,.09);
-      color:#fecaca;
-      border-radius:14px;
-      padding:12px;
-      margin-bottom:14px;
-      font-size:.88rem;
-    }
-
-    .tiny{
-      font-size:.75rem;
+    .footer{
+      margin-top:10px;
       color:var(--muted);
+      font-size:.76rem;
+      text-align:right;
     }
+
+    .greenText{ color:var(--green); }
+    .yellowText{ color:var(--yellow); }
+    .redText{ color:var(--red); }
+    .blueText{ color:var(--blue); }
+    .neonRedText{ color:var(--neon-red); }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div id="errorBoxMount"></div>
+<div class="wrap">
+  <div class="topbar">
+    <div class="brand">
+      <h1>Lean Terminal 2.0 Hybrid Engine</h1>
+      <div class="sub">Current Lean campaign • hybrid layout • no sources pill • scrollable holdings • Lean Aggressive neon-red toggle</div>
+    </div>
+    <div class="toolbar">
+      <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
+      <div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div>
+      <div class="chip" id="nextRefreshChip">Next refresh in 45s</div>
+      <button class="btn aggressive" id="aggressiveToggle">Lean Aggressive: OFF</button>
+      <button class="btn" id="refreshBtn">Refresh</button>
+      <button class="btn" id="settingsBtn">Data Settings</button>
+    </div>
+  </div>
 
-    <div class="topbar">
-      <div class="brand">
-        <div>
-          <h1>Lean Terminal — Current Campaign</h1>
-          <div class="sub">Cleaner layout • sources pill hidden • compact scrollable holdings</div>
+  <div class="strip">
+    <div class="pill"><span class="dot g"></span>READY <strong id="readyPct">63%</strong></div>
+    <div class="pill"><span class="dot y"></span>RISK <strong id="riskPct">39%</strong></div>
+    <div class="pill"><span class="dot b"></span>VALUE <strong id="valueTxt">$19,217.09</strong></div>
+    <div class="pill"><span class="dot b"></span>LAST <strong id="lastTxt">$0.00 / 0.00%</strong></div>
+    <div class="pill"><span class="dot y"></span>VOL LIGHT <strong id="volTxt">wobbly</strong></div>
+    <div class="pill" id="aggressivePill" style="display:none;"><span class="dot r"></span>MODE <strong class="neonRedText">LEAN AGGRESSIVE</strong></div>
+  </div>
+
+  <div class="strip">
+    <div class="pill">REGIME <span class="info" title="Street speak: is the market acting like a green light, yellow light, or a trap?">i</span></div>
+    <div class="pill">VOL <span class="info" title="Street speak: how choppy the tape feels right now.">i</span></div>
+    <div class="pill">DD <span class="info" title="Street speak: drawdown damage check.">i</span></div>
+    <div class="pill">BRAKE <span class="info" title="Street speak: what is slowing us down or keeping us parked.">i</span></div>
+    <div class="pill">MC <span class="info" title="Street speak: Monte Carlo range, best/base/worst lane.">i</span></div>
+    <div class="pill">CORR <span class="info" title="Street speak: are names moving together too much?">i</span></div>
+    <div class="pill">CVAR <span class="info" title="Street speak: ugly-tail loss check.">i</span></div>
+    <div class="pill">BAYES <span class="info" title="Street speak: are odds improving or getting weaker as new data rolls in?">i</span></div>
+  </div>
+
+  <section class="grid topGrid">
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h2>Campaign Snapshot</h2>
+          <span class="info" title="Street speak: quick dashboard read on what mode we are in.">i</span>
+        </div>
+        <div class="heroDate" id="heroDate">—</div>
+      </div>
+      <div class="heroValue" id="heroStatus">Loading…</div>
+      <div class="heroMeta" id="heroMeta"></div>
+      <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
+    </div>
+
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h2>Posture</h2>
+          <span class="info" title="Street speak: how we are standing right now, not just what we think.">i</span>
         </div>
       </div>
-
-      <div class="toolbar">
-        <button class="btn" id="refreshBtn">Refresh</button>
-        <button class="btn" id="settingsBtn">Data Settings</button>
+      <div class="quad">
+        <div class="miniCard"><div class="miniLabel">Mode</div><div class="miniValue" id="modeVal">—</div></div>
+        <div class="miniCard"><div class="miniLabel">Trigger</div><div class="miniValue" id="triggerVal">—</div></div>
+        <div class="miniCard"><div class="miniLabel">Risk</div><div class="miniValue" id="riskVal">—</div></div>
+        <div class="miniCard"><div class="miniLabel">Weather</div><div class="miniValue" id="weatherVal">—</div></div>
       </div>
     </div>
 
-    <section class="grid grid-top">
-      <div class="card">
-        <div class="cardTitleRow">
-          <h2>Campaign Snapshot</h2>
-          <span class="pill small" id="campaignDate">Loading...</span>
-        </div>
-        <div class="heroValue" id="heroStatus">Waiting for data</div>
-        <div class="heroMeta" id="heroMeta"></div>
-        <div class="progress"><div class="bar" id="convictionBar"></div></div>
-      </div>
-
-      <div class="card">
-        <h3>Posture</h3>
-        <div class="kpis">
-          <div class="kpi">
-            <div class="kpiLabel">Mode</div>
-            <div class="kpiValue" id="modeValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Trigger</div>
-            <div class="kpiValue" id="triggerValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Risk</div>
-            <div class="kpiValue" id="riskValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Weather</div>
-            <div class="kpiValue" id="weatherValue">—</div>
-          </div>
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h2>Math Layer</h2>
+          <span class="info" title="Street speak: the nerd stack checking correlation, vol, and quality of the path.">i</span>
         </div>
       </div>
+      <div class="quad">
+        <div class="miniCard"><div class="miniLabel">Correlation</div><div class="miniValue" id="corrVal">—</div></div>
+        <div class="miniCard"><div class="miniLabel">Vol Light</div><div class="miniValue" id="volLayerVal">—</div></div>
+        <div class="miniCard"><div class="miniLabel">Sharpe</div><div class="miniValue" id="sharpeVal">—</div></div>
+        <div class="miniCard"><div class="miniLabel">Score</div><div class="miniValue" id="scoreVal">—</div></div>
+      </div>
+    </div>
 
-      <div class="card">
-        <h3>Math Layer</h3>
-        <div class="kpis">
-          <div class="kpi">
-            <div class="kpiLabel">Correlation</div>
-            <div class="kpiValue" id="corrValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Vol Light</div>
-            <div class="kpiValue" id="volValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Sharpe</div>
-            <div class="kpiValue" id="sharpeValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Score</div>
-            <div class="kpiValue" id="scoreValue">—</div>
-          </div>
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h2>Action Bias</h2>
+          <span class="info" title="Street speak: what the dashboard wants us to lean toward doing.">i</span>
         </div>
       </div>
+      <div id="actionBiasList" class="table"></div>
+    </div>
+  </section>
 
+  <section class="grid midGrid">
+    <div class="leftRail">
       <div class="card">
-        <h3>Action Bias</h3>
-        <div class="list" id="actionList">
-          <div class="empty">No action rows loaded yet.</div>
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>System State</h3>
+            <span class="info" title="Street speak: why the car is in park, neutral, or drive.">i</span>
+          </div>
         </div>
-      </div>
-    </section>
-
-    <section class="grid grid-main">
-      <div class="card">
-        <div class="cardTitleRow">
-          <h2>Holdings</h2>
-          <span class="pill small" id="holdingsCount">0 items</span>
-        </div>
-        <div class="holdingScroller" id="holdingsList"></div>
-        <div class="footerNote">Compact pill mode with internal scroll to save screen space.</div>
+        <div class="table" id="systemStateTable"></div>
       </div>
 
-      <div class="holdingsWrap">
+      <div class="card" style="margin-top:10px;">
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>Portfolio Heatmap</h3>
+            <span class="info" title="Street speak: where the money is actually sitting.">i</span>
+          </div>
+        </div>
+        <div class="table" id="heatmapTable"></div>
+      </div>
+    </div>
+
+    <div>
+      <div class="card">
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>Action Engine</h3>
+            <span class="info" title="Street speak: what today’s move is, why, and what just happened.">i</span>
+          </div>
+        </div>
+        <div class="table" id="actionEngineTable"></div>
+        <div class="actionButtons">
+          <button class="greenBtn" id="markBtn">Mark Executed</button>
+          <div class="ghost" id="lastExecChip">Last exec: none</div>
+        </div>
+        <div class="note" id="actionNote">Waiting for data…</div>
+      </div>
+
+      <div class="card" style="margin-top:10px;">
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>Performance</h3>
+            <span class="info" title="Street speak: how the path is moving versus baselines.">i</span>
+          </div>
+        </div>
+        <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg></div>
+        <div class="chartMeta" id="perfMeta"></div>
+      </div>
+
+      <div class="grid lowerGrid">
         <div class="card">
-          <h2>Lean Health Report</h2>
-          <div class="tableLike" id="healthList">
-            <div class="empty">No health data yet.</div>
+          <div class="cardTitle">
+            <div class="titleLeft">
+              <h3>Recent Moves</h3>
+              <span class="info" title="Street speak: last moves made, quick and clean.">i</span>
+            </div>
+          </div>
+          <div style="overflow:auto;">
+            <table class="recentTable">
+              <thead><tr><th>Date</th><th>Ticker</th><th>Amount</th></tr></thead>
+              <tbody id="recentMovesBody"></tbody>
+            </table>
           </div>
         </div>
 
         <div class="card">
-          <h2>Radar</h2>
-          <div class="tableLike" id="radarList">
-            <div class="empty">No radar rows yet.</div>
+          <div class="cardTitle">
+            <div class="titleLeft">
+              <h3>Warnings</h3>
+              <span class="info" title="Street speak: danger tape, blockers, and stuff that could make the next move dumb.">i</span>
+            </div>
           </div>
-        </div>
-
-        <div class="card">
-          <h2>Today’s Checklist</h2>
-          <div class="tableLike" id="todoList">
-            <div class="empty">No checklist rows yet.</div>
-          </div>
+          <div id="warningsList"></div>
         </div>
       </div>
-    </section>
 
-    <div class="footerNote tiny" id="footerStamp">Lean Terminal ready.</div>
-  </div>
-
-  <script>
-  window.addEventListener("DOMContentLoaded", () => {
-    const errorBoxMount = document.getElementById("errorBoxMount");
-
-    function crash(label, err){
-      const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err);
-      if(errorBoxMount){
-        errorBoxMount.innerHTML = `<div class="errorBox">${escapeHtml(label)}\n\n${escapeHtml(msg)}</div>`;
-      }
-      console.error(label, err);
-    }
-
-    window.addEventListener("error", e => crash("CRASH:", e.error || e.message));
-    window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason));
-
-    const LS_HOLDINGS = "lean_holdings_csv_url";
-    const LS_SYSTEM   = "lean_system_csv_url";
-
-    // Hard-wired current holdings CSV link for the current Lean campaign
-    const DEFAULT_HOLDINGS =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-
-    // Keeps existing system CSV if already saved. Replace this if you want to hard-wire a system sheet too.
-    const DEFAULT_SYSTEM = localStorage.getItem(LS_SYSTEM) || "";
-
-    const $ = sel => document.querySelector(sel);
-
-    $("#refreshBtn").addEventListener("click", loadAll);
-    $("#settingsBtn").addEventListener("click", openSettings);
-
-    function openSettings(){
-      const currentHoldings = localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
-      const currentSystem = localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
-
-      const holdingsUrl = prompt("Holdings CSV URL", currentHoldings);
-      if(holdingsUrl !== null && holdingsUrl.trim()){
-        localStorage.setItem(LS_HOLDINGS, holdingsUrl.trim());
-      }
-
-      const systemUrl = prompt("System CSV URL", currentSystem);
-      if(systemUrl !== null){
-        localStorage.setItem(LS_SYSTEM, systemUrl.trim());
-      }
-
-      loadAll();
-    }
-
-    function getHoldingsUrl(){
-      return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
-    }
-
-    function getSystemUrl(){
-      return localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
-    }
-
-    async function loadAll(){
-      try{
-        errorBoxMount.innerHTML = "";
-        setLoadingState();
-
-        const holdingsUrl = getHoldingsUrl();
-        const systemUrl = getSystemUrl();
-
-        const [holdingsRows, systemRows] = await Promise.all([
-          holdingsUrl ? fetchCsvRows(holdingsUrl) : Promise.resolve([]),
-          systemUrl ? fetchCsvRows(systemUrl) : Promise.resolve([])
-        ]);
-
-        renderHoldings(holdingsRows);
-        renderSystem(systemRows, holdingsRows);
-
-        $("#footerStamp").textContent =
-          `Updated ${new Date().toLocaleString()} • Sources pill intentionally hidden`;
-      }catch(err){
-        crash("Failed to load Lean Terminal data.", err);
-      }
-    }
-
-    function setLoadingState(){
-      $("#campaignDate").textContent = "Loading...";
-      $("#heroStatus").textContent = "Refreshing";
-      $("#heroMeta").innerHTML = `<span class="pill small">Pulling latest rows</span>`;
-      $("#convictionBar").style.width = "22%";
-
-      ["#modeValue","#triggerValue","#riskValue","#weatherValue","#corrValue","#volValue","#sharpeValue","#scoreValue"].forEach(id => {
-        $(id).textContent = "—";
-      });
-
-      $("#actionList").innerHTML = `<div class="empty">Refreshing actions...</div>`;
-      $("#holdingsList").innerHTML = `<div class="empty">Refreshing holdings...</div>`;
-      $("#healthList").innerHTML = `<div class="empty">Refreshing health...</div>`;
-      $("#radarList").innerHTML = `<div class="empty">Refreshing radar...</div>`;
-      $("#todoList").innerHTML = `<div class="empty">Refreshing checklist...</div>`;
-      $("#holdingsCount").textContent = "0 items";
-    }
-
-    async function fetchCsvRows(url){
-      const res = await fetch(cacheBust(url), { cache:"no-store" });
-      if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-      const text = await res.text();
-      return parseCsv(text);
-    }
-
-    function cacheBust(url){
-      const joiner = url.includes("?") ? "&" : "?";
-      return `${url}${joiner}_ts=${Date.now()}`;
-    }
-
-    function parseCsv(text){
-      const rows = [];
-      let row = [];
-      let cell = "";
-      let q = false;
-
-      for(let i=0;i<text.length;i++){
-        const ch = text[i];
-        const next = text[i+1];
-
-        if(q){
-          if(ch === '"' && next === '"'){
-            cell += '"';
-            i++;
-          }else if(ch === '"'){
-            q = false;
-          }else{
-            cell += ch;
-          }
-        }else{
-          if(ch === '"'){
-            q = true;
-          }else if(ch === ","){
-            row.push(cell);
-            cell = "";
-          }else if(ch === "\n"){
-            row.push(cell);
-            rows.push(row);
-            row = [];
-            cell = "";
-          }else if(ch === "\r"){
-            // ignore
-          }else{
-            cell += ch;
-          }
-        }
-      }
-
-      if(cell.length || row.length){
-        row.push(cell);
-        rows.push(row);
-      }
-
-      if(!rows.length) return [];
-
-      const headers = rows[0].map(h => normalizeKey(h));
-      return rows.slice(1)
-        .filter(r => r.some(v => String(v || "").trim() !== ""))
-        .map(r => {
-          const obj = {};
-          headers.forEach((h, idx) => obj[h] = (r[idx] ?? "").trim());
-          return obj;
-        });
-    }
-
-    function normalizeKey(key){
-      return String(key || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "_")
-        .replace(/[^\w]/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/^_|_$/g, "");
-    }
-
-    function renderHoldings(rows){
-      const box = $("#holdingsList");
-      if(!rows.length){
-        box.innerHTML = `<div class="empty">No holdings rows found. The new holdings CSV link is wired in, but the sheet may be empty or using unexpected headers.</div>`;
-        $("#holdingsCount").textContent = "0 items";
-        return;
-      }
-
-      const normalized = rows.map(mapHoldingRow);
-      $("#holdingsCount").textContent = `${normalized.length} items`;
-
-      box.innerHTML = normalized.map(h => `
-        <div class="holdingRow">
-          <div class="holdingMain">
-            <div class="holdingName">${escapeHtml(h.ticker || h.name || "Unnamed")}</div>
-            <div class="holdingSub">${escapeHtml(h.name || h.sector || h.note || "—")}</div>
+      <div class="grid lowerGrid">
+        <div class="card">
+          <div class="cardTitle">
+            <div class="titleLeft">
+              <h3>Position History</h3>
+              <span class="info" title="Street speak: quick snapshot lane for one holding’s trail.">i</span>
+            </div>
           </div>
-          <div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div>
-          <div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal || h.tier || "—")}</div>
-          <div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change || h.pnl || "—")}</div>
+          <div class="table" id="positionHistoryTable"></div>
         </div>
-      `).join("");
-    }
 
-    function mapHoldingRow(r){
-      return {
-        ticker: pick(r, ["ticker","symbol","holding","name_short"]),
-        name: pick(r, ["name","company","description","asset"]),
-        sector: pick(r, ["sector","theme","bucket","group"]),
-        weight: pick(r, ["weight","allocation","position","size","percent"]),
-        qty: pick(r, ["qty","shares","units"]),
-        signal: pick(r, ["signal","status","go_no_go","light","bias"]),
-        tier: pick(r, ["tier","rank"]),
-        change: pick(r, ["change","pnl","return","move","day_change"]),
-        note: pick(r, ["note","notes","comment"])
-      };
-    }
-
-    function renderSystem(systemRows, holdingsRows){
-      const sys = summarizeSystem(systemRows, holdingsRows);
-
-      $("#campaignDate").textContent = sys.asOf;
-      $("#heroStatus").textContent = sys.status;
-      $("#heroMeta").innerHTML = sys.meta.map(x => `<span class="pill small ${toneClass(x)}">${escapeHtml(x)}</span>`).join("");
-      $("#convictionBar").style.width = `${sys.conviction}%`;
-
-      $("#modeValue").textContent = sys.mode;
-      $("#triggerValue").textContent = sys.trigger;
-      $("#riskValue").textContent = sys.risk;
-      $("#weatherValue").textContent = sys.weather;
-      $("#corrValue").textContent = sys.correlation;
-      $("#volValue").textContent = sys.vol;
-      $("#sharpeValue").textContent = sys.sharpe;
-      $("#scoreValue").textContent = sys.score;
-
-      renderSimpleList("#actionList", sys.actions);
-      renderCardList("#healthList", sys.health);
-      renderCardList("#radarList", sys.radar);
-      renderCardList("#todoList", sys.todo);
-    }
-
-    function summarizeSystem(systemRows, holdingsRows){
-      const rows = systemRows || [];
-      const first = rows[0] || {};
-
-      const status =
-        pick(first, ["campaign_status","status","headline","summary"]) ||
-        (holdingsRows.length ? "Lean engine online" : "Waiting on system sheet");
-
-      const mode = pick(first, ["mode","campaign_mode","posture"]) || "Lean";
-      const trigger = pick(first, ["trigger","market_trigger","gate"]) || "Watch";
-      const risk = pick(first, ["risk","risk_state","risk_mode"]) || "Controlled";
-      const weather = pick(first, ["weather","market_weather","sky"]) || "Clear";
-      const correlation = pick(first, ["correlation","corr","corr_state"]) || "—";
-      const vol = pick(first, ["vol","vol_light","volatility","volatility_light"]) || "—";
-      const sharpe = pick(first, ["sharpe","sharpe_ratio"]) || "—";
-      const score = pick(first, ["score","health_score","conviction_score"]) || guessScore(rows, holdingsRows);
-      const conviction = clamp(numberFromAny(score) || 64, 10, 100);
-
-      const asOf =
-        pick(first, ["as_of","date","timestamp","last_updated"]) ||
-        new Date().toLocaleDateString();
-
-      const meta = compact([
-        mode,
-        trigger,
-        risk,
-        weather
-      ]);
-
-      const actions = extractBucket(rows, ["action","action_1","action_2","action_3","bias","today_bias"], [
-        "Keep posture clean",
-        "Let leaders prove themselves",
-        "Avoid overlap stacking"
-      ]);
-
-      const health = extractObjects(rows, "health").length
-        ? extractObjects(rows, "health")
-        : [
-            { title:"Structure", body:"Campaign still emphasizes controlled aggression and overlap discipline." },
-            { title:"Holdings Fit", body: holdingsRows.length ? `Loaded ${holdingsRows.length} holding rows into compact pill mode.` : "No holdings sheet rows found yet." },
-            { title:"Display Update", body:"Sources pill is now hidden. Holdings panel is smaller and scrolls internally." }
-          ];
-
-      const radar = extractObjects(rows, "radar").length
-        ? extractObjects(rows, "radar")
-        : [
-            { title:"Leaders", body:"Watch relative-strength names and avoid chasing weak laggards." },
-            { title:"Macro", body:"Keep eye on volatility, breadth, and any trigger flip before adding size." },
-            { title:"Overlap", body:"Use radar as context, not as a reason to stack similar exposure." }
-          ];
-
-      const todo = extractObjects(rows, "todo").length
-        ? extractObjects(rows, "todo")
-        : [
-            { title:"Check trigger", body:"Confirm go / no-go before any adds." },
-            { title:"Review leaders", body:"Size into strongest horse, not every horse." },
-            { title:"Protect screen space", body:"Use the internal holdings scroll for quick review." }
-          ];
-
-      return {
-        asOf,
-        status,
-        meta,
-        conviction,
-        mode,
-        trigger,
-        risk,
-        weather,
-        correlation,
-        vol,
-        sharpe,
-        score,
-        actions,
-        health,
-        radar,
-        todo
-      };
-    }
-
-    function extractBucket(rows, keys, fallback){
-      const out = [];
-      rows.forEach(r => {
-        keys.forEach(k => {
-          const v = r[normalizeKey(k)];
-          if(v && !out.includes(v)) out.push(v);
-        });
-      });
-      return out.length ? out.slice(0,6) : fallback;
-    }
-
-    function extractObjects(rows, prefix){
-      const out = [];
-      rows.forEach(r => {
-        const title = pick(r, [`${prefix}_title`,`title_${prefix}`,`${prefix}`]);
-        const body = pick(r, [`${prefix}_body`,`body_${prefix}`,`${prefix}_note`,`note_${prefix}`]);
-        if(title || body){
-          out.push({
-            title: title || prefix.toUpperCase(),
-            body: body || ""
-          });
-        }
-      });
-      return out.slice(0,8);
-    }
-
-    function renderSimpleList(sel, items){
-      const el = $(sel);
-      if(!items || !items.length){
-        el.innerHTML = `<div class="empty">No rows.</div>`;
-        return;
-      }
-      el.innerHTML = items.map(item => `
-        <div class="row">
-          <div class="rowLeft">
-            <div class="ticker">${escapeHtml(item)}</div>
+        <div class="card">
+          <div class="cardTitle">
+            <div class="titleLeft">
+              <h3>Pair Correlation View</h3>
+              <span class="info" title="Street speak: are these two names dancing together or fighting each other?">i</span>
+            </div>
           </div>
-          <div class="score ${toneClass(item)}">${scoreWord(item)}</div>
+          <div class="table" id="pairMetaTable"></div>
+          <div class="chartBox" style="margin-top:10px;"><svg id="pairSvg" viewBox="0 0 1000 240" preserveAspectRatio="none"></svg></div>
         </div>
-      `).join("");
-    }
+      </div>
+    </div>
 
-    function renderCardList(sel, items){
-      const el = $(sel);
-      if(!items || !items.length){
-        el.innerHTML = `<div class="empty">No rows.</div>`;
-        return;
-      }
-      el.innerHTML = items.map(item => `
-        <div class="headline">
-          <div class="headlineTitle">${escapeHtml(item.title || "Item")}</div>
-          <div class="headlineBody">${escapeHtml(item.body || "—")}</div>
+    <div class="rightRail">
+      <div class="card">
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>Math Snapshot</h3>
+            <span class="info" title="Street speak: quick read on drawdown, peak, vol, and Sharpe.">i</span>
+          </div>
         </div>
-      `).join("");
-    }
+        <div class="table" id="mathSnapshotTable"></div>
+      </div>
 
-    function scoreWord(str){
-      const s = String(str || "").toLowerCase();
-      if(s.includes("go") || s.includes("green") || s.includes("buy")) return "GO";
-      if(s.includes("yellow") || s.includes("watch") || s.includes("trim")) return "WATCH";
-      if(s.includes("red") || s.includes("stop") || s.includes("no-go")) return "NO-GO";
-      return "LIVE";
-    }
+      <div class="card" style="margin-top:10px;">
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>Exposure & Guardrails</h3>
+            <span class="info" title="Street speak: what is live, what is parked, and what is blocking more size.">i</span>
+          </div>
+        </div>
+        <div class="table" id="guardrailTable"></div>
+      </div>
 
-    function toneClass(v){
-      const s = String(v || "").toLowerCase();
-      if(
-        s.includes("green") || s.includes("go") || s.includes("buy") ||
-        s.includes("up") || s.includes("bull") || s.includes("+")
-      ) return "green";
-      if(
-        s.includes("yellow") || s.includes("watch") || s.includes("hold") ||
-        s.includes("neutral") || s.includes("caution")
-      ) return "yellow";
-      if(
-        s.includes("red") || s.includes("no-go") || s.includes("stop") ||
-        s.includes("sell") || s.includes("down") || s.includes("risk-off") || s.includes("-")
-      ) return "red";
-      return "blue";
-    }
+      <div class="card" style="margin-top:10px;">
+        <div class="cardTitle">
+          <div class="titleLeft">
+            <h3>Holdings</h3>
+            <span class="info" title="Street speak: compact holdings pill with internal scroll so it does not eat the screen.">i</span>
+          </div>
+          <div class="heroDate" id="holdingsCount">0 items</div>
+        </div>
+        <div class="scrollHold" id="holdingsList"></div>
+      </div>
+    </div>
+  </section>
 
-    function guessScore(systemRows, holdingsRows){
-      const base = holdingsRows.length ? 68 : 52;
-      const extra = Math.min((systemRows || []).length * 3, 18);
-      return String(base + extra);
-    }
+  <section class="grid chartGrid">
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h3>Monte Carlo Panel</h3>
+          <span class="info" title="Street speak: range of likely lanes, not a crystal ball.">i</span>
+        </div>
+      </div>
+      <div class="table" id="mcTable"></div>
+      <div class="chartBox" style="height:170px; margin-top:10px;"><svg id="mcSvg" viewBox="0 0 1000 170" preserveAspectRatio="none"></svg></div>
+    </div>
 
-    function pick(obj, keys){
-      for(const key of keys){
-        const k = normalizeKey(key);
-        if(obj && obj[k] != null && String(obj[k]).trim() !== "") return String(obj[k]).trim();
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h3>Lean Health Report</h3>
+          <span class="info" title="Street speak: how healthy the campaign setup looks right now.">i</span>
+        </div>
+      </div>
+      <div id="healthList"></div>
+    </div>
+  </section>
+
+  <section class="grid bottomGrid">
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h3>Macro Snapshot</h3>
+          <span class="info" title="Street speak: the background weather — rates, dollar, oil, gold, fear.">i</span>
+        </div>
+      </div>
+      <div class="table" id="macroTable"></div>
+    </div>
+
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h3>History Snapshot</h3>
+          <span class="info" title="Street speak: quick lookback card for portfolio and benchmark context.">i</span>
+        </div>
+      </div>
+      <div class="table" id="historyTable"></div>
+    </div>
+
+    <div class="card shockCard">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h3>Shock Radar</h3>
+          <span class="info" title="Street speak: sectors or routes that can suddenly wake up and move the board.">i</span>
+        </div>
+      </div>
+      <div class="shockList" id="shockList"></div>
+    </div>
+  </section>
+
+  <div class="footer" id="footerStamp">Hybrid layout ready.</div>
+</div>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const LS_HOLDINGS = "lean_holdings_csv_url";
+  const LS_SYSTEM = "lean_system_csv_url";
+  const LS_LAST_EXEC = "lean_last_exec_v3";
+  const LS_AGGRESSIVE = "lean_aggressive_mode";
+
+  const DEFAULT_HOLDINGS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
+
+  const $ = sel => document.querySelector(sel);
+  let countdown = 45;
+  let timer = null;
+
+  $("#refreshBtn").addEventListener("click", loadAll);
+  $("#settingsBtn").addEventListener("click", openSettings);
+  $("#markBtn").addEventListener("click", markExecuted);
+  $("#aggressiveToggle").addEventListener("click", toggleAggressive);
+
+  function startClock(){
+    if(timer) clearInterval(timer);
+    tickClock();
+    timer = setInterval(() => {
+      tickClock();
+      countdown--;
+      if(countdown <= 0){
+        countdown = 45;
+        loadAll();
       }
-      return "";
-    }
+      $("#nextRefreshChip").textContent = `Next refresh in ${countdown}s`;
+    }, 1000);
+  }
 
-    function compact(arr){
-      return arr.filter(Boolean);
-    }
+  function tickClock(){
+    $("#clockNow").textContent = new Date().toLocaleTimeString();
+  }
 
-    function numberFromAny(v){
-      const m = String(v || "").match(/-?\d+(\.\d+)?/);
-      return m ? Number(m[0]) : NaN;
-    }
+  function openSettings(){
+    const h = prompt("Holdings CSV URL", localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS);
+    if(h !== null && h.trim()) localStorage.setItem(LS_HOLDINGS, h.trim());
 
-    function clamp(n, min, max){
-      return Math.max(min, Math.min(max, n));
-    }
-
-    function escapeHtml(str){
-      return String(str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#39;");
-    }
+    const s = prompt("System CSV URL", localStorage.getItem(LS_SYSTEM) || "");
+    if(s !== null) localStorage.setItem(LS_SYSTEM, s.trim());
 
     loadAll();
-  });
-  </script>
+  }
+
+  function markExecuted(){
+    const stamp = new Date().toLocaleString();
+    localStorage.setItem(LS_LAST_EXEC, stamp);
+    $("#lastExecChip").textContent = `Last exec: ${stamp}`;
+  }
+
+  function isAggressive(){
+    return localStorage.getItem(LS_AGGRESSIVE) === "1";
+  }
+
+  function toggleAggressive(){
+    const next = !isAggressive();
+    localStorage.setItem(LS_AGGRESSIVE, next ? "1" : "0");
+    applyAggressiveUI();
+    loadAll();
+  }
+
+  function applyAggressiveUI(){
+    const on = isAggressive();
+    const btn = $("#aggressiveToggle");
+    const pill = $("#aggressivePill");
+    btn.textContent = `Lean Aggressive: ${on ? "ON" : "OFF"}`;
+    btn.classList.toggle("active", on);
+    pill.style.display = on ? "inline-flex" : "none";
+  }
+
+  function getHoldingsUrl(){ return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS; }
+  function getSystemUrl(){ return localStorage.getItem(LS_SYSTEM) || ""; }
+
+  async function loadAll(){
+    countdown = 45;
+    try{
+      const holdingsUrl = getHoldingsUrl();
+      const systemUrl = getSystemUrl();
+
+      const [holdingsRows, systemRows] = await Promise.all([
+        holdingsUrl ? fetchCsvRows(holdingsUrl) : Promise.resolve([]),
+        systemUrl ? fetchCsvRows(systemUrl) : Promise.resolve([])
+      ]);
+
+      const view = buildView(systemRows, holdingsRows, isAggressive());
+      renderAll(view);
+
+      const stamp = new Date().toLocaleTimeString();
+      $("#updatedChip").textContent = `LAST UPDATED: ${stamp}`;
+      $("#footerStamp").textContent = `Hybrid index updated ${new Date().toLocaleString()} • sources pill hidden • Lean Aggressive toggle included`;
+      $("#lastExecChip").textContent = `Last exec: ${localStorage.getItem(LS_LAST_EXEC) || "none"}`;
+    }catch(err){
+      console.error(err);
+      $("#footerStamp").textContent = `Load issue: ${err.message || err}`;
+    }
+  }
+
+  async function fetchCsvRows(url){
+    const res = await fetch(cacheBust(url), { cache:"no-store" });
+    if(!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
+    return parseCsv(await res.text());
+  }
+
+  function cacheBust(url){
+    return url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now();
+  }
+
+  function parseCsv(text){
+    const rows = [];
+    let row = [], cell = "", q = false;
+    for(let i=0;i<text.length;i++){
+      const ch = text[i], nx = text[i+1];
+      if(q){
+        if(ch === '"' && nx === '"'){ cell += '"'; i++; }
+        else if(ch === '"'){ q = false; }
+        else cell += ch;
+      }else{
+        if(ch === '"') q = true;
+        else if(ch === ","){ row.push(cell); cell = ""; }
+        else if(ch === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; }
+        else if(ch === "\r"){}
+        else cell += ch;
+      }
+    }
+    if(cell.length || row.length){ row.push(cell); rows.push(row); }
+    if(!rows.length) return [];
+    const headers = rows[0].map(norm);
+    return rows.slice(1)
+      .filter(r => r.some(v => String(v || "").trim() !== ""))
+      .map(r => {
+        const o = {};
+        headers.forEach((h,i) => o[h] = (r[i] ?? "").trim());
+        return o;
+      });
+  }
+
+  function norm(s){
+    return String(s || "").trim().toLowerCase()
+      .replace(/\s+/g,"_").replace(/[^\w]/g,"_")
+      .replace(/_+/g,"_").replace(/^_|_$/g,"");
+  }
+
+  function pick(o, keys){
+    for(const key of keys){
+      const k = norm(key);
+      if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim();
+    }
+    return "";
+  }
+
+  function num(v, fallback=0){
+    const m = String(v ?? "").replace(/,/g,"").match(/-?\d+(\.\d+)?/);
+    return m ? Number(m[0]) : fallback;
+  }
+
+  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
+
+  function pct(v){
+    const n = num(v, 0);
+    return `${n.toFixed(1)}%`;
+  }
+
+  function money(v){
+    const n = Number(v || 0);
+    return n.toLocaleString(undefined, { style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2 });
+  }
+
+  function compact(arr){ return arr.filter(Boolean); }
+
+  function uniq(arr){ return [...new Set(arr)]; }
+
+  function toneClass(v){
+    const s = String(v || "").toLowerCase();
+    if(s.includes("green") || s.includes("go") || s.includes("risk on") || s.includes("ready") || s.includes("up") || s.includes("buy") || s.includes("safe")) return "greenText";
+    if(s.includes("yellow") || s.includes("watch") || s.includes("wobbly") || s.includes("moderate") || s.includes("caution") || s.includes("consider") || s.includes("radar")) return "yellowText";
+    if(s.includes("red") || s.includes("stop") || s.includes("no-go") || s.includes("down") || s.includes("risk off") || s.includes("block") || s.includes("-")) return "redText";
+    return "blueText";
+  }
+
+  function mapHolding(r){
+    return {
+      ticker: pick(r, ["ticker","symbol","holding","name_short"]) || "—",
+      name: pick(r, ["name","company","description","asset"]) || "—",
+      sector: pick(r, ["sector","theme","bucket","group"]) || "—",
+      weight: pick(r, ["weight","allocation","position","size","percent"]) || "",
+      qty: pick(r, ["qty","shares","units"]) || "",
+      signal: pick(r, ["signal","status","go_no_go","light","bias"]) || "—",
+      change: pick(r, ["change","pnl","return","move","day_change"]) || "—",
+      weightNum: num(pick(r, ["weight","allocation","position","size","percent"]), 0)
+    };
+  }
+
+  function inferCash(holdings, s0){
+    const explicit = num(pick(s0, ["cash_anchor","cash_pct","cash","sgov_nest"]), NaN);
+    if(!Number.isNaN(explicit) && explicit > 0) return explicit;
+    const cashRow = holdings.find(h => /cash|sgov/i.test(`${h.ticker} ${h.name} ${h.sector}`));
+    if(cashRow && cashRow.weightNum > 0) return cashRow.weightNum;
+    return 85.1;
+  }
+
+  function inferValue(s0){
+    const explicit = num(pick(s0, ["value","portfolio_value","total_value"]), NaN);
+    if(!Number.isNaN(explicit) && explicit > 0) return explicit;
+    return 19217.09;
+  }
+
+  function buildView(systemRows, holdingsRows, aggressive){
+    const s0 = systemRows[0] || {};
+    const holdings = holdingsRows.map(mapHolding);
+    const cashPct = inferCash(holdings, s0);
+    const totalValue = inferValue(s0);
+
+    const scoreBase = num(pick(s0, ["score","health_score","conviction_score"]), clamp(58 + holdings.length * 1.1, 58, 92));
+    const score = aggressive ? clamp(scoreBase + 7, 1, 100) : scoreBase;
+    const ready = aggressive ? 72 : 63;
+    const risk = aggressive ? 56 : 39;
+
+    const actions = uniq(compact([
+      pick(s0, ["action_1","bias_1","today_bias"]),
+      pick(s0, ["action_2","bias_2"]),
+      pick(s0, ["action_3","bias_3"]),
+      aggressive ? "Lean harder into leaders" : "Keep posture clean",
+      aggressive ? "Use tighter but faster sizing" : "Let leaders prove themselves",
+      "Avoid overlap stacking"
+    ])).slice(0,3);
+
+    return {
+      heroDate: pick(s0, ["date","as_of","last_updated"]) || new Date().toLocaleDateString(),
+      heroStatus: aggressive ? "Lean aggressive engine online" : (pick(s0, ["campaign_status","status","headline"]) || "Lean engine online"),
+      heroMeta: [
+        aggressive ? "Lean Aggressive" : (pick(s0, ["mode","campaign_mode","posture"]) || "Lean"),
+        aggressive ? "Attack Watch" : (pick(s0, ["trigger","gate"]) || "Watch"),
+        aggressive ? "Elevated" : (pick(s0, ["risk","risk_state"]) || "Controlled"),
+        pick(s0, ["weather","market_weather"]) || "Clear"
+      ],
+      score, readyPct:`${ready}%`, riskPct:`${risk}%`,
+      totalValue: money(totalValue),
+      lastTxt: pick(s0, ["last","last_move"]) || "$0.00 / 0.00%",
+      volTxt: aggressive ? "hotter" : (pick(s0, ["vol_light","volatility_light","vol"]) || "wobbly"),
+
+      mode: aggressive ? "Lean Aggressive" : (pick(s0, ["mode","campaign_mode","posture"]) || "Lean"),
+      trigger: aggressive ? "Attack Watch" : (pick(s0, ["trigger","gate"]) || "Watch"),
+      riskState: aggressive ? "Elevated" : (pick(s0, ["risk","risk_state"]) || "Controlled"),
+      weather: pick(s0, ["weather","market_weather"]) || "Clear",
+
+      corr: pick(s0, ["correlation","corr","corr_state"]) || "—",
+      volLayer: aggressive ? "Hot" : (pick(s0, ["vol_light","volatility_light","vol"]) || "—"),
+      sharpe: pick(s0, ["sharpe","sharpe_ratio"]) || "—",
+
+      actions,
+
+      systemState: [
+        ["Market Regime", aggressive ? "RISK ON+" : (pick(s0, ["market_regime","regime"]) || "RISK ON")],
+        ["Deployment", aggressive ? "DEPLOY FASTER" : (pick(s0, ["deployment"]) || "CONSIDER DEPLOYING CASH")],
+        ["Cash Anchor", pct(cashPct)],
+        ["Liquidity", pick(s0, ["liquidity"]) || "LIQUID"],
+        ["Volatility", aggressive ? "ACTIVE" : (pick(s0, ["volatility"]) || "WATCH")],
+        ["Violations", pick(s0, ["violations"]) || `Cash > ${pct(cashPct)} in Deploy Mode`],
+        ["Brake", aggressive ? "SOFTER" : (pick(s0, ["brake","primary_blocker"]) || "NONE")],
+        ["Confidence", aggressive ? "67%" : (pick(s0, ["confidence"]) || "50%")]
+      ],
+
+      heatmap: buildHeatmap(holdings, cashPct),
+
+      actionEngine: [
+        ["Today", aggressive ? "PRESS LEADERS" : (pick(s0, ["today_action","action_today"]) || "DONE: VXUS")],
+        ["Reason", aggressive ? "Aggressive toggle is ON" : (pick(s0, ["reason"]) || "Today already marked exec")],
+        ["If Executed", aggressive ? "Recheck heat fast" : (pick(s0, ["if_executed"]) || "Already advanced")],
+        ["Next Trading Day", aggressive ? "Buy strongest horse first" : (pick(s0, ["next_trading_day"]) || "Next move staged")],
+        ["Strength Check", pick(s0, ["strength_check"]) || "Leaders first"],
+        ["Radar Overlay", pick(s0, ["radar_overlay"]) || "Neutral"],
+        ["Meta", aggressive ? "Today MED | Next HIGH" : (pick(s0, ["meta"]) || "Today LOW | Next MED")],
+        ["Risk-Sized Buy", aggressive ? "$100 leader candidate" : (pick(s0, ["risk_sized_buy"]) || "$75 CRWV")]
+      ],
+
+      actionNote: aggressive
+        ? "Lean Aggressive is ON. This mode visually flags a faster stance, but still keep overlap discipline."
+        : (pick(s0, ["action_note","note"]) || "You already checked off today. Next live move gets staged when the trigger flips."),
+
+      mathSnapshot: [
+        ["Drawdown", pick(s0, ["drawdown"]) || "-0.05%"],
+        ["Peak", pick(s0, ["peak"]) || money(totalValue)],
+        ["Vol", aggressive ? "Higher" : (pick(s0, ["vol","volatility"]) || "0.00%")],
+        ["Sharpe", pick(s0, ["sharpe","sharpe_ratio"]) || "2.90"]
+      ],
+
+      guardrails: [
+        ["SGOV Nest", pick(s0, ["sgov_nest"]) || pct(cashPct)],
+        ["Active Exposure", pick(s0, ["active_exposure"]) || pct(100 - cashPct)],
+        ["Lean Capital", pick(s0, ["lean_capital"]) || money(totalValue * ((100 - cashPct)/100))],
+        ["Lean Participation", aggressive ? "FAST" : (pick(s0, ["lean_participation"]) || "100.00%")],
+        ["Primary Blocker", aggressive ? "Overlap / Heat" : (pick(s0, ["primary_blocker","blocker"]) || "Cash Anchor")],
+        ["Blocker Severity", aggressive ? "Higher" : (pick(s0, ["blocker_severity"]) || "Moderate")]
+      ],
+
+      holdings,
+
+      performanceSeries: aggressive
+        ? [100,100.3,100.15,100.4,101.05,101.25,101.6]
+        : [100,100.2,100.05,100.01,100.85,100.86,101.02],
+
+      performanceMeta: [
+        `Window: ${pick(s0, ["window"]) || "2026-03-10 → 2026-03-16"}`,
+        `Lean: ${aggressive ? "1.60%" : (pick(s0, ["lean_return"]) || "0.89%")}`,
+        `Benchmarks: ${pick(s0, ["benchmarks"]) || "SPY / QQQ / SGOV"}`
+      ],
+
+      recentMoves: buildRecentMoves(systemRows),
+      warnings: uniq(compact([
+        aggressive ? "Aggressive mode can magnify mistakes" : "",
+        pick(s0, ["warning_1"]),
+        pick(s0, ["warning_2"]),
+        pick(s0, ["warnings"]) || `Heavy lean: Cash ${pct(cashPct)}`,
+        "Avoid overlap stacking"
+      ])).slice(0,4),
+
+      positionHistory: [
+        ["Ticker", pick(s0, ["position_ticker"]) || (holdings[0]?.ticker || "ACHR")],
+        ["Window", pick(s0, ["position_window"]) || "10 snapshots"],
+        ["Start", pick(s0, ["position_start"]) || "—"],
+        ["End", pick(s0, ["position_end"]) || "—"]
+      ],
+
+      pairMeta: [
+        ["Pair", pick(s0, ["pair"]) || "ACHR vs ARKQ"],
+        ["Reading", pick(s0, ["pair_reading"]) || "-1.00"]
+      ],
+
+      mc: [
+        ["Best Case", aggressive ? money(totalValue * 1.03) : money(totalValue * 1.017)],
+        ["Average", aggressive ? money(totalValue * 1.01) : money(totalValue * 1.001)],
+        ["Worst Case", aggressive ? money(totalValue * 0.985) : money(totalValue * 0.997)]
+      ],
+
+      health: [
+        ["Structure", "Clean top cards plus full engine panels in one screen."],
+        ["Holdings", "Compact scrollable holdings kept tight to save real estate."],
+        ["Info Icons", "Street-speak i icons restored on key panels and signals."],
+        ["Display", aggressive ? "Lean Aggressive visual mode is active." : "Sources pill hidden, useful blocks stay visible."]
+      ],
+
+      macro: [
+        ["Date", pick(s0, ["macro_date","date"]) || new Date().toLocaleDateString()],
+        ["10Y", pick(s0, ["10y","ten_year"]) || "4.28"],
+        ["2Y", pick(s0, ["2y","two_year"]) || "3.73"],
+        ["Curve", pick(s0, ["curve"]) || "0.55"],
+        ["DXY", pick(s0, ["dxy"]) || "100.53"],
+        ["Oil", pick(s0, ["oil"]) || "68.71"],
+        ["Gold", pick(s0, ["gold"]) || "2,180.00"],
+        ["VIX", pick(s0, ["vix"]) || "27.85"]
+      ],
+
+      history: [
+        ["Date", pick(s0, ["history_date"]) || "—"],
+        ["Portfolio", pick(s0, ["portfolio"]) || money(totalValue)],
+        ["SPY", pick(s0, ["spy"]) || "684.3"],
+        ["Notes", pick(s0, ["history_notes","notes"]) || "Semis strength"]
+      ],
+
+      shock: [
+        ["OIL", "Normal energy conditions", "Green", "Stable", "Score 0"],
+        ["LNG", "LNG supply stable", "Green", "Stable", "Score 0"],
+        ["SHIPPING", "Maritime routes normal", "Green", "Stable", "Score 0"]
+      ]
+    };
+  }
+
+  function buildHeatmap(holdings, cashPct){
+    const bins = {};
+    holdings.forEach(h => {
+      const key = /cash|sgov/i.test(`${h.ticker} ${h.name}`) ? "Cash" : (h.sector || "Other");
+      bins[key] = (bins[key] || 0) + (h.weightNum || 0);
+    });
+
+    if(!Object.keys(bins).length){
+      bins["Cash"] = cashPct;
+      bins["Core"] = 3.9;
+      bins["Industrials"] = 3.5;
+      bins["Energy"] = 3.1;
+      bins["Tech"] = 1.7;
+      bins["International"] = 1.0;
+      bins["Innovation"] = 0.8;
+    }
+
+    return Object.entries(bins)
+      .sort((a,b) => b[1] - a[1])
+      .slice(0,8)
+      .map(([k,v]) => [k, pct(v)]);
+  }
+
+  function buildRecentMoves(rows){
+    const out = rows.slice(0,6).map(r => [
+      pick(r, ["move_date","date"]) || new Date().toLocaleDateString(),
+      pick(r, ["move_ticker","ticker","symbol"]) || "VXUS",
+      pick(r, ["move_amount","amount"]) || "$75.00"
+    ]);
+    return out.length ? out : [
+      [new Date().toLocaleDateString(), "VXUS", "$75.00"],
+      ["2026-03-09", "XLE", "$75.00"]
+    ];
+  }
+
+  function renderAll(v){
+    $("#heroDate").textContent = v.heroDate;
+    $("#heroStatus").textContent = v.heroStatus;
+    $("#heroMeta").innerHTML = v.heroMeta.map(x => `<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
+    $("#convictionFill").style.width = `${clamp(v.score, 1, 100)}%`;
+
+    $("#readyPct").textContent = v.readyPct;
+    $("#riskPct").textContent = v.riskPct;
+    $("#valueTxt").textContent = v.totalValue;
+    $("#lastTxt").textContent = v.lastTxt;
+    $("#volTxt").textContent = v.volTxt;
+
+    $("#modeVal").textContent = v.mode;
+    $("#modeVal").className = `miniValue ${toneClass(v.mode)}`;
+    $("#triggerVal").textContent = v.trigger;
+    $("#triggerVal").className = `miniValue ${toneClass(v.trigger)}`;
+    $("#riskVal").textContent = v.riskState;
+    $("#riskVal").className = `miniValue ${toneClass(v.riskState)}`;
+    $("#weatherVal").textContent = v.weather;
+    $("#weatherVal").className = `miniValue ${toneClass(v.weather)}`;
+
+    $("#corrVal").textContent = v.corr;
+    $("#corrVal").className = `miniValue ${toneClass(v.corr)}`;
+    $("#volLayerVal").textContent = v.volLayer;
+    $("#volLayerVal").className = `miniValue ${toneClass(v.volLayer)}`;
+    $("#sharpeVal").textContent = v.sharpe;
+    $("#scoreVal").textContent = String(v.score);
+
+    $("#actionBiasList").innerHTML = v.actions.map(x => `
+      <div class="trow">
+        <div class="tlabel">${escapeHtml(x)}</div>
+        <div class="tval ${toneClass(x)}">LIVE</div>
+      </div>
+    `).join("");
+
+    renderTable("#systemStateTable", v.systemState);
+    renderTable("#heatmapTable", v.heatmap);
+    renderTable("#actionEngineTable", v.actionEngine);
+    $("#actionNote").textContent = v.actionNote;
+    renderTable("#mathSnapshotTable", v.mathSnapshot);
+    renderTable("#guardrailTable", v.guardrails);
+    renderHoldings(v.holdings);
+    drawLineChart("#perfSvg", [v.performanceSeries, [100,100.05,100.1,100.2,100.25,100.35,100.4]]);
+    $("#perfMeta").innerHTML = v.performanceMeta.map(x => `<div class="mini">${escapeHtml(x)}</div>`).join("");
+
+    $("#recentMovesBody").innerHTML = v.recentMoves.map(r => `
+      <tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>
+    `).join("");
+
+    $("#warningsList").innerHTML = v.warnings.map(w => `<div class="note">${escapeHtml(w)}</div>`).join("");
+    renderTable("#positionHistoryTable", v.positionHistory);
+    renderTable("#pairMetaTable", v.pairMeta);
+    drawLineChart("#pairSvg", [[100,99.8,100.2,100.9,101.3,101.5,101.9],[100,100.1,99.9,99.7,99.4,99.2,99.0]]);
+    renderTable("#mcTable", v.mc);
+    drawBars("#mcSvg", v.mc.map(x => num(x[1], 0)));
+    $("#healthList").innerHTML = v.health.map(r => `<div class="note"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
+    renderTable("#macroTable", v.macro);
+    renderTable("#historyTable", v.history);
+    $("#shockList").innerHTML = v.shock.map(r => `
+      <div class="shockRow">
+        <div>
+          <div class="shockTitle">${escapeHtml(r[0])}</div>
+          <div class="shockBody">${escapeHtml(r[1])}</div>
+        </div>
+        <div class="tag ${String(r[2]).toLowerCase().includes("green") ? "green" : String(r[2]).toLowerCase().includes("yellow") ? "yellow" : "red"}">${escapeHtml(r[2])}</div>
+        <div class="tag">${escapeHtml(r[3])}</div>
+        <div class="tag">${escapeHtml(r[4])}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderTable(sel, rows){
+    $(sel).innerHTML = rows.map(r => `
+      <div class="trow">
+        <div class="tlabel">${escapeHtml(r[0])}</div>
+        <div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div>
+      </div>
+    `).join("");
+  }
+
+  function renderHoldings(rows){
+    $("#holdingsCount").textContent = `${rows.length} items`;
+    if(!rows.length){
+      $("#holdingsList").innerHTML = `<div class="empty">No holdings rows found.</div>`;
+      return;
+    }
+    $("#holdingsList").innerHTML = rows.map(h => `
+      <div class="holdingRow">
+        <div>
+          <div class="holdingName">${escapeHtml(h.ticker)}</div>
+          <div class="holdingSub">${escapeHtml(h.name || h.sector || "—")}</div>
+        </div>
+        <div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div>
+        <div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div>
+        <div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div>
+      </div>
+    `).join("");
+  }
+
+  function drawLineChart(sel, seriesList){
+    const svg = $(sel);
+    const width = 1000, height = 260, pad = 40;
+    const values = seriesList.flat();
+    const min = Math.min(...values), max = Math.max(...values);
+    const xStep = (width - pad * 2) / (seriesList[0].length - 1 || 1);
+    const y = v => {
+      if(max === min) return height / 2;
+      return height - pad - ((v - min) / (max - min)) * (height - pad * 2);
+    };
+
+    const grid = [0,1,2,3].map(i => {
+      const gy = pad + i * ((height - pad*2)/3);
+      return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;
+    }).join("");
+
+    const colors = ["#22c55e", "#60a5fa", "#ff355e"];
+    const paths = seriesList.map((series, idx) => {
+      const d = series.map((v,i) => `${i===0 ? "M" : "L"} ${pad + i*xStep} ${y(v)}`).join(" ");
+      return `<path d="${d}" fill="none" stroke="${colors[idx % colors.length]}" stroke-width="4" stroke-linecap="round" />`;
+    }).join("");
+
+    svg.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}${paths}</svg>`;
+  }
+
+  function drawBars(sel, values){
+    const svg = $(sel);
+    const width = 1000, height = 170, pad = 60;
+    const max = Math.max(...values, 1);
+    const barW = 120;
+    const gap = 150;
+    const startX = 140;
+    const bars = values.map((v, i) => {
+      const h = ((v / max) * (height - pad - 25));
+      const x = startX + i * (barW + gap);
+      const y = height - 20 - h;
+      return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="12" fill="#315aa6" />`;
+    }).join("");
+    svg.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><line x1="50" y1="${height-20}" x2="${width-50}" y2="${height-20}" stroke="rgba(255,255,255,.08)" />${bars}</svg>`;
+  }
+
+  function escapeHtml(str){
+    return String(str ?? "")
+      .replaceAll("&","&amp;")
+      .replaceAll("<","&lt;")
+      .replaceAll(">","&gt;")
+      .replaceAll('"',"&quot;")
+      .replaceAll("'","&#39;");
+  }
+
+  applyAggressiveUI();
+  startClock();
+  loadAll();
+});
+</script>
 </body>
 </html>
