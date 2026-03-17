@@ -3,513 +3,68 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal 2.0 Hybrid Index</title>
+  <title>Lean Terminal 2.0 Compact Hybrid</title>
   <style>
     :root{
-      --bg:#060c1a;
-      --bg2:#091224;
-      --panel:#101a2c;
-      --panel2:#0d1628;
-      --text:#e8edf7;
-      --muted:#94a3b8;
-      --line:rgba(255,255,255,.08);
-      --line2:rgba(255,255,255,.14);
-      --green:#22c55e;
-      --yellow:#f59e0b;
-      --red:#ef4444;
-      --neon-red:#ff355e;
-      --neon-red-glow:rgba(255,53,94,.45);
-      --blue:#3b82f6;
-      --pill:#0c1425;
-      --shadow:0 14px 36px rgba(0,0,0,.28);
-      --radius:18px;
+      --bg:#060c1a; --panel:#0d1628; --panel2:#101a2c; --text:#e8edf7; --muted:#94a3b8;
+      --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6;
+      --neon-red:#ff355e; --neon-red-glow:rgba(255,53,94,.35); --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
     }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
-    body{
-      margin:0;
-      color:var(--text);
-      background:
-        radial-gradient(circle at top left, #0a1730 0%, #060c1a 42%, #040915 100%);
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-    }
-
-    .wrap{
-      max-width:1700px;
-      margin:0 auto;
-      padding:14px;
-    }
-
-    .topbar{
-      display:flex;
-      align-items:flex-start;
-      justify-content:space-between;
-      gap:12px;
-      margin-bottom:10px;
-    }
-
-    .brand h1{
-      margin:0 0 2px 0;
-      font-size:1.6rem;
-      font-weight:800;
-      letter-spacing:.01em;
-    }
-
-    .sub{
-      color:var(--muted);
-      font-size:.92rem;
-    }
-
-    .toolbar{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      justify-content:flex-end;
-      align-items:center;
-    }
-
-    .chip,.btn{
-      border:1px solid var(--line2);
-      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.01));
-      color:var(--text);
-      border-radius:14px;
-      padding:9px 12px;
-      font:inherit;
-      box-shadow:var(--shadow);
-    }
-
-    .btn{
-      cursor:pointer;
-      font-weight:700;
-    }
-
-    .btn:hover{
-      border-color:rgba(255,255,255,.24);
-    }
-
-    .btn.aggressive{
-      background:linear-gradient(180deg, rgba(255,53,94,.26), rgba(255,53,94,.12));
-      border:1px solid rgba(255,53,94,.65);
-      color:#ffe5ec;
-      box-shadow:0 0 0 1px rgba(255,53,94,.22) inset, 0 0 18px var(--neon-red-glow), var(--shadow);
-    }
-
-    .btn.aggressive.active{
-      background:linear-gradient(180deg, rgba(255,53,94,.45), rgba(255,53,94,.2));
-      box-shadow:0 0 0 1px rgba(255,53,94,.35) inset, 0 0 24px var(--neon-red-glow), var(--shadow);
-    }
-
-    .strip{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:8px;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:7px;
-      border-radius:999px;
-      border:1px solid var(--line2);
-      background:var(--pill);
-      padding:6px 10px;
-      font-size:.77rem;
-      white-space:nowrap;
-    }
-
-    .dot{
-      width:10px;
-      height:10px;
-      border-radius:50%;
-      display:inline-block;
-    }
-    .g{background:var(--green)}
-    .y{background:var(--yellow)}
-    .r{background:var(--red)}
-    .b{background:var(--blue)}
-
-    .info{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      width:15px;
-      height:15px;
-      border-radius:50%;
-      border:1px solid rgba(255,255,255,.16);
-      color:#bfd1ea;
-      font-size:.68rem;
-      line-height:1;
-      font-weight:800;
-      cursor:help;
-      background:rgba(255,255,255,.03);
-    }
-
-    .grid{ display:grid; gap:10px; }
-    .topGrid{ grid-template-columns:1.2fr 1.15fr 1.15fr 1.2fr; margin-bottom:10px; }
-    .midGrid{ grid-template-columns:300px 1fr 300px; margin-bottom:10px; }
-    .chartGrid{ grid-template-columns:1fr 1fr; margin-bottom:10px; }
-    .lowerGrid{ grid-template-columns:1fr 1fr; margin-top:10px; }
-    .bottomGrid{ grid-template-columns:300px 320px 1fr; }
-
-    @media (max-width:1500px){
-      .topGrid{grid-template-columns:1fr 1fr;}
-      .midGrid{grid-template-columns:280px 1fr;}
-      .midGrid .rightRail{grid-column:1 / -1;}
-      .bottomGrid{grid-template-columns:1fr 1fr;}
-      .bottomGrid .shockCard{grid-column:1 / -1;}
-    }
-
-    @media (max-width:980px){
-      .topGrid,.midGrid,.chartGrid,.lowerGrid,.bottomGrid{grid-template-columns:1fr;}
-    }
-
-    .card{
-      min-width:0;
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      background:linear-gradient(180deg, rgba(255,255,255,.025), rgba(255,255,255,.012));
-      box-shadow:var(--shadow);
-      padding:14px;
-    }
-
-    .cardTitle{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:8px;
-      margin-bottom:10px;
-    }
-
-    .titleLeft{
-      display:flex;
-      align-items:center;
-      gap:6px;
-      min-width:0;
-    }
-
-    .cardTitle h2,.cardTitle h3{
-      margin:0;
-      font-size:1rem;
-      font-weight:800;
-    }
-
-    .heroDate{
-      font-size:.72rem;
-      color:#d5e1f2;
-      padding:7px 11px;
-      border-radius:999px;
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.02);
-    }
-
-    .heroValue{
-      font-size:1.95rem;
-      line-height:1;
-      font-weight:900;
-      margin:2px 0 12px 0;
-    }
-
-    .heroMeta{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-
-    .mini{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.015);
-      border-radius:999px;
-      padding:6px 12px;
-      font-size:.78rem;
-      color:#d9e4f4;
-    }
-
-    .gradientBar{
-      width:100%;
-      height:13px;
-      border-radius:999px;
-      background:rgba(255,255,255,.09);
-      overflow:hidden;
-    }
-
-    .gradientFill{
-      height:100%;
-      width:0%;
-      background:linear-gradient(90deg, #ff4d4d 0%, #ff9f0a 42%, #f6c000 60%, #2fc96b 100%);
-      border-radius:999px;
-      transition:width .2s ease;
-    }
-
-    .quad{
-      display:grid;
-      grid-template-columns:1fr 1fr;
-      gap:12px;
-    }
-
-    .miniCard{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      border-radius:18px;
-      padding:16px;
-      min-height:102px;
-    }
-
-    .miniLabel{
-      color:var(--muted);
-      font-size:.78rem;
-      margin-bottom:6px;
-    }
-
-    .miniValue{
-      font-size:1.05rem;
-      font-weight:900;
-      line-height:1.15;
-    }
-
-    .table{
-      display:grid;
-      gap:0;
-      border:1px solid var(--line);
-      border-radius:14px;
-      overflow:hidden;
-      background:rgba(255,255,255,.015);
-    }
-
-    .trow{
-      display:grid;
-      grid-template-columns:1fr auto;
-      gap:10px;
-      padding:7px 10px;
-      border-top:1px solid rgba(255,255,255,.055);
-      align-items:center;
-      min-width:0;
-    }
-    .trow:first-child{ border-top:none; }
-
-    .tlabel{
-      color:#dce7f6;
-      font-size:.82rem;
-      min-width:0;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .tval{
-      color:#f3f7fc;
-      font-weight:800;
-      font-size:.82rem;
-      white-space:nowrap;
-    }
-
-    .actionButtons{
-      display:flex;
-      gap:8px;
-      align-items:center;
-      flex-wrap:wrap;
-      margin-top:10px;
-    }
-
-    .greenBtn{
-      border:none;
-      background:#3d8d3f;
-      color:white;
-      border-radius:10px;
-      padding:9px 12px;
-      font-weight:800;
-      cursor:pointer;
-    }
-
-    .ghost{
-      border:1px solid var(--line2);
-      background:rgba(255,255,255,.02);
-      color:#dbe6f5;
-      border-radius:10px;
-      padding:8px 11px;
-      font-size:.78rem;
-    }
-
-    .note{
-      margin-top:10px;
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px;
-      font-size:.78rem;
-      color:var(--muted);
-      background:rgba(255,255,255,.015);
-    }
-
-    .scrollHold{
-      max-height:306px;
-      overflow:auto;
-      padding-right:4px;
-      scrollbar-width:thin;
-      scrollbar-color:rgba(255,255,255,.18) transparent;
-    }
-    .scrollHold::-webkit-scrollbar{ width:8px; }
-    .scrollHold::-webkit-scrollbar-thumb{
-      background:rgba(255,255,255,.16);
-      border-radius:999px;
-    }
-
-    .holdingRow{
-      display:grid;
-      grid-template-columns:minmax(0,1.1fr) auto auto auto;
-      gap:8px;
-      align-items:center;
-      padding:7px 9px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      border-radius:12px;
-      margin-bottom:7px;
-      min-width:0;
-    }
-
-    .holdingName{
-      font-size:.84rem;
-      font-weight:800;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .holdingSub{
-      font-size:.72rem;
-      color:var(--muted);
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-      margin-top:2px;
-    }
-
-    .miniPill{
-      font-size:.7rem;
-      padding:4px 7px;
-      min-width:58px;
-      text-align:center;
-      border:1px solid var(--line2);
-      border-radius:999px;
-      background:#101827;
-      white-space:nowrap;
-    }
-
-    .chartBox{
-      height:230px;
-      border:1px solid var(--line);
-      border-radius:14px;
-      background:linear-gradient(180deg, rgba(0,0,0,.10), rgba(255,255,255,.01));
-      overflow:hidden;
-      position:relative;
-    }
-
-    .chartMeta{
-      margin-top:8px;
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .chartMeta .mini{
-      font-size:.72rem;
-      padding:5px 8px;
-    }
-
-    svg{ width:100%; height:100%; display:block; }
-
-    .recentTable{
-      width:100%;
-      border-collapse:collapse;
-      font-size:.82rem;
-    }
-
-    .recentTable th,.recentTable td{
-      padding:8px 9px;
-      border-top:1px solid rgba(255,255,255,.06);
-      text-align:left;
-    }
-
-    .recentTable th{
-      color:var(--muted);
-      font-weight:700;
-      font-size:.76rem;
-    }
-
-    .shockList{ display:grid; gap:10px; }
-
-    .shockRow{
-      display:grid;
-      grid-template-columns:minmax(0,1fr) auto auto auto;
-      gap:8px;
-      align-items:start;
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:11px;
-      background:rgba(255,255,255,.02);
-    }
-
-    .shockTitle{
-      font-weight:800;
-      font-size:.85rem;
-      margin-bottom:5px;
-    }
-
-    .shockBody{
-      font-size:.76rem;
-      color:var(--muted);
-      line-height:1.35;
-    }
-
-    .tag{
-      padding:5px 8px;
-      border-radius:999px;
-      border:1px solid var(--line2);
-      background:#0f1728;
-      font-size:.68rem;
-      font-weight:800;
-      white-space:nowrap;
-      align-self:start;
-    }
-
-    .tag.green{ color:#b9f7c7; }
-    .tag.yellow{ color:#ffd58a; }
-    .tag.red{ color:#ffb3b3; }
-
-    .empty{
-      color:var(--muted);
-      border:1px dashed var(--line2);
-      border-radius:12px;
-      padding:12px;
-      font-size:.85rem;
-    }
-
-    .footer{
-      margin-top:10px;
-      color:var(--muted);
-      font-size:.76rem;
-      text-align:right;
-    }
-
-    .greenText{ color:var(--green); }
-    .yellowText{ color:var(--yellow); }
-    .redText{ color:var(--red); }
-    .blueText{ color:var(--blue); }
-    .neonRedText{ color:var(--neon-red); }
+    *{box-sizing:border-box} html,body{height:100%}
+    body{margin:0;color:var(--text);background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    .wrap{max-width:1450px;margin:0 auto;padding:12px}
+    .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
+    .brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}.sub{color:var(--muted);font-size:.85rem}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
+    .chip,.btn{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)}
+    .btn{cursor:pointer;font-weight:700}
+    .btn.aggressive{background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));border-color:rgba(255,53,94,.65);color:#ffe5ec;box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)}
+    .btn.aggressive.active{background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)}
+    .strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    .pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap}
+    .dot{width:10px;height:10px;border-radius:50%;display:inline-block}.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
+    .tooltipWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+    .info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid rgba(255,255,255,.16);color:#bfd1ea;font-size:.68rem;line-height:1;font-weight:800;cursor:pointer;background:rgba(255,255,255,.03);flex:0 0 auto}
+    .tooltipBox{position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#0b1222;border:1px solid rgba(255,255,255,.15);padding:9px 11px;border-radius:10px;font-size:.72rem;color:#dbe6f5;white-space:normal;width:220px;line-height:1.35;opacity:0;pointer-events:none;transition:all .15s ease;z-index:9999;box-shadow:0 10px 20px rgba(0,0,0,.4)}
+    .tooltipBox::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:6px;border-style:solid;border-color:#0b1222 transparent transparent transparent}
+    .tooltipWrap:hover .tooltipBox,.tooltipWrap.mobile-open .tooltipBox{opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto}
+    .grid{display:grid;gap:8px}.topGrid{grid-template-columns:1.2fr 1fr 1fr 1fr;margin-bottom:8px}.mainGrid{grid-template-columns:220px minmax(0,1fr) 220px;margin-bottom:8px}
+    .midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+    @media (max-width:1300px){.topGrid{grid-template-columns:1fr 1fr}.mainGrid{grid-template-columns:220px minmax(0,1fr)}.mainGrid .rightRail{grid-column:1 / -1}}
+    @media (max-width:980px){.topGrid,.mainGrid,.midPair{grid-template-columns:1fr}.tooltipBox{width:190px}}
+    .card{min-width:0;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));box-shadow:var(--shadow);padding:12px}
+    .cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
+    .heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
+    .heroValue{font-size:1.7rem;line-height:1.05;font-weight:900;margin:2px 0 10px 0}.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
+    .gradientBar{width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
+    .cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}
+    .cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
+    .table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}
+    .trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}.trow:first-child{border-top:none}
+    .tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
+    .scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}.scrollArea::-webkit-scrollbar{width:8px}.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}.tallScroll{max-height:380px}
+    .holdingRow{display:grid;grid-template-columns:minmax(0,1fr) auto auto auto;gap:7px;align-items:center;padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:7px;min-width:0}
+    .holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap;margin-top:2px}
+    .miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
+    .chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden} svg{width:100%;height:100%;display:block}
+    .chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}.note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
+    .recentTable{width:100%;border-collapse:collapse;font-size:.74rem}.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}.recentTable thead th{position:sticky;top:0;background:#0e1728}
+    .greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)}
+    .footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
     <div class="brand">
-      <h1>Lean Terminal 2.0 Hybrid Engine</h1>
-      <div class="sub">Current Lean campaign • hybrid layout • no sources pill • scrollable holdings • Lean Aggressive neon-red toggle</div>
+      <h1>Lean Terminal 2.0 Compact Hybrid</h1>
+      <div class="sub">Compressed one-screen layout • street-speak tooltips • labeled lines • scrollable panels • Lean Aggressive toggle</div>
     </div>
     <div class="toolbar">
       <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
       <div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div>
-      <div class="chip" id="nextRefreshChip">Next refresh in 45s</div>
       <button class="btn aggressive" id="aggressiveToggle">Lean Aggressive: OFF</button>
       <button class="btn" id="refreshBtn">Refresh</button>
       <button class="btn" id="settingsBtn">Data Settings</button>
@@ -517,284 +72,134 @@
   </div>
 
   <div class="strip">
-    <div class="pill"><span class="dot g"></span>READY <strong id="readyPct">63%</strong></div>
-    <div class="pill"><span class="dot y"></span>RISK <strong id="riskPct">39%</strong></div>
-    <div class="pill"><span class="dot b"></span>VALUE <strong id="valueTxt">$19,217.09</strong></div>
-    <div class="pill"><span class="dot b"></span>LAST <strong id="lastTxt">$0.00 / 0.00%</strong></div>
-    <div class="pill"><span class="dot y"></span>VOL LIGHT <strong id="volTxt">wobbly</strong></div>
+    <div class="pill"><span class="dot g"></span>READY <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Engine confidence. Higher means the setup has more go.</span></span> <strong id="readyPct">63%</strong></div>
+    <div class="pill"><span class="dot y"></span>RISK <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Heat level. Higher means it is easier to mess up.</span></span> <strong id="riskPct">39%</strong></div>
+    <div class="pill"><span class="dot b"></span>VALUE <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Total account value right now.</span></span> <strong id="valueTxt">$19,217.09</strong></div>
+    <div class="pill"><span class="dot b"></span>LAST <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Last move impact on the account.</span></span> <strong id="lastTxt">$0.00 / 0.00%</strong></div>
+    <div class="pill"><span class="dot y"></span>VOL LIGHT <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How choppy the tape feels.</span></span> <strong id="volTxt">wobbly</strong></div>
     <div class="pill" id="aggressivePill" style="display:none;"><span class="dot r"></span>MODE <strong class="neonRedText">LEAN AGGRESSIVE</strong></div>
   </div>
 
   <div class="strip">
-    <div class="pill">REGIME <span class="info" title="Street speak: is the market acting like a green light, yellow light, or a trap?">i</span></div>
-    <div class="pill">VOL <span class="info" title="Street speak: how choppy the tape feels right now.">i</span></div>
-    <div class="pill">DD <span class="info" title="Street speak: drawdown damage check.">i</span></div>
-    <div class="pill">BRAKE <span class="info" title="Street speak: what is slowing us down or keeping us parked.">i</span></div>
-    <div class="pill">MC <span class="info" title="Street speak: Monte Carlo range, best/base/worst lane.">i</span></div>
-    <div class="pill">CORR <span class="info" title="Street speak: are names moving together too much?">i</span></div>
-    <div class="pill">CVAR <span class="info" title="Street speak: ugly-tail loss check.">i</span></div>
-    <div class="pill">BAYES <span class="info" title="Street speak: are odds improving or getting weaker as new data rolls in?">i</span></div>
+    <div class="pill">REGIME <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are we in go mode or trap mode?</span></span></div>
+    <div class="pill">VOL <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How violent price moves are.</span></span></div>
+    <div class="pill">DD <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Drawdown damage check.</span></span></div>
+    <div class="pill">BRAKE <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">What is slowing us down?</span></span></div>
+    <div class="pill">MC <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Best and worst case lanes.</span></span></div>
+    <div class="pill">CORR <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are positions moving together too much?</span></span></div>
+    <div class="pill">CVAR <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Ugly-tail scenario check.</span></span></div>
+    <div class="pill">BAYES <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are the odds getting better or fading?</span></span></div>
   </div>
 
   <section class="grid topGrid">
     <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h2>Campaign Snapshot</h2>
-          <span class="info" title="Street speak: quick dashboard read on what mode we are in.">i</span>
-        </div>
-        <div class="heroDate" id="heroDate">—</div>
-      </div>
+      <div class="cardTitle"><div class="titleLeft"><h2>Campaign Snapshot</h2><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Quick read. Are we parked, watching, or pushing?</span></span></div><div class="heroDate" id="heroDate">—</div></div>
       <div class="heroValue" id="heroStatus">Loading…</div>
       <div class="heroMeta" id="heroMeta"></div>
       <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
     </div>
 
     <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h2>Posture</h2>
-          <span class="info" title="Street speak: how we are standing right now, not just what we think.">i</span>
-        </div>
-      </div>
-      <div class="quad">
-        <div class="miniCard"><div class="miniLabel">Mode</div><div class="miniValue" id="modeVal">—</div></div>
-        <div class="miniCard"><div class="miniLabel">Trigger</div><div class="miniValue" id="triggerVal">—</div></div>
-        <div class="miniCard"><div class="miniLabel">Risk</div><div class="miniValue" id="riskVal">—</div></div>
-        <div class="miniCard"><div class="miniLabel">Weather</div><div class="miniValue" id="weatherVal">—</div></div>
+      <div class="cardTitle"><div class="titleLeft"><h2>Posture</h2><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How we are standing, not what we wish would happen.</span></span></div></div>
+      <div class="cubeGrid">
+        <div class="cube"><div class="cubeLabel">Mode <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Base stance.</span></span></div><div class="cubeValue" id="modeVal">—</div></div>
+        <div class="cube"><div class="cubeLabel">Trigger <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Waiting for confirmation or ready to go.</span></span></div><div class="cubeValue" id="triggerVal">—</div></div>
+        <div class="cube"><div class="cubeLabel">Risk <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How much damage we are allowing.</span></span></div><div class="cubeValue" id="riskVal">—</div></div>
+        <div class="cube"><div class="cubeLabel">Weather <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Market conditions in plain terms.</span></span></div><div class="cubeValue" id="weatherVal">—</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h2>Math Layer</h2>
-          <span class="info" title="Street speak: the nerd stack checking correlation, vol, and quality of the path.">i</span>
-        </div>
-      </div>
-      <div class="quad">
-        <div class="miniCard"><div class="miniLabel">Correlation</div><div class="miniValue" id="corrVal">—</div></div>
-        <div class="miniCard"><div class="miniLabel">Vol Light</div><div class="miniValue" id="volLayerVal">—</div></div>
-        <div class="miniCard"><div class="miniLabel">Sharpe</div><div class="miniValue" id="sharpeVal">—</div></div>
-        <div class="miniCard"><div class="miniLabel">Score</div><div class="miniValue" id="scoreVal">—</div></div>
+      <div class="cardTitle"><div class="titleLeft"><h2>Math Layer</h2><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">The system brain checking if the move is legit.</span></span></div></div>
+      <div class="cubeGrid">
+        <div class="cube"><div class="cubeLabel">Correlation <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are positions overlapping?</span></span></div><div class="cubeValue" id="corrVal">—</div></div>
+        <div class="cube"><div class="cubeLabel">Vol <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How choppy it feels.</span></span></div><div class="cubeValue" id="volLayerVal">—</div></div>
+        <div class="cube"><div class="cubeLabel">Sharpe <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Quality of the return path.</span></span></div><div class="cubeValue" id="sharpeVal">—</div></div>
+        <div class="cube"><div class="cubeLabel">Score <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Overall system confidence.</span></span></div><div class="cubeValue" id="scoreVal">—</div></div>
       </div>
     </div>
 
     <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h2>Action Bias</h2>
-          <span class="info" title="Street speak: what the dashboard wants us to lean toward doing.">i</span>
-        </div>
-      </div>
-      <div id="actionBiasList" class="table"></div>
+      <div class="cardTitle"><div class="titleLeft"><h2>Action Bias</h2><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">What the dashboard wants us leaning toward doing.</span></span></div></div>
+      <div class="table" id="actionBiasList"></div>
     </div>
   </section>
 
-  <section class="grid midGrid">
+  <section class="grid mainGrid">
     <div class="leftRail">
       <div class="card">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>System State</h3>
-            <span class="info" title="Street speak: why the car is in park, neutral, or drive.">i</span>
-          </div>
-        </div>
+        <div class="cardTitle"><div class="titleLeft"><h3>System State</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Why the car is parked, watching, or moving.</span></span></div></div>
         <div class="table" id="systemStateTable"></div>
       </div>
 
-      <div class="card" style="margin-top:10px;">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>Portfolio Heatmap</h3>
-            <span class="info" title="Street speak: where the money is actually sitting.">i</span>
-          </div>
-        </div>
-        <div class="table" id="heatmapTable"></div>
+      <div class="card" style="margin-top:8px;">
+        <div class="cardTitle"><div class="titleLeft"><h3>Exposure & Guardrails</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">What is live, what is parked, and what is blocking more size.</span></span></div></div>
+        <div class="table"><div class="scrollArea" id="guardrailWrap"></div></div>
       </div>
     </div>
 
-    <div>
+    <div class="centerRail">
       <div class="card">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>Action Engine</h3>
-            <span class="info" title="Street speak: what today’s move is, why, and what just happened.">i</span>
-          </div>
-        </div>
-        <div class="table" id="actionEngineTable"></div>
-        <div class="actionButtons">
-          <button class="greenBtn" id="markBtn">Mark Executed</button>
-          <div class="ghost" id="lastExecChip">Last exec: none</div>
-        </div>
-        <div class="note" id="actionNote">Waiting for data…</div>
-      </div>
-
-      <div class="card" style="margin-top:10px;">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>Performance</h3>
-            <span class="info" title="Street speak: how the path is moving versus baselines.">i</span>
-          </div>
-        </div>
-        <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 260" preserveAspectRatio="none"></svg></div>
+        <div class="cardTitle"><div class="titleLeft"><h3>Performance</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How the account path is moving versus the comparison line.</span></span></div></div>
+        <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div>
         <div class="chartMeta" id="perfMeta"></div>
       </div>
 
-      <div class="grid lowerGrid">
+      <div class="midPair">
         <div class="card">
-          <div class="cardTitle">
-            <div class="titleLeft">
-              <h3>Recent Moves</h3>
-              <span class="info" title="Street speak: last moves made, quick and clean.">i</span>
-            </div>
-          </div>
-          <div style="overflow:auto;">
-            <table class="recentTable">
-              <thead><tr><th>Date</th><th>Ticker</th><th>Amount</th></tr></thead>
-              <tbody id="recentMovesBody"></tbody>
-            </table>
-          </div>
+          <div class="cardTitle"><div class="titleLeft"><h3>Action Engine</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">What to do today and why.</span></span></div></div>
+          <div class="table" id="actionEngineTable"></div>
+          <div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="markBtn">Mark Executed</button><div class="chip" id="lastExecChip">Last exec: none</div></div>
+          <div class="note" id="actionNote" style="margin-top:8px">Waiting for data…</div>
         </div>
 
         <div class="card">
-          <div class="cardTitle">
-            <div class="titleLeft">
-              <h3>Warnings</h3>
-              <span class="info" title="Street speak: danger tape, blockers, and stuff that could make the next move dumb.">i</span>
-            </div>
-          </div>
-          <div id="warningsList"></div>
+          <div class="cardTitle"><div class="titleLeft"><h3>Math Snapshot</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Fast cubes for damage, peak, chop, and quality.</span></span></div></div>
+          <div class="cubeGrid" id="mathSnapshotGrid"></div>
         </div>
       </div>
 
-      <div class="grid lowerGrid">
+      <div class="midPair">
         <div class="card">
-          <div class="cardTitle">
-            <div class="titleLeft">
-              <h3>Position History</h3>
-              <span class="info" title="Street speak: quick snapshot lane for one holding’s trail.">i</span>
-            </div>
-          </div>
-          <div class="table" id="positionHistoryTable"></div>
+          <div class="cardTitle"><div class="titleLeft"><h3>Pair Correlations</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are these names dancing together or fighting each other?</span></span></div></div>
+          <div class="table"><div class="scrollArea" id="pairTableWrap"></div></div>
         </div>
 
         <div class="card">
-          <div class="cardTitle">
-            <div class="titleLeft">
-              <h3>Pair Correlation View</h3>
-              <span class="info" title="Street speak: are these two names dancing together or fighting each other?">i</span>
-            </div>
-          </div>
-          <div class="table" id="pairMetaTable"></div>
-          <div class="chartBox" style="margin-top:10px;"><svg id="pairSvg" viewBox="0 0 1000 240" preserveAspectRatio="none"></svg></div>
+          <div class="cardTitle"><div class="titleLeft"><h3>Recent Moves</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Last moves made, quick and clean.</span></span></div></div>
+          <div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div>
+        </div>
+      </div>
+
+      <div class="midPair">
+        <div class="card">
+          <div class="cardTitle"><div class="titleLeft"><h3>Warnings</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Stuff that could make the next move dumb.</span></span></div></div>
+          <div id="warningsList"></div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle"><div class="titleLeft"><h3>Lean Health</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How healthy the setup looks right now.</span></span></div></div>
+          <div id="healthList"></div>
         </div>
       </div>
     </div>
 
     <div class="rightRail">
       <div class="card">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>Math Snapshot</h3>
-            <span class="info" title="Street speak: quick read on drawdown, peak, vol, and Sharpe.">i</span>
-          </div>
-        </div>
-        <div class="table" id="mathSnapshotTable"></div>
-      </div>
-
-      <div class="card" style="margin-top:10px;">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>Exposure & Guardrails</h3>
-            <span class="info" title="Street speak: what is live, what is parked, and what is blocking more size.">i</span>
-          </div>
-        </div>
-        <div class="table" id="guardrailTable"></div>
-      </div>
-
-      <div class="card" style="margin-top:10px;">
-        <div class="cardTitle">
-          <div class="titleLeft">
-            <h3>Holdings</h3>
-            <span class="info" title="Street speak: compact holdings pill with internal scroll so it does not eat the screen.">i</span>
-          </div>
-          <div class="heroDate" id="holdingsCount">0 items</div>
-        </div>
-        <div class="scrollHold" id="holdingsList"></div>
+        <div class="cardTitle"><div class="titleLeft"><h3>Holdings</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Compact holdings pills with internal scroll so they do not eat the screen.</span></span></div><div class="heroDate" id="holdingsCount">0 items</div></div>
+        <div class="scrollArea tallScroll" id="holdingsList"></div>
       </div>
     </div>
   </section>
 
-  <section class="grid chartGrid">
-    <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h3>Monte Carlo Panel</h3>
-          <span class="info" title="Street speak: range of likely lanes, not a crystal ball.">i</span>
-        </div>
-      </div>
-      <div class="table" id="mcTable"></div>
-      <div class="chartBox" style="height:170px; margin-top:10px;"><svg id="mcSvg" viewBox="0 0 1000 170" preserveAspectRatio="none"></svg></div>
-    </div>
-
-    <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h3>Lean Health Report</h3>
-          <span class="info" title="Street speak: how healthy the campaign setup looks right now.">i</span>
-        </div>
-      </div>
-      <div id="healthList"></div>
-    </div>
-  </section>
-
-  <section class="grid bottomGrid">
-    <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h3>Macro Snapshot</h3>
-          <span class="info" title="Street speak: the background weather — rates, dollar, oil, gold, fear.">i</span>
-        </div>
-      </div>
-      <div class="table" id="macroTable"></div>
-    </div>
-
-    <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h3>History Snapshot</h3>
-          <span class="info" title="Street speak: quick lookback card for portfolio and benchmark context.">i</span>
-        </div>
-      </div>
-      <div class="table" id="historyTable"></div>
-    </div>
-
-    <div class="card shockCard">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h3>Shock Radar</h3>
-          <span class="info" title="Street speak: sectors or routes that can suddenly wake up and move the board.">i</span>
-        </div>
-      </div>
-      <div class="shockList" id="shockList"></div>
-    </div>
-  </section>
-
-  <div class="footer" id="footerStamp">Hybrid layout ready.</div>
+  <div class="footer" id="footerStamp">Compact hybrid ready.</div>
 </div>
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  const LS_HOLDINGS = "lean_holdings_csv_url";
-  const LS_SYSTEM = "lean_system_csv_url";
-  const LS_LAST_EXEC = "lean_last_exec_v3";
-  const LS_AGGRESSIVE = "lean_aggressive_mode";
-
-  const DEFAULT_HOLDINGS = "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-
-  const $ = sel => document.querySelector(sel);
-  let countdown = 45;
+  const LS_HOLDINGS="lean_holdings_csv_url", LS_SYSTEM="lean_system_csv_url", LS_LAST_EXEC="lean_last_exec_v4", LS_AGGRESSIVE="lean_aggressive_mode";
+  const DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
+  const $ = s => document.querySelector(s);
   let timer = null;
 
   $("#refreshBtn").addEventListener("click", loadAll);
@@ -802,81 +207,39 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#markBtn").addEventListener("click", markExecuted);
   $("#aggressiveToggle").addEventListener("click", toggleAggressive);
 
-  function startClock(){
-    if(timer) clearInterval(timer);
-    tickClock();
-    timer = setInterval(() => {
-      tickClock();
-      countdown--;
-      if(countdown <= 0){
-        countdown = 45;
-        loadAll();
-      }
-      $("#nextRefreshChip").textContent = `Next refresh in ${countdown}s`;
-    }, 1000);
-  }
+  document.addEventListener("click", e => {
+    document.querySelectorAll(".tooltipWrap.mobile-open").forEach(el => { if(!el.contains(e.target)) el.classList.remove("mobile-open"); });
+    const wrap = e.target.closest(".tooltipWrap");
+    if(wrap && window.matchMedia("(hover: none)").matches){ e.preventDefault(); wrap.classList.toggle("mobile-open"); }
+  });
 
-  function tickClock(){
-    $("#clockNow").textContent = new Date().toLocaleTimeString();
-  }
-
+  function startClock(){ if(timer) clearInterval(timer); tickClock(); timer = setInterval(tickClock, 1000); }
+  function tickClock(){ $("#clockNow").textContent = new Date().toLocaleTimeString(); }
   function openSettings(){
     const h = prompt("Holdings CSV URL", localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS);
     if(h !== null && h.trim()) localStorage.setItem(LS_HOLDINGS, h.trim());
-
     const s = prompt("System CSV URL", localStorage.getItem(LS_SYSTEM) || "");
     if(s !== null) localStorage.setItem(LS_SYSTEM, s.trim());
-
     loadAll();
   }
-
-  function markExecuted(){
-    const stamp = new Date().toLocaleString();
-    localStorage.setItem(LS_LAST_EXEC, stamp);
-    $("#lastExecChip").textContent = `Last exec: ${stamp}`;
-  }
-
-  function isAggressive(){
-    return localStorage.getItem(LS_AGGRESSIVE) === "1";
-  }
-
-  function toggleAggressive(){
-    const next = !isAggressive();
-    localStorage.setItem(LS_AGGRESSIVE, next ? "1" : "0");
-    applyAggressiveUI();
-    loadAll();
-  }
-
-  function applyAggressiveUI(){
-    const on = isAggressive();
-    const btn = $("#aggressiveToggle");
-    const pill = $("#aggressivePill");
-    btn.textContent = `Lean Aggressive: ${on ? "ON" : "OFF"}`;
-    btn.classList.toggle("active", on);
-    pill.style.display = on ? "inline-flex" : "none";
-  }
-
+  function markExecuted(){ const stamp = new Date().toLocaleString(); localStorage.setItem(LS_LAST_EXEC, stamp); $("#lastExecChip").textContent = `Last exec: ${stamp}`; }
+  function isAggressive(){ return localStorage.getItem(LS_AGGRESSIVE) === "1"; }
+  function toggleAggressive(){ localStorage.setItem(LS_AGGRESSIVE, isAggressive() ? "0" : "1"); applyAggressiveUI(); loadAll(); }
+  function applyAggressiveUI(){ const on = isAggressive(); $("#aggressiveToggle").textContent = `Lean Aggressive: ${on ? "ON" : "OFF"}`; $("#aggressiveToggle").classList.toggle("active", on); $("#aggressivePill").style.display = on ? "inline-flex" : "none"; }
   function getHoldingsUrl(){ return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS; }
   function getSystemUrl(){ return localStorage.getItem(LS_SYSTEM) || ""; }
 
   async function loadAll(){
-    countdown = 45;
     try{
-      const holdingsUrl = getHoldingsUrl();
-      const systemUrl = getSystemUrl();
-
       const [holdingsRows, systemRows] = await Promise.all([
-        holdingsUrl ? fetchCsvRows(holdingsUrl) : Promise.resolve([]),
-        systemUrl ? fetchCsvRows(systemUrl) : Promise.resolve([])
+        getHoldingsUrl() ? fetchCsvRows(getHoldingsUrl()) : Promise.resolve([]),
+        getSystemUrl() ? fetchCsvRows(getSystemUrl()) : Promise.resolve([])
       ]);
-
       const view = buildView(systemRows, holdingsRows, isAggressive());
       renderAll(view);
-
-      const stamp = new Date().toLocaleTimeString();
-      $("#updatedChip").textContent = `LAST UPDATED: ${stamp}`;
-      $("#footerStamp").textContent = `Hybrid index updated ${new Date().toLocaleString()} • sources pill hidden • Lean Aggressive toggle included`;
+      $("#updatedChip").textContent = `LAST UPDATED: ${new Date().toLocaleTimeString()}`;
       $("#lastExecChip").textContent = `Last exec: ${localStorage.getItem(LS_LAST_EXEC) || "none"}`;
+      $("#footerStamp").textContent = `Compact hybrid updated ${new Date().toLocaleString()} • street-speak tooltips upgraded`;
     }catch(err){
       console.error(err);
       $("#footerStamp").textContent = `Load issue: ${err.message || err}`;
@@ -884,28 +247,23 @@ window.addEventListener("DOMContentLoaded", () => {
   }
 
   async function fetchCsvRows(url){
-    const res = await fetch(cacheBust(url), { cache:"no-store" });
+    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now(), {cache:"no-store"});
     if(!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
     return parseCsv(await res.text());
   }
 
-  function cacheBust(url){
-    return url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now();
-  }
-
   function parseCsv(text){
-    const rows = [];
-    let row = [], cell = "", q = false;
+    const rows=[]; let row=[], cell="", q=false;
     for(let i=0;i<text.length;i++){
-      const ch = text[i], nx = text[i+1];
+      const ch=text[i], nx=text[i+1];
       if(q){
         if(ch === '"' && nx === '"'){ cell += '"'; i++; }
-        else if(ch === '"'){ q = false; }
+        else if(ch === '"'){ q=false; }
         else cell += ch;
       }else{
-        if(ch === '"') q = true;
-        else if(ch === ","){ row.push(cell); cell = ""; }
-        else if(ch === "\n"){ row.push(cell); rows.push(row); row = []; cell = ""; }
+        if(ch === '"') q=true;
+        else if(ch === ","){ row.push(cell); cell=""; }
+        else if(ch === "\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
         else if(ch === "\r"){}
         else cell += ch;
       }
@@ -913,81 +271,46 @@ window.addEventListener("DOMContentLoaded", () => {
     if(cell.length || row.length){ row.push(cell); rows.push(row); }
     if(!rows.length) return [];
     const headers = rows[0].map(norm);
-    return rows.slice(1)
-      .filter(r => r.some(v => String(v || "").trim() !== ""))
-      .map(r => {
-        const o = {};
-        headers.forEach((h,i) => o[h] = (r[i] ?? "").trim());
-        return o;
-      });
+    return rows.slice(1).filter(r => r.some(v => String(v||"").trim() !== "")).map(r => { const o={}; headers.forEach((h,i)=>o[h]=(r[i] ?? "").trim()); return o; });
   }
 
-  function norm(s){
-    return String(s || "").trim().toLowerCase()
-      .replace(/\s+/g,"_").replace(/[^\w]/g,"_")
-      .replace(/_+/g,"_").replace(/^_|_$/g,"");
-  }
-
-  function pick(o, keys){
-    for(const key of keys){
-      const k = norm(key);
-      if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim();
-    }
-    return "";
-  }
-
-  function num(v, fallback=0){
-    const m = String(v ?? "").replace(/,/g,"").match(/-?\d+(\.\d+)?/);
-    return m ? Number(m[0]) : fallback;
-  }
-
-  function clamp(n, min, max){ return Math.max(min, Math.min(max, n)); }
-
-  function pct(v){
-    const n = num(v, 0);
-    return `${n.toFixed(1)}%`;
-  }
-
-  function money(v){
-    const n = Number(v || 0);
-    return n.toLocaleString(undefined, { style:"currency", currency:"USD", minimumFractionDigits:2, maximumFractionDigits:2 });
-  }
-
+  function norm(s){ return String(s||"").trim().toLowerCase().replace(/\s+/g,"_").replace(/[^\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,""); }
+  function pick(o, keys){ for(const key of keys){ const k = norm(key); if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim(); } return ""; }
+  function num(v, fallback=0){ const m = String(v ?? "").replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : fallback; }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+  function pct(v){ return `${num(v,0).toFixed(1)}%`; }
+  function money(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}); }
   function compact(arr){ return arr.filter(Boolean); }
-
   function uniq(arr){ return [...new Set(arr)]; }
-
   function toneClass(v){
-    const s = String(v || "").toLowerCase();
-    if(s.includes("green") || s.includes("go") || s.includes("risk on") || s.includes("ready") || s.includes("up") || s.includes("buy") || s.includes("safe")) return "greenText";
-    if(s.includes("yellow") || s.includes("watch") || s.includes("wobbly") || s.includes("moderate") || s.includes("caution") || s.includes("consider") || s.includes("radar")) return "yellowText";
-    if(s.includes("red") || s.includes("stop") || s.includes("no-go") || s.includes("down") || s.includes("risk off") || s.includes("block") || s.includes("-")) return "redText";
+    const s = String(v||"").toLowerCase();
+    if(s.includes("go") || s.includes("safe") || s.includes("up") || s.includes("green") || s.includes("+") || s.includes("ready")) return "greenText";
+    if(s.includes("watch") || s.includes("wobbly") || s.includes("yellow") || s.includes("moderate") || s.includes("controlled") || s.includes("clear")) return "yellowText";
+    if(s.includes("red") || s.includes("block") || s.includes("down") || s.includes("-") || s.includes("elevated")) return "redText";
     return "blueText";
   }
 
   function mapHolding(r){
     return {
-      ticker: pick(r, ["ticker","symbol","holding","name_short"]) || "—",
-      name: pick(r, ["name","company","description","asset"]) || "—",
-      sector: pick(r, ["sector","theme","bucket","group"]) || "—",
-      weight: pick(r, ["weight","allocation","position","size","percent"]) || "",
-      qty: pick(r, ["qty","shares","units"]) || "",
-      signal: pick(r, ["signal","status","go_no_go","light","bias"]) || "—",
-      change: pick(r, ["change","pnl","return","move","day_change"]) || "—",
-      weightNum: num(pick(r, ["weight","allocation","position","size","percent"]), 0)
+      ticker: pick(r,["ticker","symbol","holding","name_short"]) || "—",
+      name: pick(r,["name","company","description","asset"]) || "—",
+      sector: pick(r,["sector","theme","bucket","group"]) || "—",
+      weight: pick(r,["weight","allocation","position","size","percent"]) || "",
+      qty: pick(r,["qty","shares","units"]) || "",
+      signal: pick(r,["signal","status","go_no_go","light","bias"]) || "—",
+      change: pick(r,["change","pnl","return","move","day_change"]) || "—",
+      weightNum: num(pick(r,["weight","allocation","position","size","percent"]),0)
     };
   }
-
   function inferCash(holdings, s0){
-    const explicit = num(pick(s0, ["cash_anchor","cash_pct","cash","sgov_nest"]), NaN);
+    const explicit = num(pick(s0,["cash_anchor","cash_pct","cash","sgov_nest"]), NaN);
     if(!Number.isNaN(explicit) && explicit > 0) return explicit;
     const cashRow = holdings.find(h => /cash|sgov/i.test(`${h.ticker} ${h.name} ${h.sector}`));
     if(cashRow && cashRow.weightNum > 0) return cashRow.weightNum;
     return 85.1;
   }
-
   function inferValue(s0){
-    const explicit = num(pick(s0, ["value","portfolio_value","total_value"]), NaN);
+    const explicit = num(pick(s0,["value","portfolio_value","total_value"]), NaN);
     if(!Number.isNaN(explicit) && explicit > 0) return explicit;
     return 19217.09;
   }
@@ -997,349 +320,76 @@ window.addEventListener("DOMContentLoaded", () => {
     const holdings = holdingsRows.map(mapHolding);
     const cashPct = inferCash(holdings, s0);
     const totalValue = inferValue(s0);
-
-    const scoreBase = num(pick(s0, ["score","health_score","conviction_score"]), clamp(58 + holdings.length * 1.1, 58, 92));
+    const scoreBase = num(pick(s0,["score","health_score","conviction_score"]), 86);
     const score = aggressive ? clamp(scoreBase + 7, 1, 100) : scoreBase;
-    const ready = aggressive ? 72 : 63;
-    const risk = aggressive ? 56 : 39;
-
-    const actions = uniq(compact([
-      pick(s0, ["action_1","bias_1","today_bias"]),
-      pick(s0, ["action_2","bias_2"]),
-      pick(s0, ["action_3","bias_3"]),
-      aggressive ? "Lean harder into leaders" : "Keep posture clean",
-      aggressive ? "Use tighter but faster sizing" : "Let leaders prove themselves",
-      "Avoid overlap stacking"
-    ])).slice(0,3);
-
     return {
-      heroDate: pick(s0, ["date","as_of","last_updated"]) || new Date().toLocaleDateString(),
-      heroStatus: aggressive ? "Lean aggressive engine online" : (pick(s0, ["campaign_status","status","headline"]) || "Lean engine online"),
-      heroMeta: [
-        aggressive ? "Lean Aggressive" : (pick(s0, ["mode","campaign_mode","posture"]) || "Lean"),
-        aggressive ? "Attack Watch" : (pick(s0, ["trigger","gate"]) || "Watch"),
-        aggressive ? "Elevated" : (pick(s0, ["risk","risk_state"]) || "Controlled"),
-        pick(s0, ["weather","market_weather"]) || "Clear"
-      ],
-      score, readyPct:`${ready}%`, riskPct:`${risk}%`,
-      totalValue: money(totalValue),
-      lastTxt: pick(s0, ["last","last_move"]) || "$0.00 / 0.00%",
-      volTxt: aggressive ? "hotter" : (pick(s0, ["vol_light","volatility_light","vol"]) || "wobbly"),
-
-      mode: aggressive ? "Lean Aggressive" : (pick(s0, ["mode","campaign_mode","posture"]) || "Lean"),
-      trigger: aggressive ? "Attack Watch" : (pick(s0, ["trigger","gate"]) || "Watch"),
-      riskState: aggressive ? "Elevated" : (pick(s0, ["risk","risk_state"]) || "Controlled"),
-      weather: pick(s0, ["weather","market_weather"]) || "Clear",
-
-      corr: pick(s0, ["correlation","corr","corr_state"]) || "—",
-      volLayer: aggressive ? "Hot" : (pick(s0, ["vol_light","volatility_light","vol"]) || "—"),
-      sharpe: pick(s0, ["sharpe","sharpe_ratio"]) || "—",
-
-      actions,
-
-      systemState: [
-        ["Market Regime", aggressive ? "RISK ON+" : (pick(s0, ["market_regime","regime"]) || "RISK ON")],
-        ["Deployment", aggressive ? "DEPLOY FASTER" : (pick(s0, ["deployment"]) || "CONSIDER DEPLOYING CASH")],
-        ["Cash Anchor", pct(cashPct)],
-        ["Liquidity", pick(s0, ["liquidity"]) || "LIQUID"],
-        ["Volatility", aggressive ? "ACTIVE" : (pick(s0, ["volatility"]) || "WATCH")],
-        ["Violations", pick(s0, ["violations"]) || `Cash > ${pct(cashPct)} in Deploy Mode`],
-        ["Brake", aggressive ? "SOFTER" : (pick(s0, ["brake","primary_blocker"]) || "NONE")],
-        ["Confidence", aggressive ? "67%" : (pick(s0, ["confidence"]) || "50%")]
-      ],
-
-      heatmap: buildHeatmap(holdings, cashPct),
-
-      actionEngine: [
-        ["Today", aggressive ? "PRESS LEADERS" : (pick(s0, ["today_action","action_today"]) || "DONE: VXUS")],
-        ["Reason", aggressive ? "Aggressive toggle is ON" : (pick(s0, ["reason"]) || "Today already marked exec")],
-        ["If Executed", aggressive ? "Recheck heat fast" : (pick(s0, ["if_executed"]) || "Already advanced")],
-        ["Next Trading Day", aggressive ? "Buy strongest horse first" : (pick(s0, ["next_trading_day"]) || "Next move staged")],
-        ["Strength Check", pick(s0, ["strength_check"]) || "Leaders first"],
-        ["Radar Overlay", pick(s0, ["radar_overlay"]) || "Neutral"],
-        ["Meta", aggressive ? "Today MED | Next HIGH" : (pick(s0, ["meta"]) || "Today LOW | Next MED")],
-        ["Risk-Sized Buy", aggressive ? "$100 leader candidate" : (pick(s0, ["risk_sized_buy"]) || "$75 CRWV")]
-      ],
-
-      actionNote: aggressive
-        ? "Lean Aggressive is ON. This mode visually flags a faster stance, but still keep overlap discipline."
-        : (pick(s0, ["action_note","note"]) || "You already checked off today. Next live move gets staged when the trigger flips."),
-
-      mathSnapshot: [
-        ["Drawdown", pick(s0, ["drawdown"]) || "-0.05%"],
-        ["Peak", pick(s0, ["peak"]) || money(totalValue)],
-        ["Vol", aggressive ? "Higher" : (pick(s0, ["vol","volatility"]) || "0.00%")],
-        ["Sharpe", pick(s0, ["sharpe","sharpe_ratio"]) || "2.90"]
-      ],
-
-      guardrails: [
-        ["SGOV Nest", pick(s0, ["sgov_nest"]) || pct(cashPct)],
-        ["Active Exposure", pick(s0, ["active_exposure"]) || pct(100 - cashPct)],
-        ["Lean Capital", pick(s0, ["lean_capital"]) || money(totalValue * ((100 - cashPct)/100))],
-        ["Lean Participation", aggressive ? "FAST" : (pick(s0, ["lean_participation"]) || "100.00%")],
-        ["Primary Blocker", aggressive ? "Overlap / Heat" : (pick(s0, ["primary_blocker","blocker"]) || "Cash Anchor")],
-        ["Blocker Severity", aggressive ? "Higher" : (pick(s0, ["blocker_severity"]) || "Moderate")]
-      ],
-
-      holdings,
-
-      performanceSeries: aggressive
-        ? [100,100.3,100.15,100.4,101.05,101.25,101.6]
-        : [100,100.2,100.05,100.01,100.85,100.86,101.02],
-
-      performanceMeta: [
-        `Window: ${pick(s0, ["window"]) || "2026-03-10 → 2026-03-16"}`,
-        `Lean: ${aggressive ? "1.60%" : (pick(s0, ["lean_return"]) || "0.89%")}`,
-        `Benchmarks: ${pick(s0, ["benchmarks"]) || "SPY / QQQ / SGOV"}`
-      ],
-
+      heroDate: pick(s0,["date","as_of","last_updated"]) || new Date().toLocaleDateString(),
+      heroStatus: aggressive ? "Lean aggressive engine online" : (pick(s0,["campaign_status","status","headline"]) || "Lean engine online"),
+      heroMeta: [aggressive ? "Lean Aggressive" : (pick(s0,["mode","campaign_mode","posture"]) || "Lean"), aggressive ? "Attack Watch" : (pick(s0,["trigger","gate"]) || "Watch"), aggressive ? "Elevated" : (pick(s0,["risk","risk_state"]) || "Controlled"), pick(s0,["weather","market_weather"]) || "Clear"],
+      readyPct: aggressive ? "72%" : "63%", riskPct: aggressive ? "56%" : "39%", valueTxt: money(totalValue), lastTxt: pick(s0,["last","last_move"]) || "$0.00 / 0.00%", volTxt: aggressive ? "hotter" : (pick(s0,["vol_light","volatility_light","vol"]) || "wobbly"),
+      score, mode: aggressive ? "Lean Aggressive" : (pick(s0,["mode","campaign_mode","posture"]) || "Lean"), trigger: aggressive ? "Attack Watch" : (pick(s0,["trigger","gate"]) || "Watch"),
+      risk: aggressive ? "Elevated" : (pick(s0,["risk","risk_state"]) || "Controlled"), weather: pick(s0,["weather","market_weather"]) || "Clear", corr: pick(s0,["correlation","corr","corr_state"]) || "0.61",
+      volLayer: aggressive ? "hot" : (pick(s0,["vol_light","volatility_light","vol"]) || "wobbly"), sharpe: pick(s0,["sharpe","sharpe_ratio"]) || "2.90",
+      actions: uniq(compact([pick(s0,["action_1","bias_1","today_bias"]), pick(s0,["action_2","bias_2"]), pick(s0,["action_3","bias_3"]), aggressive ? "Lean harder into leaders" : "Keep posture clean", aggressive ? "Use tighter but faster sizing" : "Let leaders prove themselves", "Avoid overlap stacking"])).slice(0,3),
+      systemState: [["Market Regime", aggressive ? "RISK ON+" : (pick(s0,["market_regime","regime"]) || "RISK ON")], ["Deployment", aggressive ? "DEPLOY FASTER" : (pick(s0,["deployment"]) || "CONSIDER DEPLOYING CASH")], ["Cash Anchor", pct(cashPct)], ["Liquidity", pick(s0,["liquidity"]) || "LIQUID"], ["Volatility", aggressive ? "ACTIVE" : (pick(s0,["volatility"]) || "WATCH")], ["Brake", aggressive ? "SOFTER" : (pick(s0,["brake","primary_blocker"]) || "NONE")]],
+      guardrails: [["SGOV Nest", pick(s0,["sgov_nest"]) || pct(cashPct)], ["Active Exposure", pick(s0,["active_exposure"]) || pct(100 - cashPct)], ["Lean Capital", pick(s0,["lean_capital"]) || money(totalValue * ((100 - cashPct)/100))], ["Primary Blocker", aggressive ? "Overlap / Heat" : (pick(s0,["primary_blocker","blocker"]) || "Cash Anchor")], ["Severity", aggressive ? "Higher" : (pick(s0,["blocker_severity"]) || "Moderate")]],
+      performanceSeries: aggressive ? [100,100.3,100.15,100.4,101.05,101.25,101.6] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
+      benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4], performanceMeta: [aggressive ? "LEAN • 1.60%" : "LEAN • 0.89%", "SPY • 0.40%", "Window • 3/10 → 3/16"],
+      actionEngine: [["Today", aggressive ? "PRESS LEADERS" : (pick(s0,["today_action","action_today"]) || "DONE: VXUS")], ["Reason", aggressive ? "Aggressive toggle is ON" : (pick(s0,["reason"]) || "Today already marked exec")], ["Next Trading Day", aggressive ? "Buy strongest horse first" : (pick(s0,["next_trading_day"]) || "BUY $75 CRWV")], ["Meta", aggressive ? "Today MED | Next HIGH" : (pick(s0,["meta"]) || "Today LOW | Next MED")]],
+      actionNote: aggressive ? "Aggressive mode is on. Push faster, but still do not stack overlap." : "You already checked off today. Next live move is staged.",
+      mathSnapshot: [["Drawdown", pick(s0,["drawdown"]) || "-0.05%"], ["Peak", pick(s0,["peak"]) || money(totalValue)], ["Vol", aggressive ? "Higher" : (pick(s0,["vol","volatility"]) || "0.00%")], ["Sharpe", pick(s0,["sharpe","sharpe_ratio"]) || "2.90"]],
+      pairCorr: [["ACHR vs ARKQ","-1.00"], ["SMH vs QQQ","0.91"], ["XLE vs Oil","0.84"], ["CRWV vs IWM","0.56"]],
       recentMoves: buildRecentMoves(systemRows),
-      warnings: uniq(compact([
-        aggressive ? "Aggressive mode can magnify mistakes" : "",
-        pick(s0, ["warning_1"]),
-        pick(s0, ["warning_2"]),
-        pick(s0, ["warnings"]) || `Heavy lean: Cash ${pct(cashPct)}`,
-        "Avoid overlap stacking"
-      ])).slice(0,4),
-
-      positionHistory: [
-        ["Ticker", pick(s0, ["position_ticker"]) || (holdings[0]?.ticker || "ACHR")],
-        ["Window", pick(s0, ["position_window"]) || "10 snapshots"],
-        ["Start", pick(s0, ["position_start"]) || "—"],
-        ["End", pick(s0, ["position_end"]) || "—"]
-      ],
-
-      pairMeta: [
-        ["Pair", pick(s0, ["pair"]) || "ACHR vs ARKQ"],
-        ["Reading", pick(s0, ["pair_reading"]) || "-1.00"]
-      ],
-
-      mc: [
-        ["Best Case", aggressive ? money(totalValue * 1.03) : money(totalValue * 1.017)],
-        ["Average", aggressive ? money(totalValue * 1.01) : money(totalValue * 1.001)],
-        ["Worst Case", aggressive ? money(totalValue * 0.985) : money(totalValue * 0.997)]
-      ],
-
-      health: [
-        ["Structure", "Clean top cards plus full engine panels in one screen."],
-        ["Holdings", "Compact scrollable holdings kept tight to save real estate."],
-        ["Info Icons", "Street-speak i icons restored on key panels and signals."],
-        ["Display", aggressive ? "Lean Aggressive visual mode is active." : "Sources pill hidden, useful blocks stay visible."]
-      ],
-
-      macro: [
-        ["Date", pick(s0, ["macro_date","date"]) || new Date().toLocaleDateString()],
-        ["10Y", pick(s0, ["10y","ten_year"]) || "4.28"],
-        ["2Y", pick(s0, ["2y","two_year"]) || "3.73"],
-        ["Curve", pick(s0, ["curve"]) || "0.55"],
-        ["DXY", pick(s0, ["dxy"]) || "100.53"],
-        ["Oil", pick(s0, ["oil"]) || "68.71"],
-        ["Gold", pick(s0, ["gold"]) || "2,180.00"],
-        ["VIX", pick(s0, ["vix"]) || "27.85"]
-      ],
-
-      history: [
-        ["Date", pick(s0, ["history_date"]) || "—"],
-        ["Portfolio", pick(s0, ["portfolio"]) || money(totalValue)],
-        ["SPY", pick(s0, ["spy"]) || "684.3"],
-        ["Notes", pick(s0, ["history_notes","notes"]) || "Semis strength"]
-      ],
-
-      shock: [
-        ["OIL", "Normal energy conditions", "Green", "Stable", "Score 0"],
-        ["LNG", "LNG supply stable", "Green", "Stable", "Score 0"],
-        ["SHIPPING", "Maritime routes normal", "Green", "Stable", "Score 0"]
-      ]
+      warnings: uniq(compact([aggressive ? "Aggressive mode can magnify mistakes." : "", pick(s0,["warning_1"]), pick(s0,["warning_2"]), "Heavy lean: cash still dominant.", "Avoid overlap stacking."])).slice(0,4),
+      health: [["Structure","Clean compressed layout that still reads fast."], ["Holdings","Compact scrollable panel keeps the right rail tight."], ["Tooltips","Street-speak i icons explain parts in plain English."], ["Mode", aggressive ? "Lean Aggressive visual mode is active." : "Standard Lean mode is active."]],
+      holdings
     };
-  }
-
-  function buildHeatmap(holdings, cashPct){
-    const bins = {};
-    holdings.forEach(h => {
-      const key = /cash|sgov/i.test(`${h.ticker} ${h.name}`) ? "Cash" : (h.sector || "Other");
-      bins[key] = (bins[key] || 0) + (h.weightNum || 0);
-    });
-
-    if(!Object.keys(bins).length){
-      bins["Cash"] = cashPct;
-      bins["Core"] = 3.9;
-      bins["Industrials"] = 3.5;
-      bins["Energy"] = 3.1;
-      bins["Tech"] = 1.7;
-      bins["International"] = 1.0;
-      bins["Innovation"] = 0.8;
-    }
-
-    return Object.entries(bins)
-      .sort((a,b) => b[1] - a[1])
-      .slice(0,8)
-      .map(([k,v]) => [k, pct(v)]);
   }
 
   function buildRecentMoves(rows){
-    const out = rows.slice(0,6).map(r => [
-      pick(r, ["move_date","date"]) || new Date().toLocaleDateString(),
-      pick(r, ["move_ticker","ticker","symbol"]) || "VXUS",
-      pick(r, ["move_amount","amount"]) || "$75.00"
-    ]);
-    return out.length ? out : [
-      [new Date().toLocaleDateString(), "VXUS", "$75.00"],
-      ["2026-03-09", "XLE", "$75.00"]
-    ];
+    const out = rows.slice(0,6).map(r => [pick(r,["move_date","date"]) || new Date().toLocaleDateString(), pick(r,["move_ticker","ticker","symbol"]) || "VXUS", pick(r,["move_amount","amount"]) || "$75.00"]);
+    return out.length ? out : [["2026-03-16","VXUS","$75.00"],["2026-03-09","XLE","$75.00"],["2026-03-07","SMH","$100.00"],["2026-03-05","CRWV","$75.00"]];
   }
 
   function renderAll(v){
-    $("#heroDate").textContent = v.heroDate;
-    $("#heroStatus").textContent = v.heroStatus;
+    $("#heroDate").textContent = v.heroDate; $("#heroStatus").textContent = v.heroStatus;
     $("#heroMeta").innerHTML = v.heroMeta.map(x => `<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
-    $("#convictionFill").style.width = `${clamp(v.score, 1, 100)}%`;
-
-    $("#readyPct").textContent = v.readyPct;
-    $("#riskPct").textContent = v.riskPct;
-    $("#valueTxt").textContent = v.totalValue;
-    $("#lastTxt").textContent = v.lastTxt;
-    $("#volTxt").textContent = v.volTxt;
-
-    $("#modeVal").textContent = v.mode;
-    $("#modeVal").className = `miniValue ${toneClass(v.mode)}`;
-    $("#triggerVal").textContent = v.trigger;
-    $("#triggerVal").className = `miniValue ${toneClass(v.trigger)}`;
-    $("#riskVal").textContent = v.riskState;
-    $("#riskVal").className = `miniValue ${toneClass(v.riskState)}`;
-    $("#weatherVal").textContent = v.weather;
-    $("#weatherVal").className = `miniValue ${toneClass(v.weather)}`;
-
-    $("#corrVal").textContent = v.corr;
-    $("#corrVal").className = `miniValue ${toneClass(v.corr)}`;
-    $("#volLayerVal").textContent = v.volLayer;
-    $("#volLayerVal").className = `miniValue ${toneClass(v.volLayer)}`;
-    $("#sharpeVal").textContent = v.sharpe;
-    $("#scoreVal").textContent = String(v.score);
-
-    $("#actionBiasList").innerHTML = v.actions.map(x => `
-      <div class="trow">
-        <div class="tlabel">${escapeHtml(x)}</div>
-        <div class="tval ${toneClass(x)}">LIVE</div>
-      </div>
-    `).join("");
-
-    renderTable("#systemStateTable", v.systemState);
-    renderTable("#heatmapTable", v.heatmap);
-    renderTable("#actionEngineTable", v.actionEngine);
-    $("#actionNote").textContent = v.actionNote;
-    renderTable("#mathSnapshotTable", v.mathSnapshot);
-    renderTable("#guardrailTable", v.guardrails);
-    renderHoldings(v.holdings);
-    drawLineChart("#perfSvg", [v.performanceSeries, [100,100.05,100.1,100.2,100.25,100.35,100.4]]);
+    $("#convictionFill").style.width = `${clamp(v.score,1,100)}%`;
+    $("#readyPct").textContent = v.readyPct; $("#riskPct").textContent = v.riskPct; $("#valueTxt").textContent = v.valueTxt; $("#lastTxt").textContent = v.lastTxt; $("#volTxt").textContent = v.volTxt;
+    setCube("#modeVal", v.mode); setCube("#triggerVal", v.trigger); setCube("#riskVal", v.risk); setCube("#weatherVal", v.weather); setCube("#corrVal", v.corr); setCube("#volLayerVal", v.volLayer); setCube("#sharpeVal", v.sharpe); setCube("#scoreVal", String(v.score));
+    $("#actionBiasList").innerHTML = v.actions.map(x => `<div class="trow"><div class="tlabel">${escapeHtml(x)}</div><div class="tval blueText">LIVE</div></div>`).join("");
+    renderTable("#systemStateTable", v.systemState); $("#guardrailWrap").innerHTML = wrapTableHtml(v.guardrails); drawPerformanceChart("#perfSvg", v.performanceSeries, v.benchmarkSeries);
     $("#perfMeta").innerHTML = v.performanceMeta.map(x => `<div class="mini">${escapeHtml(x)}</div>`).join("");
-
-    $("#recentMovesBody").innerHTML = v.recentMoves.map(r => `
-      <tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>
-    `).join("");
-
-    $("#warningsList").innerHTML = v.warnings.map(w => `<div class="note">${escapeHtml(w)}</div>`).join("");
-    renderTable("#positionHistoryTable", v.positionHistory);
-    renderTable("#pairMetaTable", v.pairMeta);
-    drawLineChart("#pairSvg", [[100,99.8,100.2,100.9,101.3,101.5,101.9],[100,100.1,99.9,99.7,99.4,99.2,99.0]]);
-    renderTable("#mcTable", v.mc);
-    drawBars("#mcSvg", v.mc.map(x => num(x[1], 0)));
-    $("#healthList").innerHTML = v.health.map(r => `<div class="note"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
-    renderTable("#macroTable", v.macro);
-    renderTable("#historyTable", v.history);
-    $("#shockList").innerHTML = v.shock.map(r => `
-      <div class="shockRow">
-        <div>
-          <div class="shockTitle">${escapeHtml(r[0])}</div>
-          <div class="shockBody">${escapeHtml(r[1])}</div>
-        </div>
-        <div class="tag ${String(r[2]).toLowerCase().includes("green") ? "green" : String(r[2]).toLowerCase().includes("yellow") ? "yellow" : "red"}">${escapeHtml(r[2])}</div>
-        <div class="tag">${escapeHtml(r[3])}</div>
-        <div class="tag">${escapeHtml(r[4])}</div>
-      </div>
-    `).join("");
+    renderTable("#actionEngineTable", v.actionEngine); $("#actionNote").textContent = v.actionNote;
+    $("#mathSnapshotGrid").innerHTML = v.mathSnapshot.map(([k,val]) => `<div class="cube"><div class="cubeLabel">${escapeHtml(k)}</div><div class="cubeValue ${toneClass(val)}">${escapeHtml(val)}</div></div>`).join("");
+    $("#pairTableWrap").innerHTML = wrapTableHtml(v.pairCorr);
+    $("#recentMovesBody").innerHTML = v.recentMoves.map(r => `<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>`).join("");
+    $("#warningsList").innerHTML = v.warnings.map(x => `<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
+    $("#healthList").innerHTML = v.health.map(r => `<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
+    renderHoldings(v.holdings);
   }
 
-  function renderTable(sel, rows){
-    $(sel).innerHTML = rows.map(r => `
-      <div class="trow">
-        <div class="tlabel">${escapeHtml(r[0])}</div>
-        <div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div>
-      </div>
-    `).join("");
-  }
-
+  function setCube(sel, value){ const el = $(sel); el.textContent = value; el.className = `cubeValue ${toneClass(value)}`; }
+  function renderTable(sel, rows){ $(sel).innerHTML = rows.map(r => `<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join(""); }
+  function wrapTableHtml(rows){ return rows.map(r => `<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join(""); }
   function renderHoldings(rows){
     $("#holdingsCount").textContent = `${rows.length} items`;
-    if(!rows.length){
-      $("#holdingsList").innerHTML = `<div class="empty">No holdings rows found.</div>`;
-      return;
-    }
-    $("#holdingsList").innerHTML = rows.map(h => `
-      <div class="holdingRow">
-        <div>
-          <div class="holdingName">${escapeHtml(h.ticker)}</div>
-          <div class="holdingSub">${escapeHtml(h.name || h.sector || "—")}</div>
-        </div>
-        <div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div>
-        <div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div>
-        <div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div>
-      </div>
-    `).join("");
+    if(!rows.length){ $("#holdingsList").innerHTML = `<div class="note">No holdings rows found.</div>`; return; }
+    $("#holdingsList").innerHTML = rows.map(h => `<div class="holdingRow"><div><div class="holdingName">${escapeHtml(h.ticker)}</div><div class="holdingSub">${escapeHtml(h.name || h.sector || "—")}</div></div><div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div><div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div><div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div></div>`).join("");
   }
-
-  function drawLineChart(sel, seriesList){
-    const svg = $(sel);
-    const width = 1000, height = 260, pad = 40;
-    const values = seriesList.flat();
-    const min = Math.min(...values), max = Math.max(...values);
-    const xStep = (width - pad * 2) / (seriesList[0].length - 1 || 1);
-    const y = v => {
-      if(max === min) return height / 2;
-      return height - pad - ((v - min) / (max - min)) * (height - pad * 2);
-    };
-
-    const grid = [0,1,2,3].map(i => {
-      const gy = pad + i * ((height - pad*2)/3);
-      return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;
-    }).join("");
-
-    const colors = ["#22c55e", "#60a5fa", "#ff355e"];
-    const paths = seriesList.map((series, idx) => {
-      const d = series.map((v,i) => `${i===0 ? "M" : "L"} ${pad + i*xStep} ${y(v)}`).join(" ");
-      return `<path d="${d}" fill="none" stroke="${colors[idx % colors.length]}" stroke-width="4" stroke-linecap="round" />`;
-    }).join("");
-
-    svg.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}${paths}</svg>`;
+  function drawPerformanceChart(sel, leanSeries, benchSeries){
+    const svg = $(sel), width = 1000, height = 220, pad = 40, values = leanSeries.concat(benchSeries);
+    const min = Math.min(...values), max = Math.max(...values), xStep = (width - pad * 2) / (leanSeries.length - 1 || 1);
+    const y = v => max === min ? height / 2 : height - pad - ((v - min) / (max - min)) * (height - pad * 2);
+    const grid = [0,1,2,3].map(i => { const gy = pad + i * ((height - pad*2)/3); return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`; }).join("");
+    const leanPath = leanSeries.map((v,i) => `${i===0 ? "M":"L"} ${pad + i*xStep} ${y(v)}`).join(" ");
+    const benchPath = benchSeries.map((v,i) => `${i===0 ? "M":"L"} ${pad + i*xStep} ${y(v)}`).join(" ");
+    const leanLastX = pad + (leanSeries.length - 1) * xStep, leanLastY = y(leanSeries[leanSeries.length - 1]), benchLastY = y(benchSeries[benchSeries.length - 1]);
+    svg.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<path d="${leanPath}" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" /><path d="${benchPath}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" /><text x="${leanLastX - 55}" y="${leanLastY - 8}" fill="#22c55e" font-size="14" font-weight="800">LEAN</text><text x="${leanLastX - 45}" y="${benchLastY - 8}" fill="#60a5fa" font-size="14" font-weight="800">SPY</text></svg>`;
   }
+  function escapeHtml(str){ return String(str ?? "").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
 
-  function drawBars(sel, values){
-    const svg = $(sel);
-    const width = 1000, height = 170, pad = 60;
-    const max = Math.max(...values, 1);
-    const barW = 120;
-    const gap = 150;
-    const startX = 140;
-    const bars = values.map((v, i) => {
-      const h = ((v / max) * (height - pad - 25));
-      const x = startX + i * (barW + gap);
-      const y = height - 20 - h;
-      return `<rect x="${x}" y="${y}" width="${barW}" height="${h}" rx="12" fill="#315aa6" />`;
-    }).join("");
-    svg.innerHTML = `<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none"><line x1="50" y1="${height-20}" x2="${width-50}" y2="${height-20}" stroke="rgba(255,255,255,.08)" />${bars}</svg>`;
-  }
-
-  function escapeHtml(str){
-    return String(str ?? "")
-      .replaceAll("&","&amp;")
-      .replaceAll("<","&lt;")
-      .replaceAll(">","&gt;")
-      .replaceAll('"',"&quot;")
-      .replaceAll("'","&#39;");
-  }
-
-  applyAggressiveUI();
-  startClock();
-  loadAll();
+  applyAggressiveUI(); startClock(); loadAll();
 });
 </script>
 </body>
