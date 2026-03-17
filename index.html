@@ -3,363 +3,397 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal 1.8 Data Engine</title>
+  <title>Lean Terminal Index</title>
   <style>
     :root{
       --bg:#0b1020;
       --panel:#121a2b;
-      --panel2:#0f172a;
+      --panel-2:#0f172a;
       --text:#e5e7eb;
       --muted:#94a3b8;
       --green:#22c55e;
       --yellow:#f59e0b;
       --red:#ef4444;
       --blue:#3b82f6;
-      --cyan:#06b6d4;
-      --purple:#8b5cf6;
       --line:rgba(255,255,255,.08);
       --pill:#111827;
-      --shadow:0 12px 30px rgba(0,0,0,.25);
+      --shadow:0 12px 32px rgba(0,0,0,.28);
+      --radius:18px;
     }
 
-    *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    a{color:#93c5fd;text-decoration:none}
-    button,input,select,textarea{font:inherit}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
+    body{
+      margin:0;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
+      color:var(--text);
+    }
 
     .wrap{
-      max-width:1500px;
+      max-width:1400px;
       margin:0 auto;
       padding:18px;
     }
 
     .topbar{
       display:flex;
+      flex-wrap:wrap;
+      gap:12px;
       align-items:center;
       justify-content:space-between;
-      gap:16px;
-      flex-wrap:wrap;
-      margin-bottom:18px;
+      margin-bottom:14px;
     }
 
-    .titleBlock h1{
+    .brand{
+      display:flex;
+      align-items:center;
+      gap:12px;
+    }
+
+    .brand h1{
       margin:0;
-      font-size:28px;
-      line-height:1.1;
-      letter-spacing:.3px;
+      font-size:1.15rem;
+      font-weight:700;
+      letter-spacing:.2px;
     }
 
     .sub{
       color:var(--muted);
-      margin-top:6px;
-      font-size:14px;
+      font-size:.88rem;
+      margin-top:2px;
     }
 
-    .statusRow{
+    .toolbar{
       display:flex;
       gap:10px;
       flex-wrap:wrap;
-    }
-
-    .pill{
-      background:var(--pill);
-      border:1px solid var(--line);
-      color:var(--text);
-      padding:8px 12px;
-      border-radius:999px;
-      font-size:13px;
-      display:inline-flex;
       align-items:center;
-      gap:8px;
-      white-space:nowrap;
     }
 
-    .dot{
-      width:10px;height:10px;border-radius:50%;
-      display:inline-block;
-      background:var(--muted);
-      box-shadow:0 0 0 2px rgba(255,255,255,.04) inset;
-    }
-    .green{background:var(--green)}
-    .yellow{background:var(--yellow)}
-    .red{background:var(--red)}
-    .blue{background:var(--blue)}
-    .cyan{background:var(--cyan)}
-    .purple{background:var(--purple)}
-
-    .card{
-      background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));
+    .btn, .input{
+      background:var(--panel);
+      color:var(--text);
       border:1px solid var(--line);
-      border-radius:20px;
+      border-radius:12px;
+      padding:10px 12px;
+      font:inherit;
       box-shadow:var(--shadow);
     }
 
-    .controls{
-      padding:16px;
-      margin-bottom:18px;
-    }
-
-    .controlsHeader{
-      display:flex;
-      justify-content:space-between;
-      align-items:center;
-      gap:12px;
-      flex-wrap:wrap;
-      margin-bottom:12px;
-    }
-
-    .controlsHeader h2{
-      margin:0;
-      font-size:18px;
-    }
-
-    .controlsGrid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:12px;
-    }
-
-    .field{
-      display:flex;
-      flex-direction:column;
-      gap:6px;
-    }
-
-    .field label{
-      font-size:12px;
-      color:var(--muted);
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-
-    .field input{
-      width:100%;
-      background:#0a1222;
-      border:1px solid var(--line);
-      color:var(--text);
-      border-radius:12px;
-      padding:10px 12px;
-    }
-
-    .btnRow{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      margin-top:14px;
-    }
-
     .btn{
-      background:#13203a;
-      color:var(--text);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 14px;
       cursor:pointer;
-      transition:.15s ease;
     }
-    .btn:hover{transform:translateY(-1px)}
-    .btn.primary{background:#17305f;border-color:rgba(59,130,246,.4)}
-    .btn.good{background:#133320;border-color:rgba(34,197,94,.35)}
-    .btn.warn{background:#3a2a0f;border-color:rgba(245,158,11,.35)}
 
-    .heroGrid{
+    .btn:hover{
+      border-color:rgba(255,255,255,.18);
+    }
+
+    .grid{
       display:grid;
-      grid-template-columns:repeat(4,minmax(0,1fr));
       gap:14px;
-      margin-bottom:18px;
     }
 
-    .metric{
+    .grid-top{
+      grid-template-columns:1.2fr .9fr .9fr .9fr;
+      margin-bottom:14px;
+    }
+
+    .grid-main{
+      grid-template-columns:1.15fr .95fr;
+    }
+
+    @media (max-width:1180px){
+      .grid-top{ grid-template-columns:1fr 1fr; }
+      .grid-main{ grid-template-columns:1fr; }
+    }
+
+    @media (max-width:740px){
+      .grid-top{ grid-template-columns:1fr; }
+    }
+
+    .card{
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
+      border:1px solid var(--line);
+      border-radius:var(--radius);
       padding:16px;
-      min-height:116px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
+      box-shadow:var(--shadow);
+      min-width:0;
     }
 
-    .metricTop{
-      display:flex;
-      justify-content:space-between;
-      align-items:flex-start;
-      gap:10px;
-    }
-
-    .metricLabel{
-      color:var(--muted);
-      font-size:12px;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-    }
-
-    .metricValue{
-      font-size:24px;
+    .card h2, .card h3{
+      margin:0 0 10px 0;
+      font-size:1rem;
       font-weight:700;
-      margin-top:6px;
     }
 
-    .metricSub{
-      color:var(--muted);
-      font-size:13px;
-      margin-top:8px;
-      line-height:1.35;
-    }
-
-    .sectionGrid{
-      display:grid;
-      grid-template-columns:repeat(2,minmax(0,1fr));
-      gap:16px;
-    }
-
-    .panel{
-      overflow:hidden;
-    }
-
-    .panelHead{
-      padding:14px 16px;
-      border-bottom:1px solid var(--line);
+    .cardTitleRow{
       display:flex;
+      align-items:center;
       justify-content:space-between;
-      align-items:center;
       gap:10px;
-      flex-wrap:wrap;
+      margin-bottom:8px;
     }
 
-    .panelHead h3{
-      margin:0;
-      font-size:18px;
-    }
-
-    .panelBody{
-      padding:14px 16px 16px;
-    }
-
-    .micro{
+    .muted{
       color:var(--muted);
-      font-size:12px;
     }
 
-    .sourceLine{
+    .heroValue{
+      font-size:2rem;
+      font-weight:800;
+      line-height:1;
+      margin:6px 0 8px 0;
+    }
+
+    .heroMeta{
       display:flex;
-      gap:8px;
       flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .pill{
+      display:inline-flex;
       align-items:center;
-      font-size:12px;
-      color:var(--muted);
-    }
-
-    .miniBadge{
-      font-size:11px;
-      padding:4px 8px;
-      border-radius:999px;
+      gap:6px;
       border:1px solid var(--line);
-      background:#0d1528;
-      color:var(--muted);
+      background:var(--pill);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:.8rem;
+      white-space:nowrap;
     }
 
-    .summaryList{
+    .pill.small{
+      font-size:.72rem;
+      padding:4px 8px;
+    }
+
+    .kpis{
       display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
       gap:10px;
     }
 
-    .summaryItem{
+    .kpi{
+      background:rgba(255,255,255,.025);
       border:1px solid var(--line);
-      background:#0b1426;
       border-radius:14px;
       padding:12px;
     }
 
-    .summaryItemTitle{
-      font-weight:600;
+    .kpiLabel{
+      color:var(--muted);
+      font-size:.78rem;
       margin-bottom:6px;
+    }
+
+    .kpiValue{
+      font-size:1.15rem;
+      font-weight:700;
+    }
+
+    .sectionLabel{
+      color:var(--muted);
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:10px;
+    }
+
+    .list{
+      display:grid;
+      gap:8px;
+    }
+
+    .row{
       display:flex;
       align-items:center;
-      gap:8px;
-      flex-wrap:wrap;
-    }
-
-    .summaryItemText{
-      color:var(--muted);
-      font-size:14px;
-      line-height:1.45;
-      white-space:pre-wrap;
-      word-break:break-word;
-    }
-
-    .tableWrap{
-      overflow:auto;
+      justify-content:space-between;
+      gap:10px;
       border:1px solid var(--line);
-      border-radius:14px;
-      background:#09111f;
-    }
-
-    table{
-      width:100%;
-      border-collapse:collapse;
-      min-width:640px;
-    }
-
-    th,td{
-      padding:10px 12px;
-      border-bottom:1px solid var(--line);
-      text-align:left;
-      font-size:13px;
-      vertical-align:top;
-    }
-
-    th{
-      position:sticky;
-      top:0;
-      background:#0e172b;
-      color:#cbd5e1;
-      z-index:1;
-      font-weight:600;
-    }
-
-    tr:hover td{
       background:rgba(255,255,255,.02);
+      border-radius:14px;
+      padding:10px 12px;
+      min-width:0;
+    }
+
+    .rowLeft{
+      min-width:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .ticker{
+      font-weight:800;
+      letter-spacing:.03em;
+    }
+
+    .metaSmall{
+      color:var(--muted);
+      font-size:.8rem;
+    }
+
+    .score{
+      font-weight:800;
+      font-size:.95rem;
+    }
+
+    .green{ color:var(--green); }
+    .yellow{ color:var(--yellow); }
+    .red{ color:var(--red); }
+    .blue{ color:var(--blue); }
+
+    .progress{
+      width:100%;
+      height:8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      margin-top:8px;
+    }
+
+    .bar{
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+      transition:width .25s ease;
+    }
+
+    .holdingsWrap{
+      display:grid;
+      gap:10px;
+    }
+
+    /* Smaller holdings pill with internal scroll */
+    .holdingScroller{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:330px;
+      overflow-y:auto;
+      padding-right:4px;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(255,255,255,.22) transparent;
+    }
+
+    .holdingScroller::-webkit-scrollbar{
+      width:8px;
+    }
+    .holdingScroller::-webkit-scrollbar-track{
+      background:transparent;
+    }
+    .holdingScroller::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,.18);
+      border-radius:999px;
+    }
+
+    .holdingRow{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) auto auto auto;
+      gap:8px;
+      align-items:center;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:8px 10px;
+      min-width:0;
+    }
+
+    .holdingMain{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .holdingName{
+      font-weight:700;
+      font-size:.88rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .holdingSub{
+      color:var(--muted);
+      font-size:.74rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .miniPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      background:#101827;
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:.72rem;
+      min-width:62px;
+      text-align:center;
+    }
+
+    .tableLike{
+      display:grid;
+      gap:8px;
+    }
+
+    .headline{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .headlineTitle{
+      font-weight:700;
+      margin-bottom:5px;
+    }
+
+    .headlineBody{
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.38;
+    }
+
+    .footerNote{
+      margin-top:14px;
+      color:var(--muted);
+      font-size:.8rem;
+      text-align:right;
     }
 
     .empty{
       color:var(--muted);
-      font-size:14px;
-      padding:14px 0;
+      font-size:.9rem;
+      border:1px dashed var(--line);
+      border-radius:12px;
+      padding:12px;
+    }
+
+    .hidden{
+      display:none !important;
     }
 
     .errorBox{
       white-space:pre-wrap;
-      background:#2a1117;
+      border:1px solid rgba(239,68,68,.45);
+      background:rgba(239,68,68,.09);
       color:#fecaca;
-      border:1px solid rgba(239,68,68,.35);
-      border-radius:16px;
-      padding:14px;
-      margin-bottom:18px;
-      font-size:13px;
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:14px;
+      font-size:.88rem;
     }
 
-    .foot{
+    .tiny{
+      font-size:.75rem;
       color:var(--muted);
-      font-size:12px;
-      margin-top:16px;
-      text-align:center;
-    }
-
-    .kicker{
-      display:flex;
-      gap:8px;
-      flex-wrap:wrap;
-      margin-bottom:8px;
-    }
-
-    @media (max-width:1100px){
-      .heroGrid{grid-template-columns:repeat(2,minmax(0,1fr))}
-      .sectionGrid{grid-template-columns:1fr}
-      .controlsGrid{grid-template-columns:1fr}
-    }
-
-    @media (max-width:640px){
-      .heroGrid{grid-template-columns:1fr}
-      .wrap{padding:12px}
-      .titleBlock h1{font-size:22px}
     }
   </style>
 </head>
@@ -368,598 +402,551 @@
     <div id="errorBoxMount"></div>
 
     <div class="topbar">
-      <div class="titleBlock">
-        <h1>Lean Terminal 1.8 — Data Engine</h1>
-        <div class="sub">Macro + Correlation + Shock + Executive / Network layer</div>
+      <div class="brand">
+        <div>
+          <h1>Lean Terminal — Current Campaign</h1>
+          <div class="sub">Cleaner layout • sources pill hidden • compact scrollable holdings</div>
+        </div>
       </div>
 
-      <div class="statusRow">
-        <div class="pill"><span id="liveDot" class="dot blue"></span><span id="liveStatus">Booting</span></div>
-        <div class="pill">Updated <span id="updatedAt">—</span></div>
+      <div class="toolbar">
+        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn" id="settingsBtn">Data Settings</button>
       </div>
     </div>
 
-    <section class="card controls">
-      <div class="controlsHeader">
-        <h2>Data Sources</h2>
-        <div class="micro">Saved in local storage</div>
+    <section class="grid grid-top">
+      <div class="card">
+        <div class="cardTitleRow">
+          <h2>Campaign Snapshot</h2>
+          <span class="pill small" id="campaignDate">Loading...</span>
+        </div>
+        <div class="heroValue" id="heroStatus">Waiting for data</div>
+        <div class="heroMeta" id="heroMeta"></div>
+        <div class="progress"><div class="bar" id="convictionBar"></div></div>
       </div>
 
-      <div class="controlsGrid">
-        <div class="field">
-          <label for="macroUrl">Macro CSV</label>
-          <input id="macroUrl" type="text" />
-        </div>
-
-        <div class="field">
-          <label for="correlationUrl">Correlation CSV</label>
-          <input id="correlationUrl" type="text" />
-        </div>
-
-        <div class="field">
-          <label for="shockUrl">Shock / Trigger CSV</label>
-          <input id="shockUrl" type="text" />
-        </div>
-
-        <div class="field">
-          <label for="networkUrl">Executive / Network CSV</label>
-          <input id="networkUrl" type="text" />
-        </div>
-      </div>
-
-      <div class="btnRow">
-        <button class="btn primary" id="refreshBtn">Refresh Engine</button>
-        <button class="btn good" id="saveBtn">Save URLs</button>
-        <button class="btn warn" id="resetBtn">Reset Defaults</button>
-      </div>
-    </section>
-
-    <section class="heroGrid">
-      <div class="card metric">
-        <div class="metricTop">
-          <div>
-            <div class="metricLabel">Macro Layer</div>
-            <div class="metricValue" id="macroScore">—</div>
+      <div class="card">
+        <h3>Posture</h3>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="kpiLabel">Mode</div>
+            <div class="kpiValue" id="modeValue">—</div>
           </div>
-          <span id="macroDot" class="dot blue"></span>
+          <div class="kpi">
+            <div class="kpiLabel">Trigger</div>
+            <div class="kpiValue" id="triggerValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Risk</div>
+            <div class="kpiValue" id="riskValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Weather</div>
+            <div class="kpiValue" id="weatherValue">—</div>
+          </div>
         </div>
-        <div class="metricSub" id="macroSub">Waiting for data.</div>
       </div>
 
-      <div class="card metric">
-        <div class="metricTop">
-          <div>
-            <div class="metricLabel">Correlation Layer</div>
-            <div class="metricValue" id="correlationScore">—</div>
+      <div class="card">
+        <h3>Math Layer</h3>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="kpiLabel">Correlation</div>
+            <div class="kpiValue" id="corrValue">—</div>
           </div>
-          <span id="correlationDot" class="dot blue"></span>
+          <div class="kpi">
+            <div class="kpiLabel">Vol Light</div>
+            <div class="kpiValue" id="volValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Sharpe</div>
+            <div class="kpiValue" id="sharpeValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Score</div>
+            <div class="kpiValue" id="scoreValue">—</div>
+          </div>
         </div>
-        <div class="metricSub" id="correlationSub">Waiting for data.</div>
       </div>
 
-      <div class="card metric">
-        <div class="metricTop">
-          <div>
-            <div class="metricLabel">Shock / Trigger Layer</div>
-            <div class="metricValue" id="shockScore">—</div>
-          </div>
-          <span id="shockDot" class="dot blue"></span>
+      <div class="card">
+        <h3>Action Bias</h3>
+        <div class="list" id="actionList">
+          <div class="empty">No action rows loaded yet.</div>
         </div>
-        <div class="metricSub" id="shockSub">Waiting for data.</div>
-      </div>
-
-      <div class="card metric">
-        <div class="metricTop">
-          <div>
-            <div class="metricLabel">Executive / Network Layer</div>
-            <div class="metricValue" id="networkScore">—</div>
-          </div>
-          <span id="networkDot" class="dot purple"></span>
-        </div>
-        <div class="metricSub" id="networkSub">Waiting for data.</div>
       </div>
     </section>
 
-    <section class="sectionGrid">
-      <section class="card panel">
-        <div class="panelHead">
-          <h3>Macro Engine</h3>
-          <div class="sourceLine">
-            <span class="miniBadge">CSV</span>
-            <span id="macroMeta">No data yet</span>
-          </div>
+    <section class="grid grid-main">
+      <div class="card">
+        <div class="cardTitleRow">
+          <h2>Holdings</h2>
+          <span class="pill small" id="holdingsCount">0 items</span>
         </div>
-        <div class="panelBody">
-          <div class="kicker" id="macroBadges"></div>
-          <div class="summaryList" id="macroSummary"></div>
-          <div style="height:12px"></div>
-          <div class="tableWrap" id="macroTableWrap"></div>
-        </div>
-      </section>
+        <div class="holdingScroller" id="holdingsList"></div>
+        <div class="footerNote">Compact pill mode with internal scroll to save screen space.</div>
+      </div>
 
-      <section class="card panel">
-        <div class="panelHead">
-          <h3>Correlation Engine</h3>
-          <div class="sourceLine">
-            <span class="miniBadge">CSV</span>
-            <span id="correlationMeta">No data yet</span>
+      <div class="holdingsWrap">
+        <div class="card">
+          <h2>Lean Health Report</h2>
+          <div class="tableLike" id="healthList">
+            <div class="empty">No health data yet.</div>
           </div>
         </div>
-        <div class="panelBody">
-          <div class="kicker" id="correlationBadges"></div>
-          <div class="summaryList" id="correlationSummary"></div>
-          <div style="height:12px"></div>
-          <div class="tableWrap" id="correlationTableWrap"></div>
-        </div>
-      </section>
 
-      <section class="card panel">
-        <div class="panelHead">
-          <h3>Shock / Trigger Engine</h3>
-          <div class="sourceLine">
-            <span class="miniBadge">CSV</span>
-            <span id="shockMeta">No data yet</span>
+        <div class="card">
+          <h2>Radar</h2>
+          <div class="tableLike" id="radarList">
+            <div class="empty">No radar rows yet.</div>
           </div>
         </div>
-        <div class="panelBody">
-          <div class="kicker" id="shockBadges"></div>
-          <div class="summaryList" id="shockSummary"></div>
-          <div style="height:12px"></div>
-          <div class="tableWrap" id="shockTableWrap"></div>
-        </div>
-      </section>
 
-      <section class="card panel">
-        <div class="panelHead">
-          <h3>Executive / Network Layer</h3>
-          <div class="sourceLine">
-            <span class="miniBadge">CSV</span>
-            <span id="networkMeta">No data yet</span>
+        <div class="card">
+          <h2>Today’s Checklist</h2>
+          <div class="tableLike" id="todoList">
+            <div class="empty">No checklist rows yet.</div>
           </div>
         </div>
-        <div class="panelBody">
-          <div class="kicker" id="networkBadges"></div>
-          <div class="summaryList" id="networkSummary"></div>
-          <div style="height:12px"></div>
-          <div class="tableWrap" id="networkTableWrap"></div>
-        </div>
-      </section>
+      </div>
     </section>
 
-    <div class="foot">
-      Lean Terminal 1.8 • generic CSV-aware rendering • local URL persistence
-    </div>
+    <div class="footerNote tiny" id="footerStamp">Lean Terminal ready.</div>
   </div>
 
   <script>
-    window.addEventListener("DOMContentLoaded", () => {
-      /* ============================
-         Crash protection
-      ============================ */
-      const errorBoxMount = document.getElementById("errorBoxMount");
+  window.addEventListener("DOMContentLoaded", () => {
+    const errorBoxMount = document.getElementById("errorBoxMount");
 
-      function crash(label, err){
-        const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err);
-        if(errorBoxMount){
-          errorBoxMount.innerHTML = `<div class="errorBox">${escapeHtml(label)}\n\n${escapeHtml(msg)}</div>`;
-        }
-        console.error(label, err);
-        setLive("Error", "red");
+    function crash(label, err){
+      const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err);
+      if(errorBoxMount){
+        errorBoxMount.innerHTML = `<div class="errorBox">${escapeHtml(label)}\n\n${escapeHtml(msg)}</div>`;
+      }
+      console.error(label, err);
+    }
+
+    window.addEventListener("error", e => crash("CRASH:", e.error || e.message));
+    window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason));
+
+    const LS_HOLDINGS = "lean_holdings_csv_url";
+    const LS_SYSTEM   = "lean_system_csv_url";
+
+    // Hard-wired current holdings CSV link for the current Lean campaign
+    const DEFAULT_HOLDINGS =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
+
+    // Keeps existing system CSV if already saved. Replace this if you want to hard-wire a system sheet too.
+    const DEFAULT_SYSTEM = localStorage.getItem(LS_SYSTEM) || "";
+
+    const $ = sel => document.querySelector(sel);
+
+    $("#refreshBtn").addEventListener("click", loadAll);
+    $("#settingsBtn").addEventListener("click", openSettings);
+
+    function openSettings(){
+      const currentHoldings = localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
+      const currentSystem = localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
+
+      const holdingsUrl = prompt("Holdings CSV URL", currentHoldings);
+      if(holdingsUrl !== null && holdingsUrl.trim()){
+        localStorage.setItem(LS_HOLDINGS, holdingsUrl.trim());
       }
 
-      window.addEventListener("error", e => crash("CRASH:", e.error || e.message));
-      window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason));
-
-      /* ============================
-         Local storage keys
-      ============================ */
-      const LS_MACRO = "lean_macro_csv_url";
-      const LS_CORRELATION = "lean_correlation_csv_url";
-      const LS_SHOCK = "lean_shock_csv_url";
-      const LS_NETWORK = "lean_network_csv_url";
-
-      /* ============================
-         Default URLs
-      ============================ */
-      const DEFAULT_MACRO =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1415413978&single=true&output=csv";
-
-      const DEFAULT_CORRELATION =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=364290076&single=true&output=csv";
-
-      const DEFAULT_SHOCK =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1626144660&single=true&output=csv";
-
-      const DEFAULT_NETWORK =
-        "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-
-      /* ============================
-         DOM
-      ============================ */
-      const macroUrlEl = document.getElementById("macroUrl");
-      const correlationUrlEl = document.getElementById("correlationUrl");
-      const shockUrlEl = document.getElementById("shockUrl");
-      const networkUrlEl = document.getElementById("networkUrl");
-
-      const refreshBtn = document.getElementById("refreshBtn");
-      const saveBtn = document.getElementById("saveBtn");
-      const resetBtn = document.getElementById("resetBtn");
-
-      const updatedAtEl = document.getElementById("updatedAt");
-      const liveDot = document.getElementById("liveDot");
-      const liveStatus = document.getElementById("liveStatus");
-
-      /* ============================
-         Helpers
-      ============================ */
-      function $(id){ return document.getElementById(id); }
-
-      function escapeHtml(v){
-        return String(v ?? "")
-          .replaceAll("&","&amp;")
-          .replaceAll("<","&lt;")
-          .replaceAll(">","&gt;")
-          .replaceAll('"',"&quot;")
-          .replaceAll("'","&#39;");
+      const systemUrl = prompt("System CSV URL", currentSystem);
+      if(systemUrl !== null){
+        localStorage.setItem(LS_SYSTEM, systemUrl.trim());
       }
 
-      function setLive(label, colorClass){
-        liveStatus.textContent = label;
-        liveDot.className = `dot ${colorClass || "blue"}`;
+      loadAll();
+    }
+
+    function getHoldingsUrl(){
+      return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
+    }
+
+    function getSystemUrl(){
+      return localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
+    }
+
+    async function loadAll(){
+      try{
+        errorBoxMount.innerHTML = "";
+        setLoadingState();
+
+        const holdingsUrl = getHoldingsUrl();
+        const systemUrl = getSystemUrl();
+
+        const [holdingsRows, systemRows] = await Promise.all([
+          holdingsUrl ? fetchCsvRows(holdingsUrl) : Promise.resolve([]),
+          systemUrl ? fetchCsvRows(systemUrl) : Promise.resolve([])
+        ]);
+
+        renderHoldings(holdingsRows);
+        renderSystem(systemRows, holdingsRows);
+
+        $("#footerStamp").textContent =
+          `Updated ${new Date().toLocaleString()} • Sources pill intentionally hidden`;
+      }catch(err){
+        crash("Failed to load Lean Terminal data.", err);
       }
+    }
 
-      function nowStamp(){
-        return new Date().toLocaleString();
-      }
+    function setLoadingState(){
+      $("#campaignDate").textContent = "Loading...";
+      $("#heroStatus").textContent = "Refreshing";
+      $("#heroMeta").innerHTML = `<span class="pill small">Pulling latest rows</span>`;
+      $("#convictionBar").style.width = "22%";
 
-      function saveUrls(){
-        localStorage.setItem(LS_MACRO, macroUrlEl.value.trim());
-        localStorage.setItem(LS_CORRELATION, correlationUrlEl.value.trim());
-        localStorage.setItem(LS_SHOCK, shockUrlEl.value.trim());
-        localStorage.setItem(LS_NETWORK, networkUrlEl.value.trim());
-      }
+      ["#modeValue","#triggerValue","#riskValue","#weatherValue","#corrValue","#volValue","#sharpeValue","#scoreValue"].forEach(id => {
+        $(id).textContent = "—";
+      });
 
-      function loadSavedUrls(){
-        macroUrlEl.value = localStorage.getItem(LS_MACRO) || DEFAULT_MACRO;
-        correlationUrlEl.value = localStorage.getItem(LS_CORRELATION) || DEFAULT_CORRELATION;
-        shockUrlEl.value = localStorage.getItem(LS_SHOCK) || DEFAULT_SHOCK;
-        networkUrlEl.value = localStorage.getItem(LS_NETWORK) || DEFAULT_NETWORK;
-      }
+      $("#actionList").innerHTML = `<div class="empty">Refreshing actions...</div>`;
+      $("#holdingsList").innerHTML = `<div class="empty">Refreshing holdings...</div>`;
+      $("#healthList").innerHTML = `<div class="empty">Refreshing health...</div>`;
+      $("#radarList").innerHTML = `<div class="empty">Refreshing radar...</div>`;
+      $("#todoList").innerHTML = `<div class="empty">Refreshing checklist...</div>`;
+      $("#holdingsCount").textContent = "0 items";
+    }
 
-      function resetDefaults(){
-        macroUrlEl.value = DEFAULT_MACRO;
-        correlationUrlEl.value = DEFAULT_CORRELATION;
-        shockUrlEl.value = DEFAULT_SHOCK;
-        networkUrlEl.value = DEFAULT_NETWORK;
-        saveUrls();
-      }
+    async function fetchCsvRows(url){
+      const res = await fetch(cacheBust(url), { cache:"no-store" });
+      if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      const text = await res.text();
+      return parseCsv(text);
+    }
 
-      function normalizeKey(k){
-        return String(k || "")
-          .trim()
-          .toLowerCase()
-          .replace(/\s+/g, " ")
-          .replace(/[_-]+/g, " ");
-      }
+    function cacheBust(url){
+      const joiner = url.includes("?") ? "&" : "?";
+      return `${url}${joiner}_ts=${Date.now()}`;
+    }
 
-      function parseCsv(text){
-        const rows = [];
-        let row = [];
-        let cell = "";
-        let i = 0;
-        let inQuotes = false;
+    function parseCsv(text){
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let q = false;
 
-        while(i < text.length){
-          const ch = text[i];
-          const next = text[i + 1];
+      for(let i=0;i<text.length;i++){
+        const ch = text[i];
+        const next = text[i+1];
 
-          if(inQuotes){
-            if(ch === '"' && next === '"'){
-              cell += '"';
-              i += 2;
-              continue;
-            }
-            if(ch === '"'){
-              inQuotes = false;
-              i++;
-              continue;
-            }
+        if(q){
+          if(ch === '"' && next === '"'){
+            cell += '"';
+            i++;
+          }else if(ch === '"'){
+            q = false;
+          }else{
             cell += ch;
-            i++;
-            continue;
           }
-
+        }else{
           if(ch === '"'){
-            inQuotes = true;
-            i++;
-            continue;
-          }
-
-          if(ch === ","){
+            q = true;
+          }else if(ch === ","){
             row.push(cell);
             cell = "";
-            i++;
-            continue;
-          }
-
-          if(ch === "\n"){
+          }else if(ch === "\n"){
             row.push(cell);
             rows.push(row);
             row = [];
             cell = "";
-            i++;
-            continue;
+          }else if(ch === "\r"){
+            // ignore
+          }else{
+            cell += ch;
           }
-
-          if(ch === "\r"){
-            i++;
-            continue;
-          }
-
-          cell += ch;
-          i++;
         }
+      }
 
+      if(cell.length || row.length){
         row.push(cell);
-        if(row.some(v => String(v).length)){
-          rows.push(row);
-        }
-
-        if(!rows.length) return [];
-
-        const headers = rows[0].map(h => String(h || "").trim());
-        return rows.slice(1)
-          .filter(r => r.some(v => String(v || "").trim() !== ""))
-          .map(r => {
-            const obj = {};
-            headers.forEach((h, idx) => obj[h || `col_${idx+1}`] = (r[idx] ?? "").trim());
-            return obj;
-          });
+        rows.push(row);
       }
 
-      async function fetchCsvRows(url){
-        if(!url) return [];
-        const res = await fetch(url, { cache: "no-store" });
-        if(!res.ok) throw new Error(`Fetch failed: ${res.status} ${res.statusText}`);
-        const text = await res.text();
-        return parseCsv(text);
-      }
+      if(!rows.length) return [];
 
-      function findValue(row, names){
-        if(!row) return "";
-        const keys = Object.keys(row);
-        for(const candidate of names){
-          const want = normalizeKey(candidate);
-          const found = keys.find(k => normalizeKey(k) === want);
-          if(found && String(row[found]).trim()) return row[found];
-        }
-        for(const candidate of names){
-          const want = normalizeKey(candidate);
-          const found = keys.find(k => normalizeKey(k).includes(want));
-          if(found && String(row[found]).trim()) return row[found];
-        }
-        return "";
-      }
-
-      function colorFromText(text){
-        const v = String(text || "").toLowerCase();
-        if(
-          v.includes("green") || v.includes("bull") || v.includes("go") ||
-          v.includes("risk on") || v.includes("positive") || v.includes("healthy")
-        ) return "green";
-
-        if(
-          v.includes("yellow") || v.includes("watch") || v.includes("mixed") ||
-          v.includes("neutral") || v.includes("caution")
-        ) return "yellow";
-
-        if(
-          v.includes("red") || v.includes("bear") || v.includes("risk off") ||
-          v.includes("negative") || v.includes("danger") || v.includes("alert")
-        ) return "red";
-
-        if(v.includes("purple")) return "purple";
-        if(v.includes("blue")) return "blue";
-        return "blue";
-      }
-
-      function deriveHeadline(rows, fallback){
-        if(!rows || !rows.length){
-          return { score:"—", sub:"No rows found.", color:"blue" };
-        }
-
-        const first = rows[0];
-        const score =
-          findValue(first, ["score","signal","status","regime","verdict","reading","tier","stance"]) ||
-          `${rows.length} rows`;
-
-        const sub =
-          findValue(first, ["summary","note","notes","comment","comments","description","details","outlook"]) ||
-          `Loaded ${rows.length} row${rows.length === 1 ? "" : "s"}.`;
-
-        const colorSource =
-          findValue(first, ["color","signal","status","verdict","regime","tier"]) || fallback || "";
-        const color = colorFromText(colorSource);
-
-        return { score, sub, color };
-      }
-
-      function buildBadges(rows){
-        if(!rows || !rows.length) return [];
-        const first = rows[0];
-        const preferred = ["status","signal","score","tier","regime","verdict","direction","bias","risk","mode"];
-        const out = [];
-
-        for(const key of Object.keys(first)){
-          if(out.length >= 5) break;
-          const nk = normalizeKey(key);
-          if(preferred.some(p => nk.includes(p))){
-            const val = first[key];
-            if(String(val || "").trim()){
-              out.push(`${key}: ${val}`);
-            }
-          }
-        }
-
-        if(!out.length){
-          const keys = Object.keys(first).slice(0,4);
-          keys.forEach(k => {
-            if(String(first[k] || "").trim()) out.push(`${k}: ${first[k]}`);
-          });
-        }
-        return out;
-      }
-
-      function buildSummaryItems(rows){
-        if(!rows || !rows.length) return [];
-        const items = [];
-
-        rows.slice(0,6).forEach((row, idx) => {
-          const title =
-            findValue(row, ["title","item","name","metric","theme","category","ticker","indicator"]) ||
-            `Row ${idx + 1}`;
-
-          const text =
-            findValue(row, ["summary","note","notes","description","details","comment","comments","value"]) ||
-            Object.entries(row)
-              .slice(0,4)
-              .map(([k,v]) => `${k}: ${v}`)
-              .join(" • ");
-
-          const statusish =
-            findValue(row, ["status","signal","verdict","tier","regime","color"]) || "";
-
-          items.push({
-            title,
-            text,
-            color: colorFromText(statusish)
-          });
+      const headers = rows[0].map(h => normalizeKey(h));
+      return rows.slice(1)
+        .filter(r => r.some(v => String(v || "").trim() !== ""))
+        .map(r => {
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = (r[idx] ?? "").trim());
+          return obj;
         });
+    }
 
-        return items;
+    function normalizeKey(key){
+      return String(key || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^\w]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+    }
+
+    function renderHoldings(rows){
+      const box = $("#holdingsList");
+      if(!rows.length){
+        box.innerHTML = `<div class="empty">No holdings rows found. The new holdings CSV link is wired in, but the sheet may be empty or using unexpected headers.</div>`;
+        $("#holdingsCount").textContent = "0 items";
+        return;
       }
 
-      function renderBadges(targetId, badges){
-        const el = $(targetId);
-        if(!el) return;
-        el.innerHTML = badges.map(b => `<span class="miniBadge">${escapeHtml(b)}</span>`).join("");
-      }
+      const normalized = rows.map(mapHoldingRow);
+      $("#holdingsCount").textContent = `${normalized.length} items`;
 
-      function renderSummary(targetId, items){
-        const el = $(targetId);
-        if(!el) return;
-
-        if(!items.length){
-          el.innerHTML = `<div class="empty">No summary items.</div>`;
-          return;
-        }
-
-        el.innerHTML = items.map(item => `
-          <div class="summaryItem">
-            <div class="summaryItemTitle">
-              <span class="dot ${escapeHtml(item.color || "blue")}"></span>
-              <span>${escapeHtml(item.title)}</span>
-            </div>
-            <div class="summaryItemText">${escapeHtml(item.text)}</div>
+      box.innerHTML = normalized.map(h => `
+        <div class="holdingRow">
+          <div class="holdingMain">
+            <div class="holdingName">${escapeHtml(h.ticker || h.name || "Unnamed")}</div>
+            <div class="holdingSub">${escapeHtml(h.name || h.sector || h.note || "—")}</div>
           </div>
-        `).join("");
-      }
+          <div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div>
+          <div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal || h.tier || "—")}</div>
+          <div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change || h.pnl || "—")}</div>
+        </div>
+      `).join("");
+    }
 
-      function renderTable(targetId, rows){
-        const wrap = $(targetId);
-        if(!wrap) return;
+    function mapHoldingRow(r){
+      return {
+        ticker: pick(r, ["ticker","symbol","holding","name_short"]),
+        name: pick(r, ["name","company","description","asset"]),
+        sector: pick(r, ["sector","theme","bucket","group"]),
+        weight: pick(r, ["weight","allocation","position","size","percent"]),
+        qty: pick(r, ["qty","shares","units"]),
+        signal: pick(r, ["signal","status","go_no_go","light","bias"]),
+        tier: pick(r, ["tier","rank"]),
+        change: pick(r, ["change","pnl","return","move","day_change"]),
+        note: pick(r, ["note","notes","comment"])
+      };
+    }
 
-        if(!rows || !rows.length){
-          wrap.innerHTML = `<div class="empty" style="padding:14px">No table rows.</div>`;
-          return;
-        }
+    function renderSystem(systemRows, holdingsRows){
+      const sys = summarizeSystem(systemRows, holdingsRows);
 
-        const columns = Object.keys(rows[0]);
-        const head = columns.map(c => `<th>${escapeHtml(c)}</th>`).join("");
-        const body = rows.map(r => `
-          <tr>
-            ${columns.map(c => `<td>${escapeHtml(r[c])}</td>`).join("")}
-          </tr>
-        `).join("");
+      $("#campaignDate").textContent = sys.asOf;
+      $("#heroStatus").textContent = sys.status;
+      $("#heroMeta").innerHTML = sys.meta.map(x => `<span class="pill small ${toneClass(x)}">${escapeHtml(x)}</span>`).join("");
+      $("#convictionBar").style.width = `${sys.conviction}%`;
 
-        wrap.innerHTML = `
-          <table>
-            <thead><tr>${head}</tr></thead>
-            <tbody>${body}</tbody>
-          </table>
-        `;
-      }
+      $("#modeValue").textContent = sys.mode;
+      $("#triggerValue").textContent = sys.trigger;
+      $("#riskValue").textContent = sys.risk;
+      $("#weatherValue").textContent = sys.weather;
+      $("#corrValue").textContent = sys.correlation;
+      $("#volValue").textContent = sys.vol;
+      $("#sharpeValue").textContent = sys.sharpe;
+      $("#scoreValue").textContent = sys.score;
 
-      function renderMetric(prefix, rows, fallbackColor){
-        const headline = deriveHeadline(rows, fallbackColor);
-        $(`${prefix}Score`).textContent = headline.score;
-        $(`${prefix}Sub`).textContent = headline.sub;
-        $(`${prefix}Dot`).className = `dot ${headline.color}`;
-        $(`${prefix}Meta`).textContent = rows.length ? `${rows.length} rows loaded` : "No data";
-        renderBadges(`${prefix}Badges`, buildBadges(rows));
-        renderSummary(`${prefix}Summary`, buildSummaryItems(rows));
-        renderTable(`${prefix}TableWrap`, rows);
-      }
+      renderSimpleList("#actionList", sys.actions);
+      renderCardList("#healthList", sys.health);
+      renderCardList("#radarList", sys.radar);
+      renderCardList("#todoList", sys.todo);
+    }
 
-      async function refreshAll(){
-        try{
-          errorBoxMount.innerHTML = "";
-          saveUrls();
-          setLive("Loading", "yellow");
+    function summarizeSystem(systemRows, holdingsRows){
+      const rows = systemRows || [];
+      const first = rows[0] || {};
 
-          const sources = {
-            macro: macroUrlEl.value.trim(),
-            correlation: correlationUrlEl.value.trim(),
-            shock: shockUrlEl.value.trim(),
-            network: networkUrlEl.value.trim()
-          };
+      const status =
+        pick(first, ["campaign_status","status","headline","summary"]) ||
+        (holdingsRows.length ? "Lean engine online" : "Waiting on system sheet");
 
-          const [macroRows, correlationRows, shockRows, networkRows] = await Promise.all([
-            fetchCsvRows(sources.macro),
-            fetchCsvRows(sources.correlation),
-            fetchCsvRows(sources.shock),
-            fetchCsvRows(sources.network)
-          ]);
+      const mode = pick(first, ["mode","campaign_mode","posture"]) || "Lean";
+      const trigger = pick(first, ["trigger","market_trigger","gate"]) || "Watch";
+      const risk = pick(first, ["risk","risk_state","risk_mode"]) || "Controlled";
+      const weather = pick(first, ["weather","market_weather","sky"]) || "Clear";
+      const correlation = pick(first, ["correlation","corr","corr_state"]) || "—";
+      const vol = pick(first, ["vol","vol_light","volatility","volatility_light"]) || "—";
+      const sharpe = pick(first, ["sharpe","sharpe_ratio"]) || "—";
+      const score = pick(first, ["score","health_score","conviction_score"]) || guessScore(rows, holdingsRows);
+      const conviction = clamp(numberFromAny(score) || 64, 10, 100);
 
-          renderMetric("macro", macroRows, "green");
-          renderMetric("correlation", correlationRows, "blue");
-          renderMetric("shock", shockRows, "red");
-          renderMetric("network", networkRows, "purple");
+      const asOf =
+        pick(first, ["as_of","date","timestamp","last_updated"]) ||
+        new Date().toLocaleDateString();
 
-          updatedAtEl.textContent = nowStamp();
-          setLive("Live", "green");
-        }catch(err){
-          crash("REFRESH FAILED:", err);
-        }
-      }
+      const meta = compact([
+        mode,
+        trigger,
+        risk,
+        weather
+      ]);
 
-      /* ============================
-         Events
-      ============================ */
-      refreshBtn.addEventListener("click", refreshAll);
+      const actions = extractBucket(rows, ["action","action_1","action_2","action_3","bias","today_bias"], [
+        "Keep posture clean",
+        "Let leaders prove themselves",
+        "Avoid overlap stacking"
+      ]);
 
-      saveBtn.addEventListener("click", () => {
-        saveUrls();
-        setLive("URLs Saved", "green");
-        updatedAtEl.textContent = nowStamp();
+      const health = extractObjects(rows, "health").length
+        ? extractObjects(rows, "health")
+        : [
+            { title:"Structure", body:"Campaign still emphasizes controlled aggression and overlap discipline." },
+            { title:"Holdings Fit", body: holdingsRows.length ? `Loaded ${holdingsRows.length} holding rows into compact pill mode.` : "No holdings sheet rows found yet." },
+            { title:"Display Update", body:"Sources pill is now hidden. Holdings panel is smaller and scrolls internally." }
+          ];
+
+      const radar = extractObjects(rows, "radar").length
+        ? extractObjects(rows, "radar")
+        : [
+            { title:"Leaders", body:"Watch relative-strength names and avoid chasing weak laggards." },
+            { title:"Macro", body:"Keep eye on volatility, breadth, and any trigger flip before adding size." },
+            { title:"Overlap", body:"Use radar as context, not as a reason to stack similar exposure." }
+          ];
+
+      const todo = extractObjects(rows, "todo").length
+        ? extractObjects(rows, "todo")
+        : [
+            { title:"Check trigger", body:"Confirm go / no-go before any adds." },
+            { title:"Review leaders", body:"Size into strongest horse, not every horse." },
+            { title:"Protect screen space", body:"Use the internal holdings scroll for quick review." }
+          ];
+
+      return {
+        asOf,
+        status,
+        meta,
+        conviction,
+        mode,
+        trigger,
+        risk,
+        weather,
+        correlation,
+        vol,
+        sharpe,
+        score,
+        actions,
+        health,
+        radar,
+        todo
+      };
+    }
+
+    function extractBucket(rows, keys, fallback){
+      const out = [];
+      rows.forEach(r => {
+        keys.forEach(k => {
+          const v = r[normalizeKey(k)];
+          if(v && !out.includes(v)) out.push(v);
+        });
       });
+      return out.length ? out.slice(0,6) : fallback;
+    }
 
-      resetBtn.addEventListener("click", () => {
-        resetDefaults();
-        setLive("Defaults Restored", "blue");
-        updatedAtEl.textContent = nowStamp();
+    function extractObjects(rows, prefix){
+      const out = [];
+      rows.forEach(r => {
+        const title = pick(r, [`${prefix}_title`,`title_${prefix}`,`${prefix}`]);
+        const body = pick(r, [`${prefix}_body`,`body_${prefix}`,`${prefix}_note`,`note_${prefix}`]);
+        if(title || body){
+          out.push({
+            title: title || prefix.toUpperCase(),
+            body: body || ""
+          });
+        }
       });
+      return out.slice(0,8);
+    }
 
-      /* ============================
-         Boot
-      ============================ */
-      try{
-        loadSavedUrls();
-        refreshAll();
-      }catch(err){
-        crash("BOOT FAILED:", err);
+    function renderSimpleList(sel, items){
+      const el = $(sel);
+      if(!items || !items.length){
+        el.innerHTML = `<div class="empty">No rows.</div>`;
+        return;
       }
-    });
+      el.innerHTML = items.map(item => `
+        <div class="row">
+          <div class="rowLeft">
+            <div class="ticker">${escapeHtml(item)}</div>
+          </div>
+          <div class="score ${toneClass(item)}">${scoreWord(item)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderCardList(sel, items){
+      const el = $(sel);
+      if(!items || !items.length){
+        el.innerHTML = `<div class="empty">No rows.</div>`;
+        return;
+      }
+      el.innerHTML = items.map(item => `
+        <div class="headline">
+          <div class="headlineTitle">${escapeHtml(item.title || "Item")}</div>
+          <div class="headlineBody">${escapeHtml(item.body || "—")}</div>
+        </div>
+      `).join("");
+    }
+
+    function scoreWord(str){
+      const s = String(str || "").toLowerCase();
+      if(s.includes("go") || s.includes("green") || s.includes("buy")) return "GO";
+      if(s.includes("yellow") || s.includes("watch") || s.includes("trim")) return "WATCH";
+      if(s.includes("red") || s.includes("stop") || s.includes("no-go")) return "NO-GO";
+      return "LIVE";
+    }
+
+    function toneClass(v){
+      const s = String(v || "").toLowerCase();
+      if(
+        s.includes("green") || s.includes("go") || s.includes("buy") ||
+        s.includes("up") || s.includes("bull") || s.includes("+")
+      ) return "green";
+      if(
+        s.includes("yellow") || s.includes("watch") || s.includes("hold") ||
+        s.includes("neutral") || s.includes("caution")
+      ) return "yellow";
+      if(
+        s.includes("red") || s.includes("no-go") || s.includes("stop") ||
+        s.includes("sell") || s.includes("down") || s.includes("risk-off") || s.includes("-")
+      ) return "red";
+      return "blue";
+    }
+
+    function guessScore(systemRows, holdingsRows){
+      const base = holdingsRows.length ? 68 : 52;
+      const extra = Math.min((systemRows || []).length * 3, 18);
+      return String(base + extra);
+    }
+
+    function pick(obj, keys){
+      for(const key of keys){
+        const k = normalizeKey(key);
+        if(obj && obj[k] != null && String(obj[k]).trim() !== "") return String(obj[k]).trim();
+      }
+      return "";
+    }
+
+    function compact(arr){
+      return arr.filter(Boolean);
+    }
+
+    function numberFromAny(v){
+      const m = String(v || "").match(/-?\d+(\.\d+)?/);
+      return m ? Number(m[0]) : NaN;
+    }
+
+    function clamp(n, min, max){
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    loadAll();
+  });
   </script>
 </body>
 </html>
