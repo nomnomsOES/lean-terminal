@@ -6,9 +6,9 @@
   <title>Lean Terminal 2.0 Compact Hybrid</title>
   <style>
     :root{
-      --bg:#060c1a;--text:#e8edf7;--muted:#94a3b8;--line:rgba(255,255,255,.08);--line2:rgba(255,255,255,.14);
-      --green:#22c55e;--yellow:#f59e0b;--red:#ef4444;--blue:#3b82f6;--neon-red:#ff355e;--neon-red-glow:rgba(255,53,94,.35);
-      --pill:#0c1425;--shadow:0 14px 36px rgba(0,0,0,.28);
+      --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
+      --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6; --neon-red:#ff355e; --neon-red-glow:rgba(255,53,94,.35);
+      --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
     }
     *{box-sizing:border-box} html,body{height:100%}
     body{margin:0;color:var(--text);background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
@@ -180,7 +180,7 @@
 
 <script>
 window.addEventListener("DOMContentLoaded", () => {
-  const LS_HOLDINGS="lean_holdings_csv_url", LS_SYSTEM="lean_system_csv_url", LS_LAST_EXEC="lean_last_exec_v5", LS_AGGRESSIVE="lean_aggressive_mode";
+  const LS_HOLDINGS="lean_holdings_csv_url", LS_SYSTEM="lean_system_csv_url", LS_LAST_EXEC="lean_last_exec_v6", LS_AGGRESSIVE="lean_aggressive_mode";
   const DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
   const $ = s => document.querySelector(s); let timer = null;
 
@@ -238,19 +238,8 @@ window.addEventListener("DOMContentLoaded", () => {
     const rows=[]; let row=[], cell="", q=false;
     for(let i=0;i<text.length;i++){
       const ch=text[i], nx=text[i+1];
-      if(q){
-        if(ch === '"' && nx === '"'){ cell += '"'; i++; }
-        else if(ch === '"'){ q=false; }
-        else cell += ch;
-      }else{
-        if(ch === '"') q=true;
-        else if(ch === ","){ row.push(cell); cell=""; }
-        else if(ch === "
-"){ row.push(cell); rows.push(row); row=[]; cell=""; }
-        else if(ch === "
-"){}
-        else cell += ch;
-      }
+      if(q){ if(ch === '"' && nx === '"'){ cell += '"'; i++; } else if(ch === '"'){ q=false; } else cell += ch; }
+      else { if(ch === '"') q=true; else if(ch === ","){ row.push(cell); cell=""; } else if(ch === "\n"){ row.push(cell); rows.push(row); row=[]; cell=""; } else if(ch !== "\r"){ cell += ch; } }
     }
     if(cell.length || row.length){ row.push(cell); rows.push(row); }
     if(!rows.length) return [];
@@ -258,9 +247,9 @@ window.addEventListener("DOMContentLoaded", () => {
     return rows.slice(1).filter(r => r.some(v => String(v||"").trim() !== "")).map(r => { const o={}; headers.forEach((h,i)=>o[h]=(r[i] ?? "").trim()); return o; });
   }
 
-  function norm(s){ return String(s||"").trim().toLowerCase().replace(/\s+/g,"_").replace(/[^\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,""); }
+  function norm(s){ return String(s||"").trim().toLowerCase().replace(/\\s+/g,"_").replace(/[^\\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,""); }
   function pick(o, keys){ for(const key of keys){ const k = norm(key); if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim(); } return ""; }
-  function num(v, fallback=0){ const m = String(v ?? "").replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : fallback; }
+  function num(v, fallback=0){ const m = String(v ?? "").replace(/,/g,"").match(/-?\\d+(\\.\\d+)?/); return m ? Number(m[0]) : fallback; }
   function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
   function pct(v){ return `${num(v,0).toFixed(1)}%`; }
   function money(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}); }
@@ -298,6 +287,10 @@ window.addEventListener("DOMContentLoaded", () => {
     if(!Number.isNaN(explicit) && explicit > 0) return explicit;
     return 19217.09;
   }
+  function buildRecentMoves(rows){
+    const out = rows.slice(0,6).map(r => [pick(r,["move_date","date"]) || new Date().toLocaleDateString(), pick(r,["move_ticker","ticker","symbol"]) || "VXUS", pick(r,["move_amount","amount"]) || "$75.00"]);
+    return out.length ? out : [["2026-03-16","VXUS","$75.00"],["2026-03-09","XLE","$75.00"],["2026-03-07","SMH","$100.00"],["2026-03-05","CRWV","$75.00"]];
+  }
 
   function buildView(systemRows, holdingsRows, agg){
     const s0 = systemRows[0] || {};
@@ -310,22 +303,13 @@ window.addEventListener("DOMContentLoaded", () => {
       heroDate: pick(s0,["date","as_of","last_updated"]) || new Date().toLocaleDateString(),
       heroStatus: agg ? "Lean AGG engine online" : (pick(s0,["campaign_status","status","headline"]) || "Lean engine online"),
       heroMeta: [agg ? "AGG" : (pick(s0,["mode","campaign_mode","posture"]) || "Lean"), agg ? "Attack Watch" : (pick(s0,["trigger","gate"]) || "Watch"), agg ? "Elevated" : (pick(s0,["risk","risk_state"]) || "Controlled"), pick(s0,["weather","market_weather"]) || "Clear"],
-      readyPct: agg ? "72%" : "63%",
-      riskPct: agg ? "56%" : "39%",
-      valueTxt: money(totalValue),
-      lastTxt: pick(s0,["last","last_move"]) || "$0.00 / 0.00%",
-      weatherPill: agg ? "hotter" : (pick(s0,["vol_light","volatility_light","vol"]) || "wobbly"),
-      leanDelta: agg ? "+1.10%" : (pick(s0,["lean_return"]) || "+0.89%"),
-      aggDelta: "+1.60%",
-      score, mode: agg ? "AGG" : (pick(s0,["mode","campaign_mode","posture"]) || "Lean"), trigger: agg ? "Attack Watch" : (pick(s0,["trigger","gate"]) || "Watch"),
-      risk: agg ? "Elevated" : (pick(s0,["risk","risk_state"]) || "Controlled"), weather: pick(s0,["weather","market_weather"]) || "Clear", corr: pick(s0,["correlation","corr","corr_state"]) || "0.61",
-      tapeWeather: agg ? "hot" : (pick(s0,["vol_light","volatility_light","vol"]) || "wobbly"), sharpe: pick(s0,["sharpe","sharpe_ratio"]) || "2.90",
+      readyPct: agg ? "72%" : "63%", riskPct: agg ? "56%" : "39%", valueTxt: money(totalValue), lastTxt: pick(s0,["last","last_move"]) || "$0.00 / 0.00%", weatherPill: agg ? "hotter" : (pick(s0,["vol_light","volatility_light","vol"]) || "wobbly"),
+      leanDelta: agg ? "+1.10%" : (pick(s0,["lean_return"]) || "+0.89%"), aggDelta: "+1.60%", score,
+      mode: agg ? "AGG" : (pick(s0,["mode","campaign_mode","posture"]) || "Lean"), trigger: agg ? "Attack Watch" : (pick(s0,["trigger","gate"]) || "Watch"), risk: agg ? "Elevated" : (pick(s0,["risk","risk_state"]) || "Controlled"), weather: pick(s0,["weather","market_weather"]) || "Clear", corr: pick(s0,["correlation","corr","corr_state"]) || "0.61", tapeWeather: agg ? "hot" : (pick(s0,["vol_light","volatility_light","vol"]) || "wobbly"), sharpe: pick(s0,["sharpe","sharpe_ratio"]) || "2.90",
       actionEngine: [["Today", agg ? "PRESS LEADERS" : (pick(s0,["today_action","action_today"]) || "DONE: VXUS")], ["Reason", agg ? "AGG is on — radar reacts faster to leaders" : (pick(s0,["reason"]) || "Today already marked exec")], ["Next Trading Day", agg ? "Buy strongest horse first" : (pick(s0,["next_trading_day"]) || "BUY $75 CRWV")], ["Meta", agg ? "Today MED | Next HIGH" : (pick(s0,["meta"]) || "Today LOW | Next MED")], ["Radar Stance", agg ? "More sensitive, not reckless" : "Standard filter"]],
       actionNote: agg ? "AGG is more polite to strong radar names, yes — quicker to respect leaders and upgrades — but still filtered. No blind chasing and no overlap stacking." : "Standard Lean mode waits longer before upgrading radar names.",
-      performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
-      benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4], performanceMeta: [`LEAN • ${agg ? "1.10%" : "0.89%"}`,"SPY • 0.40%","AGG • 1.60%"],
-      pairCorr: [["ACHR vs ARKQ","-1.00"],["SMH vs QQQ","0.91"],["XLE vs Oil","0.84"],["CRWV vs IWM","0.56"]],
-      recentMoves: buildRecentMoves(systemRows),
+      performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02], benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4], performanceMeta: [`LEAN • ${agg ? "1.10%" : "0.89%"}`,"SPY • 0.40%","AGG • 1.60%"],
+      pairCorr: [["ACHR vs ARKQ","-1.00"],["SMH vs QQQ","0.91"],["XLE vs Oil","0.84"],["CRWV vs IWM","0.56"]], recentMoves: buildRecentMoves(systemRows),
       mathSnapshot: [["Drawdown", pick(s0,["drawdown"]) || "-0.05%"],["Peak", pick(s0,["peak"]) || money(totalValue)],["Vol", agg ? "Higher" : (pick(s0,["vol","volatility"]) || "0.00%")],["Sharpe", pick(s0,["sharpe","sharpe_ratio"]) || "2.90"]],
       warnings: uniq(compact([agg ? "AGG can magnify mistakes." : "","Heavy lean: cash still dominant.","Avoid overlap stacking.","Respect tape weather."])).slice(0,4),
       health: [["Structure","Compressed layout that still reads fast."],["Tooltips","Street-speak i icons explain parts in plain English."],["AGG Logic", agg ? "Faster radar sensitivity to strong names." : "Standard radar filter."],["Mode", agg ? "AGG is active." : "Standard Lean is active."]],
@@ -335,26 +319,15 @@ window.addEventListener("DOMContentLoaded", () => {
     };
   }
 
-  function buildRecentMoves(rows){
-    const out = rows.slice(0,6).map(r => [pick(r,["move_date","date"]) || new Date().toLocaleDateString(), pick(r,["move_ticker","ticker","symbol"]) || "VXUS", pick(r,["move_amount","amount"]) || "$75.00"]);
-    return out.length ? out : [["2026-03-16","VXUS","$75.00"],["2026-03-09","XLE","$75.00"],["2026-03-07","SMH","$100.00"],["2026-03-05","CRWV","$75.00"]];
-  }
-
   function renderAll(v){
-    $("#heroDate").textContent = v.heroDate; $("#heroStatus").textContent = v.heroStatus;
-    $("#heroMeta").innerHTML = v.heroMeta.map(x => `<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
-    $("#convictionFill").style.width = `${clamp(v.score,1,100)}%`;
-    $("#readyPct").textContent = v.readyPct; $("#riskPct").textContent = v.riskPct; $("#valueTxt").textContent = v.valueTxt; $("#lastTxt").textContent = v.lastTxt; $("#weatherPill").textContent = v.weatherPill;
-    $("#leanDelta").textContent = v.leanDelta; $("#leanDelta").className = toneClass(v.leanDelta); $("#aggDelta").textContent = v.aggDelta;
+    $("#heroDate").textContent = v.heroDate; $("#heroStatus").textContent = v.heroStatus; $("#heroMeta").innerHTML = v.heroMeta.map(x => `<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join(""); $("#convictionFill").style.width = `${clamp(v.score,1,100)}%`;
+    $("#readyPct").textContent = v.readyPct; $("#riskPct").textContent = v.riskPct; $("#valueTxt").textContent = v.valueTxt; $("#lastTxt").textContent = v.lastTxt; $("#weatherPill").textContent = v.weatherPill; $("#leanDelta").textContent = v.leanDelta; $("#leanDelta").className = toneClass(v.leanDelta); $("#aggDelta").textContent = v.aggDelta;
     setCube("#modeVal", v.mode); setCube("#triggerVal", v.trigger); setCube("#riskVal", v.risk); setCube("#weatherVal", v.weather); setCube("#corrVal", v.corr); setCube("#volLayerVal", v.tapeWeather); setCube("#sharpeVal", v.sharpe); setCube("#scoreVal", String(v.score));
     renderTable("#actionEngineTable", v.actionEngine); $("#actionNote").textContent = v.actionNote;
     drawPerformanceChart("#perfSvg", v.performanceSeries, v.benchmarkSeries); $("#perfMeta").innerHTML = v.performanceMeta.map(x => `<div class="mini">${escapeHtml(x)}</div>`).join("");
     $("#pairTableWrap").innerHTML = wrapTableHtml(v.pairCorr); $("#recentMovesBody").innerHTML = v.recentMoves.map(r => `<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>`).join("");
     $("#mathSnapshotGrid").innerHTML = v.mathSnapshot.map(([k,val]) => `<div class="cube"><div class="cubeLabel">${escapeHtml(k)}</div><div class="cubeValue ${toneClass(val)}">${escapeHtml(val)}</div></div>`).join("");
-    $("#warningsList").innerHTML = v.warnings.map(x => `<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
-    $("#healthList").innerHTML = v.health.map(r => `<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
-    $("#shockRadarWrap").innerHTML = v.shockRadar.map(r => `<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");
-    $("#guardrailWrap").innerHTML = wrapTableHtml(v.guardrails); renderHoldings(v.holdings);
+    $("#warningsList").innerHTML = v.warnings.map(x => `<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join(""); $("#healthList").innerHTML = v.health.map(r => `<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join(""); $("#shockRadarWrap").innerHTML = v.shockRadar.map(r => `<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join(""); $("#guardrailWrap").innerHTML = wrapTableHtml(v.guardrails); renderHoldings(v.holdings);
   }
 
   function setCube(sel, value){ const el = $(sel); el.textContent = value; el.className = `cubeValue ${toneClass(value)}`; }
