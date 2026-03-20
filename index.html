@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal 2.0 Compact Hybrid</title>
+<title>Lean Terminal 2.0 — Live Final</title>
 <style>
 :root{
   --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
@@ -11,44 +11,592 @@
   --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
 }
 *{box-sizing:border-box} html,body{height:100%}
-body{margin:0;color:var(--text);background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+body{
+  margin:0;color:var(--text);
+  background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
+}
 .wrap{max-width:1420px;margin:0 auto;padding:12px}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}.sub{color:var(--muted);font-size:.85rem}
+.brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}
+.sub{color:var(--muted);font-size:.85rem}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-.chip,.btn{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)}
+.chip,.btn{
+  border:1px solid var(--line2);
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
+  color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)
+}
 .btn{cursor:pointer;font-weight:700}
-.btn.aggressive{background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));border-color:rgba(255,53,94,.65);color:#ffe5ec;box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)}
-.btn.aggressive.active{background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)}
+.btn.aggressive{
+  background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));
+  border-color:rgba(255,53,94,.65);color:#ffe5ec;
+  box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)
+}
+.btn.aggressive.active{
+  background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));
+  box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)
+}
 .strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
-.tooltipWrap{position:relative;display:inline-flex;align-items:center;justify-content:center}
-.info{display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;border:1px solid rgba(255,255,255,.16);color:#bfd1ea;font-size:.68rem;line-height:1;font-weight:800;cursor:pointer;background:rgba(255,255,255,.03)}
-.tooltipBox{position:absolute;bottom:130%;left:50%;transform:translateX(-50%);background:#0b1222;border:1px solid rgba(255,255,255,.15);padding:9px 11px;border-radius:10px;font-size:.72rem;color:#dbe6f5;white-space:normal;width:220px;line-height:1.35;opacity:0;pointer-events:none;transition:all .15s ease;z-index:9999;box-shadow:0 10px 20px rgba(0,0,0,.4)}
-.tooltipBox::after{content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);border-width:6px;border-style:solid;border-color:#0b1222 transparent transparent transparent}
-.tooltipWrap:hover .tooltipBox,.tooltipWrap.mobile-open .tooltipBox{opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto}
-.grid{display:grid;gap:8px}.topGrid{grid-template-columns:3fr 1fr;margin-bottom:8px}.mainGrid{grid-template-columns:280px minmax(0,1fr) 230px}.actionHoldRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
-@media (max-width:1300px){.topGrid,.mainGrid,.actionHoldRow,.midPair,.triple{grid-template-columns:1fr}} @media (max-width:980px){.tooltipBox{width:190px}}
-.card{min-width:0;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));box-shadow:var(--shadow);padding:12px}
-.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
-.heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}.heroValue{font-size:1.7rem;line-height:1.05;font-weight:900;margin:2px 0 10px 0}.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}.mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
-.gradientBar{width:100%;height:10px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
-.cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}.cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
-.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)} .trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}.trow:first-child{border-top:none}.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
-.scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}.scrollArea::-webkit-scrollbar{width:8px}.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}.tallScroll{max-height:360px}
-.holdingRow{display:grid;grid-template-columns:72px minmax(0,1fr) 64px 84px 72px;gap:7px;align-items:center;padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:7px;min-width:0}.holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
-.chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden} svg{width:100%;height:100%;display:block}
-.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}.note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
-.recentTable{width:100%;border-collapse:collapse;font-size:.74rem}.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}.recentTable thead th{position:sticky;top:0;background:#0e1728}
-.radarGrid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.radarLegend{display:grid;gap:6px}.legendPill{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:5px 9px;background:#0f1728;font-size:.68rem}
-.greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)} .footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
-</style></head>
+.pill{
+  display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);
+  background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap
+}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
+.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
+.tooltipWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
+.info{
+  display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
+  border:1px solid rgba(255,255,255,.16);color:#bfd1ea;font-size:.68rem;line-height:1;font-weight:800;
+  cursor:pointer;background:rgba(255,255,255,.03)
+}
+.tooltipBox{
+  position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
+  background:#0b1222;border:1px solid rgba(255,255,255,.15);padding:9px 11px;border-radius:10px;
+  font-size:.72rem;color:#dbe6f5;white-space:normal;width:220px;line-height:1.35;opacity:0;
+  pointer-events:none;transition:all .15s ease;z-index:9999;box-shadow:0 10px 20px rgba(0,0,0,.4)
+}
+.tooltipBox::after{
+  content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
+  border-width:6px;border-style:solid;border-color:#0b1222 transparent transparent transparent
+}
+.tooltipWrap:hover .tooltipBox,.tooltipWrap.mobile-open .tooltipBox{
+  opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto
+}
+.grid{display:grid;gap:8px}
+.topGrid{grid-template-columns:3fr 1fr;margin-bottom:8px}
+.mainGrid{grid-template-columns:280px minmax(0,1fr) 230px}
+.actionHoldRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
+.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
+.budgetGrid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}
+@media (max-width:1300px){
+  .topGrid,.mainGrid,.actionHoldRow,.midPair,.triple,.budgetGrid{grid-template-columns:1fr}
+}
+@media (max-width:980px){.tooltipBox{width:190px}}
+.card{
+  min-width:0;border:1px solid var(--line);border-radius:22px;
+  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));
+  box-shadow:var(--shadow);padding:12px
+}
+.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
+.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}
+.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
+.heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
+.heroValue{font-size:1.05rem;line-height:1.05;font-weight:700;margin:2px 0 10px 0}
+.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
+.gradientBar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
+.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
+.cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}
+.cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}
+.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
+.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}
+.trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}
+.trow:first-child{border-top:none}
+.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
+.scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
+.scrollArea::-webkit-scrollbar{width:8px}
+.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}
+.tallScroll{max-height:360px}
+.holdingRow{
+  display:grid;grid-template-columns:72px minmax(0,1fr) 64px 84px 72px;gap:7px;align-items:center;
+  padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);
+  border-radius:12px;margin-bottom:7px;min-width:0
+}
+.holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
+.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
+.chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden}
+svg{width:100%;height:100%;display:block}
+.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
+.note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
+.recentTable{width:100%;border-collapse:collapse;font-size:.74rem}
+.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}
+.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}
+.recentTable thead th{position:sticky;top:0;background:#0e1728}
+.radarGrid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
+.radarLegend{display:grid;gap:6px}
+.legendPill{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:5px 9px;background:#0f1728;font-size:.68rem}
+.budgetBox{border-radius:18px;padding:12px;border:1px solid var(--line)}
+.budgetProgress{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
+.budgetProgressFill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22c55e 0%,#60a5fa 100%)}
+.actionSection{border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);padding:12px}
+.actionGrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+@media (max-width:1100px){.actionGrid3{grid-template-columns:1fr}}
+.actionBox{border-radius:18px;padding:12px}
+.greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)}
+.footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
+</style>
+</head>
 <body>
 <div class="wrap">
-<div class="topbar"><div class="brand"><h1>Lean Terminal 2.0 Compact Hybrid</h1><div class="sub">AGG mode added • beef radar added • campaign snapshot 3/4 width • holdings 1/2 width</div></div><div class="toolbar"><div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div><div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div><button class="btn aggressive" id="aggressiveToggle">AGG: OFF</button><button class="btn" id="refreshBtn">Refresh</button><button class="btn" id="settingsBtn">Data Settings</button></div></div>
-<div class="grid topGrid"><div class="card"><div class="cardTitle"><div class="titleLeft"><h2>Campaign Snapshot</h2><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Quick read. Are we parked, watching, or pushing?</span></span></div><div class="heroDate" id="heroDate">—</div></div><div class="heroValue" id="heroStatus">Lean engine online</div><div class="heroMeta" id="heroMeta"></div><div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div></div><div id="rightPillStack" class="grid" style="gap:8px"><div class="pill"><span class="dot g"></span>READY <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Engine confidence. Higher means the setup has more go.</span></span> <strong id="readyPct">63%</strong></div><div class="pill"><span class="dot y"></span>RISK <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Heat level. Higher means it is easier to mess up.</span></span> <strong id="riskPct">39%</strong></div><div class="pill"><span class="dot b"></span>VALUE <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Total account value right now.</span></span> <strong id="valueTxt">$19,217.09</strong></div><div class="pill"><span class="dot b"></span>LAST <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Last move impact on the account.</span></span> <strong id="lastTxt">$0.00 / 0.00%</strong></div><div class="pill"><span class="dot y"></span>WEATHER <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Tape weather. Smooth, shaky, or stormy.</span></span> <strong id="weatherPill">wobbly</strong></div><div class="pill"><span class="dot g"></span>LEAN Δ <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Lean mode performance today.</span></span> <strong id="leanDelta">+0.89%</strong></div><div class="pill"><span class="dot r"></span>AGG Δ <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">AGG mode performance today.</span></span> <strong id="aggDelta" class="neonRedText">+1.60%</strong></div></div></div>
-<div class="strip" style="justify-content:flex-end"><div class="pill">REGIME <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are we in go mode or trap mode?</span></span></div><div class="pill">VOL <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How violent price moves are.</span></span></div><div class="pill">DD <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Drawdown damage check.</span></span></div><div class="pill">BRAKE <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">What is slowing us down?</span></span></div><div class="pill">MC <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Best and worst case lanes.</span></span></div><div class="pill">CORR <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are positions moving together too much?</span></span></div><div class="pill">CVAR <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Ugly-tail scenario check.</span></span></div><div class="pill">BAYES <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are the odds getting better or fading?</span></span></div></div>
-<section class="grid mainGrid"><div class="leftRail"><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Posture</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How we are positioned, not what we wish would happen.</span></span></div></div><div class="cubeGrid"><div class="cube"><div class="cubeLabel">Mode <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Base stance.</span></span></div><div class="cubeValue" id="modeVal">Lean</div></div><div class="cube"><div class="cubeLabel">Trigger <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Waiting for confirmation or ready to go.</span></span></div><div class="cubeValue" id="triggerVal">Watch</div></div><div class="cube"><div class="cubeLabel">Risk <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How much damage we are allowing.</span></span></div><div class="cubeValue" id="riskVal">Controlled</div></div><div class="cube"><div class="cubeLabel">Weather <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Market conditions in plain terms.</span></span></div><div class="cubeValue" id="weatherVal">Clear</div></div></div></div><div class="card" style="margin-top:8px;"><div class="cardTitle"><div class="titleLeft"><h3>Math Layer</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">The system brain checking if the move is legit.</span></span></div></div><div class="cubeGrid"><div class="cube"><div class="cubeLabel">Correlation <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are positions overlapping?</span></span></div><div class="cubeValue" id="corrVal">0.61</div></div><div class="cube"><div class="cubeLabel">Tape Weather <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Smooth, shaky, or stormy.</span></span></div><div class="cubeValue" id="volLayerVal">wobbly</div></div><div class="cube"><div class="cubeLabel">Sharpe <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Quality of the return path.</span></span></div><div class="cubeValue" id="sharpeVal">2.90</div></div><div class="cube"><div class="cubeLabel">Score <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Overall system confidence.</span></span></div><div class="cubeValue" id="scoreVal">86</div></div></div></div></div><div class="centerRail"><div class="actionHoldRow"><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Action Engine</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Top priority. What to do today and why.</span></span></div></div><div class="table" id="actionEngineTable"></div><div style="display:flex;gap:8px;flex-wrap:wrap;margin-top:8px"><button class="btn" id="markBtn">Mark Executed</button><div class="chip" id="lastExecChip">Last exec: none</div></div><div class="note" id="actionNote" style="margin-top:8px">Standard Lean mode waits longer before upgrading radar names.</div></div><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Holdings</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Cleaner, wider rows. Ticker first, one weight pill, one status pill, one move pill.</span></span></div><div class="heroDate" id="holdingsCount">0 items</div></div><div class="scrollArea tallScroll" id="holdingsList"></div></div></div><div class="midPair"><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Performance</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How the account path is moving versus the comparison line.</span></span></div></div><div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div><div class="chartMeta" id="perfMeta"></div></div><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Spider Radar</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Shape view of Lean versus benchmark strength across core factors.</span></span></div></div><div class="radarGrid"><svg viewBox="0 0 220 220" style="height:185px"><polygon points="110,20 182,66 155,154 65,154 38,66" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="2"></polygon><polygon points="110,40 162,78 142,138 78,138 58,78" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="2"></polygon></svg><div class="radarLegend"><div class="legendPill"><span class="dot g"></span>Lean</div><div class="legendPill"><span class="dot b"></span>SPY</div><div class="legendPill"><span class="dot r"></span>AGG hotter</div></div></div></div></div><div class="triple"><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Pair Correlations</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Are these names dancing together or fighting each other?</span></span></div></div><div class="table"><div class="scrollArea" id="pairTableWrap"></div></div></div><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Recent Moves</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Last moves made, quick and clean.</span></span></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Math Snapshot</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Fast cubes for damage, peak, chop, and quality.</span></span></div></div><div class="cubeGrid" id="mathSnapshotGrid"></div></div></div><div class="triple"><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Warnings</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Stuff that could make the next move dumb.</span></span></div></div><div id="warningsList"></div></div><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Lean Health</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">How healthy the setup looks right now.</span></span></div></div><div id="healthList"></div></div><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Shock Radar</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Live background pressures that can spill into the campaign.</span></span></div></div><div class="table"><div class="scrollArea" id="shockRadarWrap"></div></div></div></div></div><div class="rightRail"><div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Exposure & Guardrails</h3><span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">What is live, what is parked, and what is blocking more size.</span></span></div></div><div class="table"><div class="scrollArea" id="guardrailWrap"></div></div></div></div></section><div class="footer" id="footerStamp">Compact hybrid ready.</div></div>
-<script>window.addEventListener("DOMContentLoaded",()=>{const LS_HOLDINGS="lean_holdings_csv_url",LS_SYSTEM="lean_system_csv_url",LS_LAST_EXEC="lean_last_exec_v7",LS_AGGRESSIVE="lean_aggressive_mode",DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";const $=s=>document.querySelector(s);let timer=null;$("#refreshBtn").addEventListener("click",loadAll);$("#settingsBtn").addEventListener("click",openSettings);$("#markBtn").addEventListener("click",markExecuted);$("#aggressiveToggle").addEventListener("click",toggleAggressive);document.addEventListener("click",e=>{document.querySelectorAll(".tooltipWrap.mobile-open").forEach(el=>{if(!el.contains(e.target))el.classList.remove("mobile-open")});const wrap=e.target.closest(".tooltipWrap");if(wrap&&window.matchMedia("(hover: none)").matches){e.preventDefault();wrap.classList.toggle("mobile-open")}});function startClock(){if(timer)clearInterval(timer);tickClock();timer=setInterval(tickClock,1000)}function tickClock(){$("#clockNow").textContent=new Date().toLocaleTimeString()}function openSettings(){const h=prompt("Holdings CSV URL",localStorage.getItem(LS_HOLDINGS)||DEFAULT_HOLDINGS);if(h!==null&&h.trim())localStorage.setItem(LS_HOLDINGS,h.trim());const s=prompt("System CSV URL",localStorage.getItem(LS_SYSTEM)||"");if(s!==null)localStorage.setItem(LS_SYSTEM,s.trim());loadAll()}function markExecuted(){const stamp=new Date().toLocaleString();localStorage.setItem(LS_LAST_EXEC,stamp);$("#lastExecChip").textContent=`Last exec: ${stamp}`}function isAggressive(){return localStorage.getItem(LS_AGGRESSIVE)==="1"}function toggleAggressive(){localStorage.setItem(LS_AGGRESSIVE,isAggressive()?"0":"1");applyAggressiveUI();loadAll()}function applyAggressiveUI(){const on=isAggressive();$("#aggressiveToggle").textContent=`AGG: ${on?"ON":"OFF"}`;$("#aggressiveToggle").classList.toggle("active",on)}function getHoldingsUrl(){return localStorage.getItem(LS_HOLDINGS)||DEFAULT_HOLDINGS}function getSystemUrl(){return localStorage.getItem(LS_SYSTEM)||""}async function loadAll(){try{const[holdingsRows,systemRows]=await Promise.all([getHoldingsUrl()?fetchCsvRows(getHoldingsUrl()):Promise.resolve([]),getSystemUrl()?fetchCsvRows(getSystemUrl()):Promise.resolve([])]);const view=buildView(systemRows,holdingsRows,isAggressive());renderAll(view);$("#updatedChip").textContent=`LAST UPDATED: ${new Date().toLocaleTimeString()}`;$("#lastExecChip").textContent=`Last exec: ${localStorage.getItem(LS_LAST_EXEC)||"none"}`;$("#footerStamp").textContent=`Compact hybrid updated ${new Date().toLocaleString()} • AGG tuned • beef radar live`}catch(err){console.error(err);$("#footerStamp").textContent=`Load issue: ${err.message||err}`}}async function fetchCsvRows(url){const res=await fetch(url+(url.includes("?")?"&":"?")+"_ts="+Date.now(),{cache:"no-store"});if(!res.ok)throw new Error(`HTTP ${res.status} on ${url}`);return parseCsv(await res.text())}function parseCsv(text){const rows=[];let row=[],cell="",q=false;for(let i=0;i<text.length;i++){const ch=text[i],nx=text[i+1];if(q){if(ch=='"'&&nx=='"'){cell+='"';i++}else if(ch=='"'){q=false}else cell+=ch}else{if(ch=='"')q=true;else if(ch==","){row.push(cell);cell=""}else if(ch=="\n"){row.push(cell);rows.push(row);row=[];cell=""}else if(ch!="\r"){cell+=ch}}}if(cell.length||row.length){row.push(cell);rows.push(row)}if(!rows.length)return[];const headers=rows[0].map(norm);return rows.slice(1).filter(r=>r.some(v=>String(v||"").trim()!=="")).map(r=>{const o={};headers.forEach((h,i)=>o[h]=(r[i]??"").trim());return o})}function norm(s){return String(s||"").trim().toLowerCase().replace(/\s+/g,"_").replace(/[^\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,"")}function pick(o,keys){for(const key of keys){const k=norm(key);if(o&&o[k]!=null&&String(o[k]).trim()!=="")return String(o[k]).trim()}return""}function num(v,fallback=0){const m=String(v??"").replace(/,/g,"").match(/-?\d+(\.\d+)?/);return m?Number(m[0]):fallback}function clamp(n,min,max){return Math.max(min,Math.min(max,n))}function pct(v){return`${num(v,0).toFixed(1)}%`}function money(v){return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2})}function compact(arr){return arr.filter(Boolean)}function uniq(arr){return[...new Set(arr)]}function toneClass(v){const s=String(v||"").toLowerCase();if(s.includes("+")||s.includes("go")||s.includes("safe")||s.includes("green")||s.includes("up"))return"greenText";if(s.includes("-")||s.includes("red")||s.includes("block")||s.includes("down")||s.includes("elevated"))return"redText";if(s.includes("watch")||s.includes("wobbly")||s.includes("yellow")||s.includes("controlled")||s.includes("clear"))return"yellowText";return"blueText"}function mapHolding(r){return{ticker:pick(r,["ticker","symbol","holding","name_short"])||"—",name:pick(r,["name","company","description","asset"])||"—",weight:pick(r,["weight","allocation","position","size","percent"])||"",signal:pick(r,["signal","status","go_no_go","light","bias"])||"—",change:pick(r,["change","pnl","return","move","day_change"])||"—",weightNum:num(pick(r,["weight","allocation","position","size","percent"]),0)}}function inferCash(holdings,s0){const explicit=num(pick(s0,["cash_anchor","cash_pct","cash","sgov_nest"]),NaN);if(!Number.isNaN(explicit)&&explicit>0)return explicit;const cashRow=holdings.find(h=>/cash|sgov/i.test(`${h.ticker} ${h.name}`));if(cashRow&&cashRow.weightNum>0)return cashRow.weightNum;return 85.1}function inferValue(s0){const explicit=num(pick(s0,["value","portfolio_value","total_value"]),NaN);if(!Number.isNaN(explicit)&&explicit>0)return explicit;return 19217.09}function buildRecentMoves(rows){const out=rows.slice(0,6).map(r=>[pick(r,["move_date","date"])||new Date().toLocaleDateString(),pick(r,["move_ticker","ticker","symbol"])||"VXUS",pick(r,["move_amount","amount"])||"$75.00"]);return out.length?out:[["2026-03-16","VXUS","$75.00"],["2026-03-09","XLE","$75.00"],["2026-03-07","SMH","$100.00"],["2026-03-05","CRWV","$75.00"]]}function buildView(systemRows,holdingsRows,agg){const s0=systemRows[0]||{};const holdings=holdingsRows.map(mapHolding);const cashPct=inferCash(holdings,s0);const totalValue=inferValue(s0);const scoreBase=num(pick(s0,["score","health_score","conviction_score"]),86);const score=agg?clamp(scoreBase+7,1,100):scoreBase;return{heroDate:pick(s0,["date","as_of","last_updated"])||new Date().toLocaleDateString(),heroStatus:agg?"Lean AGG engine online":(pick(s0,["campaign_status","status","headline"])||"Lean engine online"),heroMeta:[agg?"AGG":(pick(s0,["mode","campaign_mode","posture"])||"Lean"),agg?"Attack Watch":(pick(s0,["trigger","gate"])||"Watch"),agg?"Elevated":(pick(s0,["risk","risk_state"])||"Controlled"),pick(s0,["weather","market_weather"])||"Clear"],readyPct:agg?"72%":"63%",riskPct:agg?"56%":"39%",valueTxt:money(totalValue),lastTxt:pick(s0,["last","last_move"])||"$0.00 / 0.00%",weatherPill:agg?"hotter":(pick(s0,["vol_light","volatility_light","vol"])||"wobbly"),leanDelta:agg?"+1.10%":(pick(s0,["lean_return"])||"+0.89%"),aggDelta:"+1.60%",score,mode:agg?"AGG":(pick(s0,["mode","campaign_mode","posture"])||"Lean"),trigger:agg?"Attack Watch":(pick(s0,["trigger","gate"])||"Watch"),risk:agg?"Elevated":(pick(s0,["risk","risk_state"])||"Controlled"),weather:pick(s0,["weather","market_weather"])||"Clear",corr:pick(s0,["correlation","corr","corr_state"])||"0.61",tapeWeather:agg?"hot":(pick(s0,["vol_light","volatility_light","vol"])||"wobbly"),sharpe:pick(s0,["sharpe","sharpe_ratio"])||"2.90",actionEngine:[["Today",agg?"PRESS LEADERS":(pick(s0,["today_action","action_today"])||"DONE: VXUS")],["Reason",agg?"AGG is on — radar reacts faster to leaders":(pick(s0,["reason"])||"Today already marked exec")],["Next Trading Day",agg?"Buy strongest horse first":(pick(s0,["next_trading_day"])||"BUY $75 CRWV")],["Meta",agg?"LOW → HIGH":(pick(s0,["meta"])||"LOW → MED")],["Radar Stance",agg?"More sensitive, not reckless":"Standard filter"]],actionNote:agg?"AGG is more polite to strong radar names — quicker to respect leaders — but still filtered. No blind chasing and no overlap stacking.":"Standard Lean mode waits longer before upgrading radar names.",performanceSeries:agg?[100,100.35,100.15,100.42,101.05,101.28,101.62]:[100,100.2,100.05,100.01,100.85,100.86,101.02],benchmarkSeries:[100,100.05,100.1,100.2,100.25,100.35,100.4],performanceMeta:[`LEAN • ${agg?"1.10%":"0.89%"}`,"SPY • 0.40%","AGG • 1.60%"],pairCorr:[["ACHR vs ARKQ","-1.00"],["SMH vs QQQ","0.91"],["XLE vs Oil","0.84"],["CRWV vs IWM","0.56"]],recentMoves:buildRecentMoves(systemRows),mathSnapshot:[["Drawdown",pick(s0,["drawdown"])||"-0.05%"],["Peak",pick(s0,["peak"])||money(totalValue)],["Vol",agg?"Higher":(pick(s0,["vol","volatility"])||"0.00%")],["Sharpe",pick(s0,["sharpe","sharpe_ratio"])||"2.90"]],warnings:uniq(compact([agg?"AGG can magnify mistakes.":"","Heavy lean: cash still dominant.","Avoid overlap stacking.","Respect tape weather."])).slice(0,4),health:[["Structure","Compressed layout that still reads fast."],["Tooltips","Street-speak i icons explain parts in plain English."],["AGG Logic",agg?"Faster radar sensitivity to strong names.":"Standard radar filter."],["Mode",agg?"AGG is active.":"Standard Lean is active."]],shockRadar:[["BEEF SIGNAL","Calf prices are hot. Beef chain pressure rising.","WATCH"],["OIL","Energy conditions normal.","GREEN"],["LNG","Supply stable.","GREEN"],["SHIPPING","Routes normal.","GREEN"]],guardrails:[["SGOV Nest",pick(s0,["sgov_nest"])||pct(cashPct)],["Active Exposure",pick(s0,["active_exposure"])||pct(100-cashPct)],["Lean Capital",pick(s0,["lean_capital"])||money(totalValue*((100-cashPct)/100))],["Primary Blocker",agg?"Overlap / Heat":(pick(s0,["primary_blocker","blocker"])||"Cash Anchor")],["Severity",agg?"Higher":(pick(s0,["blocker_severity"])||"Moderate")]],holdings}}function renderAll(v){$("#heroDate").textContent=v.heroDate;$("#heroStatus").textContent=v.heroStatus;$("#heroMeta").innerHTML=v.heroMeta.map(x=>`<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");$("#convictionFill").style.width=`${clamp(v.score,1,100)}%`;$("#readyPct").textContent=v.readyPct;$("#riskPct").textContent=v.riskPct;$("#valueTxt").textContent=v.valueTxt;$("#lastTxt").textContent=v.lastTxt;$("#weatherPill").textContent=v.weatherPill;$("#leanDelta").textContent=v.leanDelta;$("#leanDelta").className=toneClass(v.leanDelta);$("#aggDelta").textContent=v.aggDelta;setCube("#modeVal",v.mode);setCube("#triggerVal",v.trigger);setCube("#riskVal",v.risk);setCube("#weatherVal",v.weather);setCube("#corrVal",v.corr);setCube("#volLayerVal",v.tapeWeather);setCube("#sharpeVal",v.sharpe);setCube("#scoreVal",String(v.score));renderTable("#actionEngineTable",v.actionEngine);$("#actionNote").textContent=v.actionNote;drawPerformanceChart("#perfSvg",v.performanceSeries,v.benchmarkSeries);$("#perfMeta").innerHTML=v.performanceMeta.map(x=>`<div class="mini">${escapeHtml(x)}</div>`).join("");$("#pairTableWrap").innerHTML=wrapTableHtml(v.pairCorr);$("#recentMovesBody").innerHTML=v.recentMoves.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td></tr>`).join("");$("#mathSnapshotGrid").innerHTML=v.mathSnapshot.map(([k,val])=>`<div class="cube"><div class="cubeLabel">${escapeHtml(k)}</div><div class="cubeValue ${toneClass(val)}">${escapeHtml(val)}</div></div>`).join("");$("#warningsList").innerHTML=v.warnings.map(x=>`<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");$("#healthList").innerHTML=v.health.map(r=>`<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");$("#shockRadarWrap").innerHTML=v.shockRadar.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");$("#guardrailWrap").innerHTML=wrapTableHtml(v.guardrails);renderHoldings(v.holdings)}function setCube(sel,value){const el=$(sel);el.textContent=value;el.className=`cubeValue ${toneClass(value)}`}function renderTable(sel,rows){$(sel).innerHTML=rows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("")}function wrapTableHtml(rows){return rows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("")}function renderHoldings(rows){$("#holdingsCount").textContent=`${rows.length} items`;if(!rows.length){$("#holdingsList").innerHTML=`<div class="note">No holdings rows found.</div>`;return}$("#holdingsList").innerHTML=rows.map(h=>`<div class="holdingRow"><div class="holdingName">${escapeHtml(h.ticker)}</div><div class="holdingSub">${escapeHtml(h.name||"—")}</div><div class="miniPill">${escapeHtml(h.weight||"—")}</div><div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div><div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div></div>`).join("")}function drawPerformanceChart(sel,leanSeries,benchSeries){const svg=$(sel),width=1000,height=220,pad=40,values=leanSeries.concat(benchSeries),min=Math.min(...values),max=Math.max(...values),xStep=(width-pad*2)/(leanSeries.length-1||1),y=v=>max===min?height/2:height-pad-((v-min)/(max-min))*(height-pad*2);const grid=[0,1,2,3].map(i=>{const gy=pad+i*((height-pad*2)/3);return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;}).join("");const leanPath=leanSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");const benchPath=benchSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");const lx=pad+(leanSeries.length-1)*xStep,ly=y(leanSeries[leanSeries.length-1]),by=y(benchSeries[benchSeries.length-1]);svg.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<path d="${leanPath}" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" /><path d="${benchPath}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" /><text x="${lx-55}" y="${ly-8}" fill="#22c55e" font-size="14" font-weight="800">LEAN</text><text x="${lx-45}" y="${by-8}" fill="#60a5fa" font-size="14" font-weight="800">SPY</text></svg>`}function escapeHtml(str){return String(str??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;")}applyAggressiveUI();startClock();loadAll()});</script>
-</body></html>
+  <div class="topbar">
+    <div class="brand">
+      <h1>Lean Terminal 2.0 — Live Final</h1>
+      <div class="sub">holdings + budget tracker + trade log wired • lean + AGG full intelligence • beef radar live</div>
+    </div>
+    <div class="toolbar">
+      <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
+      <div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div>
+      <button class="btn aggressive" id="aggressiveToggle">AGG: OFF</button>
+      <button class="btn" id="refreshBtn">Refresh</button>
+      <button class="btn" id="settingsBtn">Data Settings</button>
+    </div>
+  </div>
+
+  <div class="grid topGrid">
+    <div class="card">
+      <div class="cardTitle">
+        <div class="titleLeft">
+          <h2>Campaign Snapshot</h2>
+          <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Quick read. Are we parked, watching, or pushing?</span></span>
+        </div>
+        <div class="heroDate" id="heroDate">—</div>
+      </div>
+      <div class="heroValue" id="heroStatus">Lean engine online</div>
+      <div class="heroMeta" id="heroMeta"></div>
+      <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
+    </div>
+    <div class="grid" style="gap:8px">
+      <div class="pill"><span class="dot g"></span>READY <strong id="readyPct">63%</strong></div>
+      <div class="pill"><span class="dot y"></span>RISK <strong id="riskPct">39%</strong></div>
+      <div class="pill"><span class="dot b"></span>VALUE <strong id="valueTxt">$19,217.09</strong></div>
+      <div class="pill"><span class="dot b"></span>LAST <strong id="lastTxt">$0.00 / 0.00%</strong></div>
+      <div class="pill"><span class="dot y"></span>WEATHER <strong id="weatherPill">wobbly</strong></div>
+      <div class="pill"><span class="dot g"></span>LEAN Δ <strong id="leanDelta">+0.89%</strong></div>
+      <div class="pill"><span class="dot r"></span>AGG Δ <strong id="aggDelta" class="neonRedText">+1.60%</strong></div>
+    </div>
+  </div>
+
+  <div class="strip" style="justify-content:flex-end">
+    <div class="pill">REGIME</div>
+    <div class="pill">VOL</div>
+    <div class="pill">DD</div>
+    <div class="pill">BRAKE</div>
+    <div class="pill">MC</div>
+    <div class="pill">CORR</div>
+    <div class="pill">CVAR</div>
+    <div class="pill">BAYES</div>
+  </div>
+
+  <div class="card">
+    <div class="cardTitle">
+      <div class="titleLeft">
+        <h3>Monthly Budget Tracker</h3>
+        <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Tracks this month’s deploy budget, what has been used, what is left, and what is set for today.</span></span>
+      </div>
+    </div>
+    <div class="budgetGrid">
+      <div class="budgetBox"><div class="cubeLabel">Monthly Budget</div><div class="cubeValue" id="budgetMonthly">$1,000</div></div>
+      <div class="budgetBox" style="border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.10)"><div class="cubeLabel">Used</div><div class="cubeValue" id="budgetUsed">$0</div></div>
+      <div class="budgetBox" style="border-color:rgba(59,130,246,.25);background:rgba(59,130,246,.10)"><div class="cubeLabel">Remaining</div><div class="cubeValue" id="budgetRemaining">$1,000</div></div>
+      <div class="budgetBox" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.10)"><div class="cubeLabel">Today Deploy</div><div class="cubeValue" id="budgetToday">$0</div></div>
+    </div>
+    <div class="budgetProgress"><div class="budgetProgressFill" id="budgetProgressFill"></div></div>
+    <div class="note" id="budgetNote" style="margin-top:8px">Waiting for budget feed…</div>
+  </div>
+
+  <div class="grid mainGrid">
+    <div class="leftRail">
+      <div class="card">
+        <div class="cardTitle"><div class="titleLeft"><h3>Posture</h3></div></div>
+        <div class="cubeGrid">
+          <div class="cube"><div class="cubeLabel">Mode</div><div class="cubeValue" id="modeVal">Lean</div></div>
+          <div class="cube"><div class="cubeLabel">Trigger</div><div class="cubeValue" id="triggerVal">Watch</div></div>
+          <div class="cube"><div class="cubeLabel">Risk</div><div class="cubeValue" id="riskVal">Controlled</div></div>
+          <div class="cube"><div class="cubeLabel">Weather</div><div class="cubeValue" id="weatherVal">Clear</div></div>
+        </div>
+      </div>
+
+      <div class="card" style="margin-top:8px;">
+        <div class="cardTitle"><div class="titleLeft"><h3>Math Layer</h3></div></div>
+        <div class="cubeGrid">
+          <div class="cube"><div class="cubeLabel">Correlation</div><div class="cubeValue" id="corrVal">0.61</div></div>
+          <div class="cube"><div class="cubeLabel">Tape Weather</div><div class="cubeValue" id="volLayerVal">wobbly</div></div>
+          <div class="cube"><div class="cubeLabel">Sharpe</div><div class="cubeValue" id="sharpeVal">2.90</div></div>
+          <div class="cube"><div class="cubeLabel">Score</div><div class="cubeValue" id="scoreVal">86</div></div>
+        </div>
+      </div>
+    </div>
+
+    <div class="centerRail">
+      <div class="actionHoldRow">
+        <div class="card">
+          <div class="cardTitle">
+            <div class="titleLeft">
+              <h3>Action Engine</h3>
+              <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Top priority. Shows Lean and AGG picks, holds, trims, and avoids. Uses your holdings labels and budget tracker.</span></span>
+            </div>
+          </div>
+          <div id="actionBlocks"><div class="note">Loading action engine…</div></div>
+          <div class="note" id="actionNote" style="margin-top:8px">Lean sells lighter and slower. AGG trims faster when weak overlap names are blocking better opportunities. Both modes still respect the 25% cash floor.</div>
+        </div>
+
+        <div class="card">
+          <div class="cardTitle"><div class="titleLeft"><h3>Holdings</h3></div><div class="heroDate" id="holdingsCount">0 items</div></div>
+          <div class="scrollArea tallScroll" id="holdingsList"></div>
+        </div>
+      </div>
+
+      <div class="midPair">
+        <div class="card">
+          <div class="cardTitle"><div class="titleLeft"><h3>Performance</h3></div></div>
+          <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div>
+          <div class="chartMeta" id="perfMeta"></div>
+        </div>
+        <div class="card">
+          <div class="cardTitle"><div class="titleLeft"><h3>Spider Radar</h3></div></div>
+          <div class="radarGrid">
+            <svg viewBox="0 0 220 220" style="height:185px">
+              <polygon points="110,20 182,66 155,154 65,154 38,66" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="2"></polygon>
+              <polygon points="110,40 162,78 142,138 78,138 58,78" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="2"></polygon>
+            </svg>
+            <div class="radarLegend">
+              <div class="legendPill"><span class="dot g"></span>Lean</div>
+              <div class="legendPill"><span class="dot b"></span>SPY</div>
+              <div class="legendPill"><span class="dot r"></span>AGG hotter</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <div class="triple">
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Pair Correlations</h3></div></div><div class="table"><div class="scrollArea" id="pairTableWrap"></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Recent Moves</h3></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Mode</th><th>Action</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Math Snapshot</h3></div></div><div class="cubeGrid" id="mathSnapshotGrid"></div></div>
+      </div>
+
+      <div class="triple">
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Warnings</h3></div></div><div id="warningsList"></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Lean Health</h3></div></div><div id="healthList"></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Shock Radar</h3></div></div><div class="table"><div class="scrollArea" id="shockRadarWrap"></div></div></div>
+      </div>
+    </div>
+
+    <div class="rightRail">
+      <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Exposure & Guardrails</h3></div></div><div class="table"><div class="scrollArea" id="guardrailWrap"></div></div></div>
+    </div>
+  </div>
+
+  <div class="footer" id="footerStamp">Live final ready.</div>
+</div>
+
+<script>
+window.addEventListener("DOMContentLoaded", () => {
+  const LS_HOLDINGS="lean_holdings_csv_url";
+  const LS_BUDGET="lean_budget_csv_url";
+  const LS_TRADELOG="lean_tradelog_csv_url";
+  const LS_AGGRESSIVE="lean_aggressive_mode";
+
+  const DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
+  const DEFAULT_BUDGET="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=215007649&single=true&output=csv";
+  const DEFAULT_TRADELOG="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv";
+
+  const $ = s => document.querySelector(s);
+  let timer = null;
+
+  $("#refreshBtn").addEventListener("click", loadAll);
+  $("#settingsBtn").addEventListener("click", openSettings);
+  $("#aggressiveToggle").addEventListener("click", toggleAggressive);
+
+  function startClock(){ if(timer) clearInterval(timer); tickClock(); timer = setInterval(tickClock,1000); }
+  function tickClock(){ $("#clockNow").textContent = new Date().toLocaleTimeString(); }
+
+  function openSettings(){
+    const h = prompt("Holdings CSV URL", localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS);
+    if(h !== null && h.trim()) localStorage.setItem(LS_HOLDINGS, h.trim());
+    const b = prompt("Budget CSV URL", localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET);
+    if(b !== null && b.trim()) localStorage.setItem(LS_BUDGET, b.trim());
+    const t = prompt("Trade Log CSV URL", localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG);
+    if(t !== null && t.trim()) localStorage.setItem(LS_TRADELOG, t.trim());
+    loadAll();
+  }
+
+  function isAggressive(){ return localStorage.getItem(LS_AGGRESSIVE) === "1"; }
+  function toggleAggressive(){ localStorage.setItem(LS_AGGRESSIVE, isAggressive() ? "0" : "1"); applyAggressiveUI(); loadAll(); }
+  function applyAggressiveUI(){ const on=isAggressive(); $("#aggressiveToggle").textContent=`AGG: ${on?"ON":"OFF"}`; $("#aggressiveToggle").classList.toggle("active",on); }
+
+  function getHoldingsUrl(){ return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS; }
+  function getBudgetUrl(){ return localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET; }
+  function getTradeLogUrl(){ return localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG; }
+
+  async function loadAll(){
+    try{
+      const [holdingsRows,budgetRows,tradeRows] = await Promise.all([
+        fetchCsvRows(getHoldingsUrl()),
+        fetchCsvRows(getBudgetUrl()),
+        fetchCsvRows(getTradeLogUrl())
+      ]);
+      const view = buildView(holdingsRows,budgetRows,tradeRows,isAggressive());
+      renderAll(view);
+      $("#updatedChip").textContent = `LAST UPDATED: ${new Date().toLocaleTimeString()}`;
+      $("#footerStamp").textContent = `Live final updated ${new Date().toLocaleString()} • holdings + budget + trade log linked`;
+    }catch(err){
+      console.error(err);
+      $("#footerStamp").textContent = `Load issue: ${err.message || err}`;
+    }
+  }
+
+  async function fetchCsvRows(url){
+    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now(), {cache:"no-store"});
+    if(!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
+    return parseCsv(await res.text());
+  }
+
+  function parseCsv(text){
+    const rows=[]; let row=[], cell="", q=false;
+    for(let i=0;i<text.length;i++){
+      const ch=text[i], nx=text[i+1];
+      if(q){
+        if(ch === '"' && nx === '"'){ cell += '"'; i++; }
+        else if(ch === '"'){ q=false; }
+        else cell += ch;
+      }else{
+        if(ch === '"') q=true;
+        else if(ch === ","){ row.push(cell); cell=""; }
+        else if(ch === "\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
+        else if(ch !== "\r"){ cell += ch; }
+      }
+    }
+    if(cell.length || row.length){ row.push(cell); rows.push(row); }
+    if(!rows.length) return [];
+    const headers = rows[0].map(norm);
+    return rows.slice(1).filter(r => r.some(v => String(v||"").trim() !== "")).map(r => {
+      const o={}; headers.forEach((h,i)=>o[h]=(r[i] ?? "").trim()); return o;
+    });
+  }
+
+  function norm(s){ return String(s||"").trim().toLowerCase().replace(/\s+/g,"_").replace(/[^\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,""); }
+  function pick(o, keys){ for(const key of keys){ const k=norm(key); if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim(); } return ""; }
+  function num(v, fallback=0){ const m=String(v??"").replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : fallback; }
+  function money(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0}); }
+  function money2(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}); }
+  function pct(v){ return `${Number(v||0).toFixed(1)}%`; }
+  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
+  function uniq(arr){ return [...new Set(arr)]; }
+  function compact(arr){ return arr.filter(Boolean); }
+
+  function toneClass(v){
+    const s=String(v||"").toLowerCase();
+    if(s.includes("+")||s.includes("go")||s.includes("safe")||s.includes("green")||s.includes("high")||s.includes("strong")) return "greenText";
+    if(s.includes("-")||s.includes("red")||s.includes("avoid")||s.includes("weak")||s.includes("sell")) return "redText";
+    if(s.includes("watch")||s.includes("wobbly")||s.includes("controlled")||s.includes("hold")||s.includes("med")) return "yellowText";
+    return "blueText";
+  }
+
+  function mapHolding(r){
+    return {
+      ticker: pick(r,["ticker","symbol"]) || "—",
+      name: pick(r,["name","role","company","description","asset"]) || "—",
+      weight: pick(r,["weight"]) || "",
+      signal: pick(r,["signal"]) || "—",
+      change: pick(r,["change","day_change","helper"]) || "—",
+      radar: pick(r,["radar"]) || "NO",
+      strength: pick(r,["strength"]) || "LOW",
+      network: pick(r,["network"]) || "None",
+      correlation: pick(r,["correlation"]) || "MED",
+      priority: pick(r,["priority"]) || "3",
+      weightNum: num(pick(r,["weight"]),0)
+    };
+  }
+
+  function inferCash(holdings){
+    const cashRow = holdings.find(h => /sgov|cash/i.test(`${h.ticker} ${h.name}`));
+    return cashRow ? cashRow.weightNum : 85.1;
+  }
+
+  function getBudgetState(rows, agg){
+    const row = rows[0] || {};
+    const monthly = num(pick(row,["monthly_budget"]), 1000);
+    const used = num(pick(row,["used_to_date"]), 0);
+    const remaining = num(pick(row,["remaining"]), Math.max(monthly-used,0));
+    const todayDeploy = num(pick(row,["today_deploy"]), 0);
+    const mode = pick(row,["mode"]) || (agg ? "AGG" : "LEAN");
+    const note = pick(row,["notes"]) || "waiting for first signal";
+    return { monthly, used, remaining, todayDeploy, mode, note, usedPct: monthly > 0 ? clamp((used/monthly)*100,0,100) : 0 };
+  }
+
+  function rankCandidates(holdings){
+    const candidates = holdings.filter(h => !/sgov|cash/i.test(`${h.ticker} ${h.name}`));
+    const mapVal = (s, dict, fallback=0) => dict[String(s||"").toUpperCase()] ?? fallback;
+    const scored = candidates.map(h => {
+      const score =
+        mapVal(h.radar,{HOT:30,YES:18,NO:0}) +
+        mapVal(h.strength,{HIGH:30,MED:18,LOW:6}) +
+        mapVal(h.network,{AI:16,DEFENSE:12,SPACE:10,ENERGY:6,INTERNATIONAL:4,NONE:0},4) +
+        ({1:15,2:8,3:2}[String(h.priority)] ?? 0) +
+        (/go|live/i.test(h.signal) ? 8 : /watch/i.test(h.signal) ? 3 : 0) +
+        mapVal(h.correlation,{LOW:0,MED:-8,HIGH:-18});
+      return {...h, score};
+    }).sort((a,b)=>b.score-a.score);
+    return scored;
+  }
+
+  function buildActions(holdings,budget,agg){
+    const ranked = rankCandidates(holdings);
+    const top = ranked[0] || {ticker:"—"};
+    const second = ranked[1] || {ticker:"—"};
+    const hold = ranked[2] || {ticker:"—"};
+    const avoid = ranked.slice().sort((a,b)=>a.score-b.score)[0] || {ticker:"—"};
+    const trim = ranked.find(h => /xle/i.test(h.ticker)) || avoid;
+    const deploy = budget.todayDeploy;
+    const topAmt = Math.round(deploy * 0.60);
+    const secondAmt = deploy - topAmt;
+    const trimAmt = agg ? 50 : 25;
+    return {ranked, top, second, hold, avoid, trim, deploy, topAmt, secondAmt, trimAmt};
+  }
+
+  function buildView(holdingsRows,budgetRows,tradeRows,agg){
+    const holdings = holdingsRows.map(mapHolding);
+    const budget = getBudgetState(budgetRows, agg);
+    const actions = buildActions(holdings, budget, agg);
+    const cashPct = inferCash(holdings);
+
+    return {
+      heroDate: new Date().toLocaleDateString(),
+      heroStatus: agg ? "Lean AGG engine online" : "Lean engine online",
+      heroMeta: [agg ? "AGG" : "Lean", agg ? "Attack Watch" : "Watch", agg ? "Elevated" : "Controlled", "Clear"],
+      readyPct: agg ? "72%" : "63%",
+      riskPct: agg ? "56%" : "39%",
+      valueTxt: "$19,217.09",
+      lastTxt: "$0.00 / 0.00%",
+      weatherPill: agg ? "hotter" : "wobbly",
+      leanDelta: agg ? "+1.10%" : "+0.89%",
+      aggDelta: "+1.60%",
+      mode: agg ? "AGG" : "Lean",
+      trigger: agg ? "Attack Watch" : "Watch",
+      risk: agg ? "Elevated" : "Controlled",
+      weather: "Clear",
+      corr: "0.61",
+      tapeWeather: agg ? "hot" : "wobbly",
+      sharpe: "2.90",
+      score: agg ? 93 : 86,
+      holdings,
+      budget,
+      actions,
+      pairCorr: [["ACHR vs ARKQ","-1.00"],["SMH vs QQQ","0.91"],["XLE vs Oil","0.84"],["CRWV vs IWM","0.56"]],
+      recentMoves: tradeRows.slice(0,8).map(r => [
+        pick(r,["date"]) || "—",
+        pick(r,["mode"]) || "—",
+        pick(r,["action"]) || "—",
+        pick(r,["ticker"]) || "—",
+        pick(r,["amount"]) || "—"
+      ]),
+      mathSnapshot: [["Drawdown","-0.05%"],["Peak","$19,225.87"],["Vol", agg ? "Higher" : "0.00%"],["Sharpe","2.90"]],
+      warnings: uniq(compact([agg ? "AGG can magnify mistakes." : "","Heavy lean: cash still dominant.","Avoid overlap stacking.","Respect tape weather."])).slice(0,4),
+      health: [["Structure","Compressed layout that still reads fast."],["Tooltips","Street-speak i icons explain parts in plain English."],["AGG Logic",agg ? "Faster radar sensitivity to strong names." : "Standard radar filter."],["Mode",agg ? "AGG is active." : "Standard Lean is active."]],
+      shockRadar: [["BEEF SIGNAL","Calf prices are hot. Beef chain pressure rising.","WATCH"],["OIL","Energy conditions normal.","GREEN"],["LNG","Supply stable.","GREEN"],["SHIPPING","Routes normal.","GREEN"]],
+      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["Primary Blocker", agg ? "Overlap / Heat" : "Cash Anchor"],["Severity", agg ? "Higher" : "Moderate"]],
+      perfMeta: [agg ? "LEAN • 1.10%" : "LEAN • 0.89%","SPY • 0.40%","AGG • 1.60%"],
+      performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
+      benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4]
+    };
+  }
+
+  function renderBudget(b){
+    $("#budgetMonthly").textContent = money(b.monthly);
+    $("#budgetUsed").textContent = money(b.used);
+    $("#budgetRemaining").textContent = money(b.remaining);
+    $("#budgetToday").textContent = money(b.todayDeploy);
+    $("#budgetProgressFill").style.width = `${b.usedPct}%`;
+    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Mode: ${b.mode}. Notes: ${b.note}. AGG still respects the 25% cash floor.`;
+  }
+
+  function actionBox(title,color,label,value,reason){
+    return `<div class="actionBox" style="border:1px solid ${color}33;background:${color}1a">
+      <div style="margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${color}">${label}</div>
+      <div style="font-size:16px;font-weight:900;color:#fff">${title}${value ? ` → ${value}` : ""}</div>
+      <div style="margin-top:4px;font-size:11px;color:#cbd5e1">${reason}</div>
+    </div>`;
+  }
+
+  function renderActions(v){
+    const a=v.actions;
+    const lean = `
+      <div class="actionSection">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1">Lean Mode</div>
+          <div class="mini">Slower / cleaner</div>
+        </div>
+        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt||0),"Leader still clean, but Lean sizes smaller and waits for cleaner confirmation.")}
+        <div style="height:8px"></div>
+        ${actionBox(a.second.ticker,"#60a5fa","Second",money(a.secondAmt||0),"Secondary trend. Good enough to nibble, not enough to press hard.")}
+        <div class="actionGrid3" style="margin-top:8px">
+          ${actionBox(a.hold.ticker,"#fcd34d","Hold","","Decent structure. Keep it, don’t add yet.")}
+          ${actionBox(`${a.trim.ticker} trim`,"#fb7185","Trim",money(25),"Weak plus overlap. Small trim to free capital.")}
+          ${actionBox("Fresh weak adds","#ef4444","Avoid","","No fresh buys while better horses are available.")}
+        </div>
+      </div>`;
+    const agg = `
+      <div class="actionSection">
+        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG Mode</div>
+          <div class="mini" style="border-color:rgba(255,53,94,.30);color:#fecdd3">Faster / hotter</div>
+        </div>
+        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt||0),"Strongest horse, network aligned, low overlap.")}
+        <div style="height:8px"></div>
+        ${actionBox(a.second.ticker,"#60a5fa","Second",money(a.secondAmt||0),"Strong secondary trend, cluster support, correlation still clean.")}
+        <div class="actionGrid3" style="margin-top:8px">
+          ${actionBox(a.hold.ticker,"#fcd34d","Hold","","Decent setup, just not top 2 today.")}
+          ${actionBox(`${a.trim.ticker} trim`,"#fb7185","Sell / Trim",money(a.trimAmt||50),"Weak plus high overlap. Rotate that cash into stronger horses.")}
+          ${actionBox("Fresh weak adds","#ef4444","Avoid","","No reason to add where momentum is weaker than the leaders.")}
+        </div>
+      </div>`;
+    $("#actionBlocks").innerHTML = `${lean}<div style="height:12px"></div>${agg}`;
+    $("#actionNote").textContent = `Lean sells lighter and slower. AGG trims faster when weak overlap names are blocking better opportunities. Monthly budget remaining: ${money(v.budget.remaining)}.`;
+  }
+
+  function renderAll(v){
+    $("#heroDate").textContent=v.heroDate;
+    $("#heroStatus").textContent=v.heroStatus;
+    $("#heroMeta").innerHTML=v.heroMeta.map(x=>`<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
+    $("#convictionFill").style.width=`${clamp(v.score,1,100)}%`;
+    $("#readyPct").textContent=v.readyPct;
+    $("#riskPct").textContent=v.riskPct;
+    $("#valueTxt").textContent=v.valueTxt;
+    $("#lastTxt").textContent=v.lastTxt;
+    $("#weatherPill").textContent=v.weatherPill;
+    $("#leanDelta").textContent=v.leanDelta;
+    $("#aggDelta").textContent=v.aggDelta;
+    setCube("#modeVal",v.mode); setCube("#triggerVal",v.trigger); setCube("#riskVal",v.risk); setCube("#weatherVal",v.weather);
+    setCube("#corrVal",v.corr); setCube("#volLayerVal",v.tapeWeather); setCube("#sharpeVal",v.sharpe); setCube("#scoreVal",String(v.score));
+    renderBudget(v.budget);
+    renderActions(v);
+    drawPerformanceChart("#perfSvg",v.performanceSeries,v.benchmarkSeries);
+    $("#perfMeta").innerHTML=v.perfMeta.map(x=>`<div class="mini">${escapeHtml(x)}</div>`).join("");
+    $("#pairTableWrap").innerHTML=wrapTableHtml(v.pairCorr);
+    $("#recentMovesBody").innerHTML=v.recentMoves.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td><td>${escapeHtml(r[4])}</td></tr>`).join("");
+    $("#mathSnapshotGrid").innerHTML=v.mathSnapshot.map(([k,val])=>`<div class="cube"><div class="cubeLabel">${escapeHtml(k)}</div><div class="cubeValue ${toneClass(val)}">${escapeHtml(val)}</div></div>`).join("");
+    $("#warningsList").innerHTML=v.warnings.map(x=>`<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
+    $("#healthList").innerHTML=v.health.map(r=>`<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
+    $("#shockRadarWrap").innerHTML=v.shockRadar.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");
+    $("#guardrailWrap").innerHTML=wrapTableHtml(v.guardrails);
+    renderHoldings(v.holdings);
+  }
+
+  function setCube(sel, value){ const el=$(sel); el.textContent=value; el.className=`cubeValue ${toneClass(value)}`; }
+  function wrapTableHtml(rows){ return rows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join(""); }
+  function renderHoldings(rows){
+    $("#holdingsCount").textContent = `${rows.length} items`;
+    if(!rows.length){ $("#holdingsList").innerHTML = `<div class="note">No holdings rows found.</div>`; return; }
+    $("#holdingsList").innerHTML = rows.map(h=>`<div class="holdingRow"><div class="holdingName">${escapeHtml(h.ticker)}</div><div class="holdingSub">${escapeHtml(h.name||"—")}</div><div class="miniPill">${escapeHtml(h.weight||"—")}</div><div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div><div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div></div>`).join("");
+  }
+  function drawPerformanceChart(sel, leanSeries, benchSeries){
+    const svg=$(sel), width=1000, height=220, pad=40, values=leanSeries.concat(benchSeries), min=Math.min(...values), max=Math.max(...values), xStep=(width-pad*2)/(leanSeries.length-1||1), y=v=>max===min?height/2:height-pad-((v-min)/(max-min))*(height-pad*2);
+    const grid=[0,1,2,3].map(i=>{const gy=pad+i*((height-pad*2)/3);return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;}).join("");
+    const leanPath=leanSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");
+    const benchPath=benchSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");
+    const lx=pad+(leanSeries.length-1)*xStep,ly=y(leanSeries[leanSeries.length-1]),by=y(benchSeries[benchSeries.length-1]);
+    svg.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<path d="${leanPath}" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" /><path d="${benchPath}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" /><text x="${lx-55}" y="${ly-8}" fill="#22c55e" font-size="14" font-weight="800">LEAN</text><text x="${lx-45}" y="${by-8}" fill="#60a5fa" font-size="14" font-weight="800">SPY</text></svg>`;
+  }
+  function escapeHtml(str){ return String(str??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
+
+  applyAggressiveUI();
+  startClock();
+  loadAll();
+});
+</script>
+</body>
+</html>
