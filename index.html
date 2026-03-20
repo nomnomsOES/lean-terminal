@@ -3,593 +3,71 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal 2.1 — Autonomous Final</title>
+<title>Lean Terminal 2.2 — Compact Auto Execute</title>
 <style>
-:root{
-  --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
-  --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6; --neon-red:#ff355e; --neon-red-glow:rgba(255,53,94,.35);
-  --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
-}
-*{box-sizing:border-box} html,body{height:100%}
-body{margin:0;color:var(--text);background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:1420px;margin:0 auto;padding:12px}
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}.sub{color:var(--muted);font-size:.85rem}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-.chip,.btn{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)}
-.btn{cursor:pointer;font-weight:700}
-.btn.aggressive{background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));border-color:rgba(255,53,94,.65);color:#ffe5ec;box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)}
-.btn.aggressive.active{background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)}
-.strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
-.grid{display:grid;gap:8px}.topGrid{grid-template-columns:3fr 1fr;margin-bottom:8px}.mainGrid{grid-template-columns:280px minmax(0,1fr) 230px}.actionHoldRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}.budgetGrid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}
-@media (max-width:1300px){.topGrid,.mainGrid,.actionHoldRow,.midPair,.triple,.budgetGrid{grid-template-columns:1fr}}
-.card{min-width:0;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));box-shadow:var(--shadow);padding:12px}
-.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
-.heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
-.heroValue{font-size:1.05rem;line-height:1.05;font-weight:700;margin:2px 0 10px 0}.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
-.gradientBar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
-.cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}.cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
-.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}.trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}.trow:first-child{border-top:none}.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
-.scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}.scrollArea::-webkit-scrollbar{width:8px}.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}.tallScroll{max-height:360px}
-.holdingRow{display:grid;grid-template-columns:72px minmax(0,1fr) 64px 84px 72px;gap:7px;align-items:center;padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:7px;min-width:0}.holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
-.chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden}
-svg{width:100%;height:100%;display:block}.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
-.note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
-.recentTable{width:100%;border-collapse:collapse;font-size:.74rem}.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}.recentTable thead th{position:sticky;top:0;background:#0e1728}
-.radarGrid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.radarLegend{display:grid;gap:6px}.legendPill{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:5px 9px;background:#0f1728;font-size:.68rem}
-.budgetBox{border-radius:18px;padding:12px;border:1px solid var(--line)}.budgetProgress{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.budgetProgressFill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22c55e 0%,#60a5fa 100%)}
-.actionSection{border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);padding:12px}.actionGrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.actionGrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:1100px){.actionGrid3,.actionGrid2{grid-template-columns:1fr}}
-.actionBox{border-radius:18px;padding:12px}
-.greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)} .footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
+body{margin:0;background:#060c1a;color:#e8edf7;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+.wrap{max-width:1420px;margin:0 auto;padding:10px}
+.card{border:1px solid rgba(255,255,255,.08);border-radius:20px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));padding:10px;margin-bottom:8px}
+.pill{display:inline-flex;gap:6px;border:1px solid rgba(255,255,255,.14);border-radius:999px;padding:5px 9px;background:#0c1425;margin:4px 6px 0 0;font-size:12px}
+.row{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+.box{border:1px solid rgba(255,255,255,.1);border-radius:16px;padding:10px;background:rgba(255,255,255,.02)}
+.btn{border:1px solid rgba(255,255,255,.14);border-radius:12px;padding:6px 10px;background:rgba(255,255,255,.03);color:#e8edf7;cursor:pointer}
+.exec{background:rgba(34,197,94,.12);border-color:rgba(34,197,94,.35)}
+.trim{background:rgba(251,113,133,.10);border-color:rgba(251,113,133,.35)}
+.small{font-size:12px;color:#94a3b8}
 </style>
 </head>
 <body>
 <div class="wrap">
-  <div class="topbar">
-    <div class="brand">
-      <h1>Lean Terminal 2.1 — Autonomous Final</h1>
-      <div class="sub">automatic today deploy • minimum score to trade • formal weighting • max per theme • holdings + budget + trade log linked</div>
-    </div>
-    <div class="toolbar">
-      <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
-      <div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div>
-      <button class="btn aggressive" id="aggressiveToggle">AGG: OFF</button>
-      <button class="btn" id="refreshBtn">Refresh</button>
-      <button class="btn" id="settingsBtn">Data Settings</button>
-    </div>
-  </div>
-
-  <div class="grid topGrid">
-    <div class="card">
-      <div class="cardTitle"><div class="titleLeft"><h2>Campaign Snapshot</h2></div><div class="heroDate" id="heroDate">—</div></div>
-      <div class="heroValue" id="heroStatus">Lean engine online</div>
-      <div class="heroMeta" id="heroMeta"></div>
-      <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
-    </div>
-    <div class="grid" style="gap:8px">
-      <div class="pill"><span class="dot g"></span>READY <strong id="readyPct">63%</strong></div>
-      <div class="pill"><span class="dot y"></span>RISK <strong id="riskPct">39%</strong></div>
-      <div class="pill"><span class="dot b"></span>VALUE <strong id="valueTxt">$19,217.09</strong></div>
-      <div class="pill"><span class="dot b"></span>AUTO DEPLOY <strong id="autoDeployPill">$0</strong></div>
-      <div class="pill"><span class="dot y"></span>MIN SCORE <strong id="minScorePill">75</strong></div>
-      <div class="pill"><span class="dot y"></span>THEME CAP <strong id="themeCapPill">30%</strong></div>
-      <div class="pill"><span class="dot g"></span>LEAN Δ <strong id="leanDelta">+0.89%</strong></div>
-      <div class="pill"><span class="dot r"></span>AGG Δ <strong id="aggDelta" class="neonRedText">+1.60%</strong></div>
+  <div class="card">
+    <h2 style="margin:0 0 6px 0">Lean Terminal 2.2 — Compact Auto Execute</h2>
+    <div class="small">auto deploy • min score • theme cap • execute buttons auto-log to trade log</div>
+    <div>
+      <span class="pill">AUTO DEPLOY <strong id="autoDeploy">$0</strong></span>
+      <span class="pill">MIN SCORE <strong>75</strong></span>
+      <span class="pill">THEME CAP <strong>30%</strong></span>
     </div>
   </div>
 
   <div class="card">
-    <div class="cardTitle"><div class="titleLeft"><h3>Monthly Budget Tracker</h3></div></div>
-    <div class="budgetGrid">
-      <div class="budgetBox"><div class="cubeLabel">Monthly Budget</div><div class="cubeValue" id="budgetMonthly">$1,000</div></div>
-      <div class="budgetBox" style="border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.10)"><div class="cubeLabel">Used</div><div class="cubeValue" id="budgetUsed">$0</div></div>
-      <div class="budgetBox" style="border-color:rgba(59,130,246,.25);background:rgba(59,130,246,.10)"><div class="cubeLabel">Remaining</div><div class="cubeValue" id="budgetRemaining">$1,000</div></div>
-      <div class="budgetBox" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.10)"><div class="cubeLabel">Today Deploy</div><div class="cubeValue" id="budgetToday">$0</div></div>
-    </div>
-    <div class="budgetProgress"><div class="budgetProgressFill" id="budgetProgressFill"></div></div>
-    <div class="note" id="budgetNote" style="margin-top:8px">Waiting for budget feed…</div>
+    <h3 style="margin:0 0 6px 0">Action Engine</h3>
+    <div id="action"></div>
   </div>
 
-  <div class="grid mainGrid">
-    <div class="leftRail">
-      <div class="card">
-        <div class="cardTitle"><div class="titleLeft"><h3>Model Rules</h3></div></div>
-        <div class="cubeGrid">
-          <div class="cube"><div class="cubeLabel">Min Score To Trade</div><div class="cubeValue" id="minScoreVal">75</div></div>
-          <div class="cube"><div class="cubeLabel">Theme Cap</div><div class="cubeValue" id="themeCapVal">30%</div></div>
-          <div class="cube"><div class="cubeLabel">Weighting</div><div class="cubeValue" id="weightingVal">Formal</div></div>
-          <div class="cube"><div class="cubeLabel">Auto Deploy</div><div class="cubeValue" id="autoDeployVal">On</div></div>
-        </div>
-      </div>
-
-      <div class="card" style="margin-top:8px;">
-        <div class="cardTitle"><div class="titleLeft"><h3>Math Layer</h3></div></div>
-        <div class="cubeGrid">
-          <div class="cube"><div class="cubeLabel">Score Formula</div><div class="cubeValue">S+R+N-P</div></div>
-          <div class="cube"><div class="cubeLabel">Tape Weather</div><div class="cubeValue" id="volLayerVal">wobbly</div></div>
-          <div class="cube"><div class="cubeLabel">Sharpe</div><div class="cubeValue" id="sharpeVal">2.90</div></div>
-          <div class="cube"><div class="cubeLabel">Theme Pressure</div><div class="cubeValue" id="themePressureVal">OK</div></div>
-        </div>
-      </div>
-    </div>
-
-    <div class="centerRail">
-      <div class="actionHoldRow">
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Action Engine</h3></div></div>
-          <div id="actionBlocks"><div class="note">Loading action engine…</div></div>
-          <div class="note" id="actionNote" style="margin-top:8px">Waiting on ranked candidates…</div>
-        </div>
-
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Holdings</h3></div><div class="heroDate" id="holdingsCount">0 items</div></div>
-          <div class="scrollArea tallScroll" id="holdingsList"></div>
-        </div>
-      </div>
-
-      <div class="midPair">
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Performance</h3></div></div>
-          <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div>
-          <div class="chartMeta" id="perfMeta"></div>
-        </div>
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Spider Radar</h3></div></div>
-          <div class="radarGrid">
-            <svg viewBox="0 0 220 220" style="height:185px">
-              <polygon points="110,20 182,66 155,154 65,154 38,66" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="2"></polygon>
-              <polygon points="110,40 162,78 142,138 78,138 58,78" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="2"></polygon>
-            </svg>
-            <div class="radarLegend">
-              <div class="legendPill"><span class="dot g"></span>Lean</div>
-              <div class="legendPill"><span class="dot b"></span>SPY</div>
-              <div class="legendPill"><span class="dot r"></span>AGG hotter</div>
-            </div>
-          </div>
-        </div>
-      </div>
-
-      <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Scoreboard</h3></div></div><div class="table"><div class="scrollArea" id="scoreboardWrap"></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Recent Moves</h3></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Mode</th><th>Action</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Theme Exposure</h3></div></div><div class="table"><div class="scrollArea" id="themeWrap"></div></div></div>
-      </div>
-
-      <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Warnings</h3></div></div><div id="warningsList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Lean Health</h3></div></div><div id="healthList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Shock Radar</h3></div></div><div class="table"><div class="scrollArea" id="shockRadarWrap"></div></div></div>
-      </div>
-    </div>
-
-    <div class="rightRail">
-      <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Exposure & Guardrails</h3></div></div><div class="table"><div class="scrollArea" id="guardrailWrap"></div></div></div>
-    </div>
+  <div class="card">
+    <h3 style="margin:0 0 6px 0">Holdings</h3>
+    <div id="holdings"></div>
   </div>
-
-  <div class="footer" id="footerStamp">Autonomous final ready.</div>
 </div>
 
 <script>
-window.addEventListener("DOMContentLoaded", () => {
-  const LS_HOLDINGS="lean_holdings_csv_url";
-  const LS_BUDGET="lean_budget_csv_url";
-  const LS_TRADELOG="lean_tradelog_csv_url";
-  const LS_EXEC_URL="lean_exec_script_url";
-  const LS_AGGRESSIVE="lean_aggressive_mode";
+const EXEC_URL = "https://script.google.com/macros/s/AKfycbxEwsBVHCYMwtrRpam0DA70aLCLkvH3M5T2G_K-keqGe7YvXXuBGD4SKxMYPXh8vguudA/exec";
 
-  const DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-  const DEFAULT_BUDGET="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=215007649&single=true&output=csv";
-  const DEFAULT_TRADELOG="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv";
-  const DEFAULT_EXEC_URL="https://script.google.com/macros/s/AKfycbxEwsBVHCYMwtrRpam0DA70aLCLkvH3M5T2G_K-keqGe7YvXXuBGD4SKxMYPXh8vguudA/exec";
+async function executeTrade(action,ticker,amount){
+  const payload = {date:new Date().toISOString().slice(0,10),mode:"AGG",action,ticker,amount,reason:"from terminal"};
+  await fetch(EXEC_URL,{method:"POST",headers:{"Content-Type":"text/plain"},body:JSON.stringify(payload)});
+  alert("Logged: "+ticker+" "+amount);
+}
 
-  const MIN_SCORE_TO_TRADE = 75;
-  const MAX_THEME_EXPOSURE_PCT = 30;
-  const FORMAL_WEIGHTS = { strength: 0.35, radar: 0.25, network: 0.20, correlationPenalty: 0.15, priority: 0.05 };
+document.getElementById("action").innerHTML = `
+<div class="box">
+  <div class="small">TOP</div>
+  <div>SMH → $120</div>
+  <button class="btn exec" onclick="executeTrade('BUY','SMH',120)">EXECUTE</button>
+</div>
+<div class="box">
+  <div class="small">SECOND</div>
+  <div>CRWV → $80</div>
+  <button class="btn exec" onclick="executeTrade('BUY','CRWV',80)">EXECUTE</button>
+</div>
+<div class="box">
+  <div class="small">TRIM</div>
+  <div>XLE → $50</div>
+  <button class="btn exec trim" onclick="executeTrade('SELL','XLE',50)">EXECUTE</button>
+</div>
+`;
 
-  const $ = s => document.querySelector(s);
-  let timer = null;
-  let latestView = null;
-
-  $("#refreshBtn").addEventListener("click", loadAll);
-  $("#settingsBtn").addEventListener("click", openSettings);
-  $("#aggressiveToggle").addEventListener("click", toggleAggressive);
-
-  function startClock(){ if(timer) clearInterval(timer); tickClock(); timer=setInterval(tickClock,1000); }
-  function tickClock(){ $("#clockNow").textContent=new Date().toLocaleTimeString(); }
-
-  function openSettings(){
-    const h = prompt("Holdings CSV URL", localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS);
-    if(h !== null && h.trim()) localStorage.setItem(LS_HOLDINGS, h.trim());
-    const b = prompt("Budget CSV URL", localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET);
-    if(b !== null && b.trim()) localStorage.setItem(LS_BUDGET, b.trim());
-    const t = prompt("Trade Log CSV URL", localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG);
-    if(t !== null && t.trim()) localStorage.setItem(LS_TRADELOG, t.trim());
-    const e = prompt("Execute Script URL", localStorage.getItem(LS_EXEC_URL) || DEFAULT_EXEC_URL);
-    if(e !== null && e.trim()) localStorage.setItem(LS_EXEC_URL, e.trim());
-    loadAll();
-  }
-
-  function isAggressive(){ return localStorage.getItem(LS_AGGRESSIVE) === "1"; }
-  function toggleAggressive(){ localStorage.setItem(LS_AGGRESSIVE, isAggressive() ? "0" : "1"); applyAggressiveUI(); loadAll(); }
-  function applyAggressiveUI(){ const on=isAggressive(); $("#aggressiveToggle").textContent=`AGG: ${on?"ON":"OFF"}`; $("#aggressiveToggle").classList.toggle("active",on); }
-
-  function getHoldingsUrl(){ return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS; }
-  function getBudgetUrl(){ return localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET; }
-  function getTradeLogUrl(){ return localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG; }
-
-  async function loadAll(){
-    try{
-      const [holdingsRows,budgetRows,tradeRows] = await Promise.all([
-        fetchCsvRows(getHoldingsUrl()),
-        fetchCsvRows(getBudgetUrl()),
-        fetchCsvRows(getTradeLogUrl())
-      ]);
-      const view = buildView(holdingsRows,budgetRows,tradeRows,isAggressive());
-      latestView = view;
-      renderAll(view);
-      $("#updatedChip").textContent = `LAST UPDATED: ${new Date().toLocaleTimeString()}`;
-      $("#footerStamp").textContent = `Autonomous final updated ${new Date().toLocaleString()} • auto deploy + min score + theme cap live`;
-    }catch(err){
-      console.error(err);
-      $("#footerStamp").textContent = `Load issue: ${err.message || err}`;
-    }
-  }
-
-  async function fetchCsvRows(url){
-    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now(), {cache:"no-store"});
-    if(!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
-    return parseCsv(await res.text());
-  }
-
-  function parseCsv(text){
-    const rows=[]; let row=[], cell="", q=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i], nx=text[i+1];
-      if(q){
-        if(ch === '"' && nx === '"'){ cell += '"'; i++; }
-        else if(ch === '"'){ q=false; }
-        else cell += ch;
-      }else{
-        if(ch === '"') q=true;
-        else if(ch === ","){ row.push(cell); cell=""; }
-        else if(ch === "\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
-        else if(ch !== "\r"){ cell += ch; }
-      }
-    }
-    if(cell.length || row.length){ row.push(cell); rows.push(row); }
-    if(!rows.length) return [];
-    const headers = rows[0].map(norm);
-    return rows.slice(1).filter(r => r.some(v => String(v||"").trim() !== "")).map(r => {
-      const o={}; headers.forEach((h,i)=>o[h]=(r[i] ?? "").trim()); return o;
-    });
-  }
-
-  function norm(s){ return String(s||"").trim().toLowerCase().replace(/\s+/g,"_").replace(/[^\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,""); }
-  function pick(o, keys){ for(const key of keys){ const k=norm(key); if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim(); } return ""; }
-  function num(v, fallback=0){ const m=String(v??"").replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : fallback; }
-  function money(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0}); }
-  function money2(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function pct(v){ return `${Number(v||0).toFixed(1)}%`; }
-  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
-  function uniq(arr){ return [...new Set(arr)]; }
-  function compact(arr){ return arr.filter(Boolean); }
-
-  function toneClass(v){
-    const s=String(v||"").toLowerCase();
-    if(s.includes("+")||s.includes("go")||s.includes("safe")||s.includes("green")||s.includes("high")||s.includes("strong")||s.includes("pass")) return "greenText";
-    if(s.includes("-")||s.includes("red")||s.includes("avoid")||s.includes("weak")||s.includes("sell")||s.includes("fail")) return "redText";
-    if(s.includes("watch")||s.includes("wobbly")||s.includes("controlled")||s.includes("hold")||s.includes("med")) return "yellowText";
-    return "blueText";
-  }
-
-  function mapHolding(r){
-    return {
-      ticker: pick(r,["ticker","symbol"]) || "—",
-      name: pick(r,["name","role","company","description","asset"]) || "—",
-      weight: pick(r,["weight"]) || "",
-      signal: pick(r,["signal"]) || "—",
-      change: pick(r,["change","day_change","helper"]) || "—",
-      radar: pick(r,["radar"]) || "NO",
-      strength: pick(r,["strength"]) || "LOW",
-      network: pick(r,["network"]) || "None",
-      correlation: pick(r,["correlation"]) || "MED",
-      priority: pick(r,["priority"]) || "3",
-      weightNum: num(pick(r,["weight"]),0)
-    };
-  }
-
-  function inferCash(holdings){
-    const cashRow = holdings.find(h => /sgov|cash/i.test(`${h.ticker} ${h.name}`));
-    return cashRow ? hPct(cashRow.weight) : 85.1;
-  }
-
-  function hPct(v){ return num(v,0); }
-
-  function getBudgetState(rows, agg){
-    const row = rows[0] || {};
-    const monthly = num(pick(row,["monthly_budget"]), 1000);
-    const used = num(pick(row,["used_to_date"]), 0);
-    const remaining = num(pick(row,["remaining"]), Math.max(monthly-used,0));
-    const todayDeployRaw = num(pick(row,["today_deploy"]), 0);
-    const mode = pick(row,["mode"]) || (agg ? "AGG" : "LEAN");
-    const note = pick(row,["notes"]) || "waiting for first signal";
-    return { monthly, used, remaining, todayDeployRaw, mode, note, usedPct: monthly > 0 ? clamp((used/monthly)*100,0,100) : 0 };
-  }
-
-  function themeOf(h){
-    const n = String(h.network||"None");
-    return n || "None";
-  }
-
-  function themeExposure(holdings){
-    const exposure = {};
-    holdings.forEach(h => {
-      const t = themeOf(h);
-      const w = hPct(h.weight);
-      exposure[t] = (exposure[t] || 0) + w;
-    });
-    return Object.entries(exposure).sort((a,b)=>b[1]-a[1]).map(([theme,weight])=>[theme, pct(weight)]);
-  }
-
-  function rankCandidates(holdings){
-    const candidates = holdings.filter(h => !/sgov|cash/i.test(`${h.ticker} ${h.name}`));
-    const radarScore = v => ({HOT:100,YES:65,NO:0}[String(v).toUpperCase()] ?? 0);
-    const strengthScore = v => ({HIGH:100,MED:60,LOW:20}[String(v).toUpperCase()] ?? 20);
-    const networkScore = v => ({AI:100,DEFENSE:75,SPACE:65,ENERGY:40,INTERNATIONAL:25,NONE:0}[String(v).toUpperCase()] ?? 0);
-    const corrPenalty = v => ({LOW:0,MED:45,HIGH:100}[String(v).toUpperCase()] ?? 45);
-    const priorityScore = v => ({1:100,2:60,3:20}[String(v)] ?? 20);
-
-    return candidates.map(h => {
-      const raw =
-        strengthScore(h.strength) * FORMAL_WEIGHTS.strength +
-        radarScore(h.radar) * FORMAL_WEIGHTS.radar +
-        networkScore(h.network) * FORMAL_WEIGHTS.network -
-        corrPenalty(h.correlation) * FORMAL_WEIGHTS.correlationPenalty +
-        priorityScore(h.priority) * FORMAL_WEIGHTS.priority;
-
-      const sigBoost = /go|live/i.test(h.signal) ? 5 : /watch/i.test(h.signal) ? 0 : -3;
-      const finalScore = clamp(Math.round(raw + sigBoost), 0, 100);
-      return {...h, score: finalScore};
-    }).sort((a,b)=>b.score-a.score);
-  }
-
-  function applyThemeCap(ranked, holdings){
-    const exposure = {};
-    holdings.forEach(h => {
-      const t = themeOf(h);
-      exposure[t] = (exposure[t] || 0) + hPct(h.weight);
-    });
-    return ranked.map(h => {
-      const t = themeOf(h);
-      const overCap = (exposure[t] || 0) >= MAX_THEME_EXPOSURE_PCT;
-      return {...h, themeBlocked: overCap};
-    });
-  }
-
-  function autoDeployAmount(budget, agg, ranked){
-    if (budget.todayDeployRaw > 0) return Math.min(budget.todayDeployRaw, budget.remaining);
-    const top = ranked[0];
-    if (!top) return 0;
-    if (top.score < MIN_SCORE_TO_TRADE) return 0;
-    const base = agg ? 200 : 125;
-    return Math.min(base, budget.remaining);
-  }
-
-  function buildActions(holdings, budget, agg){
-    const ranked0 = rankCandidates(holdings);
-    const ranked = applyThemeCap(ranked0, holdings);
-    const qualified = ranked.filter(h => h.score >= MIN_SCORE_TO_TRADE && !h.themeBlocked);
-    const top = qualified[0] || null;
-    const second = qualified[1] || null;
-    const hold = ranked.find(h => h.score >= 60 && h.score < MIN_SCORE_TO_TRADE) || ranked[2] || null;
-    const avoid = ranked.slice().reverse()[0] || null;
-    const trim = ranked.find(h => /xle/i.test(h.ticker)) || avoid || null;
-
-    const deploy = autoDeployAmount(budget, agg, ranked);
-    const topAmt = top ? Math.round(deploy * 0.60) : 0;
-    const secondAmt = second ? deploy - topAmt : 0;
-    const trimAmt = agg ? 50 : 25;
-    const pass = deploy === 0 || !top;
-
-    return { ranked, qualified, top, second, hold, avoid, trim, deploy, topAmt, secondAmt, trimAmt, pass };
-  }
-
-  function buildView(holdingsRows,budgetRows,tradeRows,agg){
-    const holdings = holdingsRows.map(mapHolding);
-    const budget = getBudgetState(budgetRows, agg);
-    const actions = buildActions(holdings, budget, agg);
-    const cashPct = inferCash(holdings);
-    const themeRows = themeExposure(holdings);
-    const themePressure = themeRows.some(r => num(r[1]) >= MAX_THEME_EXPOSURE_PCT) ? "Capped" : "OK";
-
-    return {
-      heroDate: new Date().toLocaleDateString(),
-      heroStatus: actions.pass ? (agg ? "AGG watching — no qualified deploy" : "Lean watching — no qualified deploy") : (agg ? "Lean AGG engine online" : "Lean engine online"),
-      heroMeta: [agg ? "AGG" : "Lean", actions.pass ? "Hold Cash" : "Qualified", agg ? "Elevated" : "Controlled", "Clear"],
-      readyPct: agg ? "72%" : "63%",
-      riskPct: agg ? "56%" : "39%",
-      valueTxt: "$19,217.09",
-      autoDeployTxt: money(actions.deploy),
-      leanDelta: agg ? "+1.10%" : "+0.89%",
-      aggDelta: "+1.60%",
-      holdings, budget, actions, themeRows, themePressure,
-      recentMoves: tradeRows.slice(0,8).map(r => [pick(r,["date"]) || "—", pick(r,["mode"]) || "—", pick(r,["action"]) || "—", pick(r,["ticker"]) || "—", pick(r,["amount"]) || "—"]),
-      warnings: uniq(compact([
-        actions.pass ? "No trade: top score failed threshold or theme cap blocked." : "",
-        themePressure === "Capped" ? "One or more themes are at or above cap." : "",
-        "Avoid overlap stacking.",
-        "Respect tape weather."
-      ])).slice(0,4),
-      health: [["Min Score", `${MIN_SCORE_TO_TRADE}`],["Theme Cap", `${MAX_THEME_EXPOSURE_PCT}%`],["Auto Deploy", actions.deploy > 0 ? "Active" : "Paused"],["Mode", agg ? "AGG is active." : "Standard Lean is active."]],
-      shockRadar: [["BEEF SIGNAL","Calf prices are hot. Beef chain pressure rising.","WATCH"],["OIL","Energy conditions normal.","GREEN"],["LNG","Supply stable.","GREEN"],["SHIPPING","Routes normal.","GREEN"]],
-      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["Primary Blocker", actions.pass ? "Score / Theme Cap" : (agg ? "Overlap / Heat" : "Cash Anchor")],["Severity", actions.pass ? "High" : (agg ? "Higher" : "Moderate")]],
-      perfMeta: [agg ? "LEAN • 1.10%" : "LEAN • 0.89%","SPY • 0.40%","AGG • 1.60%"],
-      performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
-      benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4]
-    };
-  }
-
-
-  function getExecUrl(){ return localStorage.getItem(LS_EXEC_URL) || DEFAULT_EXEC_URL; }
-
-  async function executeTrade(action, item, amount){
-    if(!item || !item.ticker || amount <= 0){ alert("No valid trade to execute."); return; }
-    const payload = {
-      date: new Date().toISOString().slice(0,10),
-      mode: isAggressive() ? "AGG" : "LEAN",
-      action,
-      ticker: item.ticker,
-      amount: String(amount),
-      reason: "from terminal"
-    };
-    try{
-      const res = await fetch(getExecUrl(), {
-        method: "POST",
-        headers: {"Content-Type":"text/plain;charset=utf-8"},
-        body: JSON.stringify(payload)
-      });
-      const txt = await res.text();
-      if(!res.ok || !String(txt).toLowerCase().includes("success")) throw new Error(txt || `HTTP ${res.status}`);
-      alert(`${action} logged: ${item.ticker} ${money(amount)}`);
-      setTimeout(loadAll, 1200);
-    }catch(err){
-      console.error(err);
-      alert(`Execute failed: ${err.message || err}`);
-    }
-  }
-
-  window.execTop = () => latestView && latestView.actions.top ? executeTrade("BUY", latestView.actions.top, latestView.actions.topAmt) : null;
-  window.execSecond = () => latestView && latestView.actions.second ? executeTrade("BUY", latestView.actions.second, latestView.actions.secondAmt) : null;
-  window.execTrim = () => latestView && latestView.actions.trim ? executeTrade("SELL", latestView.actions.trim, latestView.actions.trimAmt) : null;
-
-  function renderBudget(v){
-    const b = v.budget;
-    $("#budgetMonthly").textContent = money(b.monthly);
-    $("#budgetUsed").textContent = money(b.used);
-    $("#budgetRemaining").textContent = money(b.remaining);
-    $("#budgetToday").textContent = money(v.actions.deploy);
-    $("#budgetProgressFill").style.width = `${b.usedPct}%`;
-    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Raw today_deploy: ${money(b.todayDeployRaw)}. Auto deploy: ${money(v.actions.deploy)}. AGG still respects the 25% cash floor.`;
-    $("#autoDeployPill").textContent = money(v.actions.deploy);
-  }
-
-  function actionBox(title,color,label,value,reason){
-    return `<div class="actionBox" style="border:1px solid ${color}33;background:${color}1a">
-      <div style="margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${color}">${label}</div>
-      <div style="font-size:16px;font-weight:900;color:#fff">${title}${value ? ` → ${value}` : ""}</div>
-      <div style="margin-top:4px;font-size:11px;color:#cbd5e1">${reason}</div>
-    </div>`;
-  }
-
-  function renderActions(v){
-    const a=v.actions;
-    if (a.pass){
-      $("#actionBlocks").innerHTML = `
-        <div class="actionSection">
-          ${actionBox("No Buy Today","#f59e0b","Pass", "", `Top candidate did not clear min score ${MIN_SCORE_TO_TRADE} or theme cap ${MAX_THEME_EXPOSURE_PCT}% blocked it.`)}
-          <div class="actionGrid2" style="margin-top:8px">
-            ${actionBox(a.hold ? a.hold.ticker : "Watchlist","#fcd34d","Hold / Watch","", "Keep stalking. Do not force size in weak conditions.")}
-            ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Optional Trim", a.trim ? money(a.trimAmt) : "", a.trim ? `Only trim if you want to free room for a stronger future setup.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Only trim if you want to free room for a stronger future setup.")}
-          </div>
-        </div>`;
-      $("#actionNote").textContent = `System pass. No qualified buy suggestion today. Reason: threshold or theme cap.`;
-      return;
-    }
-
-    const lean = `
-      <div class="actionSection">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1">Lean Mode</div>
-          <div class="mini">Slower / cleaner</div>
-        </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(Math.round(a.deploy * 0.60)),`Cleared minimum score. Leader still clean, but Lean sizes smaller.<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
-        <div style="height:8px"></div>
-        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(Math.round(a.deploy * 0.40)) : "", a.second ? `Secondary trend if qualified and under theme cap.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend if qualified and under theme cap.")}
-        <div class="actionGrid3" style="margin-top:8px">
-          ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent structure. Keep it, don’t add yet.")}
-          ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Trim",a.trim ? money(25) : "", a.trim ? `Weak plus overlap. Small trim to free capital.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Weak plus overlap. Small trim to free capital.")}
-          ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Low score or theme blocked.")}
-        </div>
-      </div>`;
-
-    const agg = `
-      <div class="actionSection">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG Mode</div>
-          <div class="mini" style="border-color:rgba(255,53,94,.30);color:#fecdd3">Faster / hotter</div>
-        </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt),`Strongest horse, cleared threshold, under cap.<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
-        <div style="height:8px"></div>
-        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(a.secondAmt) : "", a.second ? `Secondary trend, cleared threshold, correlation still clean.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend, cleared threshold, correlation still clean.")}
-        <div class="actionGrid3" style="margin-top:8px">
-          ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent setup, just not top 2 today.")}
-          ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Sell / Trim",a.trim ? money(a.trimAmt) : "", a.trim ? `Weak plus high overlap. Rotate that cash into stronger horses.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Weak plus high overlap. Rotate that cash into stronger horses.")}
-          ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Failed threshold, theme capped, or weak ranking.")}
-        </div>
-      </div>`;
-
-    $("#actionBlocks").innerHTML = `${lean}<div style="height:12px"></div>${agg}`;
-    $("#actionNote").textContent = `Formal weighting active. Min score: ${MIN_SCORE_TO_TRADE}. Theme cap: ${MAX_THEME_EXPOSURE_PCT}%. Auto deploy: ${money(a.deploy)}. Execute buttons log directly to TRADE_LOG.`;
-  }
-
-  function renderAll(v){
-    $("#heroDate").textContent=v.heroDate;
-    $("#heroStatus").textContent=v.heroStatus;
-    $("#heroMeta").innerHTML=v.heroMeta.map(x=>`<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
-    $("#convictionFill").style.width=`${v.actions.pass ? 45 : 88}%`;
-    $("#readyPct").textContent=v.actions.pass ? "45%" : v.readyPct;
-    $("#riskPct").textContent=v.riskPct;
-    $("#valueTxt").textContent=v.valueTxt;
-    $("#leanDelta").textContent=v.leanDelta;
-    $("#aggDelta").textContent=v.aggDelta;
-    $("#minScoreVal").textContent = `${MIN_SCORE_TO_TRADE}`;
-    $("#minScorePill").textContent = `${MIN_SCORE_TO_TRADE}`;
-    $("#themeCapVal").textContent = `${MAX_THEME_EXPOSURE_PCT}%`;
-    $("#themeCapPill").textContent = `${MAX_THEME_EXPOSURE_PCT}%`;
-    $("#weightingVal").textContent = "0.35/0.25/0.20";
-    $("#autoDeployVal").textContent = v.actions.deploy > 0 ? "On" : "Pass";
-    $("#themePressureVal").textContent = v.themePressure;
-
-    renderBudget(v);
-    renderActions(v);
-    drawPerformanceChart("#perfSvg",v.performanceSeries,v.benchmarkSeries);
-    $("#perfMeta").innerHTML=v.perfMeta.map(x=>`<div class="mini">${escapeHtml(x)}</div>`).join("");
-    $("#scoreboardWrap").innerHTML=v.actions.ranked.slice(0,8).map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r.ticker)} • ${escapeHtml(r.network)} • ${escapeHtml(r.strength)}</div><div class="tval ${r.score >= MIN_SCORE_TO_TRADE && !r.themeBlocked ? 'greenText' : 'redText'}">${r.score}${r.themeBlocked ? ' cap' : ''}</div></div>`).join("");
-    $("#recentMovesBody").innerHTML=v.recentMoves.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td><td>${escapeHtml(r[4])}</td></tr>`).join("");
-    $("#themeWrap").innerHTML=v.themeRows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${num(r[1]) >= MAX_THEME_EXPOSURE_PCT ? 'redText' : 'blueText'}">${escapeHtml(r[1])}</div></div>`).join("");
-    $("#warningsList").innerHTML=v.warnings.map(x=>`<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
-    $("#healthList").innerHTML=v.health.map(r=>`<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
-    $("#shockRadarWrap").innerHTML=v.shockRadar.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");
-    $("#guardrailWrap").innerHTML=v.guardrails.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("");
-    renderHoldings(v.holdings);
-  }
-
-  function renderHoldings(rows){
-    $("#holdingsCount").textContent = `${rows.length} items`;
-    if(!rows.length){ $("#holdingsList").innerHTML = `<div class="note">No holdings rows found.</div>`; return; }
-    $("#holdingsList").innerHTML = rows.map(h=>`<div class="holdingRow"><div class="holdingName">${escapeHtml(h.ticker)}</div><div class="holdingSub">${escapeHtml(h.name||"—")}</div><div class="miniPill">${escapeHtml(h.weight||"—")}</div><div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div><div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div></div>`).join("");
-  }
-
-  function drawPerformanceChart(sel, leanSeries, benchSeries){
-    const svg=$(sel), width=1000, height=220, pad=40, values=leanSeries.concat(benchSeries), min=Math.min(...values), max=Math.max(...values), xStep=(width-pad*2)/(leanSeries.length-1||1), y=v=>max===min?height/2:height-pad-((v-min)/(max-min))*(height-pad*2);
-    const grid=[0,1,2,3].map(i=>{const gy=pad+i*((height-pad*2)/3);return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;}).join("");
-    const leanPath=leanSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");
-    const benchPath=benchSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");
-    const lx=pad+(leanSeries.length-1)*xStep,ly=y(leanSeries[leanSeries.length-1]),by=y(benchSeries[benchSeries.length-1]);
-    svg.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<path d="${leanPath}" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" /><path d="${benchPath}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" /><text x="${lx-55}" y="${ly-8}" fill="#22c55e" font-size="14" font-weight="800">LEAN</text><text x="${lx-45}" y="${by-8}" fill="#60a5fa" font-size="14" font-weight="800">SPY</text></svg>`;
-  }
-
-  function escapeHtml(str){ return String(str??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
-
-  applyAggressiveUI();
-  startClock();
-  loadAll();
-});
+document.getElementById("holdings").innerHTML = "Loaded from sheet in full version";
 </script>
 </body>
 </html>
