@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal 2.0 — Live Final</title>
+<title>Lean Terminal 2.1 — Autonomous Final</title>
 <style>
 :root{
   --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
@@ -11,131 +11,48 @@
   --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
 }
 *{box-sizing:border-box} html,body{height:100%}
-body{
-  margin:0;color:var(--text);
-  background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-}
+body{margin:0;color:var(--text);background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
 .wrap{max-width:1420px;margin:0 auto;padding:12px}
 .topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}
-.sub{color:var(--muted);font-size:.85rem}
+.brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}.sub{color:var(--muted);font-size:.85rem}
 .toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-.chip,.btn{
-  border:1px solid var(--line2);
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
-  color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)
-}
+.chip,.btn{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)}
 .btn{cursor:pointer;font-weight:700}
-.btn.aggressive{
-  background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));
-  border-color:rgba(255,53,94,.65);color:#ffe5ec;
-  box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)
-}
-.btn.aggressive.active{
-  background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));
-  box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)
-}
+.btn.aggressive{background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));border-color:rgba(255,53,94,.65);color:#ffe5ec;box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)}
+.btn.aggressive.active{background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)}
 .strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.pill{
-  display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);
-  background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap
-}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
-.tooltipWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
-.info{
-  display:inline-flex;align-items:center;justify-content:center;width:15px;height:15px;border-radius:50%;
-  border:1px solid rgba(255,255,255,.16);color:#bfd1ea;font-size:.68rem;line-height:1;font-weight:800;
-  cursor:pointer;background:rgba(255,255,255,.03)
-}
-.tooltipBox{
-  position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
-  background:#0b1222;border:1px solid rgba(255,255,255,.15);padding:9px 11px;border-radius:10px;
-  font-size:.72rem;color:#dbe6f5;white-space:normal;width:220px;line-height:1.35;opacity:0;
-  pointer-events:none;transition:all .15s ease;z-index:9999;box-shadow:0 10px 20px rgba(0,0,0,.4)
-}
-.tooltipBox::after{
-  content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  border-width:6px;border-style:solid;border-color:#0b1222 transparent transparent transparent
-}
-.tooltipWrap:hover .tooltipBox,.tooltipWrap.mobile-open .tooltipBox{
-  opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto
-}
-.grid{display:grid;gap:8px}
-.topGrid{grid-template-columns:3fr 1fr;margin-bottom:8px}
-.mainGrid{grid-template-columns:280px minmax(0,1fr) 230px}
-.actionHoldRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
-.budgetGrid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}
-@media (max-width:1300px){
-  .topGrid,.mainGrid,.actionHoldRow,.midPair,.triple,.budgetGrid{grid-template-columns:1fr}
-}
-@media (max-width:980px){.tooltipBox{width:190px}}
-.card{
-  min-width:0;border:1px solid var(--line);border-radius:22px;
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));
-  box-shadow:var(--shadow);padding:12px
-}
-.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}
-.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
+.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap}
+.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
+.grid{display:grid;gap:8px}.topGrid{grid-template-columns:3fr 1fr;margin-bottom:8px}.mainGrid{grid-template-columns:280px minmax(0,1fr) 230px}.actionHoldRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}.budgetGrid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}
+@media (max-width:1300px){.topGrid,.mainGrid,.actionHoldRow,.midPair,.triple,.budgetGrid{grid-template-columns:1fr}}
+.card{min-width:0;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));box-shadow:var(--shadow);padding:12px}
+.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
 .heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
-.heroValue{font-size:1.05rem;line-height:1.05;font-weight:700;margin:2px 0 10px 0}
-.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+.heroValue{font-size:1.05rem;line-height:1.05;font-weight:700;margin:2px 0 10px 0}.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
 .mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
-.gradientBar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
-.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
-.cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}
-.cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}
-.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
-.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}
-.trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}
-.trow:first-child{border-top:none}
-.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
-.scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
-.scrollArea::-webkit-scrollbar{width:8px}
-.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}
-.tallScroll{max-height:360px}
-.holdingRow{
-  display:grid;grid-template-columns:72px minmax(0,1fr) 64px 84px 72px;gap:7px;align-items:center;
-  padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);
-  border-radius:12px;margin-bottom:7px;min-width:0
-}
-.holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
-.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
+.gradientBar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
+.cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}.cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
+.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}.trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}.trow:first-child{border-top:none}.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
+.scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}.scrollArea::-webkit-scrollbar{width:8px}.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}.tallScroll{max-height:360px}
+.holdingRow{display:grid;grid-template-columns:72px minmax(0,1fr) 64px 84px 72px;gap:7px;align-items:center;padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:7px;min-width:0}.holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
 .chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden}
-svg{width:100%;height:100%;display:block}
-.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
+svg{width:100%;height:100%;display:block}.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
 .note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
-.recentTable{width:100%;border-collapse:collapse;font-size:.74rem}
-.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}
-.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}
-.recentTable thead th{position:sticky;top:0;background:#0e1728}
-.radarGrid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}
-.radarLegend{display:grid;gap:6px}
-.legendPill{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:5px 9px;background:#0f1728;font-size:.68rem}
-.budgetBox{border-radius:18px;padding:12px;border:1px solid var(--line)}
-.budgetProgress{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}
-.budgetProgressFill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22c55e 0%,#60a5fa 100%)}
-.actionSection{border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);padding:12px}
-.actionGrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-@media (max-width:1100px){.actionGrid3{grid-template-columns:1fr}}
+.recentTable{width:100%;border-collapse:collapse;font-size:.74rem}.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}.recentTable thead th{position:sticky;top:0;background:#0e1728}
+.radarGrid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.radarLegend{display:grid;gap:6px}.legendPill{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:5px 9px;background:#0f1728;font-size:.68rem}
+.budgetBox{border-radius:18px;padding:12px;border:1px solid var(--line)}.budgetProgress{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.budgetProgressFill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22c55e 0%,#60a5fa 100%)}
+.actionSection{border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);padding:12px}.actionGrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.actionGrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+@media (max-width:1100px){.actionGrid3,.actionGrid2{grid-template-columns:1fr}}
 .actionBox{border-radius:18px;padding:12px}
-.greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)}
-.footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
+.greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)} .footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
 </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
     <div class="brand">
-      <h1>Lean Terminal 2.0 — Live Final</h1>
-      <div class="sub">holdings + budget tracker + trade log wired • lean + AGG full intelligence • beef radar live</div>
+      <h1>Lean Terminal 2.1 — Autonomous Final</h1>
+      <div class="sub">automatic today deploy • minimum score to trade • formal weighting • max per theme • holdings + budget + trade log linked</div>
     </div>
     <div class="toolbar">
       <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
@@ -148,13 +65,7 @@ svg{width:100%;height:100%;display:block}
 
   <div class="grid topGrid">
     <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h2>Campaign Snapshot</h2>
-          <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Quick read. Are we parked, watching, or pushing?</span></span>
-        </div>
-        <div class="heroDate" id="heroDate">—</div>
-      </div>
+      <div class="cardTitle"><div class="titleLeft"><h2>Campaign Snapshot</h2></div><div class="heroDate" id="heroDate">—</div></div>
       <div class="heroValue" id="heroStatus">Lean engine online</div>
       <div class="heroMeta" id="heroMeta"></div>
       <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
@@ -163,31 +74,16 @@ svg{width:100%;height:100%;display:block}
       <div class="pill"><span class="dot g"></span>READY <strong id="readyPct">63%</strong></div>
       <div class="pill"><span class="dot y"></span>RISK <strong id="riskPct">39%</strong></div>
       <div class="pill"><span class="dot b"></span>VALUE <strong id="valueTxt">$19,217.09</strong></div>
-      <div class="pill"><span class="dot b"></span>LAST <strong id="lastTxt">$0.00 / 0.00%</strong></div>
-      <div class="pill"><span class="dot y"></span>WEATHER <strong id="weatherPill">wobbly</strong></div>
+      <div class="pill"><span class="dot b"></span>AUTO DEPLOY <strong id="autoDeployPill">$0</strong></div>
+      <div class="pill"><span class="dot y"></span>MIN SCORE <strong id="minScorePill">75</strong></div>
+      <div class="pill"><span class="dot y"></span>THEME CAP <strong id="themeCapPill">30%</strong></div>
       <div class="pill"><span class="dot g"></span>LEAN Δ <strong id="leanDelta">+0.89%</strong></div>
       <div class="pill"><span class="dot r"></span>AGG Δ <strong id="aggDelta" class="neonRedText">+1.60%</strong></div>
     </div>
   </div>
 
-  <div class="strip" style="justify-content:flex-end">
-    <div class="pill">REGIME</div>
-    <div class="pill">VOL</div>
-    <div class="pill">DD</div>
-    <div class="pill">BRAKE</div>
-    <div class="pill">MC</div>
-    <div class="pill">CORR</div>
-    <div class="pill">CVAR</div>
-    <div class="pill">BAYES</div>
-  </div>
-
   <div class="card">
-    <div class="cardTitle">
-      <div class="titleLeft">
-        <h3>Monthly Budget Tracker</h3>
-        <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Tracks this month’s deploy budget, what has been used, what is left, and what is set for today.</span></span>
-      </div>
-    </div>
+    <div class="cardTitle"><div class="titleLeft"><h3>Monthly Budget Tracker</h3></div></div>
     <div class="budgetGrid">
       <div class="budgetBox"><div class="cubeLabel">Monthly Budget</div><div class="cubeValue" id="budgetMonthly">$1,000</div></div>
       <div class="budgetBox" style="border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.10)"><div class="cubeLabel">Used</div><div class="cubeValue" id="budgetUsed">$0</div></div>
@@ -201,22 +97,22 @@ svg{width:100%;height:100%;display:block}
   <div class="grid mainGrid">
     <div class="leftRail">
       <div class="card">
-        <div class="cardTitle"><div class="titleLeft"><h3>Posture</h3></div></div>
+        <div class="cardTitle"><div class="titleLeft"><h3>Model Rules</h3></div></div>
         <div class="cubeGrid">
-          <div class="cube"><div class="cubeLabel">Mode</div><div class="cubeValue" id="modeVal">Lean</div></div>
-          <div class="cube"><div class="cubeLabel">Trigger</div><div class="cubeValue" id="triggerVal">Watch</div></div>
-          <div class="cube"><div class="cubeLabel">Risk</div><div class="cubeValue" id="riskVal">Controlled</div></div>
-          <div class="cube"><div class="cubeLabel">Weather</div><div class="cubeValue" id="weatherVal">Clear</div></div>
+          <div class="cube"><div class="cubeLabel">Min Score To Trade</div><div class="cubeValue" id="minScoreVal">75</div></div>
+          <div class="cube"><div class="cubeLabel">Theme Cap</div><div class="cubeValue" id="themeCapVal">30%</div></div>
+          <div class="cube"><div class="cubeLabel">Weighting</div><div class="cubeValue" id="weightingVal">Formal</div></div>
+          <div class="cube"><div class="cubeLabel">Auto Deploy</div><div class="cubeValue" id="autoDeployVal">On</div></div>
         </div>
       </div>
 
       <div class="card" style="margin-top:8px;">
         <div class="cardTitle"><div class="titleLeft"><h3>Math Layer</h3></div></div>
         <div class="cubeGrid">
-          <div class="cube"><div class="cubeLabel">Correlation</div><div class="cubeValue" id="corrVal">0.61</div></div>
+          <div class="cube"><div class="cubeLabel">Score Formula</div><div class="cubeValue">S+R+N-P</div></div>
           <div class="cube"><div class="cubeLabel">Tape Weather</div><div class="cubeValue" id="volLayerVal">wobbly</div></div>
           <div class="cube"><div class="cubeLabel">Sharpe</div><div class="cubeValue" id="sharpeVal">2.90</div></div>
-          <div class="cube"><div class="cubeLabel">Score</div><div class="cubeValue" id="scoreVal">86</div></div>
+          <div class="cube"><div class="cubeLabel">Theme Pressure</div><div class="cubeValue" id="themePressureVal">OK</div></div>
         </div>
       </div>
     </div>
@@ -224,14 +120,9 @@ svg{width:100%;height:100%;display:block}
     <div class="centerRail">
       <div class="actionHoldRow">
         <div class="card">
-          <div class="cardTitle">
-            <div class="titleLeft">
-              <h3>Action Engine</h3>
-              <span class="tooltipWrap"><span class="info">i</span><span class="tooltipBox">Top priority. Shows Lean and AGG picks, holds, trims, and avoids. Uses your holdings labels and budget tracker.</span></span>
-            </div>
-          </div>
+          <div class="cardTitle"><div class="titleLeft"><h3>Action Engine</h3></div></div>
           <div id="actionBlocks"><div class="note">Loading action engine…</div></div>
-          <div class="note" id="actionNote" style="margin-top:8px">Lean sells lighter and slower. AGG trims faster when weak overlap names are blocking better opportunities. Both modes still respect the 25% cash floor.</div>
+          <div class="note" id="actionNote" style="margin-top:8px">Waiting on ranked candidates…</div>
         </div>
 
         <div class="card">
@@ -263,9 +154,9 @@ svg{width:100%;height:100%;display:block}
       </div>
 
       <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Pair Correlations</h3></div></div><div class="table"><div class="scrollArea" id="pairTableWrap"></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Scoreboard</h3></div></div><div class="table"><div class="scrollArea" id="scoreboardWrap"></div></div></div>
         <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Recent Moves</h3></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Mode</th><th>Action</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Math Snapshot</h3></div></div><div class="cubeGrid" id="mathSnapshotGrid"></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Theme Exposure</h3></div></div><div class="table"><div class="scrollArea" id="themeWrap"></div></div></div>
       </div>
 
       <div class="triple">
@@ -280,7 +171,7 @@ svg{width:100%;height:100%;display:block}
     </div>
   </div>
 
-  <div class="footer" id="footerStamp">Live final ready.</div>
+  <div class="footer" id="footerStamp">Autonomous final ready.</div>
 </div>
 
 <script>
@@ -294,6 +185,10 @@ window.addEventListener("DOMContentLoaded", () => {
   const DEFAULT_BUDGET="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=215007649&single=true&output=csv";
   const DEFAULT_TRADELOG="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv";
 
+  const MIN_SCORE_TO_TRADE = 75;
+  const MAX_THEME_EXPOSURE_PCT = 30;
+  const FORMAL_WEIGHTS = { strength: 0.35, radar: 0.25, network: 0.20, correlationPenalty: 0.15, priority: 0.05 };
+
   const $ = s => document.querySelector(s);
   let timer = null;
 
@@ -301,8 +196,8 @@ window.addEventListener("DOMContentLoaded", () => {
   $("#settingsBtn").addEventListener("click", openSettings);
   $("#aggressiveToggle").addEventListener("click", toggleAggressive);
 
-  function startClock(){ if(timer) clearInterval(timer); tickClock(); timer = setInterval(tickClock,1000); }
-  function tickClock(){ $("#clockNow").textContent = new Date().toLocaleTimeString(); }
+  function startClock(){ if(timer) clearInterval(timer); tickClock(); timer=setInterval(tickClock,1000); }
+  function tickClock(){ $("#clockNow").textContent=new Date().toLocaleTimeString(); }
 
   function openSettings(){
     const h = prompt("Holdings CSV URL", localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS);
@@ -332,7 +227,7 @@ window.addEventListener("DOMContentLoaded", () => {
       const view = buildView(holdingsRows,budgetRows,tradeRows,isAggressive());
       renderAll(view);
       $("#updatedChip").textContent = `LAST UPDATED: ${new Date().toLocaleTimeString()}`;
-      $("#footerStamp").textContent = `Live final updated ${new Date().toLocaleString()} • holdings + budget + trade log linked`;
+      $("#footerStamp").textContent = `Autonomous final updated ${new Date().toLocaleString()} • auto deploy + min score + theme cap live`;
     }catch(err){
       console.error(err);
       $("#footerStamp").textContent = `Load issue: ${err.message || err}`;
@@ -380,8 +275,8 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function toneClass(v){
     const s=String(v||"").toLowerCase();
-    if(s.includes("+")||s.includes("go")||s.includes("safe")||s.includes("green")||s.includes("high")||s.includes("strong")) return "greenText";
-    if(s.includes("-")||s.includes("red")||s.includes("avoid")||s.includes("weak")||s.includes("sell")) return "redText";
+    if(s.includes("+")||s.includes("go")||s.includes("safe")||s.includes("green")||s.includes("high")||s.includes("strong")||s.includes("pass")) return "greenText";
+    if(s.includes("-")||s.includes("red")||s.includes("avoid")||s.includes("weak")||s.includes("sell")||s.includes("fail")) return "redText";
     if(s.includes("watch")||s.includes("wobbly")||s.includes("controlled")||s.includes("hold")||s.includes("med")) return "yellowText";
     return "blueText";
   }
@@ -404,48 +299,98 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function inferCash(holdings){
     const cashRow = holdings.find(h => /sgov|cash/i.test(`${h.ticker} ${h.name}`));
-    return cashRow ? cashRow.weightNum : 85.1;
+    return cashRow ? hPct(cashRow.weight) : 85.1;
   }
+
+  function hPct(v){ return num(v,0); }
 
   function getBudgetState(rows, agg){
     const row = rows[0] || {};
     const monthly = num(pick(row,["monthly_budget"]), 1000);
     const used = num(pick(row,["used_to_date"]), 0);
     const remaining = num(pick(row,["remaining"]), Math.max(monthly-used,0));
-    const todayDeploy = num(pick(row,["today_deploy"]), 0);
+    const todayDeployRaw = num(pick(row,["today_deploy"]), 0);
     const mode = pick(row,["mode"]) || (agg ? "AGG" : "LEAN");
     const note = pick(row,["notes"]) || "waiting for first signal";
-    return { monthly, used, remaining, todayDeploy, mode, note, usedPct: monthly > 0 ? clamp((used/monthly)*100,0,100) : 0 };
+    return { monthly, used, remaining, todayDeployRaw, mode, note, usedPct: monthly > 0 ? clamp((used/monthly)*100,0,100) : 0 };
+  }
+
+  function themeOf(h){
+    const n = String(h.network||"None");
+    return n || "None";
+  }
+
+  function themeExposure(holdings){
+    const exposure = {};
+    holdings.forEach(h => {
+      const t = themeOf(h);
+      const w = hPct(h.weight);
+      exposure[t] = (exposure[t] || 0) + w;
+    });
+    return Object.entries(exposure).sort((a,b)=>b[1]-a[1]).map(([theme,weight])=>[theme, pct(weight)]);
   }
 
   function rankCandidates(holdings){
     const candidates = holdings.filter(h => !/sgov|cash/i.test(`${h.ticker} ${h.name}`));
-    const mapVal = (s, dict, fallback=0) => dict[String(s||"").toUpperCase()] ?? fallback;
-    const scored = candidates.map(h => {
-      const score =
-        mapVal(h.radar,{HOT:30,YES:18,NO:0}) +
-        mapVal(h.strength,{HIGH:30,MED:18,LOW:6}) +
-        mapVal(h.network,{AI:16,DEFENSE:12,SPACE:10,ENERGY:6,INTERNATIONAL:4,NONE:0},4) +
-        ({1:15,2:8,3:2}[String(h.priority)] ?? 0) +
-        (/go|live/i.test(h.signal) ? 8 : /watch/i.test(h.signal) ? 3 : 0) +
-        mapVal(h.correlation,{LOW:0,MED:-8,HIGH:-18});
-      return {...h, score};
+    const radarScore = v => ({HOT:100,YES:65,NO:0}[String(v).toUpperCase()] ?? 0);
+    const strengthScore = v => ({HIGH:100,MED:60,LOW:20}[String(v).toUpperCase()] ?? 20);
+    const networkScore = v => ({AI:100,DEFENSE:75,SPACE:65,ENERGY:40,INTERNATIONAL:25,NONE:0}[String(v).toUpperCase()] ?? 0);
+    const corrPenalty = v => ({LOW:0,MED:45,HIGH:100}[String(v).toUpperCase()] ?? 45);
+    const priorityScore = v => ({1:100,2:60,3:20}[String(v)] ?? 20);
+
+    return candidates.map(h => {
+      const raw =
+        strengthScore(h.strength) * FORMAL_WEIGHTS.strength +
+        radarScore(h.radar) * FORMAL_WEIGHTS.radar +
+        networkScore(h.network) * FORMAL_WEIGHTS.network -
+        corrPenalty(h.correlation) * FORMAL_WEIGHTS.correlationPenalty +
+        priorityScore(h.priority) * FORMAL_WEIGHTS.priority;
+
+      const sigBoost = /go|live/i.test(h.signal) ? 5 : /watch/i.test(h.signal) ? 0 : -3;
+      const finalScore = clamp(Math.round(raw + sigBoost), 0, 100);
+      return {...h, score: finalScore};
     }).sort((a,b)=>b.score-a.score);
-    return scored;
   }
 
-  function buildActions(holdings,budget,agg){
-    const ranked = rankCandidates(holdings);
-    const top = ranked[0] || {ticker:"—"};
-    const second = ranked[1] || {ticker:"—"};
-    const hold = ranked[2] || {ticker:"—"};
-    const avoid = ranked.slice().sort((a,b)=>a.score-b.score)[0] || {ticker:"—"};
-    const trim = ranked.find(h => /xle/i.test(h.ticker)) || avoid;
-    const deploy = budget.todayDeploy;
-    const topAmt = Math.round(deploy * 0.60);
-    const secondAmt = deploy - topAmt;
+  function applyThemeCap(ranked, holdings){
+    const exposure = {};
+    holdings.forEach(h => {
+      const t = themeOf(h);
+      exposure[t] = (exposure[t] || 0) + hPct(h.weight);
+    });
+    return ranked.map(h => {
+      const t = themeOf(h);
+      const overCap = (exposure[t] || 0) >= MAX_THEME_EXPOSURE_PCT;
+      return {...h, themeBlocked: overCap};
+    });
+  }
+
+  function autoDeployAmount(budget, agg, ranked){
+    if (budget.todayDeployRaw > 0) return Math.min(budget.todayDeployRaw, budget.remaining);
+    const top = ranked[0];
+    if (!top) return 0;
+    if (top.score < MIN_SCORE_TO_TRADE) return 0;
+    const base = agg ? 200 : 125;
+    return Math.min(base, budget.remaining);
+  }
+
+  function buildActions(holdings, budget, agg){
+    const ranked0 = rankCandidates(holdings);
+    const ranked = applyThemeCap(ranked0, holdings);
+    const qualified = ranked.filter(h => h.score >= MIN_SCORE_TO_TRADE && !h.themeBlocked);
+    const top = qualified[0] || null;
+    const second = qualified[1] || null;
+    const hold = ranked.find(h => h.score >= 60 && h.score < MIN_SCORE_TO_TRADE) || ranked[2] || null;
+    const avoid = ranked.slice().reverse()[0] || null;
+    const trim = ranked.find(h => /xle/i.test(h.ticker)) || avoid || null;
+
+    const deploy = autoDeployAmount(budget, agg, ranked);
+    const topAmt = top ? Math.round(deploy * 0.60) : 0;
+    const secondAmt = second ? deploy - topAmt : 0;
     const trimAmt = agg ? 50 : 25;
-    return {ranked, top, second, hold, avoid, trim, deploy, topAmt, secondAmt, trimAmt};
+    const pass = deploy === 0 || !top;
+
+    return { ranked, qualified, top, second, hold, avoid, trim, deploy, topAmt, secondAmt, trimAmt, pass };
   }
 
   function buildView(holdingsRows,budgetRows,tradeRows,agg){
@@ -453,55 +398,45 @@ window.addEventListener("DOMContentLoaded", () => {
     const budget = getBudgetState(budgetRows, agg);
     const actions = buildActions(holdings, budget, agg);
     const cashPct = inferCash(holdings);
+    const themeRows = themeExposure(holdings);
+    const themePressure = themeRows.some(r => num(r[1]) >= MAX_THEME_EXPOSURE_PCT) ? "Capped" : "OK";
 
     return {
       heroDate: new Date().toLocaleDateString(),
-      heroStatus: agg ? "Lean AGG engine online" : "Lean engine online",
-      heroMeta: [agg ? "AGG" : "Lean", agg ? "Attack Watch" : "Watch", agg ? "Elevated" : "Controlled", "Clear"],
+      heroStatus: actions.pass ? (agg ? "AGG watching — no qualified deploy" : "Lean watching — no qualified deploy") : (agg ? "Lean AGG engine online" : "Lean engine online"),
+      heroMeta: [agg ? "AGG" : "Lean", actions.pass ? "Hold Cash" : "Qualified", agg ? "Elevated" : "Controlled", "Clear"],
       readyPct: agg ? "72%" : "63%",
       riskPct: agg ? "56%" : "39%",
       valueTxt: "$19,217.09",
-      lastTxt: "$0.00 / 0.00%",
-      weatherPill: agg ? "hotter" : "wobbly",
+      autoDeployTxt: money(actions.deploy),
       leanDelta: agg ? "+1.10%" : "+0.89%",
       aggDelta: "+1.60%",
-      mode: agg ? "AGG" : "Lean",
-      trigger: agg ? "Attack Watch" : "Watch",
-      risk: agg ? "Elevated" : "Controlled",
-      weather: "Clear",
-      corr: "0.61",
-      tapeWeather: agg ? "hot" : "wobbly",
-      sharpe: "2.90",
-      score: agg ? 93 : 86,
-      holdings,
-      budget,
-      actions,
-      pairCorr: [["ACHR vs ARKQ","-1.00"],["SMH vs QQQ","0.91"],["XLE vs Oil","0.84"],["CRWV vs IWM","0.56"]],
-      recentMoves: tradeRows.slice(0,8).map(r => [
-        pick(r,["date"]) || "—",
-        pick(r,["mode"]) || "—",
-        pick(r,["action"]) || "—",
-        pick(r,["ticker"]) || "—",
-        pick(r,["amount"]) || "—"
-      ]),
-      mathSnapshot: [["Drawdown","-0.05%"],["Peak","$19,225.87"],["Vol", agg ? "Higher" : "0.00%"],["Sharpe","2.90"]],
-      warnings: uniq(compact([agg ? "AGG can magnify mistakes." : "","Heavy lean: cash still dominant.","Avoid overlap stacking.","Respect tape weather."])).slice(0,4),
-      health: [["Structure","Compressed layout that still reads fast."],["Tooltips","Street-speak i icons explain parts in plain English."],["AGG Logic",agg ? "Faster radar sensitivity to strong names." : "Standard radar filter."],["Mode",agg ? "AGG is active." : "Standard Lean is active."]],
+      holdings, budget, actions, themeRows, themePressure,
+      recentMoves: tradeRows.slice(0,8).map(r => [pick(r,["date"]) || "—", pick(r,["mode"]) || "—", pick(r,["action"]) || "—", pick(r,["ticker"]) || "—", pick(r,["amount"]) || "—"]),
+      warnings: uniq(compact([
+        actions.pass ? "No trade: top score failed threshold or theme cap blocked." : "",
+        themePressure === "Capped" ? "One or more themes are at or above cap." : "",
+        "Avoid overlap stacking.",
+        "Respect tape weather."
+      ])).slice(0,4),
+      health: [["Min Score", `${MIN_SCORE_TO_TRADE}`],["Theme Cap", `${MAX_THEME_EXPOSURE_PCT}%`],["Auto Deploy", actions.deploy > 0 ? "Active" : "Paused"],["Mode", agg ? "AGG is active." : "Standard Lean is active."]],
       shockRadar: [["BEEF SIGNAL","Calf prices are hot. Beef chain pressure rising.","WATCH"],["OIL","Energy conditions normal.","GREEN"],["LNG","Supply stable.","GREEN"],["SHIPPING","Routes normal.","GREEN"]],
-      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["Primary Blocker", agg ? "Overlap / Heat" : "Cash Anchor"],["Severity", agg ? "Higher" : "Moderate"]],
+      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["Primary Blocker", actions.pass ? "Score / Theme Cap" : (agg ? "Overlap / Heat" : "Cash Anchor")],["Severity", actions.pass ? "High" : (agg ? "Higher" : "Moderate")]],
       perfMeta: [agg ? "LEAN • 1.10%" : "LEAN • 0.89%","SPY • 0.40%","AGG • 1.60%"],
       performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
       benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4]
     };
   }
 
-  function renderBudget(b){
+  function renderBudget(v){
+    const b = v.budget;
     $("#budgetMonthly").textContent = money(b.monthly);
     $("#budgetUsed").textContent = money(b.used);
     $("#budgetRemaining").textContent = money(b.remaining);
-    $("#budgetToday").textContent = money(b.todayDeploy);
+    $("#budgetToday").textContent = money(v.actions.deploy);
     $("#budgetProgressFill").style.width = `${b.usedPct}%`;
-    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Mode: ${b.mode}. Notes: ${b.note}. AGG still respects the 25% cash floor.`;
+    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Raw today_deploy: ${money(b.todayDeployRaw)}. Auto deploy: ${money(v.actions.deploy)}. AGG still respects the 25% cash floor.`;
+    $("#autoDeployPill").textContent = money(v.actions.deploy);
   }
 
   function actionBox(title,color,label,value,reason){
@@ -514,75 +449,93 @@ window.addEventListener("DOMContentLoaded", () => {
 
   function renderActions(v){
     const a=v.actions;
+    if (a.pass){
+      $("#actionBlocks").innerHTML = `
+        <div class="actionSection">
+          ${actionBox("No Buy Today","#f59e0b","Pass", "", `Top candidate did not clear min score ${MIN_SCORE_TO_TRADE} or theme cap ${MAX_THEME_EXPOSURE_PCT}% blocked it.`)}
+          <div class="actionGrid2" style="margin-top:8px">
+            ${actionBox(a.hold ? a.hold.ticker : "Watchlist","#fcd34d","Hold / Watch","", "Keep stalking. Do not force size in weak conditions.")}
+            ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Optional Trim", a.trim ? money(a.trimAmt) : "", "Only trim if you want to free room for a stronger future setup.")}
+          </div>
+        </div>`;
+      $("#actionNote").textContent = `System pass. No qualified buy suggestion today. Reason: threshold or theme cap.`;
+      return;
+    }
+
     const lean = `
       <div class="actionSection">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1">Lean Mode</div>
           <div class="mini">Slower / cleaner</div>
         </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt||0),"Leader still clean, but Lean sizes smaller and waits for cleaner confirmation.")}
+        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(Math.round(a.deploy * 0.60)),"Cleared minimum score. Leader still clean, but Lean sizes smaller.")}
         <div style="height:8px"></div>
-        ${actionBox(a.second.ticker,"#60a5fa","Second",money(a.secondAmt||0),"Secondary trend. Good enough to nibble, not enough to press hard.")}
+        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(Math.round(a.deploy * 0.40)) : "", "Secondary trend if qualified and under theme cap.")}
         <div class="actionGrid3" style="margin-top:8px">
-          ${actionBox(a.hold.ticker,"#fcd34d","Hold","","Decent structure. Keep it, don’t add yet.")}
-          ${actionBox(`${a.trim.ticker} trim`,"#fb7185","Trim",money(25),"Weak plus overlap. Small trim to free capital.")}
-          ${actionBox("Fresh weak adds","#ef4444","Avoid","","No fresh buys while better horses are available.")}
+          ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent structure. Keep it, don’t add yet.")}
+          ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Trim",a.trim ? money(25) : "", "Weak plus overlap. Small trim to free capital.")}
+          ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Low score or theme blocked.")}
         </div>
       </div>`;
+
     const agg = `
       <div class="actionSection">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG Mode</div>
           <div class="mini" style="border-color:rgba(255,53,94,.30);color:#fecdd3">Faster / hotter</div>
         </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt||0),"Strongest horse, network aligned, low overlap.")}
+        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt),"Strongest horse, cleared threshold, under cap.")}
         <div style="height:8px"></div>
-        ${actionBox(a.second.ticker,"#60a5fa","Second",money(a.secondAmt||0),"Strong secondary trend, cluster support, correlation still clean.")}
+        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(a.secondAmt) : "", "Secondary trend, cleared threshold, correlation still clean.")}
         <div class="actionGrid3" style="margin-top:8px">
-          ${actionBox(a.hold.ticker,"#fcd34d","Hold","","Decent setup, just not top 2 today.")}
-          ${actionBox(`${a.trim.ticker} trim`,"#fb7185","Sell / Trim",money(a.trimAmt||50),"Weak plus high overlap. Rotate that cash into stronger horses.")}
-          ${actionBox("Fresh weak adds","#ef4444","Avoid","","No reason to add where momentum is weaker than the leaders.")}
+          ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent setup, just not top 2 today.")}
+          ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Sell / Trim",a.trim ? money(a.trimAmt) : "", "Weak plus high overlap. Rotate that cash into stronger horses.")}
+          ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Failed threshold, theme capped, or weak ranking.")}
         </div>
       </div>`;
+
     $("#actionBlocks").innerHTML = `${lean}<div style="height:12px"></div>${agg}`;
-    $("#actionNote").textContent = `Lean sells lighter and slower. AGG trims faster when weak overlap names are blocking better opportunities. Monthly budget remaining: ${money(v.budget.remaining)}.`;
+    $("#actionNote").textContent = `Formal weighting active. Min score: ${MIN_SCORE_TO_TRADE}. Theme cap: ${MAX_THEME_EXPOSURE_PCT}%. Auto deploy: ${money(a.deploy)}.`;
   }
 
   function renderAll(v){
     $("#heroDate").textContent=v.heroDate;
     $("#heroStatus").textContent=v.heroStatus;
     $("#heroMeta").innerHTML=v.heroMeta.map(x=>`<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
-    $("#convictionFill").style.width=`${clamp(v.score,1,100)}%`;
-    $("#readyPct").textContent=v.readyPct;
+    $("#convictionFill").style.width=`${v.actions.pass ? 45 : 88}%`;
+    $("#readyPct").textContent=v.actions.pass ? "45%" : v.readyPct;
     $("#riskPct").textContent=v.riskPct;
     $("#valueTxt").textContent=v.valueTxt;
-    $("#lastTxt").textContent=v.lastTxt;
-    $("#weatherPill").textContent=v.weatherPill;
     $("#leanDelta").textContent=v.leanDelta;
     $("#aggDelta").textContent=v.aggDelta;
-    setCube("#modeVal",v.mode); setCube("#triggerVal",v.trigger); setCube("#riskVal",v.risk); setCube("#weatherVal",v.weather);
-    setCube("#corrVal",v.corr); setCube("#volLayerVal",v.tapeWeather); setCube("#sharpeVal",v.sharpe); setCube("#scoreVal",String(v.score));
-    renderBudget(v.budget);
+    $("#minScoreVal").textContent = `${MIN_SCORE_TO_TRADE}`;
+    $("#minScorePill").textContent = `${MIN_SCORE_TO_TRADE}`;
+    $("#themeCapVal").textContent = `${MAX_THEME_EXPOSURE_PCT}%`;
+    $("#themeCapPill").textContent = `${MAX_THEME_EXPOSURE_PCT}%`;
+    $("#weightingVal").textContent = "0.35/0.25/0.20";
+    $("#autoDeployVal").textContent = v.actions.deploy > 0 ? "On" : "Pass";
+    $("#themePressureVal").textContent = v.themePressure;
+
+    renderBudget(v);
     renderActions(v);
     drawPerformanceChart("#perfSvg",v.performanceSeries,v.benchmarkSeries);
     $("#perfMeta").innerHTML=v.perfMeta.map(x=>`<div class="mini">${escapeHtml(x)}</div>`).join("");
-    $("#pairTableWrap").innerHTML=wrapTableHtml(v.pairCorr);
+    $("#scoreboardWrap").innerHTML=v.actions.ranked.slice(0,8).map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r.ticker)} • ${escapeHtml(r.network)} • ${escapeHtml(r.strength)}</div><div class="tval ${r.score >= MIN_SCORE_TO_TRADE && !r.themeBlocked ? 'greenText' : 'redText'}">${r.score}${r.themeBlocked ? ' cap' : ''}</div></div>`).join("");
     $("#recentMovesBody").innerHTML=v.recentMoves.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td><td>${escapeHtml(r[4])}</td></tr>`).join("");
-    $("#mathSnapshotGrid").innerHTML=v.mathSnapshot.map(([k,val])=>`<div class="cube"><div class="cubeLabel">${escapeHtml(k)}</div><div class="cubeValue ${toneClass(val)}">${escapeHtml(val)}</div></div>`).join("");
+    $("#themeWrap").innerHTML=v.themeRows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${num(r[1]) >= MAX_THEME_EXPOSURE_PCT ? 'redText' : 'blueText'}">${escapeHtml(r[1])}</div></div>`).join("");
     $("#warningsList").innerHTML=v.warnings.map(x=>`<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
     $("#healthList").innerHTML=v.health.map(r=>`<div class="note" style="margin-bottom:7px"><strong>${escapeHtml(r[0])}:</strong> ${escapeHtml(r[1])}</div>`).join("");
     $("#shockRadarWrap").innerHTML=v.shockRadar.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");
-    $("#guardrailWrap").innerHTML=wrapTableHtml(v.guardrails);
+    $("#guardrailWrap").innerHTML=v.guardrails.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("");
     renderHoldings(v.holdings);
   }
 
-  function setCube(sel, value){ const el=$(sel); el.textContent=value; el.className=`cubeValue ${toneClass(value)}`; }
-  function wrapTableHtml(rows){ return rows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join(""); }
   function renderHoldings(rows){
     $("#holdingsCount").textContent = `${rows.length} items`;
     if(!rows.length){ $("#holdingsList").innerHTML = `<div class="note">No holdings rows found.</div>`; return; }
     $("#holdingsList").innerHTML = rows.map(h=>`<div class="holdingRow"><div class="holdingName">${escapeHtml(h.ticker)}</div><div class="holdingSub">${escapeHtml(h.name||"—")}</div><div class="miniPill">${escapeHtml(h.weight||"—")}</div><div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div><div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div></div>`).join("");
   }
+
   function drawPerformanceChart(sel, leanSeries, benchSeries){
     const svg=$(sel), width=1000, height=220, pad=40, values=leanSeries.concat(benchSeries), min=Math.min(...values), max=Math.max(...values), xStep=(width-pad*2)/(leanSeries.length-1||1), y=v=>max===min?height/2:height-pad-((v-min)/(max-min))*(height-pad*2);
     const grid=[0,1,2,3].map(i=>{const gy=pad+i*((height-pad*2)/3);return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;}).join("");
@@ -591,6 +544,7 @@ window.addEventListener("DOMContentLoaded", () => {
     const lx=pad+(leanSeries.length-1)*xStep,ly=y(leanSeries[leanSeries.length-1]),by=y(benchSeries[benchSeries.length-1]);
     svg.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<path d="${leanPath}" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" /><path d="${benchPath}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" /><text x="${lx-55}" y="${ly-8}" fill="#22c55e" font-size="14" font-weight="800">LEAN</text><text x="${lx-45}" y="${by-8}" fill="#60a5fa" font-size="14" font-weight="800">SPY</text></svg>`;
   }
+
   function escapeHtml(str){ return String(str??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
 
   applyAggressiveUI();
