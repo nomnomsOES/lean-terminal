@@ -3,843 +3,950 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal Pro UI</title>
+  <title>Lean Terminal Index</title>
   <style>
     :root{
-      --bg:#08111f;
-      --bg2:#0b1528;
-      --panel:#0f1b31;
-      --panel2:#12213c;
-      --line:rgba(255,255,255,.08);
-      --soft:rgba(255,255,255,.04);
-      --text:#e5edf7;
+      --bg:#0b1020;
+      --panel:#121a2b;
+      --panel-2:#0f172a;
+      --text:#e5e7eb;
       --muted:#94a3b8;
       --green:#22c55e;
       --yellow:#f59e0b;
       --red:#ef4444;
       --blue:#3b82f6;
-      --cyan:#22d3ee;
-      --purple:#a78bfa;
+      --line:rgba(255,255,255,.08);
       --pill:#111827;
-      --shadow:0 12px 40px rgba(0,0,0,.28);
+      --shadow:0 12px 32px rgba(0,0,0,.28);
       --radius:18px;
     }
 
-    *{box-sizing:border-box}
-    html,body{height:100%}
+    *{ box-sizing:border-box; }
+    html,body{ height:100%; }
     body{
       margin:0;
-      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:var(--bg);
       color:var(--text);
-      background:
-        radial-gradient(circle at top left, rgba(59,130,246,.10), transparent 30%),
-        radial-gradient(circle at top right, rgba(34,211,238,.08), transparent 25%),
-        linear-gradient(180deg,var(--bg),var(--bg2));
     }
 
-    .wrap{max-width:1560px;margin:0 auto;padding:16px}
+    .wrap{
+      max-width:1400px;
+      margin:0 auto;
+      padding:18px;
+    }
+
     .topbar{
-      display:flex;align-items:center;justify-content:space-between;gap:12px;
-      margin-bottom:14px;flex-wrap:wrap
+      display:flex;
+      flex-wrap:wrap;
+      gap:12px;
+      align-items:center;
+      justify-content:space-between;
+      margin-bottom:14px;
     }
+
     .brand{
-      display:flex;align-items:center;gap:12px
+      display:flex;
+      align-items:center;
+      gap:12px;
     }
-    .logo{
-      width:42px;height:42px;border-radius:14px;
-      background:linear-gradient(135deg, rgba(59,130,246,.25), rgba(34,211,238,.16));
-      border:1px solid var(--line);
-      display:grid;place-items:center;
-      box-shadow:var(--shadow)
+
+    .brand h1{
+      margin:0;
+      font-size:1.15rem;
+      font-weight:700;
+      letter-spacing:.2px;
     }
-    .title h1{margin:0;font-size:20px;letter-spacing:.3px}
-    .title .sub{color:var(--muted);font-size:12px;margin-top:3px}
-    .actions{display:flex;gap:8px;flex-wrap:wrap}
-    button{
-      border:1px solid var(--line);
-      background:linear-gradient(180deg, rgba(255,255,255,.04), rgba(255,255,255,.02));
+
+    .sub{
+      color:var(--muted);
+      font-size:.88rem;
+      margin-top:2px;
+    }
+
+    .toolbar{
+      display:flex;
+      gap:10px;
+      flex-wrap:wrap;
+      align-items:center;
+    }
+
+    .btn, .input{
+      background:var(--panel);
       color:var(--text);
+      border:1px solid var(--line);
       border-radius:12px;
       padding:10px 12px;
+      font:inherit;
+      box-shadow:var(--shadow);
+    }
+
+    .btn{
       cursor:pointer;
-      font-weight:600;
     }
-    button:hover{background:rgba(255,255,255,.08)}
-    .ghost{background:transparent}
-    .pillbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:14px}
-    .pill{
-      display:inline-flex;align-items:center;gap:8px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.03);
-      color:var(--text);
-      border-radius:999px;
-      padding:8px 12px;
-      font-size:12px;
-      white-space:nowrap;
+
+    .btn:hover{
+      border-color:rgba(255,255,255,.18);
     }
-    .dot{width:8px;height:8px;border-radius:999px;display:inline-block}
-    .g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)} .c{background:var(--cyan)} .p{background:var(--purple)}
 
     .grid{
       display:grid;
-      grid-template-columns:360px 1fr;
       gap:14px;
-      align-items:start;
     }
-    @media (max-width:1100px){.grid{grid-template-columns:1fr}}
-    .left,.right{display:grid;gap:14px}
+
+    .grid-top{
+      grid-template-columns:1.2fr .9fr .9fr .9fr;
+      margin-bottom:14px;
+    }
+
+    .grid-main{
+      grid-template-columns:1.15fr .95fr;
+    }
+
+    @media (max-width:1180px){
+      .grid-top{ grid-template-columns:1fr 1fr; }
+      .grid-main{ grid-template-columns:1fr; }
+    }
+
+    @media (max-width:740px){
+      .grid-top{ grid-template-columns:1fr; }
+    }
+
     .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.035), rgba(255,255,255,.02));
+      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
       border:1px solid var(--line);
       border-radius:var(--radius);
+      padding:16px;
       box-shadow:var(--shadow);
-      overflow:hidden;
-    }
-    .cardHead{
-      display:flex;align-items:center;justify-content:space-between;gap:8px;
-      padding:14px 16px;border-bottom:1px solid var(--line)
-    }
-    .cardHead h2{margin:0;font-size:14px;letter-spacing:.2px}
-    .cardBody{padding:14px 16px}
-    .muted{color:var(--muted)}
-    .tiny{font-size:12px}
-    .big{font-size:28px;font-weight:800;letter-spacing:.2px}
-    .big.sm{font-size:22px}
-    .kpiGrid{display:grid;grid-template-columns:repeat(2,1fr);gap:10px}
-    .kpi{
-      padding:12px;border:1px solid var(--line);border-radius:14px;background:var(--soft)
-    }
-    .kpi .label{font-size:11px;color:var(--muted);margin-bottom:8px;text-transform:uppercase;letter-spacing:.5px}
-    .up{color:var(--green)} .down{color:var(--red)} .flat{color:var(--yellow)}
-    .sectionGrid{
-      display:grid;grid-template-columns:repeat(12,1fr);gap:14px
-    }
-    .span-12{grid-column:span 12}
-    .span-8{grid-column:span 8}
-    .span-6{grid-column:span 6}
-    .span-4{grid-column:span 4}
-    @media (max-width:1200px){
-      .span-8,.span-6,.span-4{grid-column:span 12}
+      min-width:0;
     }
 
-    table{width:100%;border-collapse:collapse}
-    th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:13px}
-    th{color:var(--muted);font-weight:700;font-size:11px;text-transform:uppercase;letter-spacing:.4px}
-    tr:last-child td{border-bottom:none}
+    .card h2, .card h3{
+      margin:0 0 10px 0;
+      font-size:1rem;
+      font-weight:700;
+    }
+
+    .cardTitleRow{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      margin-bottom:8px;
+    }
+
+    .muted{
+      color:var(--muted);
+    }
+
+    .heroValue{
+      font-size:2rem;
+      font-weight:800;
+      line-height:1;
+      margin:6px 0 8px 0;
+    }
+
+    .heroMeta{
+      display:flex;
+      flex-wrap:wrap;
+      gap:8px;
+    }
+
+    .pill{
+      display:inline-flex;
+      align-items:center;
+      gap:6px;
+      border:1px solid var(--line);
+      background:var(--pill);
+      border-radius:999px;
+      padding:6px 10px;
+      font-size:.8rem;
+      white-space:nowrap;
+    }
+
+    .pill.small{
+      font-size:.72rem;
+      padding:4px 8px;
+    }
+
+    .kpis{
+      display:grid;
+      grid-template-columns:repeat(2, minmax(0,1fr));
+      gap:10px;
+    }
+
+    .kpi{
+      background:rgba(255,255,255,.025);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .kpiLabel{
+      color:var(--muted);
+      font-size:.78rem;
+      margin-bottom:6px;
+    }
+
+    .kpiValue{
+      font-size:1.15rem;
+      font-weight:700;
+    }
+
+    .sectionLabel{
+      color:var(--muted);
+      font-size:.78rem;
+      text-transform:uppercase;
+      letter-spacing:.08em;
+      margin-bottom:10px;
+    }
+
+    .list{
+      display:grid;
+      gap:8px;
+    }
+
+    .row{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      gap:10px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      border-radius:14px;
+      padding:10px 12px;
+      min-width:0;
+    }
+
+    .rowLeft{
+      min-width:0;
+      display:flex;
+      align-items:center;
+      gap:10px;
+    }
+
+    .ticker{
+      font-weight:800;
+      letter-spacing:.03em;
+    }
+
+    .metaSmall{
+      color:var(--muted);
+      font-size:.8rem;
+    }
 
     .score{
-      min-width:54px;text-align:center;padding:6px 8px;border-radius:10px;font-weight:800;font-size:12px;display:inline-block
+      font-weight:800;
+      font-size:.95rem;
     }
-    .score.good{background:rgba(34,197,94,.12);color:#86efac}
-    .score.mid{background:rgba(245,158,11,.12);color:#fcd34d}
-    .score.bad{background:rgba(239,68,68,.12);color:#fca5a5}
 
-    .miniBars{display:flex;align-items:flex-end;gap:6px;height:140px;padding-top:8px}
+    .green{ color:var(--green); }
+    .yellow{ color:var(--yellow); }
+    .red{ color:var(--red); }
+    .blue{ color:var(--blue); }
+
+    .progress{
+      width:100%;
+      height:8px;
+      border-radius:999px;
+      background:rgba(255,255,255,.08);
+      overflow:hidden;
+      margin-top:8px;
+    }
+
     .bar{
-      flex:1;border-radius:10px 10px 4px 4px;
-      background:linear-gradient(180deg, rgba(59,130,246,.9), rgba(34,211,238,.75));
-      min-height:8px;position:relative
-    }
-    .barLabel{
-      position:absolute;bottom:-24px;left:50%;transform:translateX(-50%);
-      font-size:10px;color:var(--muted);white-space:nowrap
+      height:100%;
+      width:0%;
+      border-radius:999px;
+      background:linear-gradient(90deg, var(--red), var(--yellow), var(--green));
+      transition:width .25s ease;
     }
 
-    .scrollPills{
-      display:flex;gap:8px;flex-wrap:wrap;max-height:132px;overflow:auto;padding-right:4px
-    }
-    .holdingPill{
-      background:#101a2d;border:1px solid var(--line);border-radius:999px;
-      padding:8px 10px;font-size:12px;display:inline-flex;align-items:center;gap:8px
+    .holdingsWrap{
+      display:grid;
+      gap:10px;
     }
 
-    .simGrid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-    @media (max-width:900px){.simGrid{grid-template-columns:1fr}}
-    .sim{
-      border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft)
-    }
-    .sim h3{margin:0 0 8px 0;font-size:13px}
-    .sim ul{margin:8px 0 0 18px;padding:0}
-    .sim li{margin:6px 0;color:#dbe7f7;font-size:12px}
-
-    .traffic{
-      display:grid;grid-template-columns:repeat(3,1fr);gap:10px
-    }
-    .light{
-      border:1px solid var(--line);border-radius:14px;padding:12px;background:var(--soft)
+    /* Smaller holdings pill with internal scroll */
+    .holdingScroller{
+      display:flex;
+      flex-direction:column;
+      gap:8px;
+      max-height:330px;
+      overflow-y:auto;
+      padding-right:4px;
+      scrollbar-width:thin;
+      scrollbar-color:rgba(255,255,255,.22) transparent;
     }
 
-    .chartWrap{
-      width:100%;height:260px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));padding:10px
+    .holdingScroller::-webkit-scrollbar{
+      width:8px;
     }
-    canvas{width:100%;height:100%}
+    .holdingScroller::-webkit-scrollbar-track{
+      background:transparent;
+    }
+    .holdingScroller::-webkit-scrollbar-thumb{
+      background:rgba(255,255,255,.18);
+      border-radius:999px;
+    }
+
+    .holdingRow{
+      display:grid;
+      grid-template-columns:minmax(0,1.1fr) auto auto auto;
+      gap:8px;
+      align-items:center;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      border-radius:12px;
+      padding:8px 10px;
+      min-width:0;
+    }
+
+    .holdingMain{
+      min-width:0;
+      display:flex;
+      flex-direction:column;
+      gap:2px;
+    }
+
+    .holdingName{
+      font-weight:700;
+      font-size:.88rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .holdingSub{
+      color:var(--muted);
+      font-size:.74rem;
+      overflow:hidden;
+      text-overflow:ellipsis;
+      white-space:nowrap;
+    }
+
+    .miniPill{
+      display:inline-flex;
+      align-items:center;
+      justify-content:center;
+      border:1px solid var(--line);
+      background:#101827;
+      border-radius:999px;
+      padding:4px 8px;
+      font-size:.72rem;
+      min-width:62px;
+      text-align:center;
+    }
+
+    .tableLike{
+      display:grid;
+      gap:8px;
+    }
+
+    .headline{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.02);
+      border-radius:14px;
+      padding:12px;
+    }
+
+    .headlineTitle{
+      font-weight:700;
+      margin-bottom:5px;
+    }
+
+    .headlineBody{
+      color:var(--muted);
+      font-size:.9rem;
+      line-height:1.38;
+    }
 
     .footerNote{
-      color:var(--muted);font-size:11px;padding:0 2px 2px 2px
+      margin-top:14px;
+      color:var(--muted);
+      font-size:.8rem;
+      text-align:right;
     }
 
-    .configBox{
-      display:none;
-      position:fixed;inset:0;background:rgba(0,0,0,.55);backdrop-filter:blur(4px);
-      align-items:center;justify-content:center;padding:14px;z-index:9999
+    .empty{
+      color:var(--muted);
+      font-size:.9rem;
+      border:1px dashed var(--line);
+      border-radius:12px;
+      padding:12px;
     }
-    .configInner{
-      width:min(760px,100%);
-      background:#0d172a;border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)
+
+    .hidden{
+      display:none !important;
     }
-    .configInner .head{
-      padding:14px 16px;border-bottom:1px solid var(--line);display:flex;align-items:center;justify-content:space-between
+
+    .errorBox{
+      white-space:pre-wrap;
+      border:1px solid rgba(239,68,68,.45);
+      background:rgba(239,68,68,.09);
+      color:#fecaca;
+      border-radius:14px;
+      padding:12px;
+      margin-bottom:14px;
+      font-size:.88rem;
     }
-    .configInner .body{padding:16px}
-    .configInner label{display:block;font-size:12px;color:var(--muted);margin-bottom:6px}
-    .configInner textarea{
-      width:100%;min-height:64px;resize:vertical;border-radius:12px;border:1px solid var(--line);
-      background:#0a1324;color:var(--text);padding:12px;margin-bottom:12px
+
+    .tiny{
+      font-size:.75rem;
+      color:var(--muted);
     }
-    .statusLine{
-      display:flex;gap:10px;align-items:center;justify-content:space-between;flex-wrap:wrap;
-      padding:10px 16px;border-top:1px solid var(--line);background:rgba(255,255,255,.02)
-    }
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-    .hidden{display:none}
   </style>
 </head>
 <body>
   <div class="wrap">
+    <div id="errorBoxMount"></div>
+
     <div class="topbar">
       <div class="brand">
-        <div class="logo">📈</div>
-        <div class="title">
-          <h1>Lean Terminal Pro UI</h1>
-          <div class="sub">Ranking • AI Filter • Agent Simulation • Benchmark Panel • Pro Dashboard</div>
-        </div>
-      </div>
-      <div class="actions">
-        <button id="btnReload">Reload Data</button>
-        <button id="btnConfig" class="ghost">Data Settings</button>
-      </div>
-    </div>
-
-    <div class="pillbar">
-      <div class="pill"><span class="dot g"></span><span id="marketWeather">Clear</span></div>
-      <div class="pill"><span class="dot b"></span>Mode: <span id="modeLabel">Lean</span></div>
-      <div class="pill"><span class="dot c"></span>Top Rank: <span id="topRankLabel">--</span></div>
-      <div class="pill"><span class="dot p"></span>AI Gate: <span id="aiGateLabel">--</span></div>
-      <div class="pill"><span class="dot y"></span>Risk Status: <span id="riskLabel">--</span></div>
-      <div class="pill"><span class="dot r"></span>Last Refresh: <span id="lastRefresh">--</span></div>
-    </div>
-
-    <div class="grid">
-      <div class="left">
-        <div class="card">
-          <div class="cardHead"><h2>Executive Snapshot</h2><span class="tiny muted">Street-level view</span></div>
-          <div class="cardBody">
-            <div class="kpiGrid">
-              <div class="kpi">
-                <div class="label">Portfolio</div>
-                <div class="big" id="kpiPortfolioValue">--</div>
-                <div class="tiny muted" id="kpiPortfolioSub">waiting for data</div>
-              </div>
-              <div class="kpi">
-                <div class="label">Daily Change</div>
-                <div class="big sm" id="kpiDayChange">--</div>
-                <div class="tiny muted" id="kpiDayChangeSub">vs prior close</div>
-              </div>
-              <div class="kpi">
-                <div class="label">Best Horse</div>
-                <div class="big sm" id="kpiBestHorse">--</div>
-                <div class="tiny muted" id="kpiBestHorseSub">top ranked signal</div>
-              </div>
-              <div class="kpi">
-                <div class="label">Go / No-Go</div>
-                <div class="big sm" id="kpiGoNoGo">--</div>
-                <div class="tiny muted" id="kpiGoNoGoSub">AI + risk stack</div>
-              </div>
-            </div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardHead"><h2>Holdings</h2><span class="tiny muted">scrollable pills</span></div>
-          <div class="cardBody">
-            <div class="scrollPills" id="holdingsPills"></div>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardHead"><h2>AI Filter Layer</h2><span class="tiny muted">gate before action</span></div>
-          <div class="cardBody">
-            <table>
-              <thead>
-                <tr><th>Ticker</th><th>AI View</th><th>Rank</th><th>Action</th></tr>
-              </thead>
-              <tbody id="aiTable"></tbody>
-            </table>
-          </div>
-        </div>
-
-        <div class="card">
-          <div class="cardHead"><h2>Volatility Traffic Light</h2><span class="tiny muted">quick danger scan</span></div>
-          <div class="cardBody">
-            <div class="traffic" id="trafficGrid"></div>
-          </div>
+        <div>
+          <h1>Lean Terminal — Current Campaign</h1>
+          <div class="sub">Cleaner layout • sources pill hidden • compact scrollable holdings</div>
         </div>
       </div>
 
-      <div class="right">
-        <div class="sectionGrid">
-          <div class="card span-8">
-            <div class="cardHead"><h2>Signal Ranking Board</h2><span class="tiny muted">highest score first</span></div>
-            <div class="cardBody">
-              <table>
-                <thead>
-                  <tr><th>#</th><th>Ticker</th><th>Theme</th><th>Score</th><th>Status</th><th>Move</th></tr>
-                </thead>
-                <tbody id="rankingTable"></tbody>
-              </table>
-            </div>
-          </div>
-
-          <div class="card span-4">
-            <div class="cardHead"><h2>Score Stack</h2><span class="tiny muted">visual sort</span></div>
-            <div class="cardBody">
-              <div class="miniBars" id="scoreBars"></div>
-            </div>
-          </div>
-
-          <div class="card span-6">
-            <div class="cardHead"><h2>Performance vs Benchmarks</h2><span class="tiny muted">keep us honest</span></div>
-            <div class="cardBody">
-              <table>
-                <thead>
-                  <tr><th>Line</th><th>Return</th><th>Read</th></tr>
-                </thead>
-                <tbody id="benchTable"></tbody>
-              </table>
-              <div class="footerNote">Edit the benchmark values in the CONFIG object if you want your own baselines.</div>
-            </div>
-          </div>
-
-          <div class="card span-6">
-            <div class="cardHead"><h2>Correlation / Relative Move View</h2><span class="tiny muted">simple paired line panel</span></div>
-            <div class="cardBody">
-              <div class="chartWrap"><canvas id="pairChart" width="700" height="260"></canvas></div>
-            </div>
-          </div>
-
-          <div class="card span-12">
-            <div class="cardHead"><h2>Agent Simulation v1</h2><span class="tiny muted">bull / bear / risk debate layer</span></div>
-            <div class="cardBody">
-              <div class="simGrid">
-                <div class="sim">
-                  <h3>🟢 Bull Agent</h3>
-                  <div class="tiny muted" id="bullSummary">Looking for upside.</div>
-                  <ul id="bullList"></ul>
-                </div>
-                <div class="sim">
-                  <h3>🟡 Bear Agent</h3>
-                  <div class="tiny muted" id="bearSummary">Looking for weak spots.</div>
-                  <ul id="bearList"></ul>
-                </div>
-                <div class="sim">
-                  <h3>🔴 Risk Agent</h3>
-                  <div class="tiny muted" id="riskSummary">Protect capital first.</div>
-                  <ul id="riskList"></ul>
-                </div>
-              </div>
-            </div>
-          </div>
-
-          <div class="card span-12">
-            <div class="cardHead"><h2>Campaign Notes</h2><span class="tiny muted">what the board is saying</span></div>
-            <div class="cardBody">
-              <div id="campaignNotes" class="tiny" style="line-height:1.7"></div>
-            </div>
-          </div>
-        </div>
+      <div class="toolbar">
+        <button class="btn" id="refreshBtn">Refresh</button>
+        <button class="btn" id="settingsBtn">Data Settings</button>
       </div>
     </div>
+
+    <section class="grid grid-top">
+      <div class="card">
+        <div class="cardTitleRow">
+          <h2>Campaign Snapshot</h2>
+          <span class="pill small" id="campaignDate">Loading...</span>
+        </div>
+        <div class="heroValue" id="heroStatus">Waiting for data</div>
+        <div class="heroMeta" id="heroMeta"></div>
+        <div class="progress"><div class="bar" id="convictionBar"></div></div>
+      </div>
+
+      <div class="card">
+        <h3>Posture</h3>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="kpiLabel">Mode</div>
+            <div class="kpiValue" id="modeValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Trigger</div>
+            <div class="kpiValue" id="triggerValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Risk</div>
+            <div class="kpiValue" id="riskValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Weather</div>
+            <div class="kpiValue" id="weatherValue">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Math Layer</h3>
+        <div class="kpis">
+          <div class="kpi">
+            <div class="kpiLabel">Correlation</div>
+            <div class="kpiValue" id="corrValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Vol Light</div>
+            <div class="kpiValue" id="volValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Sharpe</div>
+            <div class="kpiValue" id="sharpeValue">—</div>
+          </div>
+          <div class="kpi">
+            <div class="kpiLabel">Score</div>
+            <div class="kpiValue" id="scoreValue">—</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="card">
+        <h3>Action Bias</h3>
+        <div class="list" id="actionList">
+          <div class="empty">No action rows loaded yet.</div>
+        </div>
+      </div>
+    </section>
+
+    <section class="grid grid-main">
+      <div class="card">
+        <div class="cardTitleRow">
+          <h2>Holdings</h2>
+          <span class="pill small" id="holdingsCount">0 items</span>
+        </div>
+        <div class="holdingScroller" id="holdingsList"></div>
+        <div class="footerNote">Compact pill mode with internal scroll to save screen space.</div>
+      </div>
+
+      <div class="holdingsWrap">
+        <div class="card">
+          <h2>Lean Health Report</h2>
+          <div class="tableLike" id="healthList">
+            <div class="empty">No health data yet.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Radar</h2>
+          <div class="tableLike" id="radarList">
+            <div class="empty">No radar rows yet.</div>
+          </div>
+        </div>
+
+        <div class="card">
+          <h2>Today’s Checklist</h2>
+          <div class="tableLike" id="todoList">
+            <div class="empty">No checklist rows yet.</div>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <div class="footerNote tiny" id="footerStamp">Lean Terminal ready.</div>
   </div>
 
-  <div class="configBox" id="configBox">
-    <div class="configInner">
-      <div class="head">
-        <strong>Data Settings</strong>
-        <button id="btnCloseConfig">Close</button>
-      </div>
-      <div class="body">
-        <label for="holdingsUrl">Holdings CSV URL</label>
-        <textarea id="holdingsUrl" class="mono"></textarea>
+  <script>
+  window.addEventListener("DOMContentLoaded", () => {
+    const errorBoxMount = document.getElementById("errorBoxMount");
 
-        <label for="systemUrl">System / Ranking CSV URL</label>
-        <textarea id="systemUrl" class="mono"></textarea>
-
-        <label for="macroUrl">Macro CSV URL (optional)</label>
-        <textarea id="macroUrl" class="mono"></textarea>
-
-        <div class="tiny muted">
-          Paste your published Google Sheet CSV links here, hit save, then reload.
-        </div>
-      </div>
-      <div class="statusLine">
-        <div class="tiny muted">Stored in local browser only.</div>
-        <div style="display:flex;gap:8px">
-          <button id="btnSaveConfig">Save</button>
-        </div>
-      </div>
-    </div>
-  </div>
-
-<script>
-/* =========================================================
-   LEAN TERMINAL PRO UI
-   - single file
-   - paste into index.html
-   - use Data Settings to store your CSV links
-========================================================= */
-
-/* ======= DEFAULT FEEDS (replace these if you want) ======= */
-const DEFAULT_HOLDINGS =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv";
-
-const DEFAULT_SYSTEM =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-
-const DEFAULT_MACRO =
-"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1415413978&single=true&output=csv";
-
-/* ======= LOCAL STORAGE ======= */
-const LS_HOLDINGS="lean_pro_holdings_csv";
-const LS_SYSTEM="lean_pro_system_csv";
-const LS_MACRO="lean_pro_macro_csv";
-
-/* ======= TUNABLE CONFIG ======= */
-const CONFIG = {
-  mode:"Lean",
-  topN:8,
-  minTradeScore:70,
-  bench:[
-    {name:"Portfolio", value:4.2},
-    {name:"S&P 500", value:2.1},
-    {name:"QQQ", value:3.5},
-    {name:"SMH", value:4.7}
-  ],
-  pairSeriesA:[100,101,103,102,106,108,110,109,112,115],
-  pairSeriesB:[100,100.4,101.2,100.8,102.5,103.6,104.2,103.1,104.8,106.1]
-};
-
-/* ======= APP STATE ======= */
-const STATE = {
-  holdings:[],
-  system:[],
-  macro:[],
-  topRank:null,
-  aiGate:"--",
-  riskStatus:"--"
-};
-
-/* ======= DOM ======= */
-const $ = (id)=>document.getElementById(id);
-
-/* ======= CSV PARSER ======= */
-function parseCSV(text){
-  const rows = [];
-  let row = [], cell = "", q = false;
-  for(let i=0;i<text.length;i++){
-    const ch = text[i], nx = text[i+1];
-    if(ch === '"'){
-      if(q && nx === '"'){ cell += '"'; i++; }
-      else { q = !q; }
-    }else if(ch === ',' && !q){
-      row.push(cell); cell = "";
-    }else if((ch === '\n' || ch === '\r') && !q){
-      if(ch === '\r' && nx === '\n') i++;
-      row.push(cell);
-      if(row.some(v => String(v).trim() !== "")) rows.push(row);
-      row = []; cell = "";
-    }else{
-      cell += ch;
+    function crash(label, err){
+      const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err);
+      if(errorBoxMount){
+        errorBoxMount.innerHTML = `<div class="errorBox">${escapeHtml(label)}\n\n${escapeHtml(msg)}</div>`;
+      }
+      console.error(label, err);
     }
-  }
-  row.push(cell);
-  if(row.some(v => String(v).trim() !== "")) rows.push(row);
-  return rows;
-}
 
-async function fetchCSV(url){
-  if(!url) return [];
-  const res = await fetch(url, {cache:"no-store"});
-  if(!res.ok) throw new Error("Failed CSV fetch: " + res.status + " " + url);
-  const text = await res.text();
-  const rows = parseCSV(text);
-  if(!rows.length) return [];
-  const headers = rows[0].map(h => String(h || "").trim());
-  return rows.slice(1).map(r=>{
-    const obj = {};
-    headers.forEach((h,idx)=>obj[h || ("col"+idx)] = (r[idx] ?? "").trim());
-    obj.__row = r;
-    return obj;
+    window.addEventListener("error", e => crash("CRASH:", e.error || e.message));
+    window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason));
+
+    const LS_HOLDINGS = "lean_holdings_csv_url";
+    const LS_SYSTEM   = "lean_system_csv_url";
+
+    // Hard-wired current holdings CSV link for the current Lean campaign
+    const DEFAULT_HOLDINGS =
+      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
+
+    // Keeps existing system CSV if already saved. Replace this if you want to hard-wire a system sheet too.
+    const DEFAULT_SYSTEM = localStorage.getItem(LS_SYSTEM) || "";
+
+    const $ = sel => document.querySelector(sel);
+
+    $("#refreshBtn").addEventListener("click", loadAll);
+    $("#settingsBtn").addEventListener("click", openSettings);
+
+    function openSettings(){
+      const currentHoldings = localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
+      const currentSystem = localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
+
+      const holdingsUrl = prompt("Holdings CSV URL", currentHoldings);
+      if(holdingsUrl !== null && holdingsUrl.trim()){
+        localStorage.setItem(LS_HOLDINGS, holdingsUrl.trim());
+      }
+
+      const systemUrl = prompt("System CSV URL", currentSystem);
+      if(systemUrl !== null){
+        localStorage.setItem(LS_SYSTEM, systemUrl.trim());
+      }
+
+      loadAll();
+    }
+
+    function getHoldingsUrl(){
+      return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
+    }
+
+    function getSystemUrl(){
+      return localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
+    }
+
+    async function loadAll(){
+      try{
+        errorBoxMount.innerHTML = "";
+        setLoadingState();
+
+        const holdingsUrl = getHoldingsUrl();
+        const systemUrl = getSystemUrl();
+
+        const [holdingsRows, systemRows] = await Promise.all([
+          holdingsUrl ? fetchCsvRows(holdingsUrl) : Promise.resolve([]),
+          systemUrl ? fetchCsvRows(systemUrl) : Promise.resolve([])
+        ]);
+
+        renderHoldings(holdingsRows);
+        renderSystem(systemRows, holdingsRows);
+
+        $("#footerStamp").textContent =
+          `Updated ${new Date().toLocaleString()} • Sources pill intentionally hidden`;
+      }catch(err){
+        crash("Failed to load Lean Terminal data.", err);
+      }
+    }
+
+    function setLoadingState(){
+      $("#campaignDate").textContent = "Loading...";
+      $("#heroStatus").textContent = "Refreshing";
+      $("#heroMeta").innerHTML = `<span class="pill small">Pulling latest rows</span>`;
+      $("#convictionBar").style.width = "22%";
+
+      ["#modeValue","#triggerValue","#riskValue","#weatherValue","#corrValue","#volValue","#sharpeValue","#scoreValue"].forEach(id => {
+        $(id).textContent = "—";
+      });
+
+      $("#actionList").innerHTML = `<div class="empty">Refreshing actions...</div>`;
+      $("#holdingsList").innerHTML = `<div class="empty">Refreshing holdings...</div>`;
+      $("#healthList").innerHTML = `<div class="empty">Refreshing health...</div>`;
+      $("#radarList").innerHTML = `<div class="empty">Refreshing radar...</div>`;
+      $("#todoList").innerHTML = `<div class="empty">Refreshing checklist...</div>`;
+      $("#holdingsCount").textContent = "0 items";
+    }
+
+    async function fetchCsvRows(url){
+      const res = await fetch(cacheBust(url), { cache:"no-store" });
+      if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
+      const text = await res.text();
+      return parseCsv(text);
+    }
+
+    function cacheBust(url){
+      const joiner = url.includes("?") ? "&" : "?";
+      return `${url}${joiner}_ts=${Date.now()}`;
+    }
+
+    function parseCsv(text){
+      const rows = [];
+      let row = [];
+      let cell = "";
+      let q = false;
+
+      for(let i=0;i<text.length;i++){
+        const ch = text[i];
+        const next = text[i+1];
+
+        if(q){
+          if(ch === '"' && next === '"'){
+            cell += '"';
+            i++;
+          }else if(ch === '"'){
+            q = false;
+          }else{
+            cell += ch;
+          }
+        }else{
+          if(ch === '"'){
+            q = true;
+          }else if(ch === ","){
+            row.push(cell);
+            cell = "";
+          }else if(ch === "\n"){
+            row.push(cell);
+            rows.push(row);
+            row = [];
+            cell = "";
+          }else if(ch === "\r"){
+            // ignore
+          }else{
+            cell += ch;
+          }
+        }
+      }
+
+      if(cell.length || row.length){
+        row.push(cell);
+        rows.push(row);
+      }
+
+      if(!rows.length) return [];
+
+      const headers = rows[0].map(h => normalizeKey(h));
+      return rows.slice(1)
+        .filter(r => r.some(v => String(v || "").trim() !== ""))
+        .map(r => {
+          const obj = {};
+          headers.forEach((h, idx) => obj[h] = (r[idx] ?? "").trim());
+          return obj;
+        });
+    }
+
+    function normalizeKey(key){
+      return String(key || "")
+        .trim()
+        .toLowerCase()
+        .replace(/\s+/g, "_")
+        .replace(/[^\w]/g, "_")
+        .replace(/_+/g, "_")
+        .replace(/^_|_$/g, "");
+    }
+
+    function renderHoldings(rows){
+      const box = $("#holdingsList");
+      if(!rows.length){
+        box.innerHTML = `<div class="empty">No holdings rows found. The new holdings CSV link is wired in, but the sheet may be empty or using unexpected headers.</div>`;
+        $("#holdingsCount").textContent = "0 items";
+        return;
+      }
+
+      const normalized = rows.map(mapHoldingRow);
+      $("#holdingsCount").textContent = `${normalized.length} items`;
+
+      box.innerHTML = normalized.map(h => `
+        <div class="holdingRow">
+          <div class="holdingMain">
+            <div class="holdingName">${escapeHtml(h.ticker || h.name || "Unnamed")}</div>
+            <div class="holdingSub">${escapeHtml(h.name || h.sector || h.note || "—")}</div>
+          </div>
+          <div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div>
+          <div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal || h.tier || "—")}</div>
+          <div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change || h.pnl || "—")}</div>
+        </div>
+      `).join("");
+    }
+
+    function mapHoldingRow(r){
+      return {
+        ticker: pick(r, ["ticker","symbol","holding","name_short"]),
+        name: pick(r, ["name","company","description","asset"]),
+        sector: pick(r, ["sector","theme","bucket","group"]),
+        weight: pick(r, ["weight","allocation","position","size","percent"]),
+        qty: pick(r, ["qty","shares","units"]),
+        signal: pick(r, ["signal","status","go_no_go","light","bias"]),
+        tier: pick(r, ["tier","rank"]),
+        change: pick(r, ["change","pnl","return","move","day_change"]),
+        note: pick(r, ["note","notes","comment"])
+      };
+    }
+
+    function renderSystem(systemRows, holdingsRows){
+      const sys = summarizeSystem(systemRows, holdingsRows);
+
+      $("#campaignDate").textContent = sys.asOf;
+      $("#heroStatus").textContent = sys.status;
+      $("#heroMeta").innerHTML = sys.meta.map(x => `<span class="pill small ${toneClass(x)}">${escapeHtml(x)}</span>`).join("");
+      $("#convictionBar").style.width = `${sys.conviction}%`;
+
+      $("#modeValue").textContent = sys.mode;
+      $("#triggerValue").textContent = sys.trigger;
+      $("#riskValue").textContent = sys.risk;
+      $("#weatherValue").textContent = sys.weather;
+      $("#corrValue").textContent = sys.correlation;
+      $("#volValue").textContent = sys.vol;
+      $("#sharpeValue").textContent = sys.sharpe;
+      $("#scoreValue").textContent = sys.score;
+
+      renderSimpleList("#actionList", sys.actions);
+      renderCardList("#healthList", sys.health);
+      renderCardList("#radarList", sys.radar);
+      renderCardList("#todoList", sys.todo);
+    }
+
+    function summarizeSystem(systemRows, holdingsRows){
+      const rows = systemRows || [];
+      const first = rows[0] || {};
+
+      const status =
+        pick(first, ["campaign_status","status","headline","summary"]) ||
+        (holdingsRows.length ? "Lean engine online" : "Waiting on system sheet");
+
+      const mode = pick(first, ["mode","campaign_mode","posture"]) || "Lean";
+      const trigger = pick(first, ["trigger","market_trigger","gate"]) || "Watch";
+      const risk = pick(first, ["risk","risk_state","risk_mode"]) || "Controlled";
+      const weather = pick(first, ["weather","market_weather","sky"]) || "Clear";
+      const correlation = pick(first, ["correlation","corr","corr_state"]) || "—";
+      const vol = pick(first, ["vol","vol_light","volatility","volatility_light"]) || "—";
+      const sharpe = pick(first, ["sharpe","sharpe_ratio"]) || "—";
+      const score = pick(first, ["score","health_score","conviction_score"]) || guessScore(rows, holdingsRows);
+      const conviction = clamp(numberFromAny(score) || 64, 10, 100);
+
+      const asOf =
+        pick(first, ["as_of","date","timestamp","last_updated"]) ||
+        new Date().toLocaleDateString();
+
+      const meta = compact([
+        mode,
+        trigger,
+        risk,
+        weather
+      ]);
+
+      const actions = extractBucket(rows, ["action","action_1","action_2","action_3","bias","today_bias"], [
+        "Keep posture clean",
+        "Let leaders prove themselves",
+        "Avoid overlap stacking"
+      ]);
+
+      const health = extractObjects(rows, "health").length
+        ? extractObjects(rows, "health")
+        : [
+            { title:"Structure", body:"Campaign still emphasizes controlled aggression and overlap discipline." },
+            { title:"Holdings Fit", body: holdingsRows.length ? `Loaded ${holdingsRows.length} holding rows into compact pill mode.` : "No holdings sheet rows found yet." },
+            { title:"Display Update", body:"Sources pill is now hidden. Holdings panel is smaller and scrolls internally." }
+          ];
+
+      const radar = extractObjects(rows, "radar").length
+        ? extractObjects(rows, "radar")
+        : [
+            { title:"Leaders", body:"Watch relative-strength names and avoid chasing weak laggards." },
+            { title:"Macro", body:"Keep eye on volatility, breadth, and any trigger flip before adding size." },
+            { title:"Overlap", body:"Use radar as context, not as a reason to stack similar exposure." }
+          ];
+
+      const todo = extractObjects(rows, "todo").length
+        ? extractObjects(rows, "todo")
+        : [
+            { title:"Check trigger", body:"Confirm go / no-go before any adds." },
+            { title:"Review leaders", body:"Size into strongest horse, not every horse." },
+            { title:"Protect screen space", body:"Use the internal holdings scroll for quick review." }
+          ];
+
+      return {
+        asOf,
+        status,
+        meta,
+        conviction,
+        mode,
+        trigger,
+        risk,
+        weather,
+        correlation,
+        vol,
+        sharpe,
+        score,
+        actions,
+        health,
+        radar,
+        todo
+      };
+    }
+
+    function extractBucket(rows, keys, fallback){
+      const out = [];
+      rows.forEach(r => {
+        keys.forEach(k => {
+          const v = r[normalizeKey(k)];
+          if(v && !out.includes(v)) out.push(v);
+        });
+      });
+      return out.length ? out.slice(0,6) : fallback;
+    }
+
+    function extractObjects(rows, prefix){
+      const out = [];
+      rows.forEach(r => {
+        const title = pick(r, [`${prefix}_title`,`title_${prefix}`,`${prefix}`]);
+        const body = pick(r, [`${prefix}_body`,`body_${prefix}`,`${prefix}_note`,`note_${prefix}`]);
+        if(title || body){
+          out.push({
+            title: title || prefix.toUpperCase(),
+            body: body || ""
+          });
+        }
+      });
+      return out.slice(0,8);
+    }
+
+    function renderSimpleList(sel, items){
+      const el = $(sel);
+      if(!items || !items.length){
+        el.innerHTML = `<div class="empty">No rows.</div>`;
+        return;
+      }
+      el.innerHTML = items.map(item => `
+        <div class="row">
+          <div class="rowLeft">
+            <div class="ticker">${escapeHtml(item)}</div>
+          </div>
+          <div class="score ${toneClass(item)}">${scoreWord(item)}</div>
+        </div>
+      `).join("");
+    }
+
+    function renderCardList(sel, items){
+      const el = $(sel);
+      if(!items || !items.length){
+        el.innerHTML = `<div class="empty">No rows.</div>`;
+        return;
+      }
+      el.innerHTML = items.map(item => `
+        <div class="headline">
+          <div class="headlineTitle">${escapeHtml(item.title || "Item")}</div>
+          <div class="headlineBody">${escapeHtml(item.body || "—")}</div>
+        </div>
+      `).join("");
+    }
+
+    function scoreWord(str){
+      const s = String(str || "").toLowerCase();
+      if(s.includes("go") || s.includes("green") || s.includes("buy")) return "GO";
+      if(s.includes("yellow") || s.includes("watch") || s.includes("trim")) return "WATCH";
+      if(s.includes("red") || s.includes("stop") || s.includes("no-go")) return "NO-GO";
+      return "LIVE";
+    }
+
+    function toneClass(v){
+      const s = String(v || "").toLowerCase();
+      if(
+        s.includes("green") || s.includes("go") || s.includes("buy") ||
+        s.includes("up") || s.includes("bull") || s.includes("+")
+      ) return "green";
+      if(
+        s.includes("yellow") || s.includes("watch") || s.includes("hold") ||
+        s.includes("neutral") || s.includes("caution")
+      ) return "yellow";
+      if(
+        s.includes("red") || s.includes("no-go") || s.includes("stop") ||
+        s.includes("sell") || s.includes("down") || s.includes("risk-off") || s.includes("-")
+      ) return "red";
+      return "blue";
+    }
+
+    function guessScore(systemRows, holdingsRows){
+      const base = holdingsRows.length ? 68 : 52;
+      const extra = Math.min((systemRows || []).length * 3, 18);
+      return String(base + extra);
+    }
+
+    function pick(obj, keys){
+      for(const key of keys){
+        const k = normalizeKey(key);
+        if(obj && obj[k] != null && String(obj[k]).trim() !== "") return String(obj[k]).trim();
+      }
+      return "";
+    }
+
+    function compact(arr){
+      return arr.filter(Boolean);
+    }
+
+    function numberFromAny(v){
+      const m = String(v || "").match(/-?\d+(\.\d+)?/);
+      return m ? Number(m[0]) : NaN;
+    }
+
+    function clamp(n, min, max){
+      return Math.max(min, Math.min(max, n));
+    }
+
+    function escapeHtml(str){
+      return String(str ?? "")
+        .replaceAll("&","&amp;")
+        .replaceAll("<","&lt;")
+        .replaceAll(">","&gt;")
+        .replaceAll('"',"&quot;")
+        .replaceAll("'","&#39;");
+    }
+
+    loadAll();
   });
-}
-
-function readUrl(key, fallback){ return localStorage.getItem(key) || fallback; }
-function saveUrl(key, value){ localStorage.setItem(key, value || ""); }
-
-/* ======= HELPERS ======= */
-function num(v, d=0){
-  const x = parseFloat(String(v).replace(/[$,% ]/g,""));
-  return Number.isFinite(x) ? x : d;
-}
-function fmtPct(v){
-  const n = num(v, 0);
-  return `${n>0?"+":n<0?"":""}${n.toFixed(1)}%`;
-}
-function fmtMoney(v){
-  const n = num(v,0);
-  return new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(n);
-}
-function scoreClass(score){
-  return score >= 70 ? "good" : score >= 50 ? "mid" : "bad";
-}
-function changeClass(v){
-  return num(v) > 0 ? "up" : num(v) < 0 ? "down" : "flat";
-}
-function safeTickerFromRow(obj, idx=0){
-  return obj.Ticker || obj.ticker || obj.Symbol || obj.symbol || obj.Name || obj.name || obj.__row?.[idx] || "N/A";
-}
-function safeThemeFromRow(obj, idx=1){
-  return obj.Theme || obj.theme || obj.Setup || obj.setup || obj.Sector || obj.sector || obj.__row?.[idx] || "--";
-}
-function safeScoreFromRow(obj){
-  return num(obj.Score ?? obj.score ?? obj.Rank ?? obj.rank ?? obj["AI Score"] ?? obj.__row?.[2] ?? 0, 0);
-}
-function safeMoveFromRow(obj){
-  const cands = [obj.Change, obj.change, obj.Return, obj.return, obj["1D"], obj["Daily Change"], obj.__row?.[3]];
-  for(const c of cands){
-    if(String(c ?? "").trim() !== "") return num(c,0);
-  }
-  return 0;
-}
-function safeShares(obj){
-  return num(obj.Shares ?? obj.shares ?? obj.Qty ?? obj.qty ?? obj.Quantity ?? obj.__row?.[1] ?? 0);
-}
-function safeValue(obj){
-  return num(obj.Value ?? obj.value ?? obj["Market Value"] ?? obj["Current Value"] ?? obj.__row?.[2] ?? 0);
-}
-
-/* ======= DERIVED ======= */
-function rankedSystem(){
-  return [...STATE.system]
-    .map((r,idx)=>({
-      rankIndex: idx+1,
-      ticker: safeTickerFromRow(r),
-      theme: safeThemeFromRow(r),
-      score: safeScoreFromRow(r),
-      move: safeMoveFromRow(r),
-      row: r
-    }))
-    .sort((a,b)=>b.score-a.score);
-}
-
-function holdingsList(){
-  return [...STATE.holdings].map(h=>({
-    ticker: safeTickerFromRow(h),
-    shares: safeShares(h),
-    value: safeValue(h),
-    row: h
-  })).filter(x=>x.ticker && x.ticker !== "N/A");
-}
-
-function portfolioValue(){
-  const vals = holdingsList().map(h=>h.value).filter(v=>Number.isFinite(v) && v>0);
-  if(vals.length) return vals.reduce((a,b)=>a+b,0);
-  return 0;
-}
-
-function estimatedDayChange(){
-  const ranked = rankedSystem();
-  if(!ranked.length) return 0;
-  return ranked.slice(0,5).reduce((a,b)=>a+b.move,0) / Math.min(ranked.length,5);
-}
-
-function aiDecision(score, move){
-  if(score >= 80 && move >= 0) return "AI PASS";
-  if(score >= CONFIG.minTradeScore) return "WATCH";
-  if(score >= 50) return "MIXED";
-  return "BLOCK";
-}
-
-function riskLabelFromRank(rank){
-  if(!rank.length) return "--";
-  const avgTop = rank.slice(0,5).reduce((a,b)=>a+b.score,0)/Math.min(rank.length,5);
-  if(avgTop >= 78) return "Green";
-  if(avgTop >= 60) return "Yellow";
-  return "Red";
-}
-
-function weatherFromRisk(risk){
-  if(risk === "Green") return "Clear Sky";
-  if(risk === "Yellow") return "Cloudy";
-  if(risk === "Red") return "Storm";
-  return "Unknown";
-}
-
-/* ======= RENDERS ======= */
-function renderExecutive(){
-  const ranks = rankedSystem();
-  const top = ranks[0];
-  const pVal = portfolioValue();
-  const dChg = estimatedDayChange();
-  const go = top ? aiDecision(top.score, top.move) : "--";
-
-  STATE.topRank = top ? top.ticker : "--";
-  STATE.aiGate = go;
-  STATE.riskStatus = riskLabelFromRank(ranks);
-
-  $("kpiPortfolioValue").textContent = pVal ? fmtMoney(pVal) : "--";
-  $("kpiPortfolioSub").textContent = pVal ? `${holdingsList().length} holdings loaded` : "load holdings feed";
-  $("kpiDayChange").textContent = fmtPct(dChg);
-  $("kpiDayChange").className = "big sm " + changeClass(dChg);
-  $("kpiBestHorse").textContent = top ? top.ticker : "--";
-  $("kpiBestHorseSub").textContent = top ? `${top.theme} • score ${top.score}` : "no ranking feed";
-  $("kpiGoNoGo").textContent = go;
-  $("kpiGoNoGoSub").textContent = top ? `min trade score ${CONFIG.minTradeScore}` : "waiting";
-
-  $("marketWeather").textContent = weatherFromRisk(STATE.riskStatus);
-  $("modeLabel").textContent = CONFIG.mode;
-  $("topRankLabel").textContent = STATE.topRank || "--";
-  $("aiGateLabel").textContent = STATE.aiGate || "--";
-  $("riskLabel").textContent = STATE.riskStatus || "--";
-  $("lastRefresh").textContent = new Date().toLocaleTimeString();
-}
-
-function renderHoldings(){
-  const items = holdingsList();
-  const el = $("holdingsPills");
-  if(!items.length){
-    el.innerHTML = `<div class="tiny muted">No holdings feed loaded yet.</div>`;
-    return;
-  }
-  el.innerHTML = items.map(h=>{
-    const meta = [];
-    if(h.shares) meta.push(h.shares + " sh");
-    if(h.value) meta.push(fmtMoney(h.value));
-    return `<div class="holdingPill"><span class="dot b"></span><strong>${h.ticker}</strong><span class="muted tiny">${meta.join(" • ")}</span></div>`;
-  }).join("");
-}
-
-function renderRanking(){
-  const rows = rankedSystem().slice(0, CONFIG.topN);
-  $("rankingTable").innerHTML = rows.length ? rows.map((r,idx)=>{
-    const action = aiDecision(r.score, r.move);
-    return `
-      <tr>
-        <td>${idx+1}</td>
-        <td><strong>${r.ticker}</strong></td>
-        <td>${r.theme}</td>
-        <td><span class="score ${scoreClass(r.score)}">${r.score}</span></td>
-        <td>${action}</td>
-        <td class="${changeClass(r.move)}">${fmtPct(r.move)}</td>
-      </tr>
-    `;
-  }).join("") : `<tr><td colspan="6" class="muted">No ranking feed loaded yet.</td></tr>`;
-
-  $("scoreBars").innerHTML = rows.length ? rows.map(r=>{
-    const h = Math.max(10, Math.min(120, r.score * 1.35));
-    return `<div class="bar" style="height:${h}px"><div class="barLabel">${r.ticker}</div></div>`;
-  }).join("") : `<div class="tiny muted">Need ranking data.</div>`;
-}
-
-function renderAITable(){
-  const rows = rankedSystem().slice(0,6);
-  $("aiTable").innerHTML = rows.length ? rows.map(r=>{
-    const action = aiDecision(r.score, r.move);
-    return `
-      <tr>
-        <td><strong>${r.ticker}</strong></td>
-        <td>${action}</td>
-        <td><span class="score ${scoreClass(r.score)}">${r.score}</span></td>
-        <td>${action === "AI PASS" ? "Go" : action === "WATCH" ? "Watch" : "Stand down"}</td>
-      </tr>
-    `;
-  }).join("") : `<tr><td colspan="4" class="muted">No AI rows yet.</td></tr>`;
-}
-
-function renderTraffic(){
-  const rows = rankedSystem().slice(0,3);
-  const names = rows.length ? rows : [
-    {ticker:"Vol",score:76,move:1.2},
-    {ticker:"Momentum",score:58,move:-0.4},
-    {ticker:"Risk",score:42,move:-1.1}
-  ];
-
-  $("trafficGrid").innerHTML = names.map(r=>{
-    const status = r.score >= 70 ? "GREEN" : r.score >= 50 ? "YELLOW" : "RED";
-    const dotClass = r.score >= 70 ? "g" : r.score >= 50 ? "y" : "r";
-    return `
-      <div class="light">
-        <div class="tiny muted">${r.ticker}</div>
-        <div class="big sm">${status}</div>
-        <div class="tiny"><span class="dot ${dotClass}"></span> score ${r.score} • move ${fmtPct(r.move)}</div>
-      </div>
-    `;
-  }).join("");
-}
-
-function renderBenchmarks(){
-  const bench = CONFIG.bench;
-  const port = estimatedDayChange() * 2.4;
-  const full = bench.map((b,idx)=> idx===0 ? {name:b.name, value:port} : b);
-
-  $("benchTable").innerHTML = full.map(b=>{
-    const read = b.value >= 4 ? "Leading" : b.value >= 2 ? "Holding pace" : "Lagging";
-    return `
-      <tr>
-        <td><strong>${b.name}</strong></td>
-        <td class="${changeClass(b.value)}">${fmtPct(b.value)}</td>
-        <td>${read}</td>
-      </tr>
-    `;
-  }).join("");
-}
-
-function drawPairChart(){
-  const cvs = $("pairChart");
-  const ctx = cvs.getContext("2d");
-  const w = cvs.width, h = cvs.height;
-  ctx.clearRect(0,0,w,h);
-
-  const a = CONFIG.pairSeriesA;
-  const b = CONFIG.pairSeriesB;
-  const all = [...a,...b];
-  const min = Math.min(...all), max = Math.max(...all);
-  const pad = 24;
-
-  function x(i, n){ return pad + (i * (w - pad*2) / Math.max(1,n-1)); }
-  function y(v){ return h - pad - ((v - min) / Math.max(1,(max-min))) * (h - pad*2); }
-
-  ctx.strokeStyle = "rgba(255,255,255,.10)";
-  ctx.lineWidth = 1;
-  for(let i=0;i<5;i++){
-    const yy = pad + i*((h-pad*2)/4);
-    ctx.beginPath(); ctx.moveTo(pad,yy); ctx.lineTo(w-pad,yy); ctx.stroke();
-  }
-
-  ctx.lineWidth = 2.4;
-  ctx.strokeStyle = "#60a5fa";
-  ctx.beginPath();
-  a.forEach((v,i)=> i===0 ? ctx.moveTo(x(i,a.length),y(v)) : ctx.lineTo(x(i,a.length),y(v)));
-  ctx.stroke();
-
-  ctx.strokeStyle = "#22d3ee";
-  ctx.beginPath();
-  b.forEach((v,i)=> i===0 ? ctx.moveTo(x(i,b.length),y(v)) : ctx.lineTo(x(i,b.length),y(v)));
-  ctx.stroke();
-
-  ctx.fillStyle = "rgba(229,237,247,.8)";
-  ctx.font = "12px Inter, sans-serif";
-  ctx.fillText("Pair A", pad, 14);
-  ctx.fillText("Pair B", pad+56, 14);
-}
-
-function renderAgents(){
-  const rows = rankedSystem();
-  const top = rows[0];
-  const second = rows[1];
-  const weak = rows[rows.length-1];
-
-  $("bullSummary").textContent = top ? `${top.ticker} is leading the board.` : "Need system feed.";
-  $("bearSummary").textContent = second ? `Pressure test on ${second.ticker} and trend durability.` : "Need system feed.";
-  $("riskSummary").textContent = weak ? `${weak.ticker} is weakest on score.` : "Need system feed.";
-
-  $("bullList").innerHTML = [
-    top ? `${top.ticker} owns the best score on the board.` : "No top-ranked ticker yet.",
-    rows.length ? `Top ${Math.min(3,rows.length)} names are being prioritized by score.` : "Ranking feed not loaded.",
-    `Go only if score stays above ${CONFIG.minTradeScore}.`
-  ].map(x=>`<li>${x}</li>`).join("");
-
-  $("bearList").innerHTML = [
-    second ? `${second.ticker} needs follow-through, not just a one-day pop.` : "Need more candidates.",
-    rows.length ? `Any score slip under 60 moves a name to caution.` : "No score stack yet.",
-    `Crowding risk stays on if too many names cluster in one theme.`
-  ].map(x=>`<li>${x}</li>`).join("");
-
-  $("riskList").innerHTML = [
-    weak ? `${weak.ticker} is bottom bucket until structure improves.` : "No weak link loaded yet.",
-    `If AI says BLOCK or MIXED, keep hands off unless setup repairs.`,
-    `Protect capital first. No hero trades.`
-  ].map(x=>`<li>${x}</li>`).join("");
-}
-
-function renderNotes(){
-  const rows = rankedSystem();
-  const top = rows[0];
-  const second = rows[1];
-  const avg = rows.length ? (rows.reduce((a,b)=>a+b.score,0)/rows.length).toFixed(1) : "--";
-  const risk = STATE.riskStatus;
-  const go = STATE.aiGate;
-
-  $("campaignNotes").innerHTML = `
-    <strong>Board read:</strong> Average score is <strong>${avg}</strong>. 
-    Top horse is <strong>${top ? top.ticker : "--"}</strong>${second ? `, with ${second.ticker} in the next slot.` : "."}
-    Current risk color is <strong>${risk}</strong> and the gate says <strong>${go}</strong>.<br><br>
-    <strong>Street speak:</strong> let the board rank first, let AI say yes or no second, then let the risk layer break ties.
-    That means no random chasing, no guessing, and no jumping horses just because one candle looks cute.<br><br>
-    <strong>Execution logic:</strong> score above <strong>${CONFIG.minTradeScore}</strong> = real attention.
-    Score 50-69 = watchlist. Below 50 = dead weight until repaired.
-  `;
-}
-
-/* ======= LOAD ======= */
-async function loadAll(){
-  try{
-    const holdingsUrl = readUrl(LS_HOLDINGS, DEFAULT_HOLDINGS);
-    const systemUrl = readUrl(LS_SYSTEM, DEFAULT_SYSTEM);
-    const macroUrl = readUrl(LS_MACRO, DEFAULT_MACRO);
-
-    $("holdingsUrl").value = holdingsUrl;
-    $("systemUrl").value = systemUrl;
-    $("macroUrl").value = macroUrl;
-
-    const [holdings, system, macro] = await Promise.allSettled([
-      fetchCSV(holdingsUrl),
-      fetchCSV(systemUrl),
-      fetchCSV(macroUrl)
-    ]);
-
-    STATE.holdings = holdings.status === "fulfilled" ? holdings.value : [];
-    STATE.system = system.status === "fulfilled" ? system.value : [];
-    STATE.macro = macro.status === "fulfilled" ? macro.value : [];
-
-    renderExecutive();
-    renderHoldings();
-    renderRanking();
-    renderAITable();
-    renderTraffic();
-    renderBenchmarks();
-    drawPairChart();
-    renderAgents();
-    renderNotes();
-  }catch(err){
-    console.error(err);
-    alert("Load issue. Open Data Settings and check the CSV links.");
-  }
-}
-
-/* ======= CONFIG MODAL ======= */
-$("btnConfig").addEventListener("click", ()=> $("configBox").style.display = "flex");
-$("btnCloseConfig").addEventListener("click", ()=> $("configBox").style.display = "none");
-$("btnSaveConfig").addEventListener("click", ()=>{
-  saveUrl(LS_HOLDINGS, $("holdingsUrl").value.trim());
-  saveUrl(LS_SYSTEM, $("systemUrl").value.trim());
-  saveUrl(LS_MACRO, $("macroUrl").value.trim());
-  $("configBox").style.display = "none";
-  loadAll();
-});
-$("btnReload").addEventListener("click", loadAll);
-
-window.addEventListener("resize", drawPairChart);
-window.addEventListener("DOMContentLoaded", loadAll);
-</script>
+  </script>
 </body>
 </html>
