@@ -3,7 +3,7 @@
 <head>
 <meta charset="utf-8" />
 <meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal 2.1 — Layout Patch A</title>
+<title>Lean Terminal 2.2 — AGG Radar Upgrade</title>
 <style>
 :root{
   --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
@@ -51,7 +51,7 @@ svg{width:100%;height:100%;display:block;font-family:system-ui,-apple-system,Seg
 <div class="wrap">
   <div class="topbar">
     <div class="brand">
-      <h1>Lean Terminal 2.1 — Layout Patch A</h1>
+      <h1>Lean Terminal 2.2 — AGG Radar Upgrade</h1>
       <div class="sub">restored from the known-good architecture • holdings + budget + trade log • internal ranking engine</div>
     </div>
     <div class="toolbar">
@@ -111,7 +111,7 @@ svg{width:100%;height:100%;display:block;font-family:system-ui,-apple-system,Seg
   <div class="grid mainGrid">
     <div class="leftRail">
       <div class="card">
-        <div class="cardTitle"><div class="titleLeft"><h3>Model Rules</h3></div></div>
+        <div class="cardTitle"><div class="titleLeft"><h3>#6 Model Rules</h3></div></div>
         <div class="cubeGrid">
           <div class="cube"><div class="cubeLabel">Min Score To Trade</div><div class="cubeValue" id="minScoreVal">75</div></div>
           <div class="cube"><div class="cubeLabel">Theme Cap</div><div class="cubeValue" id="themeCapVal">30%</div></div>
@@ -121,7 +121,7 @@ svg{width:100%;height:100%;display:block;font-family:system-ui,-apple-system,Seg
       </div>
 
       <div class="card" style="margin-top:8px;">
-        <div class="cardTitle"><div class="titleLeft"><h3>Math Layer</h3></div></div>
+        <div class="cardTitle"><div class="titleLeft"><h3>#7 Math Layer</h3></div></div>
         <div class="cubeGrid">
           <div class="cube"><div class="cubeLabel">Score Formula</div><div class="cubeValue">S+R+N-P</div></div>
           <div class="cube"><div class="cubeLabel">Tape Weather</div><div class="cubeValue" id="volLayerVal">wobbly</div></div>
@@ -135,12 +135,12 @@ svg{width:100%;height:100%;display:block;font-family:system-ui,-apple-system,Seg
 
       <div class="midPair">
         <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>#13 Performance</h3></div></div>
+          <div class="cardTitle"><div class="titleLeft"><h3>#8 Performance</h3></div></div>
           <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div>
           <div class="chartMeta" id="perfMeta"></div>
         </div>
         <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>#14 Spider Radar</h3></div></div>
+          <div class="cardTitle"><div class="titleLeft"><h3>#9 Spider Radar</h3></div></div>
           <div class="radarGrid">
             <svg viewBox="0 0 220 220" style="height:185px">
               <polygon points="110,20 182,66 155,154 65,154 38,66" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="2"></polygon>
@@ -156,20 +156,20 @@ svg{width:100%;height:100%;display:block;font-family:system-ui,-apple-system,Seg
       </div>
 
       <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#6 Leader Board</h3></div></div><div class="table"><div class="scrollArea" id="scoreboardWrap"></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#8 Recent Moves</h3></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Mode</th><th>Action</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#9 Theme Exposure</h3></div></div><div class="table"><div class="scrollArea" id="themeWrap"></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#10 Leader Board</h3></div></div><div class="table"><div class="scrollArea" id="scoreboardWrap"></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#11 Recent Moves</h3></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Mode</th><th>Action</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#12 Theme Exposure</h3></div></div><div class="table"><div class="scrollArea" id="themeWrap"></div></div></div>
       </div>
 
       <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#10 Warnings</h3></div></div><div id="warningsList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#7 Health</h3><button class="mini" onclick="alert('Quick health check: Lean vs Agg vs market baselines.')">i</button></div></div><div id="healthList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#11 Shock Radar</h3></div></div><div class="table"><div class="scrollArea" id="shockRadarWrap"></div></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#13 Warnings</h3></div></div><div id="warningsList"></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#14 Health</h3><button class="mini" onclick="alert('Quick health check: Lean vs Agg vs market baselines.')">i</button></div></div><div id="healthList"></div></div>
+        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#15 Radar Pulse</h3></div></div><div class="table"><div class="scrollArea" id="shockRadarWrap"></div></div></div>
       </div>
     </div>
 
     <div class="rightRail">
-      <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#12 Guardrails</h3></div></div><div class="table"><div class="scrollArea" id="guardrailWrap"></div></div></div>
+      <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#16 Guardrails</h3></div></div><div class="table"><div class="scrollArea" id="guardrailWrap"></div></div></div>
     </div>
   </div>
 
@@ -183,11 +183,13 @@ window.addEventListener("DOMContentLoaded", () => {
   const LS_TRADELOG="lean_tradelog_csv_url";
   const LS_EXEC_URL="lean_exec_script_url";
   const LS_AGGRESSIVE="lean_aggressive_mode";
+  const LS_RADAR="lean_radar_csv_url";
 
   const DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
   const DEFAULT_BUDGET="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=215007649&single=true&output=csv";
   const DEFAULT_TRADELOG="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv";
   const DEFAULT_EXEC_URL="https://script.google.com/macros/s/AKfycbxEwsBVHCYMwtrRpam0DA70aLCLkvH3M5T2G_K-keqGe7YvXXuBGD4SKxMYPXh8vguudA/exec";
+  const DEFAULT_RADAR="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv";
 
   const MIN_SCORE_TO_TRADE = 75;
   const MAX_THEME_EXPOSURE_PCT = 30;
@@ -213,6 +215,8 @@ window.addEventListener("DOMContentLoaded", () => {
     if(t !== null && t.trim()) localStorage.setItem(LS_TRADELOG, t.trim());
     const e = prompt("Execute Script URL", localStorage.getItem(LS_EXEC_URL) || DEFAULT_EXEC_URL);
     if(e !== null && e.trim()) localStorage.setItem(LS_EXEC_URL, e.trim());
+    const r = prompt("Radar CSV URL", localStorage.getItem(LS_RADAR) || DEFAULT_RADAR);
+    if(r !== null && r.trim()) localStorage.setItem(LS_RADAR, r.trim());
     loadAll();
   }
 
@@ -223,16 +227,18 @@ window.addEventListener("DOMContentLoaded", () => {
   function getHoldingsUrl(){ return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS; }
   function getBudgetUrl(){ return localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET; }
   function getTradeLogUrl(){ return localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG; }
+  function getRadarUrl(){ return localStorage.getItem(LS_RADAR) || DEFAULT_RADAR; }
   function getExecUrl(){ return localStorage.getItem(LS_EXEC_URL) || DEFAULT_EXEC_URL; }
 
   async function loadAll(){
     try{
-      const [holdingsRows,budgetRows,tradeRows] = await Promise.all([
+      const [holdingsRows,budgetRows,tradeRows,radarRows] = await Promise.all([
         fetchCsvRows(getHoldingsUrl()),
         fetchCsvRows(getBudgetUrl()),
-        fetchCsvRows(getTradeLogUrl())
+        fetchCsvRows(getTradeLogUrl()),
+        fetchCsvRows(getRadarUrl())
       ]);
-      const view = buildView(holdingsRows,budgetRows,tradeRows,isAggressive());
+      const view = buildView(holdingsRows,budgetRows,tradeRows,radarRows,isAggressive());
       latestView = view;
       renderAll(view);
       $("#updatedChip").textContent = `LAST UPDATED: ${new Date().toLocaleTimeString()}`;
@@ -375,16 +381,88 @@ window.addEventListener("DOMContentLoaded", () => {
     });
   }
 
-  function autoDeployAmount(budget, agg, ranked){
-    if (budget.todayDeployRaw > 0) return Math.min(budget.todayDeployRaw, budget.remaining);
-    const top = ranked[0];
-    if (!top) return 0;
-    if (top.score < MIN_SCORE_TO_TRADE) return 0;
-    const base = agg ? 200 : 125;
-    return Math.min(base, budget.remaining);
+
+  function average(nums){ return nums.length ? nums.reduce((a,b)=>a+b,0)/nums.length : 0; }
+
+  function moveValue(v){
+    const n = num(String(v || "").replace("%",""), 0);
+    return Number.isFinite(n) ? n : 0;
   }
 
-  function buildActions(holdings, budget, agg){
+  function mapRadarRow(r){
+    return {
+      ticker: pick(r,["ticker"]) || "—",
+      theme: pick(r,["theme"]) || "—",
+      note: pick(r,["note"]) || "",
+      radar: (pick(r,["radar"]) || "NO").toUpperCase(),
+      strength: (pick(r,["strength"]) || "LOW").toUpperCase(),
+      priority: pick(r,["priority"]) || "3"
+    };
+  }
+
+  function radarPriorityScore(v){ return ({1:100,2:60,3:20}[String(v)] ?? 20); }
+  function radarHeatScore(v){ return ({HOT:100,YES:65,NO:0}[String(v).toUpperCase()] ?? 0); }
+  function radarStrengthScore(v){ return ({HIGH:100,MED:60,LOW:20}[String(v).toUpperCase()] ?? 20); }
+
+  function rankRadarCandidates(rows, rankedCore){
+    const coreMap = new Map((rankedCore || []).map(r => [r.ticker, r]));
+    return (rows || [])
+      .map(mapRadarRow)
+      .filter(r => r.ticker && r.ticker !== "—")
+      .map(r => {
+        const core = coreMap.get(r.ticker);
+        const coreScore = core ? core.score : 0;
+        const total =
+          radarHeatScore(r.radar) * 0.45 +
+          radarStrengthScore(r.strength) * 0.30 +
+          radarPriorityScore(r.priority) * 0.15 +
+          coreScore * 0.10;
+        return {...r, coreScore, radarScore: Math.round(clamp(total,0,100))};
+      })
+      .sort((a,b)=>b.radarScore-a.radarScore || Number(a.priority)-Number(b.priority));
+  }
+
+  function computeReadyRisk(actions, themePressure){
+    const top3 = (actions.ranked || []).slice(0,3);
+    const avgTop = average(top3.map(x => x.score || 0));
+    const posMoves = top3.filter(x => moveValue(x.change) > 0).length;
+    const negativeHeat = top3.some(x => moveValue(x.change) < -1);
+    let ready = clamp(Math.round(avgTop + posMoves * 4 - (negativeHeat ? 8 : 0)), 35, 95);
+    let risk = clamp(Math.round(100 - ready + (themePressure === "Capped" ? 10 : 0)), 15, 80);
+    return {ready, risk};
+  }
+
+  function getAggModeAdvanced(actions, ready, risk){
+    const ranked = actions.ranked || [];
+    const top3 = ranked.slice(0,3);
+    const strong = ranked.filter(x => x.score >= 85 && !x.themeBlocked);
+    const qualified = ranked.filter(x => x.score >= MIN_SCORE_TO_TRADE && !x.themeBlocked);
+    const avgTop = average(top3.map(x => x.score || 0));
+    const themes = [...new Set(top3.map(x => x.network).filter(Boolean))];
+    const marketQuality = avgTop >= 80 && themes.length >= 2;
+    const momentum = top3.filter(x => moveValue(x.change) > 0).length >= 2 && !top3.some(x => moveValue(x.change) < -1);
+    const heatBlock = strong.filter(x => x.score >= 90 && moveValue(x.change) >= 4).length >= 2;
+
+    if(risk > 60) return "PASS";
+    if(ready >= 78 && risk <= 40 && strong.length >= 2 && marketQuality && momentum && !heatBlock){
+      if(ready >= 85 && strong.length >= 3) return "FULL_TIER2";
+      return "FULL";
+    }
+    if(ready >= 65 && risk <= 55 && qualified.length >= 1) return "DRIP";
+    return "PASS";
+  }
+
+  function getDeployForMode(mode, budgetRemaining, agg){
+    if(!agg){
+      return Math.min(125, budgetRemaining);
+    }
+    if(mode === "FULL_TIER2") return Math.min(350, budgetRemaining);
+    if(mode === "FULL") return Math.min(200, budgetRemaining);
+    if(mode === "DRIP") return Math.min(50, budgetRemaining);
+    return 0;
+  }
+
+  function buildActions(holdings, budget, agg, aggMode){
     const ranked0 = rankCandidates(holdings);
     const ranked = applyThemeCap(ranked0, holdings);
     const qualified = ranked.filter(h => h.score >= MIN_SCORE_TO_TRADE && !h.themeBlocked);
@@ -394,8 +472,8 @@ window.addEventListener("DOMContentLoaded", () => {
     const avoid = ranked.slice().reverse()[0] || null;
     const trim = ranked.find(h => /xle/i.test(h.ticker)) || avoid || null;
 
-    const deploy = autoDeployAmount(budget, agg, ranked);
-    const topAmt = top ? Math.round(deploy * 0.60) : 0;
+    const deploy = getDeployForMode(aggMode, budget.remaining, agg);
+    const topAmt = top ? Math.round(deploy * 0.65) : 0;
     const secondAmt = second ? deploy - topAmt : 0;
     const trimAmt = agg ? 50 : 25;
     const pass = deploy === 0 || !top;
@@ -403,37 +481,82 @@ window.addEventListener("DOMContentLoaded", () => {
     return { ranked, qualified, top, second, hold, avoid, trim, deploy, topAmt, secondAmt, trimAmt, pass };
   }
 
-  function buildView(holdingsRows,budgetRows,tradeRows,agg){
+  function buildRadarBuckets(radarCandidates){
+    const hot = radarCandidates.filter(r => r.radar === "HOT").slice(0,5);
+    const hold = radarCandidates.filter(r => r.radar === "YES").slice(0,5);
+    let cold = radarCandidates.filter(r => r.radar === "NO" || r.strength === "LOW").slice(0,5);
+    if(!cold.length) cold = radarCandidates.slice(-5).reverse();
+    return {hot, hold, cold};
+  }
+
+  function buildView(holdingsRows,budgetRows,tradeRows,radarRows,agg){
     const holdings = holdingsRows.map(mapHolding);
     const budget = getBudgetState(budgetRows, agg);
-    const actions = buildActions(holdings, budget, agg);
-    const cashPct = inferCash(holdings);
+
+    const preActions = buildActions(holdings, budget, agg, agg ? "DRIP" : "LEAN");
     const themeRows = themeExposure(holdings);
     const themePressure = themeRows.some(r => num(r[1]) >= MAX_THEME_EXPOSURE_PCT) ? "Capped" : "OK";
+    const rr = computeReadyRisk(preActions, themePressure);
+    const aggMode = getAggModeAdvanced(preActions, rr.ready, rr.risk);
+    const actions = buildActions(holdings, budget, agg, agg ? aggMode : "LEAN");
+    const ready = rr.ready;
+    const risk = rr.risk;
+
+    const radarCandidates = rankRadarCandidates(radarRows || [], actions.ranked);
+    const radarBuckets = buildRadarBuckets(radarCandidates);
+    let radarBudget = 0;
+    if(agg && aggMode === "FULL_TIER2") radarBudget = Math.min(75, Math.round(budget.remaining * 0.20));
+    else if(agg && aggMode === "FULL") radarBudget = Math.min(50, Math.round(budget.remaining * 0.15));
+    else if(agg && aggMode === "DRIP") radarBudget = Math.min(25, Math.round(budget.remaining * 0.10));
+
+    const radarPick = (agg && aggMode !== "PASS") ? radarCandidates.find(r => r.radar === "HOT" && (r.strength === "HIGH" || r.strength === "MED")) || radarCandidates[0] || null : null;
+    const radarAmount = radarPick ? radarBudget : 0;
+    const radarAction = !radarPick ? "WATCH" : radarAmount > 0 ? "DEPLOYED" : "CANDIDATE";
+    const radarLogPreview = radarCandidates.slice(0,3).map(r => ({
+      date: new Date().toISOString().slice(0,10),
+      ticker: r.ticker,
+      theme: r.theme,
+      radar: r.radar,
+      strength: r.strength,
+      priority: r.priority,
+      mode: agg ? aggMode : "LEAN",
+      score: r.radarScore,
+      radarAction: r.ticker === (radarPick && radarPick.ticker) ? radarAction : "WATCH",
+      deployAmount: r.ticker === (radarPick && radarPick.ticker) ? radarAmount : 0
+    }));
+
+    const cashPct = inferCash(holdings);
     const portfolioValue = holdings.reduce((sum,h)=>sum + ((h.weightNum || 0) / 100), 0) > 0 ? "$19,217.09" : "$0";
 
     return {
       heroDate: new Date().toLocaleDateString(),
-      heroStatus: actions.pass ? (agg ? "AGG watching — no qualified deploy" : "Lean watching — no qualified deploy") : (agg ? "Lean AGG engine online" : "Lean engine online"),
-      heroMeta: [agg ? "AGG" : "Lean", actions.pass ? "Hold Cash" : "Qualified", agg ? "Elevated" : "Controlled", "Clear"],
-      readyPct: agg ? "72%" : "63%",
-      riskPct: agg ? "56%" : "39%",
+      heroStatus: agg
+        ? (aggMode === "PASS" ? "AGG watching — no qualified deploy" : `Lean AGG ${aggMode.replace("_"," ")} engine online`)
+        : (actions.pass ? "Lean watching — no qualified deploy" : "Lean engine online"),
+      heroMeta: [agg ? `AGG ${aggMode.replace("_"," ")}` : "Lean", actions.pass ? "Hold Cash" : "Qualified", themePressure, radarPick ? `Radar ${radarPick.ticker}` : "Radar Waiting"],
+      readyPct: `${ready}%`,
+      riskPct: `${risk}%`,
       valueTxt: portfolioValue,
-      autoDeployTxt: money(actions.deploy),
-      leanDelta: agg ? "+1.10%" : "+0.89%",
-      aggDelta: "+1.60%",
-      holdings, budget, actions, themeRows, themePressure,
+      autoDeployTxt: money(actions.deploy + radarAmount),
+      leanDelta: "+0.89%",
+      aggDelta: agg ? "+1.60%" : "+1.10%",
+      holdings, budget, actions, themeRows, themePressure, aggMode,
+      radarCandidates, radarBuckets, radarPick, radarAmount, radarAction, radarLogPreview,
       recentMoves: tradeRows.slice(0,8).map(r => [pick(r,["date"]) || "—", pick(r,["mode"]) || "—", pick(r,["action"]) || "—", pick(r,["ticker"]) || "—", pick(r,["amount"]) || "—"]),
       warnings: uniq(compact([
-        actions.pass ? "No trade: top score failed threshold or theme cap blocked." : "",
+        actions.pass ? "No trade: top score failed threshold, risk stayed high, or theme cap blocked it." : "",
         themePressure === "Capped" ? "One or more themes are at or above cap." : "",
-        "Avoid overlap stacking.",
-        "Respect tape weather."
+        agg && aggMode === "FULL_TIER2" ? "Full throttle active. Respect trims and exits." : "",
+        radarPick ? `Radar active: ${radarPick.ticker} ${money(radarAmount)}.` : "Radar sleeve idle."
       ])).slice(0,4),
-      health: [["Lean", agg ? "+1.10%" : "+0.89%"],["Agg", "+1.60%"],["Nasdaq", "+0.45%"],["S&P 500", "+0.40%"],["DJ", "+0.28%"]],
-      shockRadar: [["BEEF SIGNAL","Calf prices are hot. Beef chain pressure rising.","WATCH"],["OIL","Energy conditions normal.","GREEN"],["LNG","Supply stable.","GREEN"],["SHIPPING","Routes normal.","GREEN"]],
-      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["Primary Blocker", actions.pass ? "Score / Theme Cap" : (agg ? "Overlap / Heat" : "Cash Anchor")],["Severity", actions.pass ? "High" : (agg ? "Higher" : "Moderate")]],
-      perfMeta: [agg ? "LEAN • 1.10%" : "LEAN • 0.89%","SPY • 0.40%","AGG • 1.60%"],
+      health: [["Lean", "+0.89%"],["Agg", agg ? "+1.60%" : "+1.10%"],["Nasdaq", "+0.45%"],["S&P 500", "+0.40%"],["DJ", "+0.28%"]],
+      shockRadar: [
+        ["HOT", radarBuckets.hot.map(x => x.ticker).join(", ") || "—", radarBuckets.hot.length ? "GREEN" : "WATCH"],
+        ["HOLD", radarBuckets.hold.map(x => x.ticker).join(", ") || "—", radarBuckets.hold.length ? "WATCH" : "BLUE"],
+        ["COLD", radarBuckets.cold.map(x => x.ticker).join(", ") || "—", radarBuckets.cold.length ? "RED" : "BLUE"]
+      ],
+      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["AGG Mode", agg ? aggMode.replace("_"," ") : "Lean"],["Severity", actions.pass ? "High" : (agg ? "Moderate" : "Controlled")]],
+      perfMeta: [agg ? `AGG • ${aggMode.replace("_"," ")}` : "LEAN • Controlled","SPY • 0.40%","QQQ • 0.45%"],
       performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
       benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4]
     };
@@ -474,10 +597,10 @@ window.addEventListener("DOMContentLoaded", () => {
     $("#budgetMonthly").textContent = money(b.monthly);
     $("#budgetUsed").textContent = money(b.used);
     $("#budgetRemaining").textContent = money(b.remaining);
-    $("#budgetToday").textContent = money(v.actions.deploy);
+    $("#budgetToday").textContent = money(v.actions.deploy + (v.radarAmount || 0));
     $("#budgetProgressFill").style.width = `${b.usedPct}%`;
-    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Raw today_deploy: ${money(b.todayDeployRaw)}. Auto deploy: ${money(v.actions.deploy)}.`;
-    $("#autoDeployPill").textContent = money(v.actions.deploy);
+    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Core deploy: ${money(v.actions.deploy)}. Radar sleeve: ${money(v.radarAmount || 0)}.`;
+    $("#autoDeployPill").textContent = money(v.actions.deploy + (v.radarAmount || 0));
   }
 
   function actionBox(title,color,label,value,reason){
@@ -488,18 +611,31 @@ window.addEventListener("DOMContentLoaded", () => {
     </div>`;
   }
 
+
   function renderActions(v){
-    const a=v.actions;
+    const a = v.actions;
+    const radarBox = v.radarPick ? `
+      <div class="actionBox" style="border:1px solid rgba(167,139,250,.30);background:rgba(167,139,250,.12);margin-top:8px">
+        <div style="margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#c4b5fd">Radar • ${escapeHtml(v.aggMode.replace("_"," "))}</div>
+        <div style="font-size:16px;font-weight:900;color:#fff">${escapeHtml(v.radarPick.ticker)} → ${money(v.radarAmount)}</div>
+        <div style="margin-top:4px;font-size:11px;color:#cbd5e1">${escapeHtml(v.radarPick.theme)} • ${escapeHtml(v.radarPick.radar)} • ${escapeHtml(v.radarPick.strength)} • score ${v.radarPick.radarScore}</div>
+      </div>` : "";
+
     if (a.pass){
       $("#actionBlocks").innerHTML = `
         <div class="actionSection">
-          ${actionBox("No Buy Today","#f59e0b","Pass", "", `Top candidate did not clear min score ${MIN_SCORE_TO_TRADE} or theme cap ${MAX_THEME_EXPOSURE_PCT}% blocked it.`)}
+          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
+            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG MODE</div>
+            <div class="mini">${escapeHtml(v.aggMode.replace("_"," "))}</div>
+          </div>
+          ${actionBox("No Buy Today","#f59e0b","Pass", "", `Top candidate did not clear min score ${MIN_SCORE_TO_TRADE}, risk stayed elevated, or theme cap ${MAX_THEME_EXPOSURE_PCT}% blocked it.`)}
           <div class="actionGrid2" style="margin-top:8px">
             ${actionBox(a.hold ? a.hold.ticker : "Watchlist","#fcd34d","Hold / Watch","", "Keep stalking. Do not force size in weak conditions.")}
             ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Optional Trim", a.trim ? money(a.trimAmt) : "", a.trim ? `Only trim if you want to free room for a stronger future setup.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Only trim if you want to free room for a stronger future setup.")}
           </div>
+          ${radarBox}
         </div>`;
-      $("#actionNote").textContent = `System pass. No qualified buy suggestion today. Reason: threshold or theme cap.`;
+      $("#actionNote").textContent = `System pass. AGG mode: ${v.aggMode.replace("_"," ")}. No qualified buy suggestion today.`;
       return;
     }
 
@@ -509,9 +645,9 @@ window.addEventListener("DOMContentLoaded", () => {
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1">Lean Mode</div>
           <div class="mini">Slower / cleaner</div>
         </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(Math.round(a.deploy * 0.60)),`Cleared minimum score. Leader still clean, but Lean sizes smaller.<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
+        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(Math.round(a.deploy * 0.65)),`Cleared minimum score. Leader still clean, but Lean sizes smaller.<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
         <div style="height:8px"></div>
-        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(Math.round(a.deploy * 0.40)) : "", a.second ? `Secondary trend if qualified and under theme cap.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend if qualified and under theme cap.")}
+        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(Math.round(a.deploy * 0.35)) : "", a.second ? `Secondary trend if qualified and under theme cap.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend if qualified and under theme cap.")}
         <div class="actionGrid3" style="margin-top:8px">
           ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent structure. Keep it, don’t add yet.")}
           ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Trim",a.trim ? money(25) : "", a.trim ? `Weak plus overlap. Small trim to free capital.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Weak plus overlap. Small trim to free capital.")}
@@ -523,9 +659,9 @@ window.addEventListener("DOMContentLoaded", () => {
       <div class="actionSection">
         <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
           <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG Mode</div>
-          <div class="mini" style="border-color:rgba(255,53,94,.30);color:#fecdd3">Faster / hotter</div>
+          <div class="mini" style="border-color:rgba(255,53,94,.30);color:#fecdd3">${escapeHtml(v.aggMode.replace("_"," "))}</div>
         </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt),`Strongest horse, cleared threshold, under cap.<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
+        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt),`Strongest horse, cleared threshold, under cap. ${v.aggMode === "DRIP" ? "Drip sizing active." : "Pressure up while guardrails stay on."}<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
         <div style="height:8px"></div>
         ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(a.secondAmt) : "", a.second ? `Secondary trend, cleared threshold, correlation still clean.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend, cleared threshold, correlation still clean.")}
         <div class="actionGrid3" style="margin-top:8px">
@@ -533,10 +669,11 @@ window.addEventListener("DOMContentLoaded", () => {
           ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Sell / Trim",a.trim ? money(a.trimAmt) : "", a.trim ? `Weak plus high overlap. Rotate that cash into stronger horses.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Weak plus high overlap. Rotate that cash into stronger horses.")}
           ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Failed threshold, theme capped, or weak ranking.")}
         </div>
+        ${radarBox}
       </div>`;
 
     $("#actionBlocks").innerHTML = `${lean}<div style="height:12px"></div>${agg}`;
-    $("#actionNote").textContent = `Formal weighting active. Min score: ${MIN_SCORE_TO_TRADE}. Theme cap: ${MAX_THEME_EXPOSURE_PCT}%. Auto deploy: ${money(a.deploy)}.`;
+    $("#actionNote").textContent = `Formal weighting active. Min score: ${MIN_SCORE_TO_TRADE}. Theme cap: ${MAX_THEME_EXPOSURE_PCT}%. AGG mode: ${v.aggMode.replace("_"," ")}. Core deploy: ${money(a.deploy)}. Radar sleeve: ${money(v.radarAmount || 0)}.`;
   }
 
   function renderAll(v){
@@ -544,7 +681,7 @@ window.addEventListener("DOMContentLoaded", () => {
     $("#heroStatus").textContent=v.heroStatus;
     $("#heroMeta").innerHTML=v.heroMeta.map(x=>`<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
     $("#convictionFill").style.width=`${v.actions.pass ? 45 : 88}%`;
-    $("#readyPct").textContent=v.actions.pass ? "45%" : v.readyPct;
+    $("#readyPct").textContent=v.readyPct;
     $("#riskPct").textContent=v.riskPct;
     $("#valueTxt").textContent=v.valueTxt;
     $("#leanDelta").textContent=v.leanDelta;
@@ -579,6 +716,7 @@ window.addEventListener("DOMContentLoaded", () => {
     $("#warningsList").innerHTML=v.warnings.map(x=>`<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
     $("#healthList").innerHTML = v.health.map(r=>`<div class="trow" style="grid-template-columns:1fr auto"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("");
     $("#shockRadarWrap").innerHTML=v.shockRadar.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");
+    if(v.radarLogPreview?.length){ console.log("RADAR TRACKING PREVIEW", v.radarLogPreview); }
     $("#guardrailWrap").innerHTML=v.guardrails.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("");
     renderHoldings(v.holdings);
   }
@@ -604,6 +742,7 @@ window.addEventListener("DOMContentLoaded", () => {
     if(!latestView || !latestView.holdings) return;
     const row = latestView.holdings.find(h => h.ticker === ticker) || {};
     const ranked = latestView.actions?.ranked?.find(r => r.ticker === ticker) || {};
+    const radar = latestView.radarCandidates?.find(r => r.ticker === ticker) || {};
     alert(`${ticker}
 
 Name: ${row.name || "—"}
@@ -616,7 +755,8 @@ Strength: ${row.strength || "—"}
 Network: ${row.network || "—"}
 Correlation: ${row.correlation || "—"}
 Priority: ${row.priority || "—"}
-Score: ${ranked.score ?? "—"}`);
+Score: ${ranked.score ?? "—"}
+Radar Score: ${radar.radarScore ?? "—"}`);
   };
 
   applyAggressiveUI();
