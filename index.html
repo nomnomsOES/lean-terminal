@@ -3,950 +3,271 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal Index</title>
+  <title>Lean Terminal — Minimal Autonomous</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:#121a2b;
-      --panel-2:#0f172a;
-      --text:#e5e7eb;
-      --muted:#94a3b8;
+      --bg:#071121;
+      --bg2:#0a1630;
+      --line:rgba(255,255,255,.09);
+      --soft:rgba(255,255,255,.04);
+      --text:#e7eefc;
+      --muted:#9bb0cf;
       --green:#22c55e;
       --yellow:#f59e0b;
       --red:#ef4444;
       --blue:#3b82f6;
-      --line:rgba(255,255,255,.08);
-      --pill:#111827;
-      --shadow:0 12px 32px rgba(0,0,0,.28);
-      --radius:18px;
+      --cyan:#22d3ee;
     }
-
-    *{ box-sizing:border-box; }
-    html,body{ height:100%; }
+    *{box-sizing:border-box}
+    html,body{height:100%}
     body{
       margin:0;
-      font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
-      background:var(--bg);
       color:var(--text);
+      font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+      background:
+        radial-gradient(circle at top left, rgba(59,130,246,.12), transparent 25%),
+        linear-gradient(180deg,var(--bg),var(--bg2));
     }
-
-    .wrap{
-      max-width:1400px;
-      margin:0 auto;
-      padding:18px;
-    }
-
-    .topbar{
-      display:flex;
-      flex-wrap:wrap;
-      gap:12px;
-      align-items:center;
-      justify-content:space-between;
-      margin-bottom:14px;
-    }
-
-    .brand{
-      display:flex;
-      align-items:center;
-      gap:12px;
-    }
-
-    .brand h1{
-      margin:0;
-      font-size:1.15rem;
-      font-weight:700;
-      letter-spacing:.2px;
-    }
-
-    .sub{
-      color:var(--muted);
-      font-size:.88rem;
-      margin-top:2px;
-    }
-
-    .toolbar{
-      display:flex;
-      gap:10px;
-      flex-wrap:wrap;
-      align-items:center;
-    }
-
-    .btn, .input{
-      background:var(--panel);
+    .wrap{max-width:1560px;margin:0 auto;padding:16px}
+    .top{display:flex;justify-content:space-between;gap:12px;flex-wrap:wrap;margin-bottom:12px}
+    .sub{font-size:12px;color:var(--muted)}
+    .ctrl{display:flex;gap:8px;flex-wrap:wrap}
+    button,select,.chip{
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.04);
       color:var(--text);
-      border:1px solid var(--line);
-      border-radius:12px;
-      padding:10px 12px;
-      font:inherit;
-      box-shadow:var(--shadow);
-    }
-
-    .btn{
-      cursor:pointer;
-    }
-
-    .btn:hover{
-      border-color:rgba(255,255,255,.18);
-    }
-
-    .grid{
-      display:grid;
-      gap:14px;
-    }
-
-    .grid-top{
-      grid-template-columns:1.2fr .9fr .9fr .9fr;
-      margin-bottom:14px;
-    }
-
-    .grid-main{
-      grid-template-columns:1.15fr .95fr;
-    }
-
-    @media (max-width:1180px){
-      .grid-top{ grid-template-columns:1fr 1fr; }
-      .grid-main{ grid-template-columns:1fr; }
-    }
-
-    @media (max-width:740px){
-      .grid-top{ grid-template-columns:1fr; }
-    }
-
-    .card{
-      background:linear-gradient(180deg, rgba(255,255,255,.02), rgba(255,255,255,.01));
-      border:1px solid var(--line);
-      border-radius:var(--radius);
-      padding:16px;
-      box-shadow:var(--shadow);
-      min-width:0;
-    }
-
-    .card h2, .card h3{
-      margin:0 0 10px 0;
-      font-size:1rem;
-      font-weight:700;
-    }
-
-    .cardTitleRow{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      margin-bottom:8px;
-    }
-
-    .muted{
-      color:var(--muted);
-    }
-
-    .heroValue{
-      font-size:2rem;
-      font-weight:800;
-      line-height:1;
-      margin:6px 0 8px 0;
-    }
-
-    .heroMeta{
-      display:flex;
-      flex-wrap:wrap;
-      gap:8px;
-    }
-
-    .pill{
-      display:inline-flex;
-      align-items:center;
-      gap:6px;
-      border:1px solid var(--line);
-      background:var(--pill);
-      border-radius:999px;
-      padding:6px 10px;
-      font-size:.8rem;
-      white-space:nowrap;
-    }
-
-    .pill.small{
-      font-size:.72rem;
-      padding:4px 8px;
-    }
-
-    .kpis{
-      display:grid;
-      grid-template-columns:repeat(2, minmax(0,1fr));
-      gap:10px;
-    }
-
-    .kpi{
-      background:rgba(255,255,255,.025);
-      border:1px solid var(--line);
       border-radius:14px;
-      padding:12px;
-    }
-
-    .kpiLabel{
-      color:var(--muted);
-      font-size:.78rem;
-      margin-bottom:6px;
-    }
-
-    .kpiValue{
-      font-size:1.15rem;
+      padding:9px 12px;
+      font-size:12px;
       font-weight:700;
     }
+    button{cursor:pointer}
+    .grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+    .card{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:18px;overflow:hidden}
+    .head{display:flex;justify-content:space-between;gap:8px;padding:12px 14px;border-bottom:1px solid var(--line)}
+    .body{padding:14px}
+    .meta{font-size:11px;color:var(--muted)}
+    .span12{grid-column:span 12}
+    .span8{grid-column:span 8}
+    .span4{grid-column:span 4}
+    @media(max-width:1200px){.span8,.span4{grid-column:span 12}}
 
-    .sectionLabel{
-      color:var(--muted);
-      font-size:.78rem;
-      text-transform:uppercase;
-      letter-spacing:.08em;
-      margin-bottom:10px;
-    }
+    .pills{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+    @media(max-width:1200px){.pills{grid-template-columns:repeat(3,1fr)}}
+    @media(max-width:760px){.pills{grid-template-columns:repeat(2,1fr)}}
+    .pill{border:1px solid var(--line);border-radius:16px;background:var(--soft);padding:12px;min-height:88px}
+    .ptop{display:flex;justify-content:space-between;gap:8px;margin-bottom:10px}
+    .num{font-size:11px;color:var(--muted);font-weight:800}
+    .i{width:18px;height:18px;border:1px solid var(--line);border-radius:999px;display:grid;place-items:center;font-size:11px;color:var(--muted)}
+    .big{font-size:27px;font-weight:900}
+    .tiny{font-size:11px;color:var(--muted)}
+    .g{color:var(--green)} .y{color:var(--yellow)} .r{color:var(--red)} .b{color:var(--blue)}
+    .flash{animation:p 1.2s infinite alternate;font-weight:900}
+    @keyframes p{from{opacity:.75}to{opacity:1;text-shadow:0 0 10px rgba(255,255,255,.18)}}
+    .modes{display:flex;gap:8px}
+    .mode{flex:1}
+    .active{outline:1px solid rgba(255,255,255,.16);background:linear-gradient(180deg,rgba(59,130,246,.18),rgba(34,211,238,.08))}
 
-    .list{
-      display:grid;
-      gap:8px;
-    }
-
+    .act{display:grid;grid-template-columns:1fr 1fr;gap:14px}
+    @media(max-width:1000px){.act{grid-template-columns:1fr}}
+    .box{border:1px solid var(--line);border-radius:16px;background:var(--soft);padding:12px}
     .row{
-      display:flex;
-      align-items:center;
-      justify-content:space-between;
-      gap:10px;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      border-radius:14px;
-      padding:10px 12px;
-      min-width:0;
+      display:grid;grid-template-columns:22px 1fr auto;gap:8px;align-items:center;
+      padding:8px 10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.02);margin-bottom:8px
     }
-
-    .rowLeft{
-      min-width:0;
-      display:flex;
-      align-items:center;
-      gap:10px;
-    }
-
-    .ticker{
-      font-weight:800;
-      letter-spacing:.03em;
-    }
-
-    .metaSmall{
-      color:var(--muted);
-      font-size:.8rem;
-    }
-
-    .score{
-      font-weight:800;
-      font-size:.95rem;
-    }
-
-    .green{ color:var(--green); }
-    .yellow{ color:var(--yellow); }
-    .red{ color:var(--red); }
-    .blue{ color:var(--blue); }
-
-    .progress{
-      width:100%;
-      height:8px;
-      border-radius:999px;
-      background:rgba(255,255,255,.08);
-      overflow:hidden;
-      margin-top:8px;
-    }
-
-    .bar{
-      height:100%;
-      width:0%;
-      border-radius:999px;
-      background:linear-gradient(90deg, var(--red), var(--yellow), var(--green));
-      transition:width .25s ease;
-    }
-
-    .holdingsWrap{
-      display:grid;
-      gap:10px;
-    }
-
-    /* Smaller holdings pill with internal scroll */
-    .holdingScroller{
-      display:flex;
-      flex-direction:column;
-      gap:8px;
-      max-height:330px;
-      overflow-y:auto;
-      padding-right:4px;
-      scrollbar-width:thin;
-      scrollbar-color:rgba(255,255,255,.22) transparent;
-    }
-
-    .holdingScroller::-webkit-scrollbar{
-      width:8px;
-    }
-    .holdingScroller::-webkit-scrollbar-track{
-      background:transparent;
-    }
-    .holdingScroller::-webkit-scrollbar-thumb{
-      background:rgba(255,255,255,.18);
-      border-radius:999px;
-    }
-
-    .holdingRow{
-      display:grid;
-      grid-template-columns:minmax(0,1.1fr) auto auto auto;
-      gap:8px;
-      align-items:center;
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      border-radius:12px;
-      padding:8px 10px;
-      min-width:0;
-    }
-
-    .holdingMain{
-      min-width:0;
-      display:flex;
-      flex-direction:column;
-      gap:2px;
-    }
-
-    .holdingName{
-      font-weight:700;
-      font-size:.88rem;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .holdingSub{
-      color:var(--muted);
-      font-size:.74rem;
-      overflow:hidden;
-      text-overflow:ellipsis;
-      white-space:nowrap;
-    }
-
-    .miniPill{
-      display:inline-flex;
-      align-items:center;
-      justify-content:center;
-      border:1px solid var(--line);
-      background:#101827;
-      border-radius:999px;
-      padding:4px 8px;
-      font-size:.72rem;
-      min-width:62px;
-      text-align:center;
-    }
-
-    .tableLike{
-      display:grid;
-      gap:8px;
-    }
-
-    .headline{
-      border:1px solid var(--line);
-      background:rgba(255,255,255,.02);
-      border-radius:14px;
-      padding:12px;
-    }
-
-    .headlineTitle{
-      font-weight:700;
-      margin-bottom:5px;
-    }
-
-    .headlineBody{
-      color:var(--muted);
-      font-size:.9rem;
-      line-height:1.38;
-    }
-
-    .footerNote{
-      margin-top:14px;
-      color:var(--muted);
-      font-size:.8rem;
-      text-align:right;
-    }
-
-    .empty{
-      color:var(--muted);
-      font-size:.9rem;
-      border:1px dashed var(--line);
-      border-radius:12px;
-      padding:12px;
-    }
-
-    .hidden{
-      display:none !important;
-    }
-
-    .errorBox{
-      white-space:pre-wrap;
-      border:1px solid rgba(239,68,68,.45);
-      background:rgba(239,68,68,.09);
-      color:#fecaca;
-      border-radius:14px;
-      padding:12px;
-      margin-bottom:14px;
-      font-size:.88rem;
-    }
-
-    .tiny{
-      font-size:.75rem;
-      color:var(--muted);
-    }
+    .tbtn{background:none;border:none;padding:0;color:var(--text);font-weight:800;cursor:pointer}
+    .tbtn:hover{text-decoration:underline}
+    .scroll{max-height:280px;overflow:auto;padding-right:4px}
+    .list{display:grid;gap:8px}
+    .item{display:flex;justify-content:space-between;gap:8px;border:1px solid var(--line);border-radius:999px;padding:8px 10px;background:rgba(255,255,255,.02)}
+    table{width:100%;border-collapse:collapse}
+    th,td{padding:10px 8px;border-bottom:1px solid var(--line);text-align:left;font-size:12px}
+    th{font-size:11px;color:var(--muted);text-transform:uppercase}
+    .score{display:inline-block;min-width:54px;padding:6px 9px;border-radius:10px;text-align:center;font-weight:900}
+    .good{background:rgba(34,197,94,.12);color:#9df3b2}
+    .mid{background:rgba(245,158,11,.12);color:#fbd46c}
+    .bad{background:rgba(239,68,68,.12);color:#ffb3b3}
+    .chart{width:100%;height:250px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(255,255,255,.025),rgba(255,255,255,.012));padding:10px}
+    canvas{width:100%;height:100%}
+    .legend{display:grid;gap:8px;margin-top:10px}
+    .lrow{display:flex;justify-content:space-between;gap:12px;font-size:12px;border-bottom:1px solid var(--line);padding-bottom:7px}
+    .sw{width:10px;height:10px;border-radius:999px;display:inline-block;margin-right:8px}
+    .modal{display:none;position:fixed;inset:0;background:rgba(0,0,0,.6);backdrop-filter:blur(4px);align-items:center;justify-content:center;padding:16px;z-index:9999}
+    .modal>div{width:min(760px,100%);background:#0b1630;border:1px solid var(--line);border-radius:18px}
+    .mh,.mf{padding:14px 16px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;gap:8px}
+    .mf{border-top:1px solid var(--line);border-bottom:none}
+    .mb{padding:16px}
+    .mb textarea{width:100%;min-height:62px;resize:vertical;border-radius:12px;border:1px solid var(--line);background:#0a1327;color:var(--text);padding:12px;margin-bottom:12px}
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div id="errorBoxMount"></div>
+<div class="wrap">
+  <div class="top">
+    <div>
+      <h1 style="margin:0;font-size:20px">Lean Terminal — Minimal Autonomous</h1>
+      <div class="sub">numbered pills • checklist • radar • horse model</div>
+    </div>
+    <div class="ctrl">
+      <div class="chip">Last: <span id="last">--</span></div>
+      <div class="chip">Next: <span id="cd">30s</span></div>
+      <button id="rf">Refresh</button>
+      <button id="st">Data Settings</button>
+    </div>
+  </div>
 
-    <div class="topbar">
-      <div class="brand">
-        <div>
-          <h1>Lean Terminal — Current Campaign</h1>
-          <div class="sub">Cleaner layout • sources pill hidden • compact scrollable holdings</div>
+  <div class="grid">
+    <div class="card span12">
+      <div class="head"><b>Core Pills</b><div class="meta">numbered for fast reshuffle later</div></div>
+      <div class="body">
+        <div class="pills">
+          <div class="pill">
+            <div class="ptop"><div class="num">#1 READY</div><div class="i" title="Blends setup quality, market risk, momentum, and available capital. Higher = cleaner conditions to act.">i</div></div>
+            <div id="ready" class="big">--</div><div class="tiny">system go meter</div>
+          </div>
+          <div class="pill">
+            <div class="ptop"><div class="num">#2 RISK</div><div class="i" title="Measures how dangerous the market is right now. Lower = cleaner. Higher = more chop, volatility, or downside risk.">i</div></div>
+            <div id="risk" class="big">--</div><div class="tiny">lower is safer</div>
+          </div>
+          <div class="pill">
+            <div class="ptop"><div class="num">#4 MODE</div><div class="i" title="Manual playbook switch. LEAN = tighter and safer. AGG = looser and more aggressive.">i</div></div>
+            <div class="modes"><button class="mode" id="lean">LEAN</button><button class="mode" id="agg">AGG</button></div>
+            <div class="tiny" style="margin-top:10px">manual playbook</div>
+          </div>
+          <div class="pill">
+            <div class="ptop"><div class="num">#5 PLAN</div><div class="i" title="System suggested posture for today. LEAN = tighter game. AGG = press harder.">i</div></div>
+            <div id="plan" class="big flash">--</div><div class="tiny">day suggestion</div>
+          </div>
+          <div class="pill">
+            <div class="ptop"><div class="num">#6 MIN SCORE</div><div class="i" title="Minimum score required to qualify. Below this = not worth attention.">i</div></div>
+            <div id="min" class="big">75</div><div class="tiny">qualifying threshold</div>
+          </div>
+          <div class="pill">
+            <div class="ptop"><div class="num">#7 THEME CAP</div><div class="i" title="LEAN cap 30%. AGG cap 50%.">i</div></div>
+            <div id="cap" class="big">30%</div><div class="tiny">per theme limit</div>
+          </div>
         </div>
-      </div>
-
-      <div class="toolbar">
-        <button class="btn" id="refreshBtn">Refresh</button>
-        <button class="btn" id="settingsBtn">Data Settings</button>
       </div>
     </div>
 
-    <section class="grid grid-top">
-      <div class="card">
-        <div class="cardTitleRow">
-          <h2>Campaign Snapshot</h2>
-          <span class="pill small" id="campaignDate">Loading...</span>
-        </div>
-        <div class="heroValue" id="heroStatus">Waiting for data</div>
-        <div class="heroMeta" id="heroMeta"></div>
-        <div class="progress"><div class="bar" id="convictionBar"></div></div>
-      </div>
-
-      <div class="card">
-        <h3>Posture</h3>
-        <div class="kpis">
-          <div class="kpi">
-            <div class="kpiLabel">Mode</div>
-            <div class="kpiValue" id="modeValue">—</div>
+    <div class="card span12">
+      <div class="head"><b>#3 ACTION</b><div class="meta">buy / sell with rank, click stats, manual checkoff</div></div>
+      <div class="body">
+        <div class="act">
+          <div class="box">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px"><b class="g">BUY</b><div><button id="eb">Execute</button></div></div>
+            <div id="buy"></div>
           </div>
-          <div class="kpi">
-            <div class="kpiLabel">Trigger</div>
-            <div class="kpiValue" id="triggerValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Risk</div>
-            <div class="kpiValue" id="riskValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Weather</div>
-            <div class="kpiValue" id="weatherValue">—</div>
+          <div class="box">
+            <div style="display:flex;justify-content:space-between;gap:8px;flex-wrap:wrap;margin-bottom:10px"><b class="r">SELL</b><div><button id="es">Execute</button></div></div>
+            <div id="sell"></div>
           </div>
         </div>
       </div>
+    </div>
 
-      <div class="card">
-        <h3>Math Layer</h3>
-        <div class="kpis">
-          <div class="kpi">
-            <div class="kpiLabel">Correlation</div>
-            <div class="kpiValue" id="corrValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Vol Light</div>
-            <div class="kpiValue" id="volValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Sharpe</div>
-            <div class="kpiValue" id="sharpeValue">—</div>
-          </div>
-          <div class="kpi">
-            <div class="kpiLabel">Score</div>
-            <div class="kpiValue" id="scoreValue">—</div>
-          </div>
+    <div class="card span4">
+      <div class="head"><b>#8 HOLDINGS</b><div class="meta">scrollable • sort by ticker</div></div>
+      <div class="body">
+        <select id="hs"><option value="ticker_asc">Ticker A-Z</option><option value="ticker_desc">Ticker Z-A</option><option value="value_desc">Value high-low</option></select>
+        <div id="hold" class="list scroll" style="margin-top:10px"></div>
+      </div>
+    </div>
+
+    <div class="card span8">
+      <div class="head"><b>#9 SIGNAL RANKING BOARD</b><div class="meta">fastest horses first</div></div>
+      <div class="body">
+        <div class="scroll">
+          <table>
+            <thead><tr><th>#</th><th>Ticker</th><th>Theme</th><th>Score</th><th>Status</th><th>Move</th><th>Price</th></tr></thead>
+            <tbody id="rank"></tbody>
+          </table>
         </div>
       </div>
+    </div>
 
-      <div class="card">
-        <h3>Action Bias</h3>
-        <div class="list" id="actionList">
-          <div class="empty">No action rows loaded yet.</div>
-        </div>
+    <div class="card span4">
+      <div class="head"><b>#10 RADAR</b><div class="meta">scrollable watch list</div></div>
+      <div class="body">
+        <select id="rs"><option value="ticker_asc">Name A-Z</option><option value="move_desc">Today gain high-low</option><option value="price_desc">Price high-low</option></select>
+        <div id="radar" class="list scroll" style="margin-top:10px"></div>
       </div>
-    </section>
+    </div>
 
-    <section class="grid grid-main">
-      <div class="card">
-        <div class="cardTitleRow">
-          <h2>Holdings</h2>
-          <span class="pill small" id="holdingsCount">0 items</span>
-        </div>
-        <div class="holdingScroller" id="holdingsList"></div>
-        <div class="footerNote">Compact pill mode with internal scroll to save screen space.</div>
+    <div class="card span4">
+      <div class="head"><b>#11 CHECKLIST</b><div class="meta">master to-do tracker</div></div>
+      <div class="body"><div id="todo" class="list scroll"></div></div>
+    </div>
+
+    <div class="card span4">
+      <div class="head"><b>#13 DISTRIBUTION</b><div class="meta">donut + industry labels</div></div>
+      <div class="body">
+        <div class="chart" style="height:220px"><canvas id="donut" width="420" height="220"></canvas></div>
+        <div id="legend" class="legend"></div>
       </div>
+    </div>
 
-      <div class="holdingsWrap">
-        <div class="card">
-          <h2>Lean Health Report</h2>
-          <div class="tableLike" id="healthList">
-            <div class="empty">No health data yet.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Radar</h2>
-          <div class="tableLike" id="radarList">
-            <div class="empty">No radar rows yet.</div>
-          </div>
-        </div>
-
-        <div class="card">
-          <h2>Today’s Checklist</h2>
-          <div class="tableLike" id="todoList">
-            <div class="empty">No checklist rows yet.</div>
-          </div>
-        </div>
-      </div>
-    </section>
-
-    <div class="footerNote tiny" id="footerStamp">Lean Terminal ready.</div>
+    <div class="card span8">
+      <div class="head"><b>#12 CORRELATION / RELATIVE MOVE VIEW</b><div class="meta">simple paired line panel</div></div>
+      <div class="body"><div class="chart"><canvas id="pair" width="820" height="250"></canvas></div></div>
+    </div>
   </div>
+</div>
 
-  <script>
-  window.addEventListener("DOMContentLoaded", () => {
-    const errorBoxMount = document.getElementById("errorBoxMount");
+<div class="modal" id="settings"><div>
+  <div class="mh"><b>Data Settings</b><button id="cs">Close</button></div>
+  <div class="mb">
+    <label class="tiny">ENGINE CSV URL</label><textarea id="eu"></textarea>
+    <label class="tiny">HOLDINGS CSV URL</label><textarea id="hu"></textarea>
+    <label class="tiny">SYSTEM / RANKING CSV URL</label><textarea id="su"></textarea>
+    <label class="tiny">RADAR CSV URL (optional)</label><textarea id="ru"></textarea>
+  </div>
+  <div class="mf"><div class="tiny">Paste published CSV links from your worksheet tabs. Saved in this browser only.</div><button id="ss">Save</button></div>
+</div></div>
 
-    function crash(label, err){
-      const msg = (err && (err.stack || err.message)) ? (err.stack || err.message) : String(err);
-      if(errorBoxMount){
-        errorBoxMount.innerHTML = `<div class="errorBox">${escapeHtml(label)}\n\n${escapeHtml(msg)}</div>`;
-      }
-      console.error(label, err);
-    }
+<div class="modal" id="tm"><div>
+  <div class="mh"><b id="tt">Ticker</b><button id="ct">Close</button></div>
+  <div class="mb" id="tb"></div>
+</div></div>
 
-    window.addEventListener("error", e => crash("CRASH:", e.error || e.message));
-    window.addEventListener("unhandledrejection", e => crash("CRASH (promise):", e.reason));
-
-    const LS_HOLDINGS = "lean_holdings_csv_url";
-    const LS_SYSTEM   = "lean_system_csv_url";
-
-    // Hard-wired current holdings CSV link for the current Lean campaign
-    const DEFAULT_HOLDINGS =
-      "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-
-    // Keeps existing system CSV if already saved. Replace this if you want to hard-wire a system sheet too.
-    const DEFAULT_SYSTEM = localStorage.getItem(LS_SYSTEM) || "";
-
-    const $ = sel => document.querySelector(sel);
-
-    $("#refreshBtn").addEventListener("click", loadAll);
-    $("#settingsBtn").addEventListener("click", openSettings);
-
-    function openSettings(){
-      const currentHoldings = localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
-      const currentSystem = localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
-
-      const holdingsUrl = prompt("Holdings CSV URL", currentHoldings);
-      if(holdingsUrl !== null && holdingsUrl.trim()){
-        localStorage.setItem(LS_HOLDINGS, holdingsUrl.trim());
-      }
-
-      const systemUrl = prompt("System CSV URL", currentSystem);
-      if(systemUrl !== null){
-        localStorage.setItem(LS_SYSTEM, systemUrl.trim());
-      }
-
-      loadAll();
-    }
-
-    function getHoldingsUrl(){
-      return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS;
-    }
-
-    function getSystemUrl(){
-      return localStorage.getItem(LS_SYSTEM) || DEFAULT_SYSTEM;
-    }
-
-    async function loadAll(){
-      try{
-        errorBoxMount.innerHTML = "";
-        setLoadingState();
-
-        const holdingsUrl = getHoldingsUrl();
-        const systemUrl = getSystemUrl();
-
-        const [holdingsRows, systemRows] = await Promise.all([
-          holdingsUrl ? fetchCsvRows(holdingsUrl) : Promise.resolve([]),
-          systemUrl ? fetchCsvRows(systemUrl) : Promise.resolve([])
-        ]);
-
-        renderHoldings(holdingsRows);
-        renderSystem(systemRows, holdingsRows);
-
-        $("#footerStamp").textContent =
-          `Updated ${new Date().toLocaleString()} • Sources pill intentionally hidden`;
-      }catch(err){
-        crash("Failed to load Lean Terminal data.", err);
-      }
-    }
-
-    function setLoadingState(){
-      $("#campaignDate").textContent = "Loading...";
-      $("#heroStatus").textContent = "Refreshing";
-      $("#heroMeta").innerHTML = `<span class="pill small">Pulling latest rows</span>`;
-      $("#convictionBar").style.width = "22%";
-
-      ["#modeValue","#triggerValue","#riskValue","#weatherValue","#corrValue","#volValue","#sharpeValue","#scoreValue"].forEach(id => {
-        $(id).textContent = "—";
-      });
-
-      $("#actionList").innerHTML = `<div class="empty">Refreshing actions...</div>`;
-      $("#holdingsList").innerHTML = `<div class="empty">Refreshing holdings...</div>`;
-      $("#healthList").innerHTML = `<div class="empty">Refreshing health...</div>`;
-      $("#radarList").innerHTML = `<div class="empty">Refreshing radar...</div>`;
-      $("#todoList").innerHTML = `<div class="empty">Refreshing checklist...</div>`;
-      $("#holdingsCount").textContent = "0 items";
-    }
-
-    async function fetchCsvRows(url){
-      const res = await fetch(cacheBust(url), { cache:"no-store" });
-      if(!res.ok) throw new Error(`HTTP ${res.status} for ${url}`);
-      const text = await res.text();
-      return parseCsv(text);
-    }
-
-    function cacheBust(url){
-      const joiner = url.includes("?") ? "&" : "?";
-      return `${url}${joiner}_ts=${Date.now()}`;
-    }
-
-    function parseCsv(text){
-      const rows = [];
-      let row = [];
-      let cell = "";
-      let q = false;
-
-      for(let i=0;i<text.length;i++){
-        const ch = text[i];
-        const next = text[i+1];
-
-        if(q){
-          if(ch === '"' && next === '"'){
-            cell += '"';
-            i++;
-          }else if(ch === '"'){
-            q = false;
-          }else{
-            cell += ch;
-          }
-        }else{
-          if(ch === '"'){
-            q = true;
-          }else if(ch === ","){
-            row.push(cell);
-            cell = "";
-          }else if(ch === "\n"){
-            row.push(cell);
-            rows.push(row);
-            row = [];
-            cell = "";
-          }else if(ch === "\r"){
-            // ignore
-          }else{
-            cell += ch;
-          }
-        }
-      }
-
-      if(cell.length || row.length){
-        row.push(cell);
-        rows.push(row);
-      }
-
-      if(!rows.length) return [];
-
-      const headers = rows[0].map(h => normalizeKey(h));
-      return rows.slice(1)
-        .filter(r => r.some(v => String(v || "").trim() !== ""))
-        .map(r => {
-          const obj = {};
-          headers.forEach((h, idx) => obj[h] = (r[idx] ?? "").trim());
-          return obj;
-        });
-    }
-
-    function normalizeKey(key){
-      return String(key || "")
-        .trim()
-        .toLowerCase()
-        .replace(/\s+/g, "_")
-        .replace(/[^\w]/g, "_")
-        .replace(/_+/g, "_")
-        .replace(/^_|_$/g, "");
-    }
-
-    function renderHoldings(rows){
-      const box = $("#holdingsList");
-      if(!rows.length){
-        box.innerHTML = `<div class="empty">No holdings rows found. The new holdings CSV link is wired in, but the sheet may be empty or using unexpected headers.</div>`;
-        $("#holdingsCount").textContent = "0 items";
-        return;
-      }
-
-      const normalized = rows.map(mapHoldingRow);
-      $("#holdingsCount").textContent = `${normalized.length} items`;
-
-      box.innerHTML = normalized.map(h => `
-        <div class="holdingRow">
-          <div class="holdingMain">
-            <div class="holdingName">${escapeHtml(h.ticker || h.name || "Unnamed")}</div>
-            <div class="holdingSub">${escapeHtml(h.name || h.sector || h.note || "—")}</div>
-          </div>
-          <div class="miniPill">${escapeHtml(h.weight || h.qty || "—")}</div>
-          <div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal || h.tier || "—")}</div>
-          <div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change || h.pnl || "—")}</div>
-        </div>
-      `).join("");
-    }
-
-    function mapHoldingRow(r){
-      return {
-        ticker: pick(r, ["ticker","symbol","holding","name_short"]),
-        name: pick(r, ["name","company","description","asset"]),
-        sector: pick(r, ["sector","theme","bucket","group"]),
-        weight: pick(r, ["weight","allocation","position","size","percent"]),
-        qty: pick(r, ["qty","shares","units"]),
-        signal: pick(r, ["signal","status","go_no_go","light","bias"]),
-        tier: pick(r, ["tier","rank"]),
-        change: pick(r, ["change","pnl","return","move","day_change"]),
-        note: pick(r, ["note","notes","comment"])
-      };
-    }
-
-    function renderSystem(systemRows, holdingsRows){
-      const sys = summarizeSystem(systemRows, holdingsRows);
-
-      $("#campaignDate").textContent = sys.asOf;
-      $("#heroStatus").textContent = sys.status;
-      $("#heroMeta").innerHTML = sys.meta.map(x => `<span class="pill small ${toneClass(x)}">${escapeHtml(x)}</span>`).join("");
-      $("#convictionBar").style.width = `${sys.conviction}%`;
-
-      $("#modeValue").textContent = sys.mode;
-      $("#triggerValue").textContent = sys.trigger;
-      $("#riskValue").textContent = sys.risk;
-      $("#weatherValue").textContent = sys.weather;
-      $("#corrValue").textContent = sys.correlation;
-      $("#volValue").textContent = sys.vol;
-      $("#sharpeValue").textContent = sys.sharpe;
-      $("#scoreValue").textContent = sys.score;
-
-      renderSimpleList("#actionList", sys.actions);
-      renderCardList("#healthList", sys.health);
-      renderCardList("#radarList", sys.radar);
-      renderCardList("#todoList", sys.todo);
-    }
-
-    function summarizeSystem(systemRows, holdingsRows){
-      const rows = systemRows || [];
-      const first = rows[0] || {};
-
-      const status =
-        pick(first, ["campaign_status","status","headline","summary"]) ||
-        (holdingsRows.length ? "Lean engine online" : "Waiting on system sheet");
-
-      const mode = pick(first, ["mode","campaign_mode","posture"]) || "Lean";
-      const trigger = pick(first, ["trigger","market_trigger","gate"]) || "Watch";
-      const risk = pick(first, ["risk","risk_state","risk_mode"]) || "Controlled";
-      const weather = pick(first, ["weather","market_weather","sky"]) || "Clear";
-      const correlation = pick(first, ["correlation","corr","corr_state"]) || "—";
-      const vol = pick(first, ["vol","vol_light","volatility","volatility_light"]) || "—";
-      const sharpe = pick(first, ["sharpe","sharpe_ratio"]) || "—";
-      const score = pick(first, ["score","health_score","conviction_score"]) || guessScore(rows, holdingsRows);
-      const conviction = clamp(numberFromAny(score) || 64, 10, 100);
-
-      const asOf =
-        pick(first, ["as_of","date","timestamp","last_updated"]) ||
-        new Date().toLocaleDateString();
-
-      const meta = compact([
-        mode,
-        trigger,
-        risk,
-        weather
-      ]);
-
-      const actions = extractBucket(rows, ["action","action_1","action_2","action_3","bias","today_bias"], [
-        "Keep posture clean",
-        "Let leaders prove themselves",
-        "Avoid overlap stacking"
-      ]);
-
-      const health = extractObjects(rows, "health").length
-        ? extractObjects(rows, "health")
-        : [
-            { title:"Structure", body:"Campaign still emphasizes controlled aggression and overlap discipline." },
-            { title:"Holdings Fit", body: holdingsRows.length ? `Loaded ${holdingsRows.length} holding rows into compact pill mode.` : "No holdings sheet rows found yet." },
-            { title:"Display Update", body:"Sources pill is now hidden. Holdings panel is smaller and scrolls internally." }
-          ];
-
-      const radar = extractObjects(rows, "radar").length
-        ? extractObjects(rows, "radar")
-        : [
-            { title:"Leaders", body:"Watch relative-strength names and avoid chasing weak laggards." },
-            { title:"Macro", body:"Keep eye on volatility, breadth, and any trigger flip before adding size." },
-            { title:"Overlap", body:"Use radar as context, not as a reason to stack similar exposure." }
-          ];
-
-      const todo = extractObjects(rows, "todo").length
-        ? extractObjects(rows, "todo")
-        : [
-            { title:"Check trigger", body:"Confirm go / no-go before any adds." },
-            { title:"Review leaders", body:"Size into strongest horse, not every horse." },
-            { title:"Protect screen space", body:"Use the internal holdings scroll for quick review." }
-          ];
-
-      return {
-        asOf,
-        status,
-        meta,
-        conviction,
-        mode,
-        trigger,
-        risk,
-        weather,
-        correlation,
-        vol,
-        sharpe,
-        score,
-        actions,
-        health,
-        radar,
-        todo
-      };
-    }
-
-    function extractBucket(rows, keys, fallback){
-      const out = [];
-      rows.forEach(r => {
-        keys.forEach(k => {
-          const v = r[normalizeKey(k)];
-          if(v && !out.includes(v)) out.push(v);
-        });
-      });
-      return out.length ? out.slice(0,6) : fallback;
-    }
-
-    function extractObjects(rows, prefix){
-      const out = [];
-      rows.forEach(r => {
-        const title = pick(r, [`${prefix}_title`,`title_${prefix}`,`${prefix}`]);
-        const body = pick(r, [`${prefix}_body`,`body_${prefix}`,`${prefix}_note`,`note_${prefix}`]);
-        if(title || body){
-          out.push({
-            title: title || prefix.toUpperCase(),
-            body: body || ""
-          });
-        }
-      });
-      return out.slice(0,8);
-    }
-
-    function renderSimpleList(sel, items){
-      const el = $(sel);
-      if(!items || !items.length){
-        el.innerHTML = `<div class="empty">No rows.</div>`;
-        return;
-      }
-      el.innerHTML = items.map(item => `
-        <div class="row">
-          <div class="rowLeft">
-            <div class="ticker">${escapeHtml(item)}</div>
-          </div>
-          <div class="score ${toneClass(item)}">${scoreWord(item)}</div>
-        </div>
-      `).join("");
-    }
-
-    function renderCardList(sel, items){
-      const el = $(sel);
-      if(!items || !items.length){
-        el.innerHTML = `<div class="empty">No rows.</div>`;
-        return;
-      }
-      el.innerHTML = items.map(item => `
-        <div class="headline">
-          <div class="headlineTitle">${escapeHtml(item.title || "Item")}</div>
-          <div class="headlineBody">${escapeHtml(item.body || "—")}</div>
-        </div>
-      `).join("");
-    }
-
-    function scoreWord(str){
-      const s = String(str || "").toLowerCase();
-      if(s.includes("go") || s.includes("green") || s.includes("buy")) return "GO";
-      if(s.includes("yellow") || s.includes("watch") || s.includes("trim")) return "WATCH";
-      if(s.includes("red") || s.includes("stop") || s.includes("no-go")) return "NO-GO";
-      return "LIVE";
-    }
-
-    function toneClass(v){
-      const s = String(v || "").toLowerCase();
-      if(
-        s.includes("green") || s.includes("go") || s.includes("buy") ||
-        s.includes("up") || s.includes("bull") || s.includes("+")
-      ) return "green";
-      if(
-        s.includes("yellow") || s.includes("watch") || s.includes("hold") ||
-        s.includes("neutral") || s.includes("caution")
-      ) return "yellow";
-      if(
-        s.includes("red") || s.includes("no-go") || s.includes("stop") ||
-        s.includes("sell") || s.includes("down") || s.includes("risk-off") || s.includes("-")
-      ) return "red";
-      return "blue";
-    }
-
-    function guessScore(systemRows, holdingsRows){
-      const base = holdingsRows.length ? 68 : 52;
-      const extra = Math.min((systemRows || []).length * 3, 18);
-      return String(base + extra);
-    }
-
-    function pick(obj, keys){
-      for(const key of keys){
-        const k = normalizeKey(key);
-        if(obj && obj[k] != null && String(obj[k]).trim() !== "") return String(obj[k]).trim();
-      }
-      return "";
-    }
-
-    function compact(arr){
-      return arr.filter(Boolean);
-    }
-
-    function numberFromAny(v){
-      const m = String(v || "").match(/-?\d+(\.\d+)?/);
-      return m ? Number(m[0]) : NaN;
-    }
-
-    function clamp(n, min, max){
-      return Math.max(min, Math.min(max, n));
-    }
-
-    function escapeHtml(str){
-      return String(str ?? "")
-        .replaceAll("&","&amp;")
-        .replaceAll("<","&lt;")
-        .replaceAll(">","&gt;")
-        .replaceAll('"',"&quot;")
-        .replaceAll("'","&#39;");
-    }
-
-    loadAll();
-  });
-  </script>
+<script>
+const D={engine:"",holdings:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv",system:"https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv",radar:""};
+const K={e:"lean_engine_csv",h:"lean_holdings_csv2",s:"lean_system_csv2",r:"lean_radar_csv2",m:"lean_mode2",tc:"lean_trade_checks2",cl:"lean_checklist2"};
+const TODO=["Build ENGINE tab","Calculate READY","Calculate RISK","Calculate PLAN","Count QUALIFIED tickers","Identify TOP_TICKER + TOP_SCORE","Generate BUY list","Generate SELL list","Apply THEME CAP constraints","Assign dollar allocation per ticker","Link MACRO_DATA to RISK","Link RETURNS/PRICES to momentum + ranking","Link CORRELATION to overlap guardrails","Connect TRADE_LOG to holdings + budget","Wire ENGINE -> SYSTEM_EXPORT -> TERMINAL"];
+const S={engine:[],holdings:[],system:[],radar:[],cd:30,last:null}; const $=id=>document.getElementById(id);
+const rd=(k,f)=>localStorage.getItem(k)||f, wr=(k,v)=>localStorage.setItem(k,v);
+const num=(v,d=0)=>{let x=parseFloat(String(v??"").replace(/[$,% ]/g,""));return Number.isFinite(x)?x:d};
+const pct=v=>`${num(v)>0?"+":num(v)<0?"":""}${num(v).toFixed(1)}%`, money=v=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(num(v));
+const get=(o,keys,f="")=>{for(const k of keys){if(o[k]!==undefined&&String(o[k]).trim()!=="")return o[k]} return f};
+function parseCSV(t){let rows=[],row=[],cell="",q=false; for(let i=0;i<t.length;i++){let ch=t[i],nx=t[i+1]; if(ch=='"'){if(q&&nx=='"'){cell+='"';i++}else q=!q}else if(ch==","&&!q){row.push(cell);cell=""}else if((ch=="\\n"||ch=="\\r")&&!q){if(ch=="\\r"&&nx=="\\n")i++; row.push(cell); if(row.some(v=>String(v).trim()!=="")) rows.push(row); row=[]; cell=""}else cell+=ch} row.push(cell); if(row.some(v=>String(v).trim()!=="")) rows.push(row); return rows}
+async function fetchCSV(url){if(!url)return[]; let r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw new Error("fetch"); let rows=parseCSV(await r.text()); if(!rows.length)return[]; let h=rows[0].map(x=>String(x||"").trim()); return rows.slice(1).map(rr=>{let o={}; h.forEach((x,i)=>o[x||("col"+i)]=(rr[i]??"").trim()); o.__row=rr; return o})}
+function engine(){return S.engine[0]||{}} function mode(){return rd(K.m,"LEAN")} function cap(){return mode()=="AGG"?50:30}
+function min(){let v=get(engine(),["MIN_SCORE","MinScore","MIN SCORE"],""); return String(v).trim()!==""?num(v,75):75}
+function holds(){return S.holdings.map(r=>({ticker:get(r,["Ticker","ticker","Symbol","symbol","Name","name"],r.__row?.[0]||"N/A"),value:num(get(r,["Value","value","Market Value","Current Value"],r.__row?.[2]||0)),shares:num(get(r,["Shares","shares","Qty","qty","Quantity"],r.__row?.[1]||0)),industry:get(r,["Industry","industry","Theme","theme","Sector","sector"],"Unlabeled"),theme:get(r,["Theme","theme","Sector","sector","Industry","industry"],"Unlabeled"),price:num(get(r,["Price","price","Last","last"],0))})).filter(x=>x.ticker&&x.ticker!="N/A")}
+function sys(rows=S.system){return rows.map((r,idx)=>({ticker:get(r,["Ticker","ticker","Symbol","symbol","Name","name"],r.__row?.[0]||"N/A"),theme:get(r,["Theme","theme","Sector","sector","Industry","industry"],r.__row?.[1]||"--"),score:num(get(r,["Score","score","Rank Score","rank_score"],r.__row?.[2]||0)),move:num(get(r,["Move","move","Change","change","1D","Today","Today Gain","today_gain"],r.__row?.[3]||0)),price:num(get(r,["Price","price","Last","last"],r.__row?.[4]||0)),qualified:num(get(r,["Score","score"],r.__row?.[2]||0))>=min(),idx})).filter(x=>x.ticker&&x.ticker!="N/A").sort((a,b)=>b.score-a.score||b.move-a.move)}
+function radar(){return sys(S.radar.length?S.radar:S.system)}
+function risk(){let v=get(engine(),["RISK","Risk"],""); if(String(v).trim()!=="") return num(v,0); let x=sys(); if(!x.length) return 50; let weak=x.filter(a=>a.score<50).length; return Math.round(Math.min(100,25+weak/(x.length||1)*50))}
+function ready(){let v=get(engine(),["READY","Ready"],""); if(String(v).trim()!=="") return num(v,0); let x=sys().slice(0,3); if(!x.length) return 0; let setup=x.reduce((a,b)=>a+b.score,0)/x.length, mom=Math.max(0,Math.min(100,50+x.reduce((a,b)=>a+b.move,0)/x.length*5)), capital=holds().length?70:50, safe=100-risk(); return Math.round((setup+mom+capital+safe)/4)}
+function plan(){let v=get(engine(),["PLAN","Plan"],""); if(String(v).trim()!=="") return String(v).toUpperCase(); let q=sys().filter(x=>x.qualified).length; return ready()>=80&&risk()<=35&&q>=2?"AGG":"LEAN"}
+function pval(){let v=get(engine(),["PORTFOLIO_VALUE","PortfolioValue","PORTFOLIO VALUE"],""); if(String(v).trim()!=="") return num(v,0); return holds().reduce((a,b)=>a+b.value,0)}
+function actions(){let ranked=sys(), h=new Map(holds().map(a=>[a.ticker,a])), q=ranked.filter(a=>a.score>=min()); let buys=q.slice(0,Math.min(3,q.length)).map((r,i)=>({...r,rank:i+1,amount:mode()=="AGG"?([150,100,75][i]||50):([100,75,50][i]||50)})); let sells=ranked.filter((r,i)=>i>=Math.max(0,ranked.length-3)||r.score<min()).filter(r=>h.has(r.ticker)).slice(0,3).map((r,i)=>({...r,rank:ranked.findIndex(x=>x.ticker==r.ticker)+1,amount:Math.max(25,Math.min(h.get(r.ticker)?.value||50,[100,75,50][i]||50))})); return {buys,sells}}
+function rg(v){return v>=70?"g":v>=40?"y":"r"} function rr(v){return v<=30?"g":v<=60?"y":"r"} function sc(v){return v>=75?"good":v>=50?"mid":"bad"}
+function renderTop(){let R=ready(), K=risk(), P=plan(); $("ready").textContent=R; $("ready").className="big "+rg(R); $("risk").textContent=K; $("risk").className="big "+rr(K); $("plan").textContent=P; $("plan").className="big flash "+(P=="AGG"?"r":"b"); $("min").textContent=min(); $("cap").textContent=cap()+"%"; $("lean").classList.toggle("active",mode()=="LEAN"); $("agg").classList.toggle("active",mode()=="AGG")}
+function renderAct(){let a=actions(), checks=JSON.parse(rd(K.tc,"{}")); const draw=(id,rows,side)=>{$(id).innerHTML=rows.length?rows.map(r=>{let key=`${side}:${r.ticker}:${r.rank}`; return `<div class='row'><input type='checkbox' ${checks[key]?"checked":""} onchange='tcheck("${key}",this.checked)'><div><button class='tbtn' onclick='showTicker("${r.ticker}")'>${r.ticker}</button> <b>#${r.rank} ${money(r.amount)}</b><div class='tiny'>${r.theme} • score ${r.score} • move ${pct(r.move)}</div></div><div class='${side=="BUY"?"g":"r"} tiny'>${side}</div></div>`}).join(""):`<div class='tiny'>No ${side.toLowerCase()} actions right now.</div>`}; draw("buy",a.buys,"BUY"); draw("sell",a.sells,"SELL")}
+function renderHold(){let x=[...holds()], s=$("hs").value; if(s=="ticker_asc")x.sort((a,b)=>a.ticker.localeCompare(b.ticker)); if(s=="ticker_desc")x.sort((a,b)=>b.ticker.localeCompare(a.ticker)); if(s=="value_desc")x.sort((a,b)=>b.value-a.value); $("hold").innerHTML=x.length?x.map(h=>`<div class='item'><div><b>${h.ticker}</b><div class='tiny'>${h.industry}</div></div><div style='text-align:right'><div>${money(h.value)}</div><div class='tiny'>${h.shares?h.shares+" sh":""}</div></div></div>`).join(""):`<div class='tiny'>No holdings loaded.</div>`}
+function renderRank(){let x=sys(); $("rank").innerHTML=x.length?x.map((r,i)=>`<tr><td>${i+1}</td><td><button class='tbtn' onclick='showTicker("${r.ticker}")'>${r.ticker}</button></td><td>${r.theme}</td><td><span class='score ${sc(r.score)}'>${r.score}</span></td><td>${r.score>=min()?"QUALIFIED":"BLOCK"}</td><td class='${r.move>0?"g":r.move<0?"r":"y"}'>${pct(r.move)}</td><td>${r.price?money(r.price):"--"}</td></tr>`).join(""):`<tr><td colspan='7' class='tiny'>No ranking data loaded.</td></tr>`}
+function renderRadar(){let x=[...radar()], s=$("rs").value; if(s=="ticker_asc")x.sort((a,b)=>a.ticker.localeCompare(b.ticker)); if(s=="move_desc")x.sort((a,b)=>b.move-a.move); if(s=="price_desc")x.sort((a,b)=>b.price-a.price); $("radar").innerHTML=x.length?x.map(r=>`<div class='item'><div><button class='tbtn' onclick='showTicker("${r.ticker}")'>${r.ticker}</button><div class='tiny'>${r.theme}</div></div><div style='text-align:right'><div class='${r.move>0?"g":r.move<0?"r":"y"}'>${pct(r.move)}</div><div class='tiny'>${r.price?money(r.price):"--"}</div></div></div>`).join(""):`<div class='tiny'>No radar list loaded.</div>`}
+function renderTodo(){let s=JSON.parse(rd(K.cl,"{}")); $("todo").innerHTML=TODO.map((t,i)=>`<label class='row' style='grid-template-columns:22px 1fr'><input type='checkbox' ${s[i]?"checked":""} onchange='tcl(${i},this.checked)'><div>${t}</div></label>`).join("")}
+function renderDist(){let g={}, cols=["#60a5fa","#22d3ee","#22c55e","#f59e0b","#ef4444","#a78bfa","#f472b6","#facc15"]; holds().forEach(h=>{let k=h.industry||h.theme||"Unlabeled"; g[k]=(g[k]||0)+h.value}); let rows=Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,8), c=$("donut"), ctx=c.getContext("2d"), total=rows.reduce((a,b)=>a+b[1],0); ctx.clearRect(0,0,c.width,c.height); if(!total){ctx.fillStyle="rgba(255,255,255,.65)";ctx.font="14px Inter";ctx.fillText("No distribution data",130,115); $("legend").innerHTML="<div class='tiny'>No holdings distribution yet.</div>"; return} let start=-Math.PI/2,cx=110,cy=110,r=72; rows.forEach((row,i)=>{let ang=row[1]/total*Math.PI*2; ctx.beginPath();ctx.moveTo(cx,cy);ctx.arc(cx,cy,r,start,start+ang);ctx.closePath();ctx.fillStyle=cols[i%cols.length];ctx.fill();start+=ang}); ctx.globalCompositeOperation="destination-out"; ctx.beginPath();ctx.arc(cx,cy,42,0,Math.PI*2);ctx.fill(); ctx.globalCompositeOperation="source-over"; ctx.fillStyle="rgba(231,238,252,.95)"; ctx.font="11px Inter";ctx.fillText("ALLOCATION",78,107);ctx.font="bold 14px Inter";ctx.fillText(money(pval()),76,126); $("legend").innerHTML=rows.map((r,i)=>`<div class='lrow'><div><span class='sw' style='background:${cols[i%cols.length]}'></span>${r[0]}</div><div>${pval()?((r[1]/pval())*100).toFixed(1):0}%</div></div>`).join("")}
+function drawPair(){let x=sys(), aName=x[0]?.ticker||"Pair A", bName=x[1]?.ticker||"Pair B", a=[100,102,108,106,120,126,133,130,142,155], b=[100,101,104,103,108,111,113,110,116,121], c=$("pair"), ctx=c.getContext("2d"), w=c.width,h=c.height,p=28, all=[...a,...b], mn=Math.min(...all), mx=Math.max(...all); const xx=(i,n)=>p+i*(w-p*2)/Math.max(1,n-1), yy=v=>h-p-((v-mn)/Math.max(1,mx-mn))*(h-p*2); ctx.clearRect(0,0,w,h); ctx.strokeStyle="rgba(255,255,255,.10)"; for(let i=0;i<5;i++){let y=p+i*((h-p*2)/4); ctx.beginPath();ctx.moveTo(p,y);ctx.lineTo(w-p,y);ctx.stroke()} ctx.lineWidth=2.4; ctx.strokeStyle="#60a5fa"; ctx.beginPath(); a.forEach((v,i)=>i?ctx.lineTo(xx(i,a.length),yy(v)):ctx.moveTo(xx(i,a.length),yy(v))); ctx.stroke(); ctx.strokeStyle="#22d3ee"; ctx.beginPath(); b.forEach((v,i)=>i?ctx.lineTo(xx(i,b.length),yy(v)):ctx.moveTo(xx(i,b.length),yy(v))); ctx.stroke(); ctx.fillStyle="rgba(231,238,252,.9)"; ctx.font="12px Inter"; ctx.fillText(aName,p,16); ctx.fillText(bName,p+70,16)}
+function showTicker(t){let r=sys().find(x=>x.ticker==t)||radar().find(x=>x.ticker==t), h=holds().find(x=>x.ticker==t); $("tt").textContent=`${t}${r?` (#${sys().findIndex(x=>x.ticker==t)+1})`:""}`; $("tb").innerHTML=`<div class='grid'><div class='card span4'><div class='body'><div class='tiny'>Score</div><div class='big'>${r?r.score:"--"}</div></div></div><div class='card span4'><div class='body'><div class='tiny'>Today</div><div class='big ${r&&r.move>0?"g":r&&r.move<0?"r":"y"}'>${r?pct(r.move):"--"}</div></div></div><div class='card span4'><div class='body'><div class='tiny'>Price</div><div class='big'>${r&&r.price?money(r.price):h&&h.price?money(h.price):"--"}</div></div></div><div class='card span12'><div class='body'><div class='tiny'>Street Speak</div><div style='margin-top:8px'>${r?`${t} is ${r.score>=min()?"qualified and in the race":"below the min score line right now"}. `:""}${r?`Today move is ${pct(r.move)} and current rank is #${sys().findIndex(x=>x.ticker==t)+1}. `:""}${h?`Current holdings value is ${money(h.value)}.`:"Not currently in holdings."}</div></div></div></div>`; $("tm").style.display="flex"}
+window.showTicker=showTicker; window.tcheck=(k,v)=>{let d=JSON.parse(rd(K.tc,"{}")); d[k]=v; wr(K.tc,JSON.stringify(d))}; window.tcl=(i,v)=>{let d=JSON.parse(rd(K.cl,"{}")); d[i]=v; wr(K.cl,JSON.stringify(d))};
+function setMode(m){wr(K.m,m); renderTop(); renderAct()}
+$("lean").onclick=()=>setMode("LEAN"); $("agg").onclick=()=>setMode("AGG"); $("hs").onchange=renderHold; $("rs").onchange=renderRadar;
+$("eb").onclick=()=>alert("BUY plan generated. Use the per-ticker checkboxes to mark what you completed."); $("es").onclick=()=>alert("SELL plan generated. Use the per-ticker checkboxes to mark what you completed.");
+$("st").onclick=()=>{$("eu").value=rd(K.e,D.engine); $("hu").value=rd(K.h,D.holdings); $("su").value=rd(K.s,D.system); $("ru").value=rd(K.r,D.radar); $("settings").style.display="flex"}; $("cs").onclick=()=>$("settings").style.display="none"; $("ss").onclick=()=>{wr(K.e,$("eu").value.trim()); wr(K.h,$("hu").value.trim()); wr(K.s,$("su").value.trim()); wr(K.r,$("ru").value.trim()); $("settings").style.display="none"; loadAll()}; $("ct").onclick=()=>$("tm").style.display="none";
+async function loadAll(){try{let [e,h,s,r]=await Promise.allSettled([fetchCSV(rd(K.e,D.engine)),fetchCSV(rd(K.h,D.holdings)),fetchCSV(rd(K.s,D.system)),fetchCSV(rd(K.r,D.radar)||rd(K.s,D.system))]); S.engine=e.status=="fulfilled"?e.value:[]; S.holdings=h.status=="fulfilled"?h.value:[]; S.system=s.status=="fulfilled"?s.value:[]; S.radar=r.status=="fulfilled"?r.value:[]; S.last=new Date(); S.cd=30; $("last").textContent=S.last.toLocaleTimeString(); renderTop(); renderAct(); renderHold(); renderRank(); renderRadar(); renderTodo(); renderDist(); drawPair()}catch(err){console.error(err); alert("Load issue. Check your CSV links in Data Settings.")}}
+function tick(){S.cd=Math.max(0,S.cd-1); $("cd").textContent=`${S.cd}s`; if(S.cd===0) loadAll()}
+$("rf").onclick=loadAll; window.addEventListener("resize",()=>{drawPair(); renderDist()}); window.addEventListener("DOMContentLoaded",()=>{if(!rd(K.m,""))wr(K.m,"LEAN"); loadAll(); setInterval(tick,1000)})
+</script>
 </body>
 </html>
