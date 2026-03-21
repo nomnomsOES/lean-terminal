@@ -238,8 +238,46 @@ const rd=(k,f)=>localStorage.getItem(k)||f, wr=(k,v)=>localStorage.setItem(k,v);
 const num=(v,d=0)=>{let x=parseFloat(String(v??"").replace(/[$,% ]/g,""));return Number.isFinite(x)?x:d};
 const pct=v=>`${num(v)>0?"+":num(v)<0?"":""}${num(v).toFixed(1)}%`, money=v=>new Intl.NumberFormat("en-US",{style:"currency",currency:"USD",maximumFractionDigits:0}).format(num(v));
 const get=(o,keys,f="")=>{for(const k of keys){if(o[k]!==undefined&&String(o[k]).trim()!=="")return o[k]} return f};
-function parseCSV(t){let rows=[],row=[],cell="",q=false; for(let i=0;i<t.length;i++){let ch=t[i],nx=t[i+1]; if(ch=='"'){if(q&&nx=='"'){cell+='"';i++}else q=!q}else if(ch==","&&!q){row.push(cell);cell=""}else if((ch=="\\n"||ch=="\\r")&&!q){if(ch=="\\r"&&nx=="\\n")i++; row.push(cell); if(row.some(v=>String(v).trim()!=="")) rows.push(row); row=[]; cell=""}else cell+=ch} row.push(cell); if(row.some(v=>String(v).trim()!=="")) rows.push(row); return rows}
-async function fetchCSV(url){if(!url)return[]; let r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw new Error("fetch"); let rows=parseCSV(await r.text()); if(!rows.length)return[]; let h=rows[0].map(x=>String(x||"").trim()); return rows.slice(1).map(rr=>{let o={}; h.forEach((x,i)=>o[x||("col"+i)]=(rr[i]??"").trim()); o.__row=rr; return o})}
+function parseCSV(text){
+  const rows = [];
+  let row = [];
+  let cell = "";
+  let inQuotes = false;
+
+  for(let i=0;i<text.length;i++){
+    const ch = text[i];
+    const next = text[i+1];
+
+    if(ch === '"'){
+      if(inQuotes && next === '"'){
+        cell += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if(ch === ',' && !inQuotes){
+      row.push(cell);
+      cell = "";
+    } else if((ch === '\n' || ch === '\r') && !inQuotes){
+      if(ch === '\r' && next === '\n') i++;
+      row.push(cell);
+      if(row.some(v => String(v).trim() !== "")){
+        rows.push(row);
+      }
+      row = [];
+      cell = "";
+    } else {
+      cell += ch;
+    }
+  }
+
+  row.push(cell);
+  if(row.some(v => String(v).trim() !== "")){
+    rows.push(row);
+  }
+
+  return rows;
+}async function fetchCSV(url){if(!url)return[]; let r=await fetch(url,{cache:"no-store"}); if(!r.ok) throw new Error("fetch"); let rows=parseCSV(await r.text()); if(!rows.length)return[]; let h=rows[0].map(x=>String(x||"").trim()); return rows.slice(1).map(rr=>{let o={}; h.forEach((x,i)=>o[x||("col"+i)]=(rr[i]??"").trim()); o.__row=rr; return o})}
 function engine(){return S.engine[0]||{}} function mode(){return rd(K.m,"LEAN")} function cap(){return mode()=="AGG"?50:30}
 function min(){let v=get(engine(),["MIN_SCORE","MinScore","MIN SCORE"],""); return String(v).trim()!==""?num(v,75):75}
 function holds(){return S.holdings.map(r=>({ticker:get(r,["Ticker","ticker","Symbol","symbol","Name","name"],r.__row?.[0]||"N/A"),value:num(get(r,["Value","value","Market Value","Current Value"],r.__row?.[2]||0)),shares:num(get(r,["Shares","shares","Qty","qty","Quantity"],r.__row?.[1]||0)),industry:get(r,["Industry","industry","Theme","theme","Sector","sector"],"Unlabeled"),theme:get(r,["Theme","theme","Sector","sector","Industry","industry"],"Unlabeled"),price:num(get(r,["Price","price","Last","last"],0))})).filter(x=>x.ticker&&x.ticker!="N/A")}
