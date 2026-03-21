@@ -1,11 +1,74 @@
-<!-- AESTHETICS PATCHED VERSION (LOGIC UNCHANGED) -->
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="utf-8" />
+<meta name="viewport" content="width=device-width,initial-scale=1" />
+<title>Lean Terminal — Minimal Autonomous</title>
 
 <style>
-body{
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+:root{
+  --bg:#071121;
+  --bg2:#0a1630;
+  --line:rgba(255,255,255,.09);
+  --soft:rgba(255,255,255,.04);
+  --text:#e7eefc;
+  --muted:#9bb0cf;
+  --green:#22c55e;
+  --yellow:#f59e0b;
+  --red:#ef4444;
+  --blue:#3b82f6;
 }
 
-/* Info button improved */
+*{box-sizing:border-box}
+
+body{
+  margin:0;
+  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif;
+  color:var(--text);
+  background:
+    radial-gradient(circle at top left, rgba(59,130,246,.12), transparent 25%),
+    linear-gradient(180deg,var(--bg),var(--bg2));
+}
+
+.wrap{max-width:1560px;margin:0 auto;padding:16px}
+
+.top{display:flex;justify-content:space-between;flex-wrap:wrap;margin-bottom:12px}
+
+button{
+  border:1px solid var(--line);
+  background:rgba(255,255,255,.04);
+  color:var(--text);
+  border-radius:14px;
+  padding:8px 12px;
+  cursor:pointer;
+  font-family:inherit;
+}
+
+.grid{display:grid;grid-template-columns:repeat(12,1fr);gap:14px}
+
+.card{
+  background:rgba(255,255,255,.03);
+  border:1px solid var(--line);
+  border-radius:18px;
+}
+
+.head{
+  padding:12px;
+  border-bottom:1px solid var(--line);
+}
+
+.body{padding:12px}
+
+.span12{grid-column:span 12}
+.span8{grid-column:span 8}
+.span4{grid-column:span 4}
+
+.scroll{
+  max-height:280px;
+  overflow:auto;
+}
+
+/* info button */
 .i{
   width:18px;
   height:18px;
@@ -16,155 +79,149 @@ body{
   font-size:11px;
   color:var(--muted);
   cursor:pointer;
-  transition:.2s;
 }
 .i:hover{
   background:rgba(255,255,255,.08);
   color:#fff;
 }
 
-/* Scroll areas FIX */
-.scroll{
-  height:280px;
-  overflow-y:auto;
-  padding-right:4px;
-}
-
-/* ACTION card resized */
-.span-action{
-  grid-column:span 4;
-}
-
-/* Uniform buttons */
-button{
-  font-family:inherit;
-}
-
-/* Cleaner ticker look */
 .tbtn{
+  background:none;
+  border:none;
+  color:var(--text);
   font-weight:700;
+  cursor:pointer;
   font-family:inherit;
 }
 
-/* Table font fix */
-table, th, td{
-  font-family:inherit;
+table{
+  width:100%;
+  border-collapse:collapse;
+}
+th,td{
+  padding:8px;
+  border-bottom:1px solid var(--line);
+  font-size:12px;
 }
 
-/* Canvas font consistency handled in JS override */
+.good{color:#9df3b2}
+.mid{color:#fbd46c}
+.bad{color:#ffb3b3}
+
 </style>
+</head>
+
+<body>
+
+<div class="wrap">
+
+<div class="grid">
+
+<!-- ACTION (resized) -->
+<div class="card span4">
+  <div class="head"><b>#3 ACTION</b></div>
+  <div class="body">
+    <div id="buy"></div>
+    <div id="sell"></div>
+  </div>
+</div>
+
+<!-- HOLDINGS -->
+<div class="card span4">
+  <div class="head"><b>#8 HOLDINGS</b></div>
+  <div class="body">
+    <div id="hold" class="scroll"></div>
+  </div>
+</div>
+
+<!-- RANKING -->
+<div class="card span4">
+  <div class="head"><b>#9 RANKING</b></div>
+  <div class="body scroll">
+    <table>
+      <tbody id="rank"></tbody>
+    </table>
+  </div>
+</div>
+
+</div>
+
+</div>
 
 <script>
-/* ===== CANVAS FONT FIX ===== */
-const setCanvasFont = (ctx,size=12,weight="")=>{
-  ctx.font = `${weight}${size}px system-ui`;
-};
 
-/* override drawPair font usage */
-function drawPair(){
-  let x=sys(),
-      aName=x[0]?.ticker||"Pair A",
-      bName=x[1]?.ticker||"Pair B",
-      a=[100,102,108,106,120,126,133,130,142,155],
-      b=[100,101,104,103,108,111,113,110,116,121],
-      c=document.getElementById("pair"),
-      ctx=c.getContext("2d"),
-      w=c.width,h=c.height,p=28;
+/* ===== SAFE CSV PARSER ===== */
+function parseCSV(text){
+  const rows=[];
+  let row=[],cell="",inQuotes=false;
 
-  let all=[...a,...b],
-      mn=Math.min(...all),
-      mx=Math.max(...all);
+  for(let i=0;i<text.length;i++){
+    const ch=text[i];
+    const next=text[i+1];
 
-  const xx=(i,n)=>p+i*(w-p*2)/Math.max(1,n-1),
-        yy=v=>h-p-((v-mn)/Math.max(1,mx-mn))*(h-p*2);
-
-  ctx.clearRect(0,0,w,h);
-
-  ctx.strokeStyle="rgba(255,255,255,.10)";
-  for(let i=0;i<5;i++){
-    let y=p+i*((h-p*2)/4);
-    ctx.beginPath();
-    ctx.moveTo(p,y);
-    ctx.lineTo(w-p,y);
-    ctx.stroke();
+    if(ch==='"'){
+      if(inQuotes && next==='"'){
+        cell+='"'; i++;
+      } else {
+        inQuotes=!inQuotes;
+      }
+    } else if(ch===',' && !inQuotes){
+      row.push(cell); cell="";
+    } else if((ch==='\n'||ch==='\r') && !inQuotes){
+      if(ch==='\r'&&next==='\n') i++;
+      row.push(cell);
+      rows.push(row);
+      row=[]; cell="";
+    } else {
+      cell+=ch;
+    }
   }
 
-  ctx.lineWidth=2.4;
+  row.push(cell);
+  rows.push(row);
 
-  ctx.strokeStyle="#60a5fa";
-  ctx.beginPath();
-  a.forEach((v,i)=>i?ctx.lineTo(xx(i,a.length),yy(v)):ctx.moveTo(xx(i,a.length),yy(v)));
-  ctx.stroke();
-
-  ctx.strokeStyle="#22d3ee";
-  ctx.beginPath();
-  b.forEach((v,i)=>i?ctx.lineTo(xx(i,b.length),yy(v)):ctx.moveTo(xx(i,b.length),yy(v)));
-  ctx.stroke();
-
-  ctx.fillStyle="rgba(231,238,252,.9)";
-  setCanvasFont(ctx,12);
-  ctx.fillText(aName,p,16);
-  ctx.fillText(bName,p+80,16);
+  return rows;
 }
 
-/* override distribution font */
-function renderDist(){
-  let g={}, cols=["#60a5fa","#22d3ee","#22c55e","#f59e0b","#ef4444","#a78bfa","#f472b6","#facc15"];
+/* ===== BASIC DEMO DATA (so page always shows something) ===== */
+const demo = [
+  {ticker:"NVDA",score:88},
+  {ticker:"CRWV",score:82},
+  {ticker:"SMH",score:76}
+];
 
-  holds().forEach(h=>{
-    let k=h.industry||h.theme||"Unlabeled";
-    g[k]=(g[k]||0)+h.value;
-  });
+/* ===== RENDER ===== */
 
-  let rows=Object.entries(g).sort((a,b)=>b[1]-a[1]).slice(0,8),
-      c=document.getElementById("donut"),
-      ctx=c.getContext("2d"),
-      total=rows.reduce((a,b)=>a+b[1],0);
+function render(){
+  document.getElementById("rank").innerHTML =
+    demo.map((r,i)=>`
+      <tr>
+        <td>${i+1}</td>
+        <td>${r.ticker}</td>
+        <td class="${r.score>75?'good':'mid'}">${r.score}</td>
+      </tr>
+    `).join("");
 
-  ctx.clearRect(0,0,c.width,c.height);
+  document.getElementById("hold").innerHTML =
+    demo.map(r=>`<div>${r.ticker}</div>`).join("");
 
-  if(!total){
-    setCanvasFont(ctx,14);
-    ctx.fillStyle="rgba(255,255,255,.65)";
-    ctx.fillText("No distribution data",130,115);
-    return;
-  }
+  document.getElementById("buy").innerHTML =
+    "<div>Top pick: NVDA</div>";
 
-  let start=-Math.PI/2,
-      cx=110,cy=110,r=72;
-
-  rows.forEach((row,i)=>{
-    let ang=row[1]/total*Math.PI*2;
-    ctx.beginPath();
-    ctx.moveTo(cx,cy);
-    ctx.arc(cx,cy,r,start,start+ang);
-    ctx.closePath();
-    ctx.fillStyle=cols[i%cols.length];
-    ctx.fill();
-    start+=ang;
-  });
-
-  ctx.globalCompositeOperation="destination-out";
-  ctx.beginPath();
-  ctx.arc(cx,cy,42,0,Math.PI*2);
-  ctx.fill();
-
-  ctx.globalCompositeOperation="source-over";
-
-  setCanvasFont(ctx,11);
-  ctx.fillStyle="rgba(231,238,252,.95)";
-  ctx.fillText("ALLOCATION",78,107);
-
-  setCanvasFont(ctx,14,"bold ");
-  ctx.fillText("$"+Math.round(pval()),76,126);
+  document.getElementById("sell").innerHTML =
+    "<div>Weak: SMH</div>";
 }
 
-/* ===== INFO BUTTON FIX ===== */
+/* ===== INFO BUTTONS ===== */
 document.querySelectorAll(".i").forEach(el=>{
   if(el.title){
-    el.dataset.tip = el.title;
-    el.removeAttribute("title");
-    el.onclick = () => alert(el.dataset.tip);
+    el.onclick=()=>alert(el.title);
   }
 });
+
+render();
+
 </script>
+
+</body>
+</html>
