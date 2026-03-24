@@ -1,768 +1,522 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal 2.2 — AGG Radar Upgrade</title>
-<style>
-:root{
-  --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
-  --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6; --neon-red:#ff355e; --neon-red-glow:rgba(255,53,94,.35);
-  --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
-}
-*{box-sizing:border-box} html,body{height:100%}
-body{margin:0;color:var(--text);background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-.wrap{max-width:1420px;margin:0 auto;padding:12px}
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.brand h1{margin:0 0 2px 0;font-size:1.45rem;font-weight:800}.sub{color:var(--muted);font-size:.85rem}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-.chip,.btn{border:1px solid var(--line2);background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)}
-.btn{cursor:pointer;font-weight:700}
-.btn.aggressive{background:linear-gradient(180deg,rgba(255,53,94,.26),rgba(255,53,94,.12));border-color:rgba(255,53,94,.65);color:#ffe5ec;box-shadow:0 0 0 1px rgba(255,53,94,.22) inset,0 0 18px var(--neon-red-glow),var(--shadow)}
-.btn.aggressive.active{background:linear-gradient(180deg,rgba(255,53,94,.45),rgba(255,53,94,.2));box-shadow:0 0 0 1px rgba(255,53,94,.35) inset,0 0 24px var(--neon-red-glow),var(--shadow)}
-.strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.pill{display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block}.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)}
-.grid{display:grid;gap:8px}.topGrid{grid-template-columns:1fr 1fr;margin-bottom:8px}.mainGrid{grid-template-columns:280px minmax(0,1fr) 230px}.actionHoldRow{display:grid;grid-template-columns:1fr 1fr;gap:8px}.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}.budgetGrid{display:grid;gap:8px;grid-template-columns:repeat(4,1fr)}
-@media (max-width:1300px){.topGrid,.mainGrid,.actionHoldRow,.midPair,.triple,.budgetGrid{grid-template-columns:1fr}}
-.card{min-width:0;border:1px solid var(--line);border-radius:22px;background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));box-shadow:var(--shadow);padding:12px}
-.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
-.heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
-.heroValue{font-size:1.05rem;line-height:1.05;font-weight:700;margin:2px 0 10px 0}.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
-.gradientBar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
-.cubeGrid{display:grid;grid-template-columns:1fr 1fr;gap:8px}.cube{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:78px}.cubeLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}.cubeValue{font-size:1rem;font-weight:900;line-height:1.15}
-.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}.trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}.trow:first-child{border-top:none}.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
-.scrollArea{max-height:160px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}.scrollArea::-webkit-scrollbar{width:8px}.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}.tallScroll{max-height:360px}
-.holdingRow{display:grid;grid-template-columns:72px minmax(0,1fr) 64px 84px 72px;gap:7px;align-items:center;padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:7px;min-width:0}.holdingName{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}.holdingSub{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
-.chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden}
-svg{width:100%;height:100%;display:block;font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
-.note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
-.recentTable{width:100%;border-collapse:collapse;font-size:.74rem}.recentTable th,.recentTable td{padding:7px 8px;border-top:1px solid rgba(255,255,255,.06);text-align:left}.recentTable th{color:var(--muted);font-weight:700;font-size:.68rem}.recentTable thead th{position:sticky;top:0;background:#0e1728}
-.radarGrid{display:grid;grid-template-columns:1fr auto;gap:10px;align-items:center}.radarLegend{display:grid;gap:6px}.legendPill{display:flex;align-items:center;gap:7px;border:1px solid var(--line2);border-radius:999px;padding:5px 9px;background:#0f1728;font-size:.68rem}
-.budgetBox{border-radius:18px;padding:12px;border:1px solid var(--line)}.budgetProgress{margin-top:10px;height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden}.budgetProgressFill{height:100%;width:0%;border-radius:999px;background:linear-gradient(90deg,#22c55e 0%,#60a5fa 100%)}
-.actionSection{border-radius:18px;border:1px solid rgba(255,255,255,.10);background:rgba(255,255,255,.02);padding:12px}.actionGrid3{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}.actionGrid2{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-@media (max-width:1100px){.actionGrid3,.actionGrid2{grid-template-columns:1fr}}
-.actionBox{border-radius:18px;padding:12px}
-.greenText{color:var(--green)} .yellowText{color:var(--yellow)} .redText{color:var(--red)} .blueText{color:var(--blue)} .neonRedText{color:var(--neon-red)} .footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
-</style>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lean Terminal v03 Compact</title>
+  <style>
+    :root{
+      --bg:#0b1020;
+      --panel:#121a2b;
+      --panel2:#0f172a;
+      --muted:#94a3b8;
+      --text:#e5e7eb;
+      --line:rgba(255,255,255,.08);
+      --green:#22c55e;
+      --yellow:#f59e0b;
+      --red:#ef4444;
+      --blue:#3b82f6;
+      --pill:#111827;
+      --shadow:0 10px 30px rgba(0,0,0,.22);
+      --radius:18px;
+    }
+    *{box-sizing:border-box}
+    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
+    a{color:inherit}
+    .wrap{max-width:1580px;margin:0 auto;padding:12px}
+    .topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
+    .titlebox{display:flex;align-items:center;gap:10px}
+    .title{font-size:20px;font-weight:800;letter-spacing:.2px}
+    .sub{font-size:12px;color:var(--muted)}
+    .chiprow{display:flex;gap:8px;flex-wrap:wrap}
+    .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;display:inline-flex;gap:6px;align-items:center}
+    .chip strong{font-size:12px}
+    .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
+    .card{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;min-height:120px}
+    .span-12{grid-column:span 12}.span-9{grid-column:span 9}.span-8{grid-column:span 8}.span-6{grid-column:span 6}.span-4{grid-column:span 4}.span-3{grid-column:span 3}
+    .head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
+    .headL{display:flex;align-items:center;gap:8px;min-width:0}
+    .n{width:24px;height:24px;border-radius:999px;background:var(--pill);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:800;color:#cbd5e1;flex:0 0 auto}
+    .hTitle{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+    .info{width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted);cursor:pointer;flex:0 0 auto}
+    .body{padding:10px 12px}
+    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
+    .mini{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:8px}
+    .mini .label{font-size:11px;color:var(--muted)}
+    .mini .value{font-size:17px;font-weight:800;margin-top:3px}
+    .muted{color:var(--muted)}
+    .big{font-size:28px;font-weight:900;line-height:1}
+    .pillline{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{font-size:11px;padding:5px 8px;border-radius:999px;background:var(--pill);border:1px solid var(--line)}
+    .green{color:var(--green)} .yellow{color:var(--yellow)} .red{color:var(--red)} .blue{color:var(--blue)}
+    .bg-red{background:rgba(239,68,68,.10)!important;border-color:rgba(239,68,68,.35)!important}
+    .bg-yellow{background:rgba(245,158,11,.10)!important;border-color:rgba(245,158,11,.35)!important}
+    .list{display:flex;flex-direction:column;gap:8px}
+    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
+    .rowL{display:flex;align-items:center;gap:10px;min-width:0}
+    .ticker{font-weight:900;letter-spacing:.25px}
+    .small{font-size:11px}
+    .scroll-180{max-height:180px;overflow:auto}
+    .scroll-240{max-height:240px;overflow:auto}
+    .scroll-300{max-height:300px;overflow:auto}
+    .warning{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#fecaca;border-radius:12px;padding:9px 10px;font-size:12px}
+    .ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.08);color:#bbf7d0;border-radius:12px;padding:9px 10px;font-size:12px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
+    button,select,input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px}
+    button{cursor:pointer}
+    .right{text-align:right}
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
+    .footer{padding:10px 12px;color:var(--muted);font-size:11px}
+    .hidden{display:none!important}
+    .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
+    @media (max-width:1200px){.span-9,.span-8,.span-6,.span-4,.span-3{grid-column:span 12}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
+    @media (max-width:640px){.wrap{padding:8px}.card{border-radius:16px}.kpis{grid-template-columns:1fr 1fr}.title{font-size:18px}}
+  </style>
 </head>
 <body>
-<div class="wrap">
-  <div class="topbar">
-    <div class="brand">
-      <h1>Lean Terminal 2.2 — AGG Radar Upgrade</h1>
-      <div class="sub">restored from the known-good architecture • holdings + budget + trade log • internal ranking engine</div>
-    </div>
-    <div class="toolbar">
-      <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
-      <div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div>
-      <button class="btn aggressive" id="aggressiveToggle">AGG: OFF</button>
-      <button class="btn" id="refreshBtn">Refresh</button>
-      <button class="btn" id="settingsBtn">Data Settings</button>
-    </div>
-  </div>
-
-  <div class="grid topGrid">
-    <div class="card">
-      <div class="cardTitle"><div class="titleLeft"><h2>#1 Action Engine</h2><button class="mini" onclick="alert('Top system actions for today. Buy, trim, or pass comes from internal ranking, minimum score, and theme cap.')">i</button></div></div>
-      <div id="actionBlocks"><div class="note">Loading action engine…</div></div>
-      <div class="note" id="actionNote" style="margin-top:8px">Waiting on ranked candidates…</div>
-    </div>
-    <div class="card">
-      <div class="cardTitle"><div class="titleLeft"><h2>#2 Campaign Snapshot</h2><button class="mini" onclick="alert('High-level campaign status: mode, readiness, risk, and deploy posture.')">i</button></div><div class="heroDate" id="heroDate">—</div></div>
-      <div class="heroValue" id="heroStatus">Lean engine online</div>
-      <div class="heroMeta" id="heroMeta"></div>
-      <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:8px;">
-    <div class="cardTitle"><div class="titleLeft"><h3>#3 Budget</h3><button class="mini" onclick="alert('Monthly budget, used, remaining, and today deploy compressed into one view.')">i</button></div></div>
-    <div class="budgetGrid">
-      <div class="budgetBox"><div class="cubeLabel">Monthly</div><div class="cubeValue" id="budgetMonthly">$1,000</div></div>
-      <div class="budgetBox" style="border-color:rgba(34,197,94,.25);background:rgba(34,197,94,.10)"><div class="cubeLabel">Used</div><div class="cubeValue" id="budgetUsed">$0</div></div>
-      <div class="budgetBox" style="border-color:rgba(59,130,246,.25);background:rgba(59,130,246,.10)"><div class="cubeLabel">Remaining</div><div class="cubeValue" id="budgetRemaining">$1,000</div></div>
-      <div class="budgetBox" style="border-color:rgba(245,158,11,.25);background:rgba(245,158,11,.10)"><div class="cubeLabel">Today Deploy</div><div class="cubeValue" id="budgetToday">$0</div></div>
-    </div>
-    <div class="budgetProgress"><div class="budgetProgressFill" id="budgetProgressFill"></div></div>
-    <div class="note" id="budgetNote" style="margin-top:8px">Waiting for budget feed…</div>
-  </div>
-
-  <div class="card" style="margin-bottom:8px;">
-    <div class="cardTitle"><div class="titleLeft"><h3>#4 Status Strip</h3><button class="mini" onclick="alert('Fast-glance traffic lights for ready, risk, value, auto deploy, min score, theme cap, lean delta, and agg delta.')">i</button></div></div>
-    <div class="strip">
-      <div class="pill"><span class="dot g"></span>READY <strong id="readyPct">63%</strong></div>
-      <div class="pill"><span class="dot y"></span>RISK <strong id="riskPct">39%</strong></div>
-      <div class="pill"><span class="dot b"></span>VALUE <strong id="valueTxt">$19,217.09</strong></div>
-      <div class="pill"><span class="dot b"></span>AUTO DEPLOY <strong id="autoDeployPill">$0</strong></div>
-      <div class="pill"><span class="dot y"></span>MIN SCORE <strong id="minScorePill">75</strong></div>
-      <div class="pill"><span class="dot y"></span>THEME CAP <strong id="themeCapPill">30%</strong></div>
-      <div class="pill"><span class="dot g"></span>LEAN Δ <strong id="leanDelta">+0.89%</strong></div>
-      <div class="pill"><span class="dot r"></span>AGG Δ <strong id="aggDelta" class="neonRedText">+1.60%</strong></div>
-    </div>
-  </div>
-
-  <div class="card" style="margin-bottom:8px;">
-    <div class="cardTitle"><div class="titleLeft"><h3>#5 Holdings</h3><button class="mini" onclick="alert('Current holdings list. Click tickers for quick stats.')">i</button></div><div class="heroDate" id="holdingsCount">0 items</div></div>
-    <div class="scrollArea tallScroll" id="holdingsList"></div>
-  </div>
-
-  <div class="grid mainGrid">
-    <div class="leftRail">
-      <div class="card">
-        <div class="cardTitle"><div class="titleLeft"><h3>#6 Model Rules</h3></div></div>
-        <div class="cubeGrid">
-          <div class="cube"><div class="cubeLabel">Min Score To Trade</div><div class="cubeValue" id="minScoreVal">75</div></div>
-          <div class="cube"><div class="cubeLabel">Theme Cap</div><div class="cubeValue" id="themeCapVal">30%</div></div>
-          <div class="cube"><div class="cubeLabel">Weighting</div><div class="cubeValue" id="weightingVal">Formal</div></div>
-          <div class="cube"><div class="cubeLabel">Auto Deploy</div><div class="cubeValue" id="autoDeployVal">On</div></div>
+  <div class="wrap">
+    <div class="topbar">
+      <div class="titlebox">
+        <div>
+          <div class="title">Lean Terminal <span class="muted">v03 Compact</span></div>
+          <div class="sub">Compact operator layout • numbered pills • info icons • scrollable panels • red alert logic</div>
         </div>
       </div>
-
-      <div class="card" style="margin-top:8px;">
-        <div class="cardTitle"><div class="titleLeft"><h3>#7 Math Layer</h3></div></div>
-        <div class="cubeGrid">
-          <div class="cube"><div class="cubeLabel">Score Formula</div><div class="cubeValue">S+R+N-P</div></div>
-          <div class="cube"><div class="cubeLabel">Tape Weather</div><div class="cubeValue" id="volLayerVal">wobbly</div></div>
-          <div class="cube"><div class="cubeLabel">Sharpe</div><div class="cubeValue" id="sharpeVal">2.90</div></div>
-          <div class="cube"><div class="cubeLabel">Theme Pressure</div><div class="cubeValue" id="themePressureVal">OK</div></div>
-        </div>
-      </div>
+      <div class="chiprow" id="statusStrip"></div>
     </div>
 
-    <div class="centerRail">
-
-      <div class="midPair">
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>#8 Performance</h3></div></div>
-          <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div>
-          <div class="chartMeta" id="perfMeta"></div>
+    <div class="grid">
+      <section class="card span-9" id="card1">
+        <div class="head">
+          <div class="headL"><div class="n">1</div><div class="hTitle">ACTION ENGINE</div><div class="info" title="Horse-race model. Buy highest-ranked qualified names. Sell weaker names or rule-breakers.">i</div></div>
+          <div class="pillline"><span class="badge" id="modeBadge">MODE: LEAN</span><span class="badge" id="planBadge">PLAN: LEAN</span><span class="badge">MIN SCORE: 75</span></div>
         </div>
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>#9 Spider Radar</h3></div></div>
-          <div class="radarGrid">
-            <svg viewBox="0 0 220 220" style="height:185px">
-              <polygon points="110,20 182,66 155,154 65,154 38,66" fill="rgba(34,197,94,0.18)" stroke="#22c55e" stroke-width="2"></polygon>
-              <polygon points="110,40 162,78 142,138 78,138 58,78" fill="rgba(96,165,250,0.18)" stroke="#60a5fa" stroke-width="2"></polygon>
-            </svg>
-            <div class="radarLegend">
-              <div class="legendPill"><span class="dot g"></span>Lean</div>
-              <div class="legendPill"><span class="dot b"></span>SPY</div>
-              <div class="legendPill"><span class="dot r"></span>AGG hotter</div>
+        <div class="body">
+          <div class="toolbar">
+            <button id="refreshBtn">Refresh</button>
+            <button id="toggleModeBtn">Toggle Mode</button>
+            <button id="toggleConfigBtn">Config</button>
+          </div>
+          <div id="actionWarnings"></div>
+          <div class="two" style="margin-top:8px">
+            <div>
+              <div class="muted small" style="margin-bottom:6px">BUY CANDIDATES</div>
+              <div id="buyList" class="list scroll-240"></div>
+            </div>
+            <div>
+              <div class="muted small" style="margin-bottom:6px">SELL / REVIEW</div>
+              <div id="sellList" class="list scroll-240"></div>
             </div>
           </div>
         </div>
-      </div>
+      </section>
 
-      <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#10 Leader Board</h3></div></div><div class="table"><div class="scrollArea" id="scoreboardWrap"></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#11 Recent Moves</h3></div></div><div class="table"><div class="scrollArea" style="max-height:155px"><table class="recentTable"><thead><tr><th>Date</th><th>Mode</th><th>Action</th><th>Ticker</th><th>Amount</th></tr></thead><tbody id="recentMovesBody"></tbody></table></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#12 Theme Exposure</h3></div></div><div class="table"><div class="scrollArea" id="themeWrap"></div></div></div>
-      </div>
+      <section class="card span-3" id="card2">
+        <div class="head">
+          <div class="headL"><div class="n">2</div><div class="hTitle">CAMPAIGN SNAPSHOT</div><div class="info" title="Fast read of posture, score, and deploy status.">i</div></div>
+          <span class="badge" id="healthBadge">HEALTH</span>
+        </div>
+        <div class="body">
+          <div class="kpis">
+            <div class="mini"><div class="label">READY</div><div class="value" id="readyVal">--</div></div>
+            <div class="mini"><div class="label">RISK</div><div class="value" id="riskVal">--</div></div>
+            <div class="mini"><div class="label">QUALIFIED</div><div class="value" id="qualifiedVal">--</div></div>
+            <div class="mini"><div class="label">BUDGET</div><div class="value" id="budgetVal">--</div></div>
+          </div>
+          <div style="margin-top:10px" class="pillline">
+            <span class="badge">THEME CAP LEAN: 30%</span>
+            <span class="badge">THEME CAP AGG: 50%</span>
+            <span class="badge">AUTO DEPLOY: ON</span>
+          </div>
+        </div>
+      </section>
 
-      <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#13 Warnings</h3></div></div><div id="warningsList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#14 Health</h3><button class="mini" onclick="alert('Quick health check: Lean vs Agg vs market baselines.')">i</button></div></div><div id="healthList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#15 Radar Pulse</h3></div></div><div class="table"><div class="scrollArea" id="shockRadarWrap"></div></div></div>
-      </div>
+      <section class="card span-4" id="card3">
+        <div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">HOLDINGS</div><div class="info" title="Current positions. Compact sizing with internal scroll so it does not eat screen space.">i</div></div><span class="badge" id="holdingCount">0 ITEMS</span></div>
+        <div class="body"><div id="holdingsList" class="list scroll-300"></div></div>
+      </section>
+
+      <section class="card span-4" id="card4">
+        <div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">LEADER BOARD</div><div class="info" title="Ranked watchlist / ranking export. Above 75 qualifies.">i</div></div><span class="badge" id="leaderCount">0 NAMES</span></div>
+        <div class="body">
+          <div class="toolbar">
+            <select id="sortRank">
+              <option value="score">Sort: Score</option>
+              <option value="ticker">Sort: Ticker</option>
+              <option value="change">Sort: Change</option>
+            </select>
+          </div>
+          <div id="leaderList" class="list scroll-300"></div>
+        </div>
+      </section>
+
+      <section class="card span-4" id="card5">
+        <div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">RADAR PULSE</div><div class="info" title="Radar list with scroll and sort. Designed to surface hot names fast.">i</div></div><span class="badge" id="radarCount">0 RADAR</span></div>
+        <div class="body">
+          <div class="toolbar">
+            <select id="sortRadar">
+              <option value="gain">Sort: Today's Gain</option>
+              <option value="ticker">Sort: Name</option>
+              <option value="price">Sort: Price</option>
+            </select>
+          </div>
+          <div id="radarList" class="list scroll-300"></div>
+        </div>
+      </section>
+
+      <section class="card span-3" id="card6">
+        <div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">WARNINGS</div><div class="info" title="Red means stop and review. Yellow means caution.">i</div></div></div>
+        <div class="body"><div id="warningList" class="list"></div></div>
+      </section>
+
+      <section class="card span-3" id="card7">
+        <div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">PERFORMANCE</div><div class="info" title="Quick path check against simple baselines if performance feed is available.">i</div></div></div>
+        <div class="body">
+          <div class="kpis">
+            <div class="mini"><div class="label">PORTFOLIO</div><div class="value" id="perfPortfolio">--</div></div>
+            <div class="mini"><div class="label">SPY</div><div class="value" id="perfSpy">--</div></div>
+            <div class="mini"><div class="label">QQQ</div><div class="value" id="perfQqq">--</div></div>
+            <div class="mini"><div class="label">ALPHA</div><div class="value" id="perfAlpha">--</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-3" id="card8">
+        <div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">THEME EXPOSURE</div><div class="info" title="Theme cap monitor. Important/critical themes turn red.">i</div></div></div>
+        <div class="body"><div id="themeList" class="list"></div></div>
+      </section>
+
+      <section class="card span-3" id="card9">
+        <div class="head"><div class="headL"><div class="n">9</div><div class="hTitle">MODEL RULES</div><div class="info" title="Locked system constraints.">i</div></div></div>
+        <div class="body">
+          <div class="list">
+            <div class="row"><div class="small">Min score to qualify</div><div class="ticker">75</div></div>
+            <div class="row"><div class="small">Theme cap (Lean / Agg)</div><div class="ticker">30% / 50%</div></div>
+            <div class="row"><div class="small">Action model</div><div class="ticker">Horse Race</div></div>
+            <div class="row"><div class="small">Execution tracking</div><div class="ticker">Per-Ticker Check</div></div>
+          </div>
+        </div>
+      </section>
+
+      <section class="card span-12 hidden" id="configCard">
+        <div class="head"><div class="headL"><div class="n">10</div><div class="hTitle">CONFIG</div><div class="info" title="Set CSV URLs once. They are saved in local storage.">i</div></div></div>
+        <div class="body">
+          <div class="list">
+            <div class="row"><div class="small mono">holdings_url</div><input id="cfgHoldings" style="width:70%" /></div>
+            <div class="row"><div class="small mono">ranking_url</div><input id="cfgRanking" style="width:70%" /></div>
+            <div class="row"><div class="small mono">system_url</div><input id="cfgSystem" style="width:70%" /></div>
+            <div class="row"><div class="small mono">performance_url</div><input id="cfgPerformance" style="width:70%" /></div>
+            <div class="row"><div class="small mono">radar_url</div><input id="cfgRadar" style="width:70%" /></div>
+            <div class="row"><div class="small mono">radar_results_url</div><input id="cfgRadarResults" style="width:70%" /></div>
+            <div class="toolbar"><button id="saveCfgBtn">Save Config</button></div>
+          </div>
+        </div>
+      </section>
     </div>
-
-    <div class="rightRail">
-      <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>#16 Guardrails</h3></div></div><div class="table"><div class="scrollArea" id="guardrailWrap"></div></div></div>
-    </div>
+    <div class="footer">Tip: keep this file as your compact operator build. Replace URLs in Config if a sheet gid changes.</div>
   </div>
 
-  <div class="footer" id="footerStamp">Restored base ready.</div>
-</div>
-
-<script>
-window.addEventListener("DOMContentLoaded", () => {
-  const LS_HOLDINGS="lean_holdings_csv_url";
-  const LS_BUDGET="lean_budget_csv_url";
-  const LS_TRADELOG="lean_tradelog_csv_url";
-  const LS_EXEC_URL="lean_exec_script_url";
-  const LS_AGGRESSIVE="lean_aggressive_mode";
-  const LS_RADAR="lean_radar_csv_url";
-
-  const DEFAULT_HOLDINGS="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=821391699&single=true&output=csv";
-  const DEFAULT_BUDGET="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=215007649&single=true&output=csv";
-  const DEFAULT_TRADELOG="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=1934871988&single=true&output=csv";
-  const DEFAULT_EXEC_URL="https://script.google.com/macros/s/AKfycbxEwsBVHCYMwtrRpam0DA70aLCLkvH3M5T2G_K-keqGe7YvXXuBGD4SKxMYPXh8vguudA/exec";
-  const DEFAULT_RADAR="https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv";
-
-  const MIN_SCORE_TO_TRADE = 75;
-  const MAX_THEME_EXPOSURE_PCT = 30;
-  const FORMAL_WEIGHTS = { strength: 0.35, radar: 0.25, network: 0.20, correlationPenalty: 0.15, priority: 0.05 };
-
-  const $ = s => document.querySelector(s);
-  let timer = null;
-  let latestView = null;
-
-  $("#refreshBtn").addEventListener("click", loadAll);
-  $("#settingsBtn").addEventListener("click", openSettings);
-  $("#aggressiveToggle").addEventListener("click", toggleAggressive);
-
-  function startClock(){ if(timer) clearInterval(timer); tickClock(); timer=setInterval(tickClock,1000); }
-  function tickClock(){ $("#clockNow").textContent=new Date().toLocaleTimeString(); }
-
-  function openSettings(){
-    const h = prompt("Holdings CSV URL", localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS);
-    if(h !== null && h.trim()) localStorage.setItem(LS_HOLDINGS, h.trim());
-    const b = prompt("Budget CSV URL", localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET);
-    if(b !== null && b.trim()) localStorage.setItem(LS_BUDGET, b.trim());
-    const t = prompt("Trade Log CSV URL", localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG);
-    if(t !== null && t.trim()) localStorage.setItem(LS_TRADELOG, t.trim());
-    const e = prompt("Execute Script URL", localStorage.getItem(LS_EXEC_URL) || DEFAULT_EXEC_URL);
-    if(e !== null && e.trim()) localStorage.setItem(LS_EXEC_URL, e.trim());
-    const r = prompt("Radar CSV URL", localStorage.getItem(LS_RADAR) || DEFAULT_RADAR);
-    if(r !== null && r.trim()) localStorage.setItem(LS_RADAR, r.trim());
-    loadAll();
-  }
-
-  function isAggressive(){ return localStorage.getItem(LS_AGGRESSIVE) === "1"; }
-  function toggleAggressive(){ localStorage.setItem(LS_AGGRESSIVE, isAggressive() ? "0" : "1"); applyAggressiveUI(); loadAll(); }
-  function applyAggressiveUI(){ const on=isAggressive(); $("#aggressiveToggle").textContent=`AGG: ${on?"ON":"OFF"}`; $("#aggressiveToggle").classList.toggle("active",on); }
-
-  function getHoldingsUrl(){ return localStorage.getItem(LS_HOLDINGS) || DEFAULT_HOLDINGS; }
-  function getBudgetUrl(){ return localStorage.getItem(LS_BUDGET) || DEFAULT_BUDGET; }
-  function getTradeLogUrl(){ return localStorage.getItem(LS_TRADELOG) || DEFAULT_TRADELOG; }
-  function getRadarUrl(){ return localStorage.getItem(LS_RADAR) || DEFAULT_RADAR; }
-  function getExecUrl(){ return localStorage.getItem(LS_EXEC_URL) || DEFAULT_EXEC_URL; }
-
-  async function loadAll(){
-    try{
-      const [holdingsRows,budgetRows,tradeRows,radarRows] = await Promise.all([
-        fetchCsvRows(getHoldingsUrl()),
-        fetchCsvRows(getBudgetUrl()),
-        fetchCsvRows(getTradeLogUrl()),
-        fetchCsvRows(getRadarUrl())
-      ]);
-      const view = buildView(holdingsRows,budgetRows,tradeRows,radarRows,isAggressive());
-      latestView = view;
-      renderAll(view);
-      $("#updatedChip").textContent = `LAST UPDATED: ${new Date().toLocaleTimeString()}`;
-      $("#footerStamp").textContent = `Restored base updated ${new Date().toLocaleString()} • internal ranking engine live`;
-    }catch(err){
-      console.error(err);
-      $("#footerStamp").textContent = `Load issue: ${err.message || err}`;
-    }
-  }
-
-  async function fetchCsvRows(url){
-    const res = await fetch(url + (url.includes("?") ? "&" : "?") + "_ts=" + Date.now(), {cache:"no-store"});
-    if(!res.ok) throw new Error(`HTTP ${res.status} on ${url}`);
-    return parseCsv(await res.text());
-  }
-
-  function parseCsv(text){
-    const rows=[]; let row=[], cell="", q=false;
-    for(let i=0;i<text.length;i++){
-      const ch=text[i], nx=text[i+1];
-      if(q){
-        if(ch === '"' && nx === '"'){ cell += '"'; i++; }
-        else if(ch === '"'){ q=false; }
-        else cell += ch;
-      }else{
-        if(ch === '"') q=true;
-        else if(ch === ","){ row.push(cell); cell=""; }
-        else if(ch === "\n"){ row.push(cell); rows.push(row); row=[]; cell=""; }
-        else if(ch !== "\r"){ cell += ch; }
-      }
-    }
-    if(cell.length || row.length){ row.push(cell); rows.push(row); }
-    if(!rows.length) return [];
-    const headers = rows[0].map(norm);
-    return rows.slice(1).filter(r => r.some(v => String(v||"").trim() !== "")).map(r => {
-      const o={}; headers.forEach((h,i)=>o[h]=(r[i] ?? "").trim()); return o;
-    });
-  }
-
-  function norm(s){ return String(s||"").trim().toLowerCase().replace(/\s+/g,"_").replace(/[^\w]/g,"_").replace(/_+/g,"_").replace(/^_|_$/g,""); }
-  function pick(o, keys){ for(const key of keys){ const k=norm(key); if(o && o[k] != null && String(o[k]).trim() !== "") return String(o[k]).trim(); } return ""; }
-  function num(v, fallback=0){ const m=String(v??"").replace(/,/g,"").match(/-?\d+(\.\d+)?/); return m ? Number(m[0]) : fallback; }
-  function money(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:0,maximumFractionDigits:0}); }
-  function money2(v){ return Number(v||0).toLocaleString(undefined,{style:"currency",currency:"USD",minimumFractionDigits:2,maximumFractionDigits:2}); }
-  function pct(v){ return `${Number(v||0).toFixed(1)}%`; }
-  function clamp(n,min,max){ return Math.max(min, Math.min(max, n)); }
-  function uniq(arr){ return [...new Set(arr)]; }
-  function compact(arr){ return arr.filter(Boolean); }
-
-  function toneClass(v){
-    const s=String(v||"").toLowerCase();
-    if(s.includes("+")||s.includes("go")||s.includes("safe")||s.includes("green")||s.includes("high")||s.includes("strong")||s.includes("pass")) return "greenText";
-    if(s.includes("-")||s.includes("red")||s.includes("avoid")||s.includes("weak")||s.includes("sell")||s.includes("fail")) return "redText";
-    if(s.includes("watch")||s.includes("wobbly")||s.includes("controlled")||s.includes("hold")||s.includes("med")) return "yellowText";
-    return "blueText";
-  }
-
-  function mapHolding(r){
-    return {
-      ticker: pick(r,["ticker","symbol"]) || "—",
-      name: pick(r,["name","role","company","description","asset"]) || "—",
-      weight: pick(r,["weight"]) || "",
-      signal: pick(r,["signal"]) || "—",
-      change: pick(r,["change","day_change","helper"]) || "—",
-      radar: pick(r,["radar"]) || "NO",
-      strength: pick(r,["strength"]) || "LOW",
-      network: pick(r,["network"]) || "None",
-      correlation: pick(r,["correlation"]) || "MED",
-      priority: pick(r,["priority"]) || "3",
-      price: pick(r,["price","last","current_price"]) || "—",
-      weightNum: num(pick(r,["weight"]),0)
+  <script>
+    const LS = {
+      mode: 'lean_mode',
+      holdings: 'lean_holdings_csv_url',
+      ranking: 'lean_ranking_csv_url',
+      system: 'lean_system_csv_url',
+      performance: 'lean_performance_csv_url',
+      radar: 'lean_radar_csv_url',
+      radarResults: 'lean_radar_results_csv_url'
     };
-  }
 
-  function inferCash(holdings){
-    const cashRow = holdings.find(h => /sgov|cash/i.test(`${h.ticker} ${h.name}`));
-    return cashRow ? hPct(cashRow.weight) : 85.1;
-  }
-
-  function hPct(v){ return num(v,0); }
-
-  function getBudgetState(rows, agg){
-    const row = rows[0] || {};
-    const monthly = num(pick(row,["monthly_budget"]), 1000);
-    const used = num(pick(row,["used_to_date"]), 0);
-    const remaining = num(pick(row,["remaining"]), Math.max(monthly-used,0));
-    const todayDeployRaw = num(pick(row,["today_deploy"]), 0);
-    const mode = pick(row,["mode"]) || (agg ? "AGG" : "LEAN");
-    const note = pick(row,["notes"]) || "waiting for first signal";
-    return { monthly, used, remaining, todayDeployRaw, mode, note, usedPct: monthly > 0 ? clamp((used/monthly)*100,0,100) : 0 };
-  }
-
-  function themeOf(h){
-    const n = String(h.network||"None");
-    return n || "None";
-  }
-
-  function themeExposure(holdings){
-    const exposure = {};
-    holdings.forEach(h => {
-      const t = themeOf(h);
-      const w = hPct(h.weight);
-      exposure[t] = (exposure[t] || 0) + w;
-    });
-    return Object.entries(exposure).sort((a,b)=>b[1]-a[1]).map(([theme,weight])=>[theme, pct(weight)]);
-  }
-
-  function rankCandidates(holdings){
-    const candidates = holdings.filter(h => !/sgov|cash/i.test(`${h.ticker} ${h.name}`));
-    const radarScore = v => ({HOT:100,YES:65,NO:0}[String(v).toUpperCase()] ?? 0);
-    const strengthScore = v => ({HIGH:100,MED:60,LOW:20}[String(v).toUpperCase()] ?? 20);
-    const networkScore = v => ({AI:100,DEFENSE:75,SPACE:65,ENERGY:40,INTERNATIONAL:25,NONE:0}[String(v).toUpperCase()] ?? 0);
-    const corrPenalty = v => ({LOW:0,MED:45,HIGH:100}[String(v).toUpperCase()] ?? 45);
-    const priorityScore = v => ({1:100,2:60,3:20}[String(v)] ?? 20);
-
-    return candidates.map(h => {
-      const raw =
-        strengthScore(h.strength) * FORMAL_WEIGHTS.strength +
-        radarScore(h.radar) * FORMAL_WEIGHTS.radar +
-        networkScore(h.network) * FORMAL_WEIGHTS.network -
-        corrPenalty(h.correlation) * FORMAL_WEIGHTS.correlationPenalty +
-        priorityScore(h.priority) * FORMAL_WEIGHTS.priority;
-
-      const sigBoost = /go|live/i.test(h.signal) ? 5 : /watch/i.test(h.signal) ? 0 : -3;
-      const finalScore = clamp(Math.round(raw + sigBoost), 0, 100);
-      return {...h, score: finalScore, price: h.price || '—', change: h.change || '—'};
-    }).sort((a,b)=>b.score-a.score);
-  }
-
-  function applyThemeCap(ranked, holdings){
-    const exposure = {};
-    holdings.forEach(h => {
-      const t = themeOf(h);
-      exposure[t] = (exposure[t] || 0) + hPct(h.weight);
-    });
-    return ranked.map(h => {
-      const t = themeOf(h);
-      const overCap = (exposure[t] || 0) >= MAX_THEME_EXPOSURE_PCT;
-      return {...h, themeBlocked: overCap};
-    });
-  }
-
-
-  function average(nums){ return nums.length ? nums.reduce((a,b)=>a+b,0)/nums.length : 0; }
-
-  function moveValue(v){
-    const n = num(String(v || "").replace("%",""), 0);
-    return Number.isFinite(n) ? n : 0;
-  }
-
-  function mapRadarRow(r){
-    return {
-      ticker: pick(r,["ticker"]) || "—",
-      theme: pick(r,["theme"]) || "—",
-      note: pick(r,["note"]) || "",
-      radar: (pick(r,["radar"]) || "NO").toUpperCase(),
-      strength: (pick(r,["strength"]) || "LOW").toUpperCase(),
-      priority: pick(r,["priority"]) || "3"
+    const DEFAULTS = {
+      holdings: localStorage.getItem(LS.holdings) || '',
+      ranking: localStorage.getItem(LS.ranking) || '',
+      system: localStorage.getItem(LS.system) || '',
+      performance: localStorage.getItem(LS.performance) || '',
+      radar: localStorage.getItem(LS.radar) || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv',
+      radarResults: localStorage.getItem(LS.radarResults) || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=922598618&single=true&output=csv'
     };
-  }
 
-  function radarPriorityScore(v){ return ({1:100,2:60,3:20}[String(v)] ?? 20); }
-  function radarHeatScore(v){ return ({HOT:100,YES:65,NO:0}[String(v).toUpperCase()] ?? 0); }
-  function radarStrengthScore(v){ return ({HIGH:100,MED:60,LOW:20}[String(v).toUpperCase()] ?? 20); }
+    let MODE = (localStorage.getItem(LS.mode) || 'LEAN').toUpperCase();
+    let DATA = { holdings:[], ranking:[], system:[], performance:[], radar:[], radarResults:[] };
 
-  function rankRadarCandidates(rows, rankedCore){
-    const coreMap = new Map((rankedCore || []).map(r => [r.ticker, r]));
-    return (rows || [])
-      .map(mapRadarRow)
-      .filter(r => r.ticker && r.ticker !== "—")
-      .map(r => {
-        const core = coreMap.get(r.ticker);
-        const coreScore = core ? core.score : 0;
-        const total =
-          radarHeatScore(r.radar) * 0.45 +
-          radarStrengthScore(r.strength) * 0.30 +
-          radarPriorityScore(r.priority) * 0.15 +
-          coreScore * 0.10;
-        return {...r, coreScore, radarScore: Math.round(clamp(total,0,100))};
-      })
-      .sort((a,b)=>b.radarScore-a.radarScore || Number(a.priority)-Number(b.priority));
-  }
-
-  function computeReadyRisk(actions, themePressure){
-    const top3 = (actions.ranked || []).slice(0,3);
-    const avgTop = average(top3.map(x => x.score || 0));
-    const posMoves = top3.filter(x => moveValue(x.change) > 0).length;
-    const negativeHeat = top3.some(x => moveValue(x.change) < -1);
-    let ready = clamp(Math.round(avgTop + posMoves * 4 - (negativeHeat ? 8 : 0)), 35, 95);
-    let risk = clamp(Math.round(100 - ready + (themePressure === "Capped" ? 10 : 0)), 15, 80);
-    return {ready, risk};
-  }
-
-  function getAggModeAdvanced(actions, ready, risk){
-    const ranked = actions.ranked || [];
-    const top3 = ranked.slice(0,3);
-    const strong = ranked.filter(x => x.score >= 85 && !x.themeBlocked);
-    const qualified = ranked.filter(x => x.score >= MIN_SCORE_TO_TRADE && !x.themeBlocked);
-    const avgTop = average(top3.map(x => x.score || 0));
-    const themes = [...new Set(top3.map(x => x.network).filter(Boolean))];
-    const marketQuality = avgTop >= 80 && themes.length >= 2;
-    const momentum = top3.filter(x => moveValue(x.change) > 0).length >= 2 && !top3.some(x => moveValue(x.change) < -1);
-    const heatBlock = strong.filter(x => x.score >= 90 && moveValue(x.change) >= 4).length >= 2;
-
-    if(risk > 60) return "PASS";
-    if(ready >= 78 && risk <= 40 && strong.length >= 2 && marketQuality && momentum && !heatBlock){
-      if(ready >= 85 && strong.length >= 3) return "FULL_TIER2";
-      return "FULL";
-    }
-    if(ready >= 65 && risk <= 55 && qualified.length >= 1) return "DRIP";
-    return "PASS";
-  }
-
-  function getDeployForMode(mode, budgetRemaining, agg){
-    if(!agg){
-      return Math.min(125, budgetRemaining);
-    }
-    if(mode === "FULL_TIER2") return Math.min(350, budgetRemaining);
-    if(mode === "FULL") return Math.min(200, budgetRemaining);
-    if(mode === "DRIP") return Math.min(50, budgetRemaining);
-    return 0;
-  }
-
-  function buildActions(holdings, budget, agg, aggMode){
-    const ranked0 = rankCandidates(holdings);
-    const ranked = applyThemeCap(ranked0, holdings);
-    const qualified = ranked.filter(h => h.score >= MIN_SCORE_TO_TRADE && !h.themeBlocked);
-    const top = qualified[0] || null;
-    const second = qualified[1] || null;
-    const hold = ranked.find(h => h.score >= 60 && h.score < MIN_SCORE_TO_TRADE) || ranked[2] || null;
-    const avoid = ranked.slice().reverse()[0] || null;
-    const trim = ranked.find(h => /xle/i.test(h.ticker)) || avoid || null;
-
-    const deploy = getDeployForMode(aggMode, budget.remaining, agg);
-    const topAmt = top ? Math.round(deploy * 0.65) : 0;
-    const secondAmt = second ? deploy - topAmt : 0;
-    const trimAmt = agg ? 50 : 25;
-    const pass = deploy === 0 || !top;
-
-    return { ranked, qualified, top, second, hold, avoid, trim, deploy, topAmt, secondAmt, trimAmt, pass };
-  }
-
-  function buildRadarBuckets(radarCandidates){
-    const hot = radarCandidates.filter(r => r.radar === "HOT").slice(0,5);
-    const hold = radarCandidates.filter(r => r.radar === "YES").slice(0,5);
-    let cold = radarCandidates.filter(r => r.radar === "NO" || r.strength === "LOW").slice(0,5);
-    if(!cold.length) cold = radarCandidates.slice(-5).reverse();
-    return {hot, hold, cold};
-  }
-
-  function buildView(holdingsRows,budgetRows,tradeRows,radarRows,agg){
-    const holdings = holdingsRows.map(mapHolding);
-    const budget = getBudgetState(budgetRows, agg);
-
-    const preActions = buildActions(holdings, budget, agg, agg ? "DRIP" : "LEAN");
-    const themeRows = themeExposure(holdings);
-    const themePressure = themeRows.some(r => num(r[1]) >= MAX_THEME_EXPOSURE_PCT) ? "Capped" : "OK";
-    const rr = computeReadyRisk(preActions, themePressure);
-    const aggMode = getAggModeAdvanced(preActions, rr.ready, rr.risk);
-    const actions = buildActions(holdings, budget, agg, agg ? aggMode : "LEAN");
-    const ready = rr.ready;
-    const risk = rr.risk;
-
-    const radarCandidates = rankRadarCandidates(radarRows || [], actions.ranked);
-    const radarBuckets = buildRadarBuckets(radarCandidates);
-    let radarBudget = 0;
-    if(agg && aggMode === "FULL_TIER2") radarBudget = Math.min(75, Math.round(budget.remaining * 0.20));
-    else if(agg && aggMode === "FULL") radarBudget = Math.min(50, Math.round(budget.remaining * 0.15));
-    else if(agg && aggMode === "DRIP") radarBudget = Math.min(25, Math.round(budget.remaining * 0.10));
-
-    const radarPick = (agg && aggMode !== "PASS") ? radarCandidates.find(r => r.radar === "HOT" && (r.strength === "HIGH" || r.strength === "MED")) || radarCandidates[0] || null : null;
-    const radarAmount = radarPick ? radarBudget : 0;
-    const radarAction = !radarPick ? "WATCH" : radarAmount > 0 ? "DEPLOYED" : "CANDIDATE";
-    const radarLogPreview = radarCandidates.slice(0,3).map(r => ({
-      date: new Date().toISOString().slice(0,10),
-      ticker: r.ticker,
-      theme: r.theme,
-      radar: r.radar,
-      strength: r.strength,
-      priority: r.priority,
-      mode: agg ? aggMode : "LEAN",
-      score: r.radarScore,
-      radarAction: r.ticker === (radarPick && radarPick.ticker) ? radarAction : "WATCH",
-      deployAmount: r.ticker === (radarPick && radarPick.ticker) ? radarAmount : 0
-    }));
-
-    const cashPct = inferCash(holdings);
-    const portfolioValue = holdings.reduce((sum,h)=>sum + ((h.weightNum || 0) / 100), 0) > 0 ? "$19,217.09" : "$0";
-
-    return {
-      heroDate: new Date().toLocaleDateString(),
-      heroStatus: agg
-        ? (aggMode === "PASS" ? "AGG watching — no qualified deploy" : `Lean AGG ${aggMode.replace("_"," ")} engine online`)
-        : (actions.pass ? "Lean watching — no qualified deploy" : "Lean engine online"),
-      heroMeta: [agg ? `AGG ${aggMode.replace("_"," ")}` : "Lean", actions.pass ? "Hold Cash" : "Qualified", themePressure, radarPick ? `Radar ${radarPick.ticker}` : "Radar Waiting"],
-      readyPct: `${ready}%`,
-      riskPct: `${risk}%`,
-      valueTxt: portfolioValue,
-      autoDeployTxt: money(actions.deploy + radarAmount),
-      leanDelta: "+0.89%",
-      aggDelta: agg ? "+1.60%" : "+1.10%",
-      holdings, budget, actions, themeRows, themePressure, aggMode,
-      radarCandidates, radarBuckets, radarPick, radarAmount, radarAction, radarLogPreview,
-      recentMoves: tradeRows.slice(0,8).map(r => [pick(r,["date"]) || "—", pick(r,["mode"]) || "—", pick(r,["action"]) || "—", pick(r,["ticker"]) || "—", pick(r,["amount"]) || "—"]),
-      warnings: uniq(compact([
-        actions.pass ? "No trade: top score failed threshold, risk stayed high, or theme cap blocked it." : "",
-        themePressure === "Capped" ? "One or more themes are at or above cap." : "",
-        agg && aggMode === "FULL_TIER2" ? "Full throttle active. Respect trims and exits." : "",
-        radarPick ? `Radar active: ${radarPick.ticker} ${money(radarAmount)}.` : "Radar sleeve idle."
-      ])).slice(0,4),
-      health: [["Lean", "+0.89%"],["Agg", agg ? "+1.60%" : "+1.10%"],["Nasdaq", "+0.45%"],["S&P 500", "+0.40%"],["DJ", "+0.28%"]],
-      shockRadar: [
-        ["HOT", radarBuckets.hot.map(x => x.ticker).join(", ") || "—", radarBuckets.hot.length ? "GREEN" : "WATCH"],
-        ["HOLD", radarBuckets.hold.map(x => x.ticker).join(", ") || "—", radarBuckets.hold.length ? "WATCH" : "BLUE"],
-        ["COLD", radarBuckets.cold.map(x => x.ticker).join(", ") || "—", radarBuckets.cold.length ? "RED" : "BLUE"]
-      ],
-      guardrails: [["SGOV Nest", pct(cashPct)],["Active Exposure", pct(100-cashPct)],["Lean Capital", money2(19217.09*((100-cashPct)/100))],["AGG Mode", agg ? aggMode.replace("_"," ") : "Lean"],["Severity", actions.pass ? "High" : (agg ? "Moderate" : "Controlled")]],
-      perfMeta: [agg ? `AGG • ${aggMode.replace("_"," ")}` : "LEAN • Controlled","SPY • 0.40%","QQQ • 0.45%"],
-      performanceSeries: agg ? [100,100.35,100.15,100.42,101.05,101.28,101.62] : [100,100.2,100.05,100.01,100.85,100.86,101.02],
-      benchmarkSeries: [100,100.05,100.1,100.2,100.25,100.35,100.4]
+    const $ = (id) => document.getElementById(id);
+    const num = (v) => {
+      if (v === null || v === undefined || v === '') return NaN;
+      const n = parseFloat(String(v).replace(/[%,$]/g,'').replace(/,/g,''));
+      return Number.isFinite(n) ? n : NaN;
     };
-  }
+    const fmtPct = (v) => Number.isFinite(v) ? `${v>0?'+':''}${v.toFixed(1)}%` : '--';
+    const fmtNum = (v, d=0) => Number.isFinite(v) ? v.toFixed(d) : '--';
+    const fmtMoney = (v) => Number.isFinite(v) ? `$${Math.round(v).toLocaleString()}` : '--';
+    const clsForRisk = (v) => !Number.isFinite(v) ? '' : v >= 65 ? 'red' : v >= 40 ? 'yellow' : 'green';
+    const clsForReady = (v) => !Number.isFinite(v) ? '' : v >= 75 ? 'green' : v >= 60 ? 'yellow' : 'red';
 
-  async function executeTrade(action, item, amount){
-    if(!item || !item.ticker || amount <= 0){ alert("No valid trade to execute."); return; }
-    const payload = {
-      date: new Date().toISOString().slice(0,10),
-      mode: isAggressive() ? "AGG" : "LEAN",
-      action,
-      ticker: item.ticker,
-      amount: String(amount),
-      reason: "from terminal"
-    };
-    try{
-      const res = await fetch(getExecUrl(), {
-        method: "POST",
-        headers: {"Content-Type":"text/plain;charset=utf-8"},
-        body: JSON.stringify(payload)
+    function csvToRows(text){
+      const lines = text.trim().split(/\r?\n/).filter(Boolean);
+      if(!lines.length) return [];
+      const parseLine = (line) => {
+        const out=[]; let cur=''; let q=false;
+        for(let i=0;i<line.length;i++){
+          const ch=line[i], nx=line[i+1];
+          if(ch==='"'){
+            if(q && nx==='"'){cur+='"';i++;}
+            else q=!q;
+          } else if(ch===',' && !q){out.push(cur);cur='';}
+          else cur+=ch;
+        }
+        out.push(cur);
+        return out.map(s=>s.trim());
+      };
+      const headers = parseLine(lines[0]).map(h=>h.toLowerCase().replace(/\s+/g,'_'));
+      return lines.slice(1).map(line=>{
+        const vals = parseLine(line);
+        const obj={};
+        headers.forEach((h,i)=>obj[h]=vals[i] ?? '');
+        return obj;
       });
+    }
+
+    async function fetchCsv(url){
+      if(!url) return [];
+      const res = await fetch(url, { cache:'no-store' });
+      if(!res.ok) throw new Error(`Fetch failed: ${res.status}`);
       const txt = await res.text();
-      if(!res.ok || !String(txt).toLowerCase().includes("success")) throw new Error(txt || `HTTP ${res.status}`);
-      alert(`${action} logged: ${item.ticker} ${money(amount)}`);
-      setTimeout(loadAll, 1200);
-    }catch(err){
-      console.error(err);
-      alert(`Execute failed: ${err.message || err}`);
-    }
-  }
-
-  window.execTop = () => latestView && latestView.actions.top ? executeTrade("BUY", latestView.actions.top, latestView.actions.topAmt) : null;
-  window.execSecond = () => latestView && latestView.actions.second ? executeTrade("BUY", latestView.actions.second, latestView.actions.secondAmt) : null;
-  window.execTrim = () => latestView && latestView.actions.trim ? executeTrade("SELL", latestView.actions.trim, latestView.actions.trimAmt) : null;
-
-  function renderBudget(v){
-    const b = v.budget;
-    $("#budgetMonthly").textContent = money(b.monthly);
-    $("#budgetUsed").textContent = money(b.used);
-    $("#budgetRemaining").textContent = money(b.remaining);
-    $("#budgetToday").textContent = money(v.actions.deploy + (v.radarAmount || 0));
-    $("#budgetProgressFill").style.width = `${b.usedPct}%`;
-    $("#budgetNote").textContent = `${b.usedPct.toFixed(0)}% of monthly budget used. Core deploy: ${money(v.actions.deploy)}. Radar sleeve: ${money(v.radarAmount || 0)}.`;
-    $("#autoDeployPill").textContent = money(v.actions.deploy + (v.radarAmount || 0));
-  }
-
-  function actionBox(title,color,label,value,reason){
-    return `<div class="actionBox" style="border:1px solid ${color}33;background:${color}1a">
-      <div style="margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:${color}">${label}</div>
-      <div style="font-size:16px;font-weight:900;color:#fff">${title}${value ? ` → ${value}` : ""}</div>
-      <div style="margin-top:4px;font-size:11px;color:#cbd5e1">${reason}</div>
-    </div>`;
-  }
-
-
-  function renderActions(v){
-    const a = v.actions;
-    const radarBox = v.radarPick ? `
-      <div class="actionBox" style="border:1px solid rgba(167,139,250,.30);background:rgba(167,139,250,.12);margin-top:8px">
-        <div style="margin-bottom:4px;font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#c4b5fd">Radar • ${escapeHtml(v.aggMode.replace("_"," "))}</div>
-        <div style="font-size:16px;font-weight:900;color:#fff">${escapeHtml(v.radarPick.ticker)} → ${money(v.radarAmount)}</div>
-        <div style="margin-top:4px;font-size:11px;color:#cbd5e1">${escapeHtml(v.radarPick.theme)} • ${escapeHtml(v.radarPick.radar)} • ${escapeHtml(v.radarPick.strength)} • score ${v.radarPick.radarScore}</div>
-      </div>` : "";
-
-    if (a.pass){
-      $("#actionBlocks").innerHTML = `
-        <div class="actionSection">
-          <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-            <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG MODE</div>
-            <div class="mini">${escapeHtml(v.aggMode.replace("_"," "))}</div>
-          </div>
-          ${actionBox("No Buy Today","#f59e0b","Pass", "", `Top candidate did not clear min score ${MIN_SCORE_TO_TRADE}, risk stayed elevated, or theme cap ${MAX_THEME_EXPOSURE_PCT}% blocked it.`)}
-          <div class="actionGrid2" style="margin-top:8px">
-            ${actionBox(a.hold ? a.hold.ticker : "Watchlist","#fcd34d","Hold / Watch","", "Keep stalking. Do not force size in weak conditions.")}
-            ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Optional Trim", a.trim ? money(a.trimAmt) : "", a.trim ? `Only trim if you want to free room for a stronger future setup.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Only trim if you want to free room for a stronger future setup.")}
-          </div>
-          ${radarBox}
-        </div>`;
-      $("#actionNote").textContent = `System pass. AGG mode: ${v.aggMode.replace("_"," ")}. No qualified buy suggestion today.`;
-      return;
+      return csvToRows(txt);
     }
 
-    const lean = `
-      <div class="actionSection">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#cbd5e1">Lean Mode</div>
-          <div class="mini">Slower / cleaner</div>
-        </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(Math.round(a.deploy * 0.65)),`Cleared minimum score. Leader still clean, but Lean sizes smaller.<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
-        <div style="height:8px"></div>
-        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(Math.round(a.deploy * 0.35)) : "", a.second ? `Secondary trend if qualified and under theme cap.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend if qualified and under theme cap.")}
-        <div class="actionGrid3" style="margin-top:8px">
-          ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent structure. Keep it, don’t add yet.")}
-          ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Trim",a.trim ? money(25) : "", a.trim ? `Weak plus overlap. Small trim to free capital.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Weak plus overlap. Small trim to free capital.")}
-          ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Low score or theme blocked.")}
-        </div>
-      </div>`;
+    function safeTicker(r){
+      return r.ticker || r.symbol || r.name || r.asset || '—';
+    }
+    function scoreOf(r){
+      return num(r.score ?? r.total_score ?? r.rank_score ?? r.ready_score);
+    }
+    function changeOf(r){
+      return num(r.today_gain ?? r.gain_today ?? r.change_pct ?? r.change_percent ?? r.percent_change);
+    }
+    function priceOf(r){
+      return num(r.price ?? r.last ?? r.last_price);
+    }
+    function qtyOf(r){
+      return num(r.qty ?? r.shares ?? r.quantity);
+    }
+    function weightOf(r){
+      return num(r.weight ?? r.portfolio_weight ?? r.pct ?? r.percent);
+    }
+    function themeOf(r){
+      return r.theme || r.bucket || r.sector || 'General';
+    }
 
-    const agg = `
-      <div class="actionSection">
-        <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
-          <div style="font-size:10px;font-weight:700;text-transform:uppercase;letter-spacing:.08em;color:#fecdd3">AGG Mode</div>
-          <div class="mini" style="border-color:rgba(255,53,94,.30);color:#fecdd3">${escapeHtml(v.aggMode.replace("_"," "))}</div>
-        </div>
-        ${actionBox(a.top.ticker,"#22c55e","Top Pick",money(a.topAmt),`Strongest horse, cleared threshold, under cap. ${v.aggMode === "DRIP" ? "Drip sizing active." : "Pressure up while guardrails stay on."}<div style="margin-top:8px"><button class="btn exec" onclick="execTop()">EXECUTE TOP</button></div>`)}
-        <div style="height:8px"></div>
-        ${actionBox(a.second ? a.second.ticker : "No second","#60a5fa","Second",a.second ? money(a.secondAmt) : "", a.second ? `Secondary trend, cleared threshold, correlation still clean.<div style="margin-top:8px"><button class="btn exec" onclick="execSecond()">EXECUTE SECOND</button></div>` : "Secondary trend, cleared threshold, correlation still clean.")}
-        <div class="actionGrid3" style="margin-top:8px">
-          ${actionBox(a.hold ? a.hold.ticker : "None","#fcd34d","Hold","","Decent setup, just not top 2 today.")}
-          ${actionBox(a.trim ? `${a.trim.ticker} trim` : "No trim","#fb7185","Sell / Trim",a.trim ? money(a.trimAmt) : "", a.trim ? `Weak plus high overlap. Rotate that cash into stronger horses.<div style="margin-top:8px"><button class="btn exec trim" onclick="execTrim()">EXECUTE TRIM</button></div>` : "Weak plus high overlap. Rotate that cash into stronger horses.")}
-          ${actionBox(a.avoid ? a.avoid.ticker : "None","#ef4444","Avoid","","Failed threshold, theme capped, or weak ranking.")}
-        </div>
-        ${radarBox}
-      </div>`;
+    function renderStatus(){
+      const sys = DATA.system[0] || {};
+      const ready = num(sys.ready ?? sys.ready_score ?? averageScore(DATA.ranking));
+      const risk = num(sys.risk ?? sys.risk_score ?? inferredRisk());
+      const plan = (sys.plan || (risk >= 60 ? 'LEAN' : 'AGG')).toUpperCase();
+      $('modeBadge').textContent = `MODE: ${MODE}`;
+      $('planBadge').textContent = `PLAN: ${plan}`;
+      $('readyVal').innerHTML = `<span class="${clsForReady(ready)}">${fmtNum(ready)}</span>`;
+      $('riskVal').innerHTML = `<span class="${clsForRisk(risk)}">${fmtNum(risk)}</span>`;
+      $('qualifiedVal').textContent = DATA.ranking.filter(r => scoreOf(r) >= 75).length || '--';
+      $('budgetVal').textContent = fmtMoney(num(sys.budget ?? sys.cash_to_deploy ?? sys.deploy_budget));
+      const health = risk >= 65 ? 'ATTN' : ready >= 75 ? 'GOOD' : 'WATCH';
+      $('healthBadge').textContent = `HEALTH: ${health}`;
+      $('statusStrip').innerHTML = `
+        <span class="chip"><strong>READY</strong> <span class="${clsForReady(ready)}">${fmtNum(ready)}</span></span>
+        <span class="chip"><strong>RISK</strong> <span class="${clsForRisk(risk)}">${fmtNum(risk)}</span></span>
+        <span class="chip"><strong>PLAN</strong> ${plan}</span>
+        <span class="chip"><strong>MODE</strong> ${MODE}</span>
+      `;
+    }
 
-    $("#actionBlocks").innerHTML = `${lean}<div style="height:12px"></div>${agg}`;
-    $("#actionNote").textContent = `Formal weighting active. Min score: ${MIN_SCORE_TO_TRADE}. Theme cap: ${MAX_THEME_EXPOSURE_PCT}%. AGG mode: ${v.aggMode.replace("_"," ")}. Core deploy: ${money(a.deploy)}. Radar sleeve: ${money(v.radarAmount || 0)}.`;
-  }
+    function averageScore(rows){
+      const vals = rows.map(scoreOf).filter(Number.isFinite);
+      if(!vals.length) return NaN;
+      return vals.reduce((a,b)=>a+b,0)/vals.length;
+    }
+    function inferredRisk(){
+      const weak = DATA.ranking.filter(r => Number.isFinite(scoreOf(r)) && scoreOf(r) < 60).length;
+      const total = Math.max(DATA.ranking.length,1);
+      return Math.min(100, Math.round((weak/total)*100));
+    }
 
-  function renderAll(v){
-    $("#heroDate").textContent=v.heroDate;
-    $("#heroStatus").textContent=v.heroStatus;
-    $("#heroMeta").innerHTML=v.heroMeta.map(x=>`<div class="mini ${toneClass(x)}">${escapeHtml(x)}</div>`).join("");
-    $("#convictionFill").style.width=`${v.actions.pass ? 45 : 88}%`;
-    $("#readyPct").textContent=v.readyPct;
-    $("#riskPct").textContent=v.riskPct;
-    $("#valueTxt").textContent=v.valueTxt;
-    $("#leanDelta").textContent=v.leanDelta;
-    $("#aggDelta").textContent=v.aggDelta;
-    $("#minScoreVal").textContent = `${MIN_SCORE_TO_TRADE}`;
-    $("#minScorePill").textContent = `${MIN_SCORE_TO_TRADE}`;
-    $("#themeCapVal").textContent = `${MAX_THEME_EXPOSURE_PCT}%`;
-    $("#themeCapPill").textContent = `${MAX_THEME_EXPOSURE_PCT}%`;
-    $("#weightingVal").textContent = "0.35/0.25/0.20";
-    $("#autoDeployVal").textContent = v.actions.deploy > 0 ? "On" : "Pass";
-    $("#themePressureVal").textContent = v.themePressure;
+    function rowHtml(left, right, extra=''){
+      return `<div class="row ${extra}"><div class="rowL">${left}</div><div class="right">${right}</div></div>`;
+    }
 
-    renderBudget(v);
-    renderActions(v);
-    drawPerformanceChart("#perfSvg",v.performanceSeries,v.benchmarkSeries);
-    $("#perfMeta").innerHTML=v.perfMeta.map(x=>`<div class="mini">${escapeHtml(x)}</div>`).join("");
-    $("#scoreboardWrap").innerHTML = `
-      <div class="trow" style="grid-template-columns:40px 1fr 90px 90px 70px;font-weight:800;background:rgba(255,255,255,.03)">
-        <div class="tlabel">#</div><div class="tlabel">Ticker</div><div class="tlabel">+/-</div><div class="tlabel">Price</div><div class="tlabel">Score</div>
-      </div>
-    ` + v.actions.ranked.slice(0,8).map((r,i)=>`
-      <div class="trow" style="grid-template-columns:40px 1fr 90px 90px 70px">
-        <div class="tval">${i+1}</div>
-        <div class="tlabel"><button class="btn" style="padding:4px 8px;font-size:.72rem" onclick="showTicker(${JSON.stringify(r.ticker)})">${escapeHtml(r.ticker)}</button></div>
-        <div class="tval ${toneClass(r.change)}">${escapeHtml(r.change || "—")}</div>
-        <div class="tval">${escapeHtml(r.price || "—")}</div>
-        <div class="tval ${r.score >= MIN_SCORE_TO_TRADE && !r.themeBlocked ? "greenText" : "redText"}">${r.score}</div>
-      </div>
-    `).join("");
-    $("#recentMovesBody").innerHTML=v.recentMoves.map(r=>`<tr><td>${escapeHtml(r[0])}</td><td>${escapeHtml(r[1])}</td><td>${escapeHtml(r[2])}</td><td>${escapeHtml(r[3])}</td><td>${escapeHtml(r[4])}</td></tr>`).join("");
-    $("#themeWrap").innerHTML=v.themeRows.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${num(r[1]) >= MAX_THEME_EXPOSURE_PCT ? 'redText' : 'blueText'}">${escapeHtml(r[1])}</div></div>`).join("");
-    $("#warningsList").innerHTML=v.warnings.map(x=>`<div class="note" style="margin-bottom:7px">${escapeHtml(x)}</div>`).join("");
-    $("#healthList").innerHTML = v.health.map(r=>`<div class="trow" style="grid-template-columns:1fr auto"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("");
-    $("#shockRadarWrap").innerHTML=v.shockRadar.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])} — ${escapeHtml(r[1])}</div><div class="tval ${toneClass(r[2])}">${escapeHtml(r[2])}</div></div>`).join("");
-    if(v.radarLogPreview?.length){ console.log("RADAR TRACKING PREVIEW", v.radarLogPreview); }
-    $("#guardrailWrap").innerHTML=v.guardrails.map(r=>`<div class="trow"><div class="tlabel">${escapeHtml(r[0])}</div><div class="tval ${toneClass(r[1])}">${escapeHtml(r[1])}</div></div>`).join("");
-    renderHoldings(v.holdings);
-  }
+    function renderHoldings(){
+      const rows = DATA.holdings;
+      $('holdingCount').textContent = `${rows.length} ITEMS`;
+      if(!rows.length){ $('holdingsList').innerHTML = `<div class="warning">No holdings feed detected. Add your holdings CSV in Config.</div>`; return; }
+      $('holdingsList').innerHTML = rows.map(r => {
+        const t = safeTicker(r);
+        const ch = changeOf(r);
+        const w = weightOf(r);
+        const theme = themeOf(r);
+        return rowHtml(
+          `<div><div class="ticker">${t}</div><div class="small muted">${theme} • Qty ${fmtNum(qtyOf(r))} • Wt ${fmtPct(w)}</div></div>`,
+          `<div><div class="${ch>=0?'green':'red'} ticker">${fmtPct(ch)}</div><div class="small muted">${fmtMoney(priceOf(r))}</div></div>`
+        );
+      }).join('');
+    }
 
-  function renderHoldings(rows){
-    $("#holdingsCount").textContent = `${rows.length} items`;
-    if(!rows.length){ $("#holdingsList").innerHTML = `<div class="note">No holdings rows found.</div>`; return; }
-    $("#holdingsList").innerHTML = rows.map(h=>`<div class="holdingRow"><div class="holdingName"><button class="btn" style="padding:4px 8px;font-size:.72rem" onclick="showTicker(${JSON.stringify(h.ticker)})">${escapeHtml(h.ticker)}</button></div><div class="holdingSub">${escapeHtml(h.name||"—")}</div><div class="miniPill">${escapeHtml(h.weight||"—")}</div><div class="miniPill ${toneClass(h.signal)}">${escapeHtml(h.signal)}</div><div class="miniPill ${toneClass(h.change)}">${escapeHtml(h.change)}</div></div>`).join("");
-  }
+    function renderLeader(){
+      let rows = [...DATA.ranking];
+      const mode = $('sortRank').value;
+      rows.sort((a,b)=> mode==='ticker' ? safeTicker(a).localeCompare(safeTicker(b)) : mode==='change' ? (changeOf(b)-changeOf(a)) : (scoreOf(b)-scoreOf(a)) );
+      $('leaderCount').textContent = `${rows.length} NAMES`;
+      if(!rows.length){ $('leaderList').innerHTML = `<div class="warning">No ranking feed detected. Add ranking_export CSV in Config.</div>`; return; }
+      $('leaderList').innerHTML = rows.map((r,i)=>{
+        const t=safeTicker(r), s=scoreOf(r), ch=changeOf(r), qualify=s>=75;
+        return rowHtml(
+          `<div><div class="ticker">#${i+1} ${t}</div><div class="small muted">${qualify?'Qualified':'Watch'} • ${themeOf(r)}</div></div>`,
+          `<div><div class="ticker ${qualify?'green':'yellow'}">${fmtNum(s,1)}</div><div class="small ${ch>=0?'green':'red'}">${fmtPct(ch)}</div></div>`,
+          !qualify ? 'bg-yellow' : ''
+        );
+      }).join('');
+    }
 
-  function drawPerformanceChart(sel, leanSeries, benchSeries){
-    const svg=$(sel), width=1000, height=220, pad=40, values=leanSeries.concat(benchSeries), min=Math.min(...values), max=Math.max(...values), xStep=(width-pad*2)/(leanSeries.length-1||1), y=v=>max===min?height/2:height-pad-((v-min)/(max-min))*(height-pad*2);
-    const grid=[0,1,2,3].map(i=>{const gy=pad+i*((height-pad*2)/3);return `<line x1="${pad}" y1="${gy}" x2="${width-pad}" y2="${gy}" stroke="rgba(255,255,255,.08)" />`;}).join("");
-    const leanPath=leanSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");
-    const benchPath=benchSeries.map((v,i)=>`${i===0?"M":"L"} ${pad+i*xStep} ${y(v)}`).join(" ");
-    const lx=pad+(leanSeries.length-1)*xStep,ly=y(leanSeries[leanSeries.length-1]),by=y(benchSeries[benchSeries.length-1]);
-    svg.innerHTML=`<svg viewBox="0 0 ${width} ${height}" preserveAspectRatio="none">${grid}<path d="${leanPath}" fill="none" stroke="#22c55e" stroke-width="4" stroke-linecap="round" /><path d="${benchPath}" fill="none" stroke="#60a5fa" stroke-width="4" stroke-linecap="round" /><text x="${lx-55}" y="${ly-8}" fill="#22c55e" font-size="14" font-weight="800">LEAN</text><text x="${lx-45}" y="${by-8}" fill="#60a5fa" font-size="14" font-weight="800">SPY</text></svg>`;
-  }
+    function renderRadar(){
+      let rows = DATA.radarResults.length ? [...DATA.radarResults] : [...DATA.radar];
+      const mode = $('sortRadar').value;
+      rows.sort((a,b)=> mode==='ticker' ? safeTicker(a).localeCompare(safeTicker(b)) : mode==='price' ? (priceOf(b)-priceOf(a)) : (changeOf(b)-changeOf(a)) );
+      $('radarCount').textContent = `${rows.length} RADAR`;
+      if(!rows.length){ $('radarList').innerHTML = `<div class="warning">No radar feed detected. Radar URLs are preloaded from your saved links.</div>`; return; }
+      $('radarList').innerHTML = rows.map(r => {
+        const t=safeTicker(r), ch=changeOf(r), p=priceOf(r);
+        return rowHtml(
+          `<div><div class="ticker">${t}</div><div class="small muted">${themeOf(r)}</div></div>`,
+          `<div><div class="${ch>=0?'green':'red'} ticker">${fmtPct(ch)}</div><div class="small muted">${fmtMoney(p)}</div></div>`
+        );
+      }).join('');
+    }
 
-  function escapeHtml(str){ return String(str??"").replaceAll("&","&amp;").replaceAll("<","&lt;").replaceAll(">","&gt;").replaceAll('"',"&quot;").replaceAll("'","&#39;"); }
+    function renderTheme(){
+      const caps = MODE === 'AGG' ? 50 : 30;
+      const map = new Map();
+      DATA.holdings.forEach(r => {
+        const th = themeOf(r); const w = weightOf(r);
+        map.set(th, (map.get(th)||0) + (Number.isFinite(w) ? w : 0));
+      });
+      const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]);
+      if(!rows.length){ $('themeList').innerHTML = `<div class="warning">No theme exposure yet.</div>`; return; }
+      $('themeList').innerHTML = rows.map(([th,w]) => rowHtml(
+        `<div><div class="ticker">${th}</div><div class="small muted">Cap ${caps}%</div></div>`,
+        `<div class="ticker ${w>caps?'red':w>caps*0.85?'yellow':'green'}">${fmtPct(w)}</div>`,
+        w>caps ? 'bg-red' : w>caps*0.85 ? 'bg-yellow' : ''
+      )).join('');
+    }
 
-  window.showTicker = function(ticker){
-    if(!latestView || !latestView.holdings) return;
-    const row = latestView.holdings.find(h => h.ticker === ticker) || {};
-    const ranked = latestView.actions?.ranked?.find(r => r.ticker === ticker) || {};
-    const radar = latestView.radarCandidates?.find(r => r.ticker === ticker) || {};
-    alert(`${ticker}
+    function renderWarnings(){
+      const warnings = [];
+      const sys = DATA.system[0] || {};
+      const risk = num(sys.risk ?? sys.risk_score ?? inferredRisk());
+      const ready = num(sys.ready ?? sys.ready_score ?? averageScore(DATA.ranking));
+      if(!DATA.holdings.length) warnings.push(['Holdings feed missing', 'Add holdings CSV URL in Config', 'red']);
+      if(!DATA.ranking.length) warnings.push(['Ranking feed missing', 'Add ranking CSV URL in Config', 'red']);
+      if(risk >= 65) warnings.push(['Risk elevated', 'System danger score is high — tighten posture', 'red']);
+      if(Number.isFinite(ready) && ready < 60) warnings.push(['Ready weak', 'Few setups are clearing your floor', 'yellow']);
+      const cap = MODE === 'AGG' ? 50 : 30;
+      const themeBreaches = [...new Set(DATA.holdings.filter(r => weightOf(r) > cap).map(themeOf))];
+      if(themeBreaches.length) warnings.push(['Theme cap breach', themeBreaches.join(', '), 'red']);
+      if(!warnings.length) warnings.push(['All clear', 'No major rule breaks detected', 'green']);
+      $('warningList').innerHTML = warnings.map(([a,b,c]) => `<div class="${c==='red'?'warning':c==='yellow'?'warning':'ok'}"><strong>${a}</strong><div class="small">${b}</div></div>`).join('');
+      if(warnings.some(w=>w[2]==='red')) $('card6').classList.add('bg-red'); else $('card6').classList.remove('bg-red');
+    }
 
-Name: ${row.name || "—"}
-Weight: ${row.weight || "—"}
-Signal: ${row.signal || "—"}
-Move: ${row.change || "—"}
-Price: ${row.price || "—"}
-Radar: ${row.radar || "—"}
-Strength: ${row.strength || "—"}
-Network: ${row.network || "—"}
-Correlation: ${row.correlation || "—"}
-Priority: ${row.priority || "—"}
-Score: ${ranked.score ?? "—"}
-Radar Score: ${radar.radarScore ?? "—"}`);
-  };
+    function renderPerformance(){
+      const p = DATA.performance[0] || {};
+      const port = num(p.portfolio ?? p.port_return ?? p.return);
+      const spy = num(p.spy ?? p.spy_return);
+      const qqq = num(p.qqq ?? p.qqq_return);
+      $('perfPortfolio').innerHTML = `<span class="${port>=0?'green':'red'}">${fmtPct(port)}</span>`;
+      $('perfSpy').innerHTML = `<span class="${spy>=0?'green':'red'}">${fmtPct(spy)}</span>`;
+      $('perfQqq').innerHTML = `<span class="${qqq>=0?'green':'red'}">${fmtPct(qqq)}</span>`;
+      $('perfAlpha').innerHTML = `<span class="${(port-spy)>=0?'green':'red'}">${fmtPct((Number.isFinite(port)&&Number.isFinite(spy))?port-spy:NaN)}</span>`;
+    }
 
-  applyAggressiveUI();
-  startClock();
-  loadAll();
-});
-</script>
+    function renderActions(){
+      const cap = MODE === 'AGG' ? 50 : 30;
+      const ranked = [...DATA.ranking].sort((a,b)=>scoreOf(b)-scoreOf(a));
+      const buys = ranked.filter(r => scoreOf(r) >= 75).slice(0,6);
+      const sells = DATA.holdings.filter(r => {
+        const match = ranked.find(x => safeTicker(x).toUpperCase()===safeTicker(r).toUpperCase());
+        const s = match ? scoreOf(match) : NaN;
+        return (Number.isFinite(s) && s < 60) || (Number.isFinite(weightOf(r)) && weightOf(r) > cap);
+      }).slice(0,6);
+
+      $('buyList').innerHTML = buys.length ? buys.map((r,i)=> rowHtml(
+        `<div><input type="checkbox" /> <span class="ticker">BUY ${safeTicker(r)}</span><div class="small muted">Rank #${i+1} • ${themeOf(r)}</div></div>`,
+        `<div><div class="ticker green">${fmtNum(scoreOf(r),1)}</div><div class="small ${changeOf(r)>=0?'green':'red'}">${fmtPct(changeOf(r))}</div></div>`
+      )).join('') : `<div class="warning">Waiting on ranked candidates over 75.</div>`;
+
+      $('sellList').innerHTML = sells.length ? sells.map(r=> rowHtml(
+        `<div><input type="checkbox" /> <span class="ticker">REVIEW ${safeTicker(r)}</span><div class="small muted">${themeOf(r)}</div></div>`,
+        `<div><div class="ticker red">CHECK</div><div class="small muted">Wt ${fmtPct(weightOf(r))}</div></div>`
+      )).join('') : `<div class="ok">No urgent sell/review flags from current rules.</div>`;
+
+      const warn = [];
+      if(!DATA.ranking.length) warn.push('Ranking feed missing');
+      if(!DATA.holdings.length) warn.push('Holdings feed missing');
+      $('actionWarnings').innerHTML = warn.length ? `<div class="warning">${warn.join(' • ')}</div>` : '';
+      if(warn.length) $('card1').classList.add('bg-yellow'); else $('card1').classList.remove('bg-yellow');
+    }
+
+    function fillConfig(){
+      $('cfgHoldings').value = DEFAULTS.holdings;
+      $('cfgRanking').value = DEFAULTS.ranking;
+      $('cfgSystem').value = DEFAULTS.system;
+      $('cfgPerformance').value = DEFAULTS.performance;
+      $('cfgRadar').value = DEFAULTS.radar;
+      $('cfgRadarResults').value = DEFAULTS.radarResults;
+    }
+
+    function saveConfig(){
+      localStorage.setItem(LS.holdings, $('cfgHoldings').value.trim());
+      localStorage.setItem(LS.ranking, $('cfgRanking').value.trim());
+      localStorage.setItem(LS.system, $('cfgSystem').value.trim());
+      localStorage.setItem(LS.performance, $('cfgPerformance').value.trim());
+      localStorage.setItem(LS.radar, $('cfgRadar').value.trim());
+      localStorage.setItem(LS.radarResults, $('cfgRadarResults').value.trim());
+      location.reload();
+    }
+
+    async function loadAll(){
+      fillConfig();
+      const urls = {
+        holdings: localStorage.getItem(LS.holdings) || DEFAULTS.holdings,
+        ranking: localStorage.getItem(LS.ranking) || DEFAULTS.ranking,
+        system: localStorage.getItem(LS.system) || DEFAULTS.system,
+        performance: localStorage.getItem(LS.performance) || DEFAULTS.performance,
+        radar: localStorage.getItem(LS.radar) || DEFAULTS.radar,
+        radarResults: localStorage.getItem(LS.radarResults) || DEFAULTS.radarResults,
+      };
+      const keys = Object.keys(urls);
+      await Promise.all(keys.map(async key => {
+        try { DATA[key] = await fetchCsv(urls[key]); }
+        catch(e){ console.warn(key, e); DATA[key] = []; }
+      }));
+      renderAll();
+    }
+
+    function renderAll(){
+      renderStatus();
+      renderHoldings();
+      renderLeader();
+      renderRadar();
+      renderTheme();
+      renderWarnings();
+      renderPerformance();
+      renderActions();
+    }
+
+    $('refreshBtn').onclick = loadAll;
+    $('toggleModeBtn').onclick = () => { MODE = MODE==='LEAN' ? 'AGG' : 'LEAN'; localStorage.setItem(LS.mode, MODE); renderAll(); };
+    $('toggleConfigBtn').onclick = () => $('configCard').classList.toggle('hidden');
+    $('saveCfgBtn').onclick = saveConfig;
+    $('sortRank').onchange = renderLeader;
+    $('sortRadar').onchange = renderRadar;
+
+    loadAll();
+    setInterval(loadAll, 60000);
+  </script>
 </body>
 </html>
