@@ -3,520 +3,655 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lean Terminal v03 Compact</title>
+  <title>Lean Terminal v08 Full Script</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:#121a2b;
-      --panel2:#0f172a;
-      --muted:#94a3b8;
-      --text:#e5e7eb;
-      --line:rgba(255,255,255,.08);
-      --green:#22c55e;
-      --yellow:#f59e0b;
-      --red:#ef4444;
-      --blue:#3b82f6;
-      --pill:#111827;
-      --shadow:0 10px 30px rgba(0,0,0,.22);
-      --radius:18px;
+      --bg:#0b1020; --panel:#121a2b; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+      --line:rgba(255,255,255,.08); --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6;
+      --pill:#111827; --shadow:0 10px 24px rgba(0,0,0,.22);
     }
     *{box-sizing:border-box}
     html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    a{color:inherit}
-    .wrap{max-width:1580px;margin:0 auto;padding:12px}
-    .topbar{display:flex;gap:10px;align-items:center;justify-content:space-between;margin-bottom:12px;flex-wrap:wrap}
-    .titlebox{display:flex;align-items:center;gap:10px}
-    .title{font-size:20px;font-weight:800;letter-spacing:.2px}
-    .sub{font-size:12px;color:var(--muted)}
-    .chiprow{display:flex;gap:8px;flex-wrap:wrap}
-    .chip{background:var(--panel);border:1px solid var(--line);border-radius:999px;padding:7px 10px;font-size:12px;display:inline-flex;gap:6px;align-items:center}
-    .chip strong{font-size:12px}
-    .grid{display:grid;grid-template-columns:repeat(12,minmax(0,1fr));gap:12px}
-    .card{background:linear-gradient(180deg,rgba(255,255,255,.02),rgba(255,255,255,.01));border:1px solid var(--line);border-radius:var(--radius);box-shadow:var(--shadow);overflow:hidden;min-height:120px}
-    .span-12{grid-column:span 12}.span-9{grid-column:span 9}.span-8{grid-column:span 8}.span-6{grid-column:span 6}.span-4{grid-column:span 4}.span-3{grid-column:span 3}
-    .head{display:flex;align-items:center;justify-content:space-between;padding:10px 12px;border-bottom:1px solid var(--line);background:rgba(255,255,255,.02)}
-    .headL{display:flex;align-items:center;gap:8px;min-width:0}
-    .n{width:24px;height:24px;border-radius:999px;background:var(--pill);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:800;color:#cbd5e1;flex:0 0 auto}
-    .hTitle{font-size:13px;font-weight:800;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
-    .info{width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted);cursor:pointer;flex:0 0 auto}
-    .body{padding:10px 12px}
-    .kpis{display:grid;grid-template-columns:repeat(4,minmax(0,1fr));gap:8px}
-    .mini{background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:8px}
-    .mini .label{font-size:11px;color:var(--muted)}
-    .mini .value{font-size:17px;font-weight:800;margin-top:3px}
-    .muted{color:var(--muted)}
-    .big{font-size:28px;font-weight:900;line-height:1}
-    .pillline{display:flex;gap:8px;flex-wrap:wrap}
-    .badge{font-size:11px;padding:5px 8px;border-radius:999px;background:var(--pill);border:1px solid var(--line)}
+    .wrap{max-width:1760px;margin:0 auto;padding:12px;padding-right:84px}
+    .topbar{display:grid;grid-template-columns:1.45fr 1fr;gap:10px;margin-bottom:10px}
+    .hero,.statusbar,.card,.helpbar,.sideRail,.sideDrawer{
+      background:linear-gradient(180deg,rgba(18,26,43,.98),rgba(15,23,42,.98));
+      border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow);
+    }
+    .hero,.statusbar,.helpbar{padding:10px 12px}
+    .heroTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+    .titleBlock h1{margin:0;font-size:22px}
+    .sub{font-size:12px;color:var(--muted);margin-top:4px}
+    .heroBadges{display:flex;gap:8px;flex-wrap:wrap}
+    .badge{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+    .topModeBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+    .topToggle,.toggle{
+      display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden
+    }
+    .topToggle button,.toggle button{
+      padding:10px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700
+    }
+    .topToggle button.active,.toggle button.active{background:#1d2a44}
+
+    .pillRow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .miniPill{
+      background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:84px;
+      display:flex;flex-direction:column;justify-content:space-between
+    }
+    .miniHead{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
+    .miniValue{font-size:22px;font-weight:800;line-height:1}
+    .miniSub{font-size:12px;color:var(--muted)}
     .green{color:var(--green)} .yellow{color:var(--yellow)} .red{color:var(--red)} .blue{color:var(--blue)}
-    .bg-red{background:rgba(239,68,68,.10)!important;border-color:rgba(239,68,68,.35)!important}
-    .bg-yellow{background:rgba(245,158,11,.10)!important;border-color:rgba(245,158,11,.35)!important}
-    .list{display:flex;flex-direction:column;gap:8px}
-    .row{display:flex;align-items:center;justify-content:space-between;gap:10px;padding:9px 10px;border:1px solid var(--line);border-radius:12px;background:var(--panel2)}
-    .rowL{display:flex;align-items:center;gap:10px;min-width:0}
-    .ticker{font-weight:900;letter-spacing:.25px}
-    .small{font-size:11px}
-    .scroll-180{max-height:180px;overflow:auto}
-    .scroll-240{max-height:240px;overflow:auto}
-    .scroll-300{max-height:300px;overflow:auto}
-    .warning{border:1px solid rgba(239,68,68,.35);background:rgba(239,68,68,.08);color:#fecaca;border-radius:12px;padding:9px 10px;font-size:12px}
-    .ok{border:1px solid rgba(34,197,94,.35);background:rgba(34,197,94,.08);color:#bbf7d0;border-radius:12px;padding:9px 10px;font-size:12px}
-    .toolbar{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-    button,select,input{background:var(--panel2);color:var(--text);border:1px solid var(--line);border-radius:10px;padding:8px 10px;font-size:12px}
-    button{cursor:pointer}
-    .right{text-align:right}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,monospace}
-    .footer{padding:10px 12px;color:var(--muted);font-size:11px}
-    .hidden{display:none!important}
-    .two{display:grid;grid-template-columns:1fr 1fr;gap:8px}
-    @media (max-width:1200px){.span-9,.span-8,.span-6,.span-4,.span-3{grid-column:span 12}.kpis{grid-template-columns:repeat(2,minmax(0,1fr))}}
-    @media (max-width:640px){.wrap{padding:8px}.card{border-radius:16px}.kpis{grid-template-columns:1fr 1fr}.title{font-size:18px}}
+    .ok{border-color:rgba(34,197,94,.35)} .warn{border-color:rgba(245,158,11,.35)} .danger{border-color:rgba(239,68,68,.45)}
+
+    .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
+    .card{padding:0;overflow:hidden;min-height:176px}
+    .span-1{grid-column:span 1}.span-2{grid-column:span 2}
+    .head{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line)}
+    .headL{display:flex;align-items:center;gap:8px}
+    .n{width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)}
+    .hTitle{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+    .info{
+      width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;
+      font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer
+    }
+    .body{padding:10px}
+    .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+    .row:last-child{border-bottom:0}
+    .scroll{max-height:128px;overflow:auto}
+    .small{font-size:12px}
+    .muted{color:var(--muted)}
+    .warning{padding:8px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fecaca;font-size:12px}
+    .good{padding:8px 9px;border-radius:10px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#bbf7d0;font-size:12px}
+    .chips{display:flex;gap:8px;flex-wrap:wrap}
+    .pillTag{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)}
+    .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+    .field{display:grid;gap:5px}
+    .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+    .field input,.field select,.field textarea{
+      width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px
+    }
+    .btn{background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer}
+    .orderRow{
+      display:grid;grid-template-columns:20px 1.1fr .7fr .55fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)
+    }
+    .sectionLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:8px 0 4px}
+    .barWrap{display:grid;gap:6px}
+    .barRow{display:grid;grid-template-columns:86px 1fr 52px;gap:8px;align-items:center}
+    .bar{height:12px;background:#0c1426;border:1px solid var(--line);border-radius:999px;overflow:hidden}
+    .barFill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green))}
+    .sideRail{
+      position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20
+    }
+    .railBtn{
+      writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);
+      background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0
+    }
+    .railBtn.active{background:#1d2a44}
+    .sideDrawer{
+      position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19
+    }
+    .sideDrawer.open{display:block}
+    .drawerHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+    .drawerBody{padding:12px}
+
+    @media (max-width:1280px){
+      .wrap{padding-right:12px}
+      .sideRail{position:static;width:auto;grid-template-columns:repeat(4,1fr);display:grid;margin-bottom:10px}
+      .railBtn{writing-mode:horizontal-tb;transform:none;height:auto;padding:10px}
+      .sideDrawer{position:static;width:auto;max-height:none;margin-bottom:10px}
+    }
+    @media (max-width:1200px){
+      .topbar{grid-template-columns:1fr}
+      .pillRow{grid-template-columns:repeat(3,minmax(0,1fr))}
+      .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+      .span-1,.span-2{grid-column:span 1}
+      .controls{grid-template-columns:1fr 1fr}
+    }
+    @media (max-width:720px){
+      .pillRow,.grid,.controls{grid-template-columns:1fr}
+      .miniValue{font-size:20px}
+      .orderRow{grid-template-columns:20px 1fr .7fr}
+      .orderRow>div:last-child{display:none}
+    }
   </style>
 </head>
 <body>
-  <div class="wrap">
-    <div class="topbar">
-      <div class="titlebox">
-        <div>
-          <div class="title">Lean Terminal <span class="muted">v03 Compact</span></div>
-          <div class="sub">Compact operator layout • numbered pills • info icons • scrollable panels • red alert logic</div>
+<div class="wrap">
+  <div class="topbar">
+    <section class="hero">
+      <div class="heroTop">
+        <div class="titleBlock">
+          <h1>Lean Terminal v08</h1>
+          <div class="sub">Full script • side tabs • top posture toggle • compact main dashboard • radar names can surface as NEW BUY if not held and qualified</div>
+        </div>
+        <div class="topModeBar">
+          <div class="topToggle">
+            <button id="topLeanBtn" class="active">LEAN</button>
+            <button id="topAggBtn">AGG</button>
+          </div>
+          <div class="heroBadges">
+            <div class="badge">Qualify: <span id="qualifyBadge">75+</span></div>
+            <div class="badge">Theme cap: <span id="themeCapBadge">30% Lean / 50% Agg</span></div>
+            <div class="badge">Mode: <span id="modeBadge">LEAN</span></div>
+            <div class="badge">Refresh: <span id="countdownBadge">60s</span></div>
+          </div>
         </div>
       </div>
-      <div class="chiprow" id="statusStrip"></div>
-    </div>
+    </section>
 
-    <div class="grid">
-      <section class="card span-9" id="card1">
-        <div class="head">
-          <div class="headL"><div class="n">1</div><div class="hTitle">ACTION ENGINE</div><div class="info" title="Horse-race model. Buy highest-ranked qualified names. Sell weaker names or rule-breakers.">i</div></div>
-          <div class="pillline"><span class="badge" id="modeBadge">MODE: LEAN</span><span class="badge" id="planBadge">PLAN: LEAN</span><span class="badge">MIN SCORE: 75</span></div>
-        </div>
-        <div class="body">
-          <div class="toolbar">
-            <button id="refreshBtn">Refresh</button>
-            <button id="toggleModeBtn">Toggle Mode</button>
-            <button id="toggleConfigBtn">Config</button>
-          </div>
-          <div id="actionWarnings"></div>
-          <div class="two" style="margin-top:8px">
-            <div>
-              <div class="muted small" style="margin-bottom:6px">BUY CANDIDATES</div>
-              <div id="buyList" class="list scroll-240"></div>
-            </div>
-            <div>
-              <div class="muted small" style="margin-bottom:6px">SELL / REVIEW</div>
-              <div id="sellList" class="list scroll-240"></div>
-            </div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card span-3" id="card2">
-        <div class="head">
-          <div class="headL"><div class="n">2</div><div class="hTitle">CAMPAIGN SNAPSHOT</div><div class="info" title="Fast read of posture, score, and deploy status.">i</div></div>
-          <span class="badge" id="healthBadge">HEALTH</span>
-        </div>
-        <div class="body">
-          <div class="kpis">
-            <div class="mini"><div class="label">READY</div><div class="value" id="readyVal">--</div></div>
-            <div class="mini"><div class="label">RISK</div><div class="value" id="riskVal">--</div></div>
-            <div class="mini"><div class="label">QUALIFIED</div><div class="value" id="qualifiedVal">--</div></div>
-            <div class="mini"><div class="label">BUDGET</div><div class="value" id="budgetVal">--</div></div>
-          </div>
-          <div style="margin-top:10px" class="pillline">
-            <span class="badge">THEME CAP LEAN: 30%</span>
-            <span class="badge">THEME CAP AGG: 50%</span>
-            <span class="badge">AUTO DEPLOY: ON</span>
-          </div>
-        </div>
-      </section>
-
-      <section class="card span-4" id="card3">
-        <div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">HOLDINGS</div><div class="info" title="Current positions. Compact sizing with internal scroll so it does not eat screen space.">i</div></div><span class="badge" id="holdingCount">0 ITEMS</span></div>
-        <div class="body"><div id="holdingsList" class="list scroll-300"></div></div>
-      </section>
-
-      <section class="card span-4" id="card4">
-        <div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">LEADER BOARD</div><div class="info" title="Ranked watchlist / ranking export. Above 75 qualifies.">i</div></div><span class="badge" id="leaderCount">0 NAMES</span></div>
-        <div class="body">
-          <div class="toolbar">
-            <select id="sortRank">
-              <option value="score">Sort: Score</option>
-              <option value="ticker">Sort: Ticker</option>
-              <option value="change">Sort: Change</option>
-            </select>
-          </div>
-          <div id="leaderList" class="list scroll-300"></div>
-        </div>
-      </section>
-
-      <section class="card span-4" id="card5">
-        <div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">RADAR PULSE</div><div class="info" title="Radar list with scroll and sort. Designed to surface hot names fast.">i</div></div><span class="badge" id="radarCount">0 RADAR</span></div>
-        <div class="body">
-          <div class="toolbar">
-            <select id="sortRadar">
-              <option value="gain">Sort: Today's Gain</option>
-              <option value="ticker">Sort: Name</option>
-              <option value="price">Sort: Price</option>
-            </select>
-          </div>
-          <div id="radarList" class="list scroll-300"></div>
-        </div>
-      </section>
-
-      <section class="card span-3" id="card6">
-        <div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">WARNINGS</div><div class="info" title="Red means stop and review. Yellow means caution.">i</div></div></div>
-        <div class="body"><div id="warningList" class="list"></div></div>
-      </section>
-
-      <section class="card span-3" id="card7">
-        <div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">PERFORMANCE</div><div class="info" title="Quick path check against simple baselines if performance feed is available.">i</div></div></div>
-        <div class="body">
-          <div class="kpis">
-            <div class="mini"><div class="label">PORTFOLIO</div><div class="value" id="perfPortfolio">--</div></div>
-            <div class="mini"><div class="label">SPY</div><div class="value" id="perfSpy">--</div></div>
-            <div class="mini"><div class="label">QQQ</div><div class="value" id="perfQqq">--</div></div>
-            <div class="mini"><div class="label">ALPHA</div><div class="value" id="perfAlpha">--</div></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card span-3" id="card8">
-        <div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">THEME EXPOSURE</div><div class="info" title="Theme cap monitor. Important/critical themes turn red.">i</div></div></div>
-        <div class="body"><div id="themeList" class="list"></div></div>
-      </section>
-
-      <section class="card span-3" id="card9">
-        <div class="head"><div class="headL"><div class="n">9</div><div class="hTitle">MODEL RULES</div><div class="info" title="Locked system constraints.">i</div></div></div>
-        <div class="body">
-          <div class="list">
-            <div class="row"><div class="small">Min score to qualify</div><div class="ticker">75</div></div>
-            <div class="row"><div class="small">Theme cap (Lean / Agg)</div><div class="ticker">30% / 50%</div></div>
-            <div class="row"><div class="small">Action model</div><div class="ticker">Horse Race</div></div>
-            <div class="row"><div class="small">Execution tracking</div><div class="ticker">Per-Ticker Check</div></div>
-          </div>
-        </div>
-      </section>
-
-      <section class="card span-12 hidden" id="configCard">
-        <div class="head"><div class="headL"><div class="n">10</div><div class="hTitle">CONFIG</div><div class="info" title="Set CSV URLs once. They are saved in local storage.">i</div></div></div>
-        <div class="body">
-          <div class="list">
-            <div class="row"><div class="small mono">holdings_url</div><input id="cfgHoldings" style="width:70%" /></div>
-            <div class="row"><div class="small mono">ranking_url</div><input id="cfgRanking" style="width:70%" /></div>
-            <div class="row"><div class="small mono">system_url</div><input id="cfgSystem" style="width:70%" /></div>
-            <div class="row"><div class="small mono">performance_url</div><input id="cfgPerformance" style="width:70%" /></div>
-            <div class="row"><div class="small mono">radar_url</div><input id="cfgRadar" style="width:70%" /></div>
-            <div class="row"><div class="small mono">radar_results_url</div><input id="cfgRadarResults" style="width:70%" /></div>
-            <div class="toolbar"><button id="saveCfgBtn">Save Config</button></div>
-          </div>
-        </div>
-      </section>
-    </div>
-    <div class="footer">Tip: keep this file as your compact operator build. Replace URLs in Config if a sheet gid changes.</div>
+    <section class="statusbar">
+      <div class="pillRow">
+        <div class="miniPill warn" id="readyPill"><div class="miniHead"><span>Ready</span><span class="info" data-help="ready">i</span></div><div class="miniValue" id="readyValue">--</div><div class="miniSub">deploy quality</div></div>
+        <div class="miniPill warn" id="riskPill"><div class="miniHead"><span>Risk</span><span class="info" data-help="risk">i</span></div><div class="miniValue" id="riskValue">--</div><div class="miniSub">lower = safer</div></div>
+        <div class="miniPill warn" id="budgetPill"><div class="miniHead"><span>Budget</span><span class="info" data-help="budget">i</span></div><div class="miniValue" id="budgetValue">--</div><div class="miniSub">suggested deploy</div></div>
+        <div class="miniPill warn" id="planPill"><div class="miniHead"><span>Plan</span><span class="info" data-help="plan">i</span></div><div class="miniValue" id="planValue">--</div><div class="miniSub">system posture</div></div>
+        <div class="miniPill warn" id="healthPill"><div class="miniHead"><span>Health</span><span class="info" data-help="health">i</span></div><div class="miniValue" id="healthValue">--</div><div class="miniSub">feed status</div></div>
+        <div class="miniPill warn" id="deployPill"><div class="miniHead"><span>Deploy</span><span class="info" data-help="deploy">i</span></div><div class="miniValue" id="deployValue">--</div><div class="miniSub">today's amount</div></div>
+      </div>
+    </section>
   </div>
 
-  <script>
-    const LS = {
-      mode: 'lean_mode',
-      holdings: 'lean_holdings_csv_url',
-      ranking: 'lean_ranking_csv_url',
-      system: 'lean_system_csv_url',
-      performance: 'lean_performance_csv_url',
-      radar: 'lean_radar_csv_url',
-      radarResults: 'lean_radar_results_csv_url'
+  <section class="helpbar small" id="helpBar">Tap any <strong>i</strong> to see what that part does.</section>
+
+  <div class="sideRail" id="sideRail">
+    <button class="railBtn" data-tab="news">News</button>
+    <button class="railBtn" data-tab="errors">Errors</button>
+    <button class="railBtn" data-tab="holdings">Full Holdings</button>
+    <button class="railBtn" data-tab="visuals">Visuals</button>
+  </div>
+
+  <section class="sideDrawer" id="sideDrawer">
+    <div class="drawerHead">
+      <strong id="drawerTitle">Side Tab</strong>
+      <button class="btn" id="closeDrawerBtn">Close</button>
+    </div>
+    <div class="drawerBody" id="drawerBody"></div>
+  </section>
+
+  <div class="grid" style="margin-top:10px">
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">1</div><div class="hTitle">Today's Orders</div></div><span class="info" data-help="orders">i</span></div>
+      <div class="body scroll" id="ordersBox"></div>
+    </section>
+
+    <section class="card span-1">
+      <div class="head"><div class="headL"><div class="n">2</div><div class="hTitle">Holdings</div></div><span class="info" data-help="holdings">i</span></div>
+      <div class="body scroll" id="holdingsBox"></div>
+    </section>
+
+    <section class="card span-1">
+      <div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">Leaderboard</div></div><span class="info" data-help="leader">i</span></div>
+      <div class="body scroll" id="leaderBox"></div>
+    </section>
+
+    <section class="card span-1">
+      <div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">Radar</div></div><span class="info" data-help="radar">i</span></div>
+      <div class="body scroll" id="radarBox"></div>
+    </section>
+
+    <section class="card span-1">
+      <div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">Flow</div></div><span class="info" data-help="flow">i</span></div>
+      <div class="body scroll" id="flowBox"></div>
+    </section>
+
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">Deploy Planner</div></div><span class="info" data-help="deployplan">i</span></div>
+      <div class="body" id="deployPlanBox"></div>
+    </section>
+
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">Controls</div></div><span class="info" data-help="controls">i</span></div>
+      <div class="body">
+        <div class="controls">
+          <div class="field"><label>Mode</label><div class="toggle"><button id="modeLeanBtn" class="active">Lean</button><button id="modeAggBtn">Agg</button></div></div>
+          <div class="field"><label>Regime</label><select id="cfgRegime"><option>Goldilocks</option><option>Reflation</option><option>Stagflation</option><option>Deflation</option></select></div>
+          <div class="field"><label>Credit stress</label><input id="cfgCredit" type="number" min="0" max="100" step="1"></div>
+          <div class="field"><label>News shock</label><input id="cfgNews" type="number" min="0" max="100" step="1"></div>
+          <div class="field"><label>Today's amount</label><input id="deployAmount" type="number" min="0" step="1" placeholder="500"></div>
+        </div>
+        <div class="chips" style="margin-top:10px">
+          <div class="pillTag">Qualify = score 75+</div>
+          <div class="pillTag">New radar name + not held + qualify = NEW BUY</div>
+          <div class="pillTag">Held + 60-74 = TRIM</div>
+          <div class="pillTag">Held + below 60 = SELL</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="saveOverlayBtn">Save</button>
+          <button class="btn" id="reloadBtn">Reload now</button>
+          <button class="btn" id="resetOverlayBtn">Reset</button>
+        </div>
+      </div>
+    </section>
+
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">System Growth</div></div><span class="info" data-help="growth">i</span></div>
+      <div class="body" id="growthBox"></div>
+    </section>
+  </div>
+</div>
+
+<script>
+const urls = {
+  radar: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv',
+  holdings: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv',
+  ranking: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=586162885&single=true&output=csv'
+};
+
+const HELP = {
+  ready: 'READY = how favorable conditions are to put money to work. Higher is better.',
+  risk: 'RISK = how dangerous the environment is. Lower is safer.',
+  budget: 'BUDGET = suggested percent of today’s cash you should consider deploying.',
+  plan: 'PLAN = posture. Lean = selective, Agg = more aggressive, Defend = preservation mode.',
+  health: 'HEALTH = whether the terminal is seeing enough live data to operate cleanly.',
+  deploy: 'DEPLOY = dollar amount from the amount box that the system suggests using today.',
+  orders: 'TODAY’S ORDERS = the simple answer box. New buys, adds, trims, sells, and watch names.',
+  holdings: 'HOLDINGS = what you already own. This anchors your real-world risk.',
+  leader: 'LEADERBOARD = ranked names and scores. This is the feed the action engine reads.',
+  radar: 'RADAR = watchlist / field scan. Names on deck even if not currently owned.',
+  flow: 'FLOW = one-line summary of the combined environment.',
+  deployplan: 'DEPLOY PLANNER = how the entered dollar amount is split across the top buy names for today.',
+  controls: 'CONTROLS = manual settings until environment layers are fully wired to feeds.',
+  growth: 'SYSTEM GROWTH = what the terminal can and cannot measure today.'
+};
+
+function $(id){ return document.getElementById(id); }
+
+function parseCSV(text){
+  const rows=[]; let row=[], cell='', inQuotes=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], next=text[i+1];
+    if(ch === '"'){
+      if(inQuotes && next === '"'){ cell += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(ch === ',' && !inQuotes){
+      row.push(cell); cell='';
+    } else if((ch === '\n' || ch === '\r') && !inQuotes){
+      if(ch === '\r' && next === '\n') i++;
+      row.push(cell); cell='';
+      if(row.some(v => String(v).trim() !== '')) rows.push(row);
+      row=[];
+    } else {
+      cell += ch;
+    }
+  }
+  if(cell.length || row.length){
+    row.push(cell);
+    if(row.some(v => String(v).trim() !== '')) rows.push(row);
+  }
+  if(!rows.length) return [];
+  const headers = rows.shift().map(h => String(h || '').trim());
+  return rows.map(r => {
+    const o={};
+    headers.forEach((h,i)=> o[h] = (r[i] ?? '').trim());
+    return o;
+  });
+}
+
+function num(v){
+  const n=parseFloat(String(v ?? '').replace(/[$,%\s,]/g,''));
+  return Number.isFinite(n) ? n : NaN;
+}
+
+function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
+function overlayDefaults(){
+  return {
+    mode: localStorage.getItem('lean_mode') || 'LEAN',
+    regime: localStorage.getItem('lean_overlay_regime') || 'Reflation',
+    credit: localStorage.getItem('lean_overlay_credit') || '28',
+    news: localStorage.getItem('lean_overlay_news') || '18',
+    amount: localStorage.getItem('lean_deploy_amount') || '',
+    newsNote1: localStorage.getItem('lean_news_note1') || 'Rates / liquidity / credit tone',
+    newsNote2: localStorage.getItem('lean_news_note2') || 'Sector leader / laggard note',
+    newsNote3: localStorage.getItem('lean_news_note3') || 'Geopolitical / macro event note'
+  };
+}
+
+function fillOverlayFields(){
+  const o = overlayDefaults();
+  $('cfgRegime').value = o.regime;
+  $('cfgCredit').value = o.credit;
+  $('cfgNews').value = o.news;
+  $('deployAmount').value = o.amount;
+  setMode(o.mode);
+}
+
+function setMode(mode){
+  localStorage.setItem('lean_mode', mode);
+  $('modeBadge').textContent = mode;
+  $('themeCapBadge').textContent = mode === 'AGG' ? '50% Agg' : '30% Lean';
+  $('modeLeanBtn').classList.toggle('active', mode === 'LEAN');
+  $('modeAggBtn').classList.toggle('active', mode === 'AGG');
+  $('topLeanBtn').classList.toggle('active', mode === 'LEAN');
+  $('topAggBtn').classList.toggle('active', mode === 'AGG');
+}
+
+function saveOverlay(){
+  localStorage.setItem('lean_overlay_regime', $('cfgRegime').value);
+  localStorage.setItem('lean_overlay_credit', $('cfgCredit').value);
+  localStorage.setItem('lean_overlay_news', $('cfgNews').value);
+  localStorage.setItem('lean_deploy_amount', $('deployAmount').value);
+}
+
+function resetOverlay(){
+  ['lean_overlay_regime','lean_overlay_credit','lean_overlay_news','lean_deploy_amount','lean_mode'].forEach(k=>localStorage.removeItem(k));
+  fillOverlayFields();
+}
+
+function setTopPill(id, value, sub, cls){
+  $(id+'Value').textContent = value;
+  const pill = $(id+'Pill');
+  pill.classList.remove('ok','warn','danger');
+  pill.classList.add(cls);
+  pill.querySelector('.miniSub').textContent = sub;
+}
+
+function pillClass(value, highGood=true){
+  if(!Number.isFinite(value)) return 'warn';
+  if(highGood) return value >= 75 ? 'ok' : value >= 55 ? 'warn' : 'danger';
+  return value <= 35 ? 'ok' : value <= 60 ? 'warn' : 'danger';
+}
+
+let refreshCountdown = 60;
+function tickCountdown(){
+  refreshCountdown -= 1;
+  if(refreshCountdown <= 0){
+    refreshCountdown = 60;
+    load();
+  }
+  $('countdownBadge').textContent = refreshCountdown + 's';
+}
+setInterval(tickCountdown, 1000);
+
+let APP = { radarRows:[], holdingsRows:[], rankingRows:[], errors:[], buys:[], trims:[], sells:[], watches:[], buyAllocations:[], plan:'LEAN', ready:0, risk:0, budget:0 };
+
+function actionClass(action){
+  const a = String(action || '').toUpperCase();
+  if(a.includes('BUY') || a === 'ADD') return 'green';
+  if(a === 'TRIM' || a === 'WATCH') return 'yellow';
+  if(a === 'SELL' || a === 'DEFEND') return 'red';
+  return '';
+}
+
+function renderDrawer(tab){
+  const drawer = $('sideDrawer');
+  const body = $('drawerBody');
+  const title = $('drawerTitle');
+  document.querySelectorAll('.railBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
+  drawer.classList.add('open');
+
+  if(tab === 'news'){
+    const o = overlayDefaults();
+    title.textContent = 'News Influencing System';
+    body.innerHTML = `
+      <div class="row"><div>Regime</div><div>${o.regime}</div></div>
+      <div class="row"><div>Credit stress</div><div>${o.credit}</div></div>
+      <div class="row"><div>News shock</div><div>${o.news}</div></div>
+      <div class="warning">This tab is still a guided overlay, not a live news feed yet.</div>
+      <div class="field"><label>Note 1</label><textarea id="newsNote1" rows="2">${o.newsNote1}</textarea></div>
+      <div class="field"><label>Note 2</label><textarea id="newsNote2" rows="2">${o.newsNote2}</textarea></div>
+      <div class="field"><label>Note 3</label><textarea id="newsNote3" rows="2">${o.newsNote3}</textarea></div>
+      <button class="btn" id="saveNewsNotesBtn">Save News Notes</button>
+    `;
+    $('saveNewsNotesBtn').onclick = () => {
+      localStorage.setItem('lean_news_note1', $('newsNote1').value);
+      localStorage.setItem('lean_news_note2', $('newsNote2').value);
+      localStorage.setItem('lean_news_note3', $('newsNote3').value);
+    };
+  }
+
+  if(tab === 'errors'){
+    title.textContent = 'System Errors / Diagnostics';
+    const errs = APP.errors.length ? APP.errors.map(e=>`<div class="warning">${e}</div>`).join('') : '<div class="good">No major system errors detected right now.</div>';
+    body.innerHTML = `
+      ${errs}
+      <div class="row"><div>Radar rows</div><div>${APP.radarRows.length}</div></div>
+      <div class="row"><div>Holdings rows</div><div>${APP.holdingsRows.length}</div></div>
+      <div class="row"><div>Ranking rows</div><div>${APP.rankingRows.length}</div></div>
+      <div class="row"><div>Plan</div><div>${APP.plan}</div></div>
+      <div class="row"><div>Ready / Risk / Budget</div><div>${APP.ready} / ${APP.risk} / ${APP.budget}</div></div>
+      <div class="small muted" style="margin-top:8px">Next phase can add stale-feed timers and column validation.</div>
+    `;
+  }
+
+  if(tab === 'holdings'){
+    title.textContent = 'Full Holdings Data';
+    body.innerHTML = APP.holdingsRows.length
+      ? APP.holdingsRows.map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'} <span class="muted">${r.Theme||r.theme||''}</span></div><div>${r.Weight||r.weight||'--'}</div></div>`).join('')
+      : '<div class="warning">No holdings data loaded.</div>';
+  }
+
+  if(tab === 'visuals'){
+    title.textContent = 'Visuals';
+    const topWeights = APP.holdingsRows
+      .map(r=>({ticker:r.Ticker||r.ticker||'--', weight:num(r.Weight||r.weight)}))
+      .filter(x=>Number.isFinite(x.weight))
+      .sort((a,b)=>b.weight-a.weight)
+      .slice(0,10);
+
+    const themeCounts = {};
+    APP.holdingsRows.forEach(r=>{
+      const t = (r.Theme||r.theme||'Unlabeled').trim() || 'Unlabeled';
+      themeCounts[t] = (themeCounts[t] || 0) + 1;
+    });
+    const themeBars = Object.entries(themeCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
+    const orderSummary = [['Buys',APP.buys.length],['Trims',APP.trims.length],['Sells',APP.sells.length],['Watches',APP.watches.length]];
+
+    body.innerHTML = `
+      <div class="sectionLabel">Top holding weights</div>
+      <div class="barWrap">
+        ${topWeights.length ? topWeights.map(x=>`
+          <div class="barRow">
+            <div>${x.ticker}</div>
+            <div class="bar"><div class="barFill" style="width:${Math.min(100,x.weight)}%"></div></div>
+            <div>${x.weight.toFixed(1)}%</div>
+          </div>
+        `).join('') : '<div class="warning">No weight data yet.</div>'}
+      </div>
+
+      <div class="sectionLabel">Theme counts</div>
+      <div class="barWrap">
+        ${themeBars.length ? themeBars.map(([k,v])=>`
+          <div class="barRow">
+            <div>${k}</div>
+            <div class="bar"><div class="barFill" style="width:${Math.min(100,v*12)}%"></div></div>
+            <div>${v}</div>
+          </div>
+        `).join('') : '<div class="warning">No theme labels yet.</div>'}
+      </div>
+
+      <div class="sectionLabel">Order mix</div>
+      <div class="barWrap">
+        ${orderSummary.map(([k,v])=>`
+          <div class="barRow">
+            <div>${k}</div>
+            <div class="bar"><div class="barFill" style="width:${Math.min(100,v*18)}%"></div></div>
+            <div>${v}</div>
+          </div>
+        `).join('')}
+      </div>
+
+      <div class="small muted" style="margin-top:8px">Best next visual upgrades: treemap for themes, network map for overlap, and a 3D score-risk-momentum bubble map.</div>
+    `;
+  }
+}
+
+async function load(){
+  APP.errors = [];
+  try{
+    const [resR,resH,resK] = await Promise.all([fetch(urls.radar),fetch(urls.holdings),fetch(urls.ranking)]);
+    const [txtR,txtH,txtK] = await Promise.all([resR.text(),resH.text(),resK.text()]);
+
+    const radarRows = parseCSV(txtR);
+    const holdingsRows = parseCSV(txtH);
+    const rankingRows = parseCSV(txtK);
+    APP.radarRows = radarRows;
+    APP.holdingsRows = holdingsRows;
+    APP.rankingRows = rankingRows;
+
+    if(!radarRows.length) APP.errors.push('Radar feed empty');
+    if(!holdingsRows.length) APP.errors.push('Holdings feed empty');
+    if(!rankingRows.length) APP.errors.push('Ranking feed empty');
+
+    $('holdingsBox').innerHTML = holdingsRows.slice(0,8).map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'}</div><div>${r.Weight||r.weight||'--'}</div></div>`).join('') || '<div class="warning">Holdings empty</div>';
+    $('leaderBox').innerHTML = rankingRows.slice(0,8).map((r,i)=>`<div class="row"><div>#${i+1} ${r.Ticker||r.ticker||'--'}</div><div>${r.Score||r.score||'--'}</div></div>`).join('') || '<div class="warning">Ranking empty</div>';
+    $('radarBox').innerHTML = radarRows.slice(0,8).map(r=>`<div class="row"><div>${r.ticker||r.Ticker||'--'}</div><div>${r.price||r.Price||''}</div></div>`).join('') || '<div class="warning">Radar empty</div>';
+
+    const overlay = overlayDefaults();
+    const mode = overlay.mode || 'LEAN';
+    const regime = overlay.regime;
+    const credit = clamp(num(overlay.credit),0,100);
+    const news = clamp(num(overlay.news),0,100);
+    const amount = clamp(num(overlay.amount),0,1e12);
+    const qualify = 75;
+    const sellCut = 60;
+
+    const regimeBoost = {Goldilocks:12, Reflation:7, Stagflation:-10, Deflation:-14}[regime] ?? 0;
+    const regimeRisk = {Goldilocks:-8, Reflation:-3, Stagflation:12, Deflation:15}[regime] ?? 0;
+    const scores = rankingRows.map(r=>num(r.Score||r.score)).filter(Number.isFinite);
+    const avgScore = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : 50;
+
+    let ready = clamp(Math.round(avgScore + regimeBoost - (credit*0.22) - (news*0.12) + (mode==='AGG'?4:0)),0,100);
+    let risk = clamp(Math.round((100-ready)*0.45 + credit*0.45 + news*0.18 + regimeRisk + (mode==='AGG'?6:0)),0,100);
+    let budget = clamp(Math.round(ready - risk + 45),0,100);
+    let plan = mode;
+    if(credit >= 65 || news >= 70 || risk >= 70 || regime === 'Deflation') plan = 'DEFEND';
+
+    APP.plan = plan; APP.ready = ready; APP.risk = risk; APP.budget = budget;
+
+    const loaded = [radarRows.length, holdingsRows.length, rankingRows.length].filter(v=>v>0).length;
+    const health = loaded === 3 ? 'GOOD' : loaded === 2 ? 'PART' : 'LOW';
+
+    setTopPill('ready', ready, 'deploy quality', pillClass(ready,true));
+    setTopPill('risk', risk, 'lower = safer', pillClass(risk,false));
+    setTopPill('budget', budget+'%', 'suggested deploy', budget>=60?'ok':budget>=35?'warn':'danger');
+    setTopPill('plan', plan, 'system posture', plan==='DEFEND'?'danger':plan==='AGG'?'ok':'warn');
+    setTopPill('health', health, 'feed status', health==='GOOD'?'ok':health==='PART'?'warn':'danger');
+
+    $('flowBox').innerHTML = `
+      <div class="row"><div>Mode</div><div>${mode}</div></div>
+      <div class="row"><div>Regime</div><div>${regime}</div></div>
+      <div class="row"><div>Credit / News</div><div>${credit} / ${news}</div></div>
+      <div class="row"><div>Plan</div><div class="${plan==='DEFEND'?'red':plan==='AGG'?'green':'yellow'}">${plan}</div></div>
+    `;
+
+    const holdingMap = new Map();
+    holdingsRows.forEach(r=>holdingMap.set(String(r.Ticker||r.ticker||'').toUpperCase(), r));
+    const radarSet = new Set(radarRows.map(r=>String(r.ticker||r.Ticker||'').toUpperCase()));
+
+    const sorted = [...rankingRows].sort((a,b)=>(num(b.Score||b.score)||-999)-(num(a.Score||a.score)||-999));
+    const buys=[], trims=[], sells=[], watches=[];
+
+    sorted.forEach((r,idx)=>{
+      const ticker = String(r.Ticker||r.ticker||'--').toUpperCase();
+      const score = num(r.Score||r.score);
+      const held = holdingMap.has(ticker);
+      const onRadar = radarSet.has(ticker);
+      if(!Number.isFinite(score)) return;
+
+      if(held && score < sellCut) sells.push({ticker,score,note:'held + score < 60'});
+      else if(held && score < qualify) trims.push({ticker,score,note:'held + score 60-74'});
+      else if(!held && score >= qualify) buys.push({ticker,score,note:onRadar ? 'NEW BUY from radar' : 'NEW BUY',rank:idx+1,radar:onRadar});
+      else if(held && score >= qualify) buys.push({ticker,score,note:'ADD / hold winner',rank:idx+1,radar:onRadar});
+      else watches.push({ticker,score,note:'watch'});
+    });
+
+    APP.buys = buys; APP.trims = trims; APP.sells = sells; APP.watches = watches;
+
+    const deployAmount = plan==='DEFEND' ? 0 : Math.round(amount*(budget/100));
+    $('deployValue').textContent = amount>0 ? '$'+deployAmount.toLocaleString() : '--';
+    $('deployPill').classList.remove('ok','warn','danger');
+    $('deployPill').classList.add(deployAmount>=500?'ok':deployAmount>0?'warn':'danger');
+
+    let buyAllocations = [];
+    if(deployAmount > 0 && buys.length){
+      const topBuys = buys.slice(0,3);
+      const weights = topBuys.map((_,i)=>i===0?0.45:i===1?0.35:0.20).slice(0,topBuys.length);
+      const totalW = weights.reduce((a,b)=>a+b,0);
+      buyAllocations = topBuys.map((b,i)=>({...b,dollars:Math.round(deployAmount*(weights[i]/totalW))}));
+    }
+    APP.buyAllocations = buyAllocations;
+
+    const buildRows = (label, items, action, amountFn) => {
+      if(!items.length) return `<div class="good">${label}: none</div>`;
+      let s = `<div class="sectionLabel">${label}</div>`;
+      s += items.map(item=>{
+        const amt = amountFn ? amountFn(item) : action;
+        return `<div class="orderRow"><input type="checkbox" disabled><div>${item.ticker} <span class="muted">(${item.score})</span></div><div class="${actionClass(action)}">${amt}</div><div class="muted">${item.note}</div></div>`;
+      }).join('');
+      return s;
     };
 
-    const DEFAULTS = {
-      holdings: localStorage.getItem(LS.holdings) || '',
-      ranking: localStorage.getItem(LS.ranking) || '',
-      system: localStorage.getItem(LS.system) || '',
-      performance: localStorage.getItem(LS.performance) || '',
-      radar: localStorage.getItem(LS.radar) || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv',
-      radarResults: localStorage.getItem(LS.radarResults) || 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=922598618&single=true&output=csv'
-    };
+    $('ordersBox').innerHTML =
+      buildRows('Buys', buyAllocations, 'BUY', x=>'$'+x.dollars.toLocaleString()) +
+      buildRows('Trims', trims.slice(0,3), 'TRIM', _=>'25%') +
+      buildRows('Sells', sells.slice(0,3), 'SELL', _=>'exit') +
+      buildRows('Watch', watches.slice(0,3), 'WATCH', _=>'watch');
 
-    let MODE = (localStorage.getItem(LS.mode) || 'LEAN').toUpperCase();
-    let DATA = { holdings:[], ranking:[], system:[], performance:[], radar:[], radarResults:[] };
-
-    const $ = (id) => document.getElementById(id);
-    const num = (v) => {
-      if (v === null || v === undefined || v === '') return NaN;
-      const n = parseFloat(String(v).replace(/[%,$]/g,'').replace(/,/g,''));
-      return Number.isFinite(n) ? n : NaN;
-    };
-    const fmtPct = (v) => Number.isFinite(v) ? `${v>0?'+':''}${v.toFixed(1)}%` : '--';
-    const fmtNum = (v, d=0) => Number.isFinite(v) ? v.toFixed(d) : '--';
-    const fmtMoney = (v) => Number.isFinite(v) ? `$${Math.round(v).toLocaleString()}` : '--';
-    const clsForRisk = (v) => !Number.isFinite(v) ? '' : v >= 65 ? 'red' : v >= 40 ? 'yellow' : 'green';
-    const clsForReady = (v) => !Number.isFinite(v) ? '' : v >= 75 ? 'green' : v >= 60 ? 'yellow' : 'red';
-
-    function csvToRows(text){
-      const lines = text.trim().split(/\r?\n/).filter(Boolean);
-      if(!lines.length) return [];
-      const parseLine = (line) => {
-        const out=[]; let cur=''; let q=false;
-        for(let i=0;i<line.length;i++){
-          const ch=line[i], nx=line[i+1];
-          if(ch==='"'){
-            if(q && nx==='"'){cur+='"';i++;}
-            else q=!q;
-          } else if(ch===',' && !q){out.push(cur);cur='';}
-          else cur+=ch;
-        }
-        out.push(cur);
-        return out.map(s=>s.trim());
-      };
-      const headers = parseLine(lines[0]).map(h=>h.toLowerCase().replace(/\s+/g,'_'));
-      return lines.slice(1).map(line=>{
-        const vals = parseLine(line);
-        const obj={};
-        headers.forEach((h,i)=>obj[h]=vals[i] ?? '');
-        return obj;
-      });
+    if(amount <= 0){
+      $('deployPlanBox').innerHTML = '<div class="warning">Enter a dollar amount. The terminal will show how much to deploy today and which buy names get that cash.</div>';
+    } else if(plan === 'DEFEND'){
+      $('deployPlanBox').innerHTML = '<div class="warning">Plan is DEFEND. No fresh buys suggested today. Review trims/sells and protect capital.</div>';
+    } else if(!buyAllocations.length){
+      $('deployPlanBox').innerHTML = '<div class="warning">No buy names currently qualify above 75.</div>';
+    } else {
+      $('deployPlanBox').innerHTML = buyAllocations.map(x=>`<div class="row"><div>${x.ticker}</div><div class="green">$${x.dollars.toLocaleString()}</div></div>`).join('') + `<div class="row"><div>Total today</div><div>$${deployAmount.toLocaleString()}</div></div>`;
     }
 
-    async function fetchCsv(url){
-      if(!url) return [];
-      const res = await fetch(url, { cache:'no-store' });
-      if(!res.ok) throw new Error(`Fetch failed: ${res.status}`);
-      const txt = await res.text();
-      return csvToRows(txt);
-    }
+    $('growthBox').innerHTML = `
+      <div class="row"><div>Decision engine</div><div class="green">${buys.length+trims.length+sells.length ? 'alive' : 'thin'}</div></div>
+      <div class="row"><div>New buy candidates</div><div>${buys.filter(x=>x.note.includes('NEW BUY')).length}</div></div>
+      <div class="row"><div>Trim flags</div><div>${trims.length}</div></div>
+      <div class="row"><div>Sell flags</div><div>${sells.length}</div></div>
+      <div class="row"><div>Radar names loaded</div><div>${radarRows.length}</div></div>
+      <div class="small muted" style="margin-top:8px">Next phase: wire full trade log feed, history feed, and real news ingestion.</div>
+    `;
 
-    function safeTicker(r){
-      return r.ticker || r.symbol || r.name || r.asset || '—';
-    }
-    function scoreOf(r){
-      return num(r.score ?? r.total_score ?? r.rank_score ?? r.ready_score);
-    }
-    function changeOf(r){
-      return num(r.today_gain ?? r.gain_today ?? r.change_pct ?? r.change_percent ?? r.percent_change);
-    }
-    function priceOf(r){
-      return num(r.price ?? r.last ?? r.last_price);
-    }
-    function qtyOf(r){
-      return num(r.qty ?? r.shares ?? r.quantity);
-    }
-    function weightOf(r){
-      return num(r.weight ?? r.portfolio_weight ?? r.pct ?? r.percent);
-    }
-    function themeOf(r){
-      return r.theme || r.bucket || r.sector || 'General';
-    }
+    const openTab = document.querySelector('.railBtn.active')?.dataset.tab;
+    if(openTab) renderDrawer(openTab);
 
-    function renderStatus(){
-      const sys = DATA.system[0] || {};
-      const ready = num(sys.ready ?? sys.ready_score ?? averageScore(DATA.ranking));
-      const risk = num(sys.risk ?? sys.risk_score ?? inferredRisk());
-      const plan = (sys.plan || (risk >= 60 ? 'LEAN' : 'AGG')).toUpperCase();
-      $('modeBadge').textContent = `MODE: ${MODE}`;
-      $('planBadge').textContent = `PLAN: ${plan}`;
-      $('readyVal').innerHTML = `<span class="${clsForReady(ready)}">${fmtNum(ready)}</span>`;
-      $('riskVal').innerHTML = `<span class="${clsForRisk(risk)}">${fmtNum(risk)}</span>`;
-      $('qualifiedVal').textContent = DATA.ranking.filter(r => scoreOf(r) >= 75).length || '--';
-      $('budgetVal').textContent = fmtMoney(num(sys.budget ?? sys.cash_to_deploy ?? sys.deploy_budget));
-      const health = risk >= 65 ? 'ATTN' : ready >= 75 ? 'GOOD' : 'WATCH';
-      $('healthBadge').textContent = `HEALTH: ${health}`;
-      $('statusStrip').innerHTML = `
-        <span class="chip"><strong>READY</strong> <span class="${clsForReady(ready)}">${fmtNum(ready)}</span></span>
-        <span class="chip"><strong>RISK</strong> <span class="${clsForRisk(risk)}">${fmtNum(risk)}</span></span>
-        <span class="chip"><strong>PLAN</strong> ${plan}</span>
-        <span class="chip"><strong>MODE</strong> ${MODE}</span>
-      `;
+  } catch(e){
+    console.error(e);
+    APP.errors.push('Load failed: ' + e.message);
+    $('healthValue').textContent = 'ERR';
+    $('ordersBox').innerHTML = '<div class="warning">Load failed</div>';
+  }
+}
+
+document.querySelectorAll('.info').forEach(el=>{
+  el.addEventListener('click', ()=>{ $('helpBar').innerHTML = HELP[el.dataset.help] || 'No help text yet.'; });
+});
+
+document.querySelectorAll('.railBtn').forEach(btn=>{
+  btn.addEventListener('click', ()=>{
+    const isActive = btn.classList.contains('active');
+    document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
+    if(isActive){
+      $('sideDrawer').classList.remove('open');
+      return;
     }
+    btn.classList.add('active');
+    renderDrawer(btn.dataset.tab);
+  });
+});
 
-    function averageScore(rows){
-      const vals = rows.map(scoreOf).filter(Number.isFinite);
-      if(!vals.length) return NaN;
-      return vals.reduce((a,b)=>a+b,0)/vals.length;
-    }
-    function inferredRisk(){
-      const weak = DATA.ranking.filter(r => Number.isFinite(scoreOf(r)) && scoreOf(r) < 60).length;
-      const total = Math.max(DATA.ranking.length,1);
-      return Math.min(100, Math.round((weak/total)*100));
-    }
+$('closeDrawerBtn').addEventListener('click', ()=>{
+  $('sideDrawer').classList.remove('open');
+  document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
+});
 
-    function rowHtml(left, right, extra=''){
-      return `<div class="row ${extra}"><div class="rowL">${left}</div><div class="right">${right}</div></div>`;
-    }
+function syncMode(mode){ setMode(mode); load(); }
+$('modeLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
+$('modeAggBtn').addEventListener('click', ()=>syncMode('AGG'));
+$('topLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
+$('topAggBtn').addEventListener('click', ()=>syncMode('AGG'));
+$('saveOverlayBtn').addEventListener('click', ()=>{ saveOverlay(); load(); });
+$('reloadBtn').addEventListener('click', ()=>{ refreshCountdown=60; load(); });
+$('resetOverlayBtn').addEventListener('click', ()=>{ resetOverlay(); load(); });
 
-    function renderHoldings(){
-      const rows = DATA.holdings;
-      $('holdingCount').textContent = `${rows.length} ITEMS`;
-      if(!rows.length){ $('holdingsList').innerHTML = `<div class="warning">No holdings feed detected. Add your holdings CSV in Config.</div>`; return; }
-      $('holdingsList').innerHTML = rows.map(r => {
-        const t = safeTicker(r);
-        const ch = changeOf(r);
-        const w = weightOf(r);
-        const theme = themeOf(r);
-        return rowHtml(
-          `<div><div class="ticker">${t}</div><div class="small muted">${theme} • Qty ${fmtNum(qtyOf(r))} • Wt ${fmtPct(w)}</div></div>`,
-          `<div><div class="${ch>=0?'green':'red'} ticker">${fmtPct(ch)}</div><div class="small muted">${fmtMoney(priceOf(r))}</div></div>`
-        );
-      }).join('');
-    }
-
-    function renderLeader(){
-      let rows = [...DATA.ranking];
-      const mode = $('sortRank').value;
-      rows.sort((a,b)=> mode==='ticker' ? safeTicker(a).localeCompare(safeTicker(b)) : mode==='change' ? (changeOf(b)-changeOf(a)) : (scoreOf(b)-scoreOf(a)) );
-      $('leaderCount').textContent = `${rows.length} NAMES`;
-      if(!rows.length){ $('leaderList').innerHTML = `<div class="warning">No ranking feed detected. Add ranking_export CSV in Config.</div>`; return; }
-      $('leaderList').innerHTML = rows.map((r,i)=>{
-        const t=safeTicker(r), s=scoreOf(r), ch=changeOf(r), qualify=s>=75;
-        return rowHtml(
-          `<div><div class="ticker">#${i+1} ${t}</div><div class="small muted">${qualify?'Qualified':'Watch'} • ${themeOf(r)}</div></div>`,
-          `<div><div class="ticker ${qualify?'green':'yellow'}">${fmtNum(s,1)}</div><div class="small ${ch>=0?'green':'red'}">${fmtPct(ch)}</div></div>`,
-          !qualify ? 'bg-yellow' : ''
-        );
-      }).join('');
-    }
-
-    function renderRadar(){
-      let rows = DATA.radarResults.length ? [...DATA.radarResults] : [...DATA.radar];
-      const mode = $('sortRadar').value;
-      rows.sort((a,b)=> mode==='ticker' ? safeTicker(a).localeCompare(safeTicker(b)) : mode==='price' ? (priceOf(b)-priceOf(a)) : (changeOf(b)-changeOf(a)) );
-      $('radarCount').textContent = `${rows.length} RADAR`;
-      if(!rows.length){ $('radarList').innerHTML = `<div class="warning">No radar feed detected. Radar URLs are preloaded from your saved links.</div>`; return; }
-      $('radarList').innerHTML = rows.map(r => {
-        const t=safeTicker(r), ch=changeOf(r), p=priceOf(r);
-        return rowHtml(
-          `<div><div class="ticker">${t}</div><div class="small muted">${themeOf(r)}</div></div>`,
-          `<div><div class="${ch>=0?'green':'red'} ticker">${fmtPct(ch)}</div><div class="small muted">${fmtMoney(p)}</div></div>`
-        );
-      }).join('');
-    }
-
-    function renderTheme(){
-      const caps = MODE === 'AGG' ? 50 : 30;
-      const map = new Map();
-      DATA.holdings.forEach(r => {
-        const th = themeOf(r); const w = weightOf(r);
-        map.set(th, (map.get(th)||0) + (Number.isFinite(w) ? w : 0));
-      });
-      const rows = [...map.entries()].sort((a,b)=>b[1]-a[1]);
-      if(!rows.length){ $('themeList').innerHTML = `<div class="warning">No theme exposure yet.</div>`; return; }
-      $('themeList').innerHTML = rows.map(([th,w]) => rowHtml(
-        `<div><div class="ticker">${th}</div><div class="small muted">Cap ${caps}%</div></div>`,
-        `<div class="ticker ${w>caps?'red':w>caps*0.85?'yellow':'green'}">${fmtPct(w)}</div>`,
-        w>caps ? 'bg-red' : w>caps*0.85 ? 'bg-yellow' : ''
-      )).join('');
-    }
-
-    function renderWarnings(){
-      const warnings = [];
-      const sys = DATA.system[0] || {};
-      const risk = num(sys.risk ?? sys.risk_score ?? inferredRisk());
-      const ready = num(sys.ready ?? sys.ready_score ?? averageScore(DATA.ranking));
-      if(!DATA.holdings.length) warnings.push(['Holdings feed missing', 'Add holdings CSV URL in Config', 'red']);
-      if(!DATA.ranking.length) warnings.push(['Ranking feed missing', 'Add ranking CSV URL in Config', 'red']);
-      if(risk >= 65) warnings.push(['Risk elevated', 'System danger score is high — tighten posture', 'red']);
-      if(Number.isFinite(ready) && ready < 60) warnings.push(['Ready weak', 'Few setups are clearing your floor', 'yellow']);
-      const cap = MODE === 'AGG' ? 50 : 30;
-      const themeBreaches = [...new Set(DATA.holdings.filter(r => weightOf(r) > cap).map(themeOf))];
-      if(themeBreaches.length) warnings.push(['Theme cap breach', themeBreaches.join(', '), 'red']);
-      if(!warnings.length) warnings.push(['All clear', 'No major rule breaks detected', 'green']);
-      $('warningList').innerHTML = warnings.map(([a,b,c]) => `<div class="${c==='red'?'warning':c==='yellow'?'warning':'ok'}"><strong>${a}</strong><div class="small">${b}</div></div>`).join('');
-      if(warnings.some(w=>w[2]==='red')) $('card6').classList.add('bg-red'); else $('card6').classList.remove('bg-red');
-    }
-
-    function renderPerformance(){
-      const p = DATA.performance[0] || {};
-      const port = num(p.portfolio ?? p.port_return ?? p.return);
-      const spy = num(p.spy ?? p.spy_return);
-      const qqq = num(p.qqq ?? p.qqq_return);
-      $('perfPortfolio').innerHTML = `<span class="${port>=0?'green':'red'}">${fmtPct(port)}</span>`;
-      $('perfSpy').innerHTML = `<span class="${spy>=0?'green':'red'}">${fmtPct(spy)}</span>`;
-      $('perfQqq').innerHTML = `<span class="${qqq>=0?'green':'red'}">${fmtPct(qqq)}</span>`;
-      $('perfAlpha').innerHTML = `<span class="${(port-spy)>=0?'green':'red'}">${fmtPct((Number.isFinite(port)&&Number.isFinite(spy))?port-spy:NaN)}</span>`;
-    }
-
-    function renderActions(){
-      const cap = MODE === 'AGG' ? 50 : 30;
-      const ranked = [...DATA.ranking].sort((a,b)=>scoreOf(b)-scoreOf(a));
-      const buys = ranked.filter(r => scoreOf(r) >= 75).slice(0,6);
-      const sells = DATA.holdings.filter(r => {
-        const match = ranked.find(x => safeTicker(x).toUpperCase()===safeTicker(r).toUpperCase());
-        const s = match ? scoreOf(match) : NaN;
-        return (Number.isFinite(s) && s < 60) || (Number.isFinite(weightOf(r)) && weightOf(r) > cap);
-      }).slice(0,6);
-
-      $('buyList').innerHTML = buys.length ? buys.map((r,i)=> rowHtml(
-        `<div><input type="checkbox" /> <span class="ticker">BUY ${safeTicker(r)}</span><div class="small muted">Rank #${i+1} • ${themeOf(r)}</div></div>`,
-        `<div><div class="ticker green">${fmtNum(scoreOf(r),1)}</div><div class="small ${changeOf(r)>=0?'green':'red'}">${fmtPct(changeOf(r))}</div></div>`
-      )).join('') : `<div class="warning">Waiting on ranked candidates over 75.</div>`;
-
-      $('sellList').innerHTML = sells.length ? sells.map(r=> rowHtml(
-        `<div><input type="checkbox" /> <span class="ticker">REVIEW ${safeTicker(r)}</span><div class="small muted">${themeOf(r)}</div></div>`,
-        `<div><div class="ticker red">CHECK</div><div class="small muted">Wt ${fmtPct(weightOf(r))}</div></div>`
-      )).join('') : `<div class="ok">No urgent sell/review flags from current rules.</div>`;
-
-      const warn = [];
-      if(!DATA.ranking.length) warn.push('Ranking feed missing');
-      if(!DATA.holdings.length) warn.push('Holdings feed missing');
-      $('actionWarnings').innerHTML = warn.length ? `<div class="warning">${warn.join(' • ')}</div>` : '';
-      if(warn.length) $('card1').classList.add('bg-yellow'); else $('card1').classList.remove('bg-yellow');
-    }
-
-    function fillConfig(){
-      $('cfgHoldings').value = DEFAULTS.holdings;
-      $('cfgRanking').value = DEFAULTS.ranking;
-      $('cfgSystem').value = DEFAULTS.system;
-      $('cfgPerformance').value = DEFAULTS.performance;
-      $('cfgRadar').value = DEFAULTS.radar;
-      $('cfgRadarResults').value = DEFAULTS.radarResults;
-    }
-
-    function saveConfig(){
-      localStorage.setItem(LS.holdings, $('cfgHoldings').value.trim());
-      localStorage.setItem(LS.ranking, $('cfgRanking').value.trim());
-      localStorage.setItem(LS.system, $('cfgSystem').value.trim());
-      localStorage.setItem(LS.performance, $('cfgPerformance').value.trim());
-      localStorage.setItem(LS.radar, $('cfgRadar').value.trim());
-      localStorage.setItem(LS.radarResults, $('cfgRadarResults').value.trim());
-      location.reload();
-    }
-
-    async function loadAll(){
-      fillConfig();
-      const urls = {
-        holdings: localStorage.getItem(LS.holdings) || DEFAULTS.holdings,
-        ranking: localStorage.getItem(LS.ranking) || DEFAULTS.ranking,
-        system: localStorage.getItem(LS.system) || DEFAULTS.system,
-        performance: localStorage.getItem(LS.performance) || DEFAULTS.performance,
-        radar: localStorage.getItem(LS.radar) || DEFAULTS.radar,
-        radarResults: localStorage.getItem(LS.radarResults) || DEFAULTS.radarResults,
-      };
-      const keys = Object.keys(urls);
-      await Promise.all(keys.map(async key => {
-        try { DATA[key] = await fetchCsv(urls[key]); }
-        catch(e){ console.warn(key, e); DATA[key] = []; }
-      }));
-      renderAll();
-    }
-
-    function renderAll(){
-      renderStatus();
-      renderHoldings();
-      renderLeader();
-      renderRadar();
-      renderTheme();
-      renderWarnings();
-      renderPerformance();
-      renderActions();
-    }
-
-    $('refreshBtn').onclick = loadAll;
-    $('toggleModeBtn').onclick = () => { MODE = MODE==='LEAN' ? 'AGG' : 'LEAN'; localStorage.setItem(LS.mode, MODE); renderAll(); };
-    $('toggleConfigBtn').onclick = () => $('configCard').classList.toggle('hidden');
-    $('saveCfgBtn').onclick = saveConfig;
-    $('sortRank').onchange = renderLeader;
-    $('sortRadar').onchange = renderRadar;
-
-    loadAll();
-    setInterval(loadAll, 60000);
-  </script>
+fillOverlayFields();
+load();
+</script>
 </body>
 </html>
