@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lean Terminal v08 Full Script</title>
+  <title>Lean Terminal v09 Mood Colors</title>
   <style>
     :root{
       --bg:#0b1020; --panel:#121a2b; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
@@ -25,24 +25,25 @@
     .heroBadges{display:flex;gap:8px;flex-wrap:wrap}
     .badge{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
     .topModeBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .topToggle,.toggle{
-      display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden
-    }
-    .topToggle button,.toggle button{
-      padding:10px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700
-    }
+    .topToggle,.toggle{display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+    .topToggle button,.toggle button{padding:10px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700}
     .topToggle button.active,.toggle button.active{background:#1d2a44}
 
-    .pillRow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:8px}
+    .pillRow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
     .miniPill{
       background:var(--panel2);border:1px solid var(--line);border-radius:14px;padding:10px;min-height:84px;
-      display:flex;flex-direction:column;justify-content:space-between
+      display:flex;flex-direction:column;justify-content:space-between;transition:all .2s ease;
     }
     .miniHead{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
     .miniValue{font-size:22px;font-weight:800;line-height:1}
     .miniSub{font-size:12px;color:var(--muted)}
     .green{color:var(--green)} .yellow{color:var(--yellow)} .red{color:var(--red)} .blue{color:var(--blue)}
-    .ok{border-color:rgba(34,197,94,.35)} .warn{border-color:rgba(245,158,11,.35)} .danger{border-color:rgba(239,68,68,.45)}
+    .ok{border-color:rgba(34,197,94,.50); box-shadow:0 0 0 1px rgba(34,197,94,.12) inset}
+    .warn{border-color:rgba(245,158,11,.50); box-shadow:0 0 0 1px rgba(245,158,11,.12) inset}
+    .danger{border-color:rgba(239,68,68,.50); box-shadow:0 0 0 1px rgba(239,68,68,.12) inset}
+    .ok .miniValue{color:var(--green)}
+    .warn .miniValue{color:var(--yellow)}
+    .danger .miniValue{color:var(--red)}
 
     .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
     .card{padding:0;overflow:hidden;min-height:176px}
@@ -51,10 +52,7 @@
     .headL{display:flex;align-items:center;gap:8px}
     .n{width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)}
     .hTitle{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
-    .info{
-      width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;
-      font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer
-    }
+    .info{width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer}
     .body{padding:10px}
     .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
     .row:last-child{border-bottom:0}
@@ -68,29 +66,18 @@
     .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
     .field{display:grid;gap:5px}
     .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
-    .field input,.field select,.field textarea{
-      width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px
-    }
+    .field input,.field select,.field textarea{width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
     .btn{background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer}
-    .orderRow{
-      display:grid;grid-template-columns:20px 1.1fr .7fr .55fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)
-    }
+    .orderRow{display:grid;grid-template-columns:20px 1.1fr .7fr .55fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
     .sectionLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:8px 0 4px}
     .barWrap{display:grid;gap:6px}
     .barRow{display:grid;grid-template-columns:86px 1fr 52px;gap:8px;align-items:center}
     .bar{height:12px;background:#0c1426;border:1px solid var(--line);border-radius:999px;overflow:hidden}
     .barFill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green))}
-    .sideRail{
-      position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20
-    }
-    .railBtn{
-      writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);
-      background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0
-    }
+    .sideRail{position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20}
+    .railBtn{writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0}
     .railBtn.active{background:#1d2a44}
-    .sideDrawer{
-      position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19
-    }
+    .sideDrawer{position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19}
     .sideDrawer.open{display:block}
     .drawerHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
     .drawerBody{padding:12px}
@@ -122,8 +109,8 @@
     <section class="hero">
       <div class="heroTop">
         <div class="titleBlock">
-          <h1>Lean Terminal v08</h1>
-          <div class="sub">Full script • side tabs • top posture toggle • compact main dashboard • radar names can surface as NEW BUY if not held and qualified</div>
+          <h1>Lean Terminal v09</h1>
+          <div class="sub">Mood color upgrade • side tabs • top posture toggle • Monte confidence pill • radar names can surface as NEW BUY if not held and qualified</div>
         </div>
         <div class="topModeBar">
           <div class="topToggle">
@@ -149,6 +136,7 @@
         <div class="miniPill warn" id="planPill"><div class="miniHead"><span>Plan</span><span class="info" data-help="plan">i</span></div><div class="miniValue" id="planValue">--</div><div class="miniSub">system posture</div></div>
         <div class="miniPill warn" id="healthPill"><div class="miniHead"><span>Health</span><span class="info" data-help="health">i</span></div><div class="miniValue" id="healthValue">--</div><div class="miniSub">feed status</div></div>
         <div class="miniPill warn" id="deployPill"><div class="miniHead"><span>Deploy</span><span class="info" data-help="deploy">i</span></div><div class="miniValue" id="deployValue">--</div><div class="miniSub">today's amount</div></div>
+        <div class="miniPill warn" id="montePill"><div class="miniHead"><span>Monte</span><span class="info" data-help="monte">i</span></div><div class="miniValue" id="monteValue">--</div><div class="miniSub">confidence</div></div>
       </div>
     </section>
   </div>
@@ -171,64 +159,33 @@
   </section>
 
   <div class="grid" style="margin-top:10px">
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">1</div><div class="hTitle">Today's Orders</div></div><span class="info" data-help="orders">i</span></div>
-      <div class="body scroll" id="ordersBox"></div>
-    </section>
-
-    <section class="card span-1">
-      <div class="head"><div class="headL"><div class="n">2</div><div class="hTitle">Holdings</div></div><span class="info" data-help="holdings">i</span></div>
-      <div class="body scroll" id="holdingsBox"></div>
-    </section>
-
-    <section class="card span-1">
-      <div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">Leaderboard</div></div><span class="info" data-help="leader">i</span></div>
-      <div class="body scroll" id="leaderBox"></div>
-    </section>
-
-    <section class="card span-1">
-      <div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">Radar</div></div><span class="info" data-help="radar">i</span></div>
-      <div class="body scroll" id="radarBox"></div>
-    </section>
-
-    <section class="card span-1">
-      <div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">Flow</div></div><span class="info" data-help="flow">i</span></div>
-      <div class="body scroll" id="flowBox"></div>
-    </section>
-
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">Deploy Planner</div></div><span class="info" data-help="deployplan">i</span></div>
-      <div class="body" id="deployPlanBox"></div>
-    </section>
-
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">Controls</div></div><span class="info" data-help="controls">i</span></div>
-      <div class="body">
-        <div class="controls">
-          <div class="field"><label>Mode</label><div class="toggle"><button id="modeLeanBtn" class="active">Lean</button><button id="modeAggBtn">Agg</button></div></div>
-          <div class="field"><label>Regime</label><select id="cfgRegime"><option>Goldilocks</option><option>Reflation</option><option>Stagflation</option><option>Deflation</option></select></div>
-          <div class="field"><label>Credit stress</label><input id="cfgCredit" type="number" min="0" max="100" step="1"></div>
-          <div class="field"><label>News shock</label><input id="cfgNews" type="number" min="0" max="100" step="1"></div>
-          <div class="field"><label>Today's amount</label><input id="deployAmount" type="number" min="0" step="1" placeholder="500"></div>
-        </div>
-        <div class="chips" style="margin-top:10px">
-          <div class="pillTag">Qualify = score 75+</div>
-          <div class="pillTag">New radar name + not held + qualify = NEW BUY</div>
-          <div class="pillTag">Held + 60-74 = TRIM</div>
-          <div class="pillTag">Held + below 60 = SELL</div>
-        </div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn" id="saveOverlayBtn">Save</button>
-          <button class="btn" id="reloadBtn">Reload now</button>
-          <button class="btn" id="resetOverlayBtn">Reset</button>
-        </div>
+    <section class="card span-2"><div class="head"><div class="headL"><div class="n">1</div><div class="hTitle">Today's Orders</div></div><span class="info" data-help="orders">i</span></div><div class="body scroll" id="ordersBox"></div></section>
+    <section class="card span-1"><div class="head"><div class="headL"><div class="n">2</div><div class="hTitle">Holdings</div></div><span class="info" data-help="holdings">i</span></div><div class="body scroll" id="holdingsBox"></div></section>
+    <section class="card span-1"><div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">Leaderboard</div></div><span class="info" data-help="leader">i</span></div><div class="body scroll" id="leaderBox"></div></section>
+    <section class="card span-1"><div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">Radar</div></div><span class="info" data-help="radar">i</span></div><div class="body scroll" id="radarBox"></div></section>
+    <section class="card span-1"><div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">Flow</div></div><span class="info" data-help="flow">i</span></div><div class="body scroll" id="flowBox"></div></section>
+    <section class="card span-2"><div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">Deploy Planner</div></div><span class="info" data-help="deployplan">i</span></div><div class="body" id="deployPlanBox"></div></section>
+    <section class="card span-2"><div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">Controls</div></div><span class="info" data-help="controls">i</span></div><div class="body">
+      <div class="controls">
+        <div class="field"><label>Mode</label><div class="toggle"><button id="modeLeanBtn" class="active">Lean</button><button id="modeAggBtn">Agg</button></div></div>
+        <div class="field"><label>Regime</label><select id="cfgRegime"><option>Goldilocks</option><option>Reflation</option><option>Stagflation</option><option>Deflation</option></select></div>
+        <div class="field"><label>Credit stress</label><input id="cfgCredit" type="number" min="0" max="100" step="1"></div>
+        <div class="field"><label>News shock</label><input id="cfgNews" type="number" min="0" max="100" step="1"></div>
+        <div class="field"><label>Today's amount</label><input id="deployAmount" type="number" min="0" step="1" placeholder="500"></div>
       </div>
-    </section>
-
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">System Growth</div></div><span class="info" data-help="growth">i</span></div>
-      <div class="body" id="growthBox"></div>
-    </section>
+      <div class="chips" style="margin-top:10px">
+        <div class="pillTag">Qualify = score 75+</div>
+        <div class="pillTag">New radar name + not held + qualify = NEW BUY</div>
+        <div class="pillTag">Held + 60-74 = TRIM</div>
+        <div class="pillTag">Held + below 60 = SELL</div>
+      </div>
+      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+        <button class="btn" id="saveOverlayBtn">Save</button>
+        <button class="btn" id="reloadBtn">Reload now</button>
+        <button class="btn" id="resetOverlayBtn">Reset</button>
+      </div>
+    </div></section>
+    <section class="card span-2"><div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">System Growth</div></div><span class="info" data-help="growth">i</span></div><div class="body" id="growthBox"></div></section>
   </div>
 </div>
 
@@ -240,62 +197,44 @@ const urls = {
 };
 
 const HELP = {
-  ready: 'READY = how favorable conditions are to put money to work. Higher is better.',
-  risk: 'RISK = how dangerous the environment is. Lower is safer.',
-  budget: 'BUDGET = suggested percent of today’s cash you should consider deploying.',
-  plan: 'PLAN = posture. Lean = selective, Agg = more aggressive, Defend = preservation mode.',
-  health: 'HEALTH = whether the terminal is seeing enough live data to operate cleanly.',
-  deploy: 'DEPLOY = dollar amount from the amount box that the system suggests using today.',
-  orders: 'TODAY’S ORDERS = the simple answer box. New buys, adds, trims, sells, and watch names.',
-  holdings: 'HOLDINGS = what you already own. This anchors your real-world risk.',
-  leader: 'LEADERBOARD = ranked names and scores. This is the feed the action engine reads.',
-  radar: 'RADAR = watchlist / field scan. Names on deck even if not currently owned.',
-  flow: 'FLOW = one-line summary of the combined environment.',
-  deployplan: 'DEPLOY PLANNER = how the entered dollar amount is split across the top buy names for today.',
-  controls: 'CONTROLS = manual settings until environment layers are fully wired to feeds.',
-  growth: 'SYSTEM GROWTH = what the terminal can and cannot measure today.'
+  ready:'READY = how favorable conditions are to put money to work. Higher is better.',
+  risk:'RISK = how dangerous the environment is. Lower is safer.',
+  budget:'BUDGET = suggested percent of today’s cash you should consider deploying.',
+  plan:'PLAN = posture. Lean = selective, Agg = more aggressive, Defend = preservation mode.',
+  health:'HEALTH = whether the terminal is seeing enough live data to operate cleanly.',
+  deploy:'DEPLOY = dollar amount from the amount box that the system suggests using today.',
+  monte:'MONTE = confidence level. Higher means the setup looks more resilient across simulated paths.',
+  orders:'TODAY’S ORDERS = the simple answer box. New buys, adds, trims, sells, and watch names.',
+  holdings:'HOLDINGS = what you already own. This anchors your real-world risk.',
+  leader:'LEADERBOARD = ranked names and scores. This is the feed the action engine reads.',
+  radar:'RADAR = watchlist / field scan. Names on deck even if not currently owned.',
+  flow:'FLOW = one-line summary of the combined environment.',
+  deployplan:'DEPLOY PLANNER = how the entered dollar amount is split across the top buy names for today.',
+  controls:'CONTROLS = manual settings until environment layers are fully wired to feeds.',
+  growth:'SYSTEM GROWTH = what the terminal can and cannot measure today.'
 };
 
 function $(id){ return document.getElementById(id); }
-
 function parseCSV(text){
   const rows=[]; let row=[], cell='', inQuotes=false;
   for(let i=0;i<text.length;i++){
     const ch=text[i], next=text[i+1];
-    if(ch === '"'){
-      if(inQuotes && next === '"'){ cell += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if(ch === ',' && !inQuotes){
-      row.push(cell); cell='';
-    } else if((ch === '\n' || ch === '\r') && !inQuotes){
+    if(ch === '"'){ if(inQuotes && next === '"'){ cell += '"'; i++; } else inQuotes = !inQuotes; }
+    else if(ch === ',' && !inQuotes){ row.push(cell); cell=''; }
+    else if((ch === '\n' || ch === '\r') && !inQuotes){
       if(ch === '\r' && next === '\n') i++;
       row.push(cell); cell='';
       if(row.some(v => String(v).trim() !== '')) rows.push(row);
       row=[];
-    } else {
-      cell += ch;
-    }
+    } else { cell += ch; }
   }
-  if(cell.length || row.length){
-    row.push(cell);
-    if(row.some(v => String(v).trim() !== '')) rows.push(row);
-  }
+  if(cell.length || row.length){ row.push(cell); if(row.some(v => String(v).trim() !== '')) rows.push(row); }
   if(!rows.length) return [];
   const headers = rows.shift().map(h => String(h || '').trim());
-  return rows.map(r => {
-    const o={};
-    headers.forEach((h,i)=> o[h] = (r[i] ?? '').trim());
-    return o;
-  });
+  return rows.map(r => { const o={}; headers.forEach((h,i)=> o[h] = (r[i] ?? '').trim()); return o; });
 }
-
-function num(v){
-  const n=parseFloat(String(v ?? '').replace(/[$,%\s,]/g,''));
-  return Number.isFinite(n) ? n : NaN;
-}
-
+function num(v){ const n=parseFloat(String(v ?? '').replace(/[$,%\s,]/g,'')); return Number.isFinite(n) ? n : NaN; }
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-
 function overlayDefaults(){
   return {
     mode: localStorage.getItem('lean_mode') || 'LEAN',
@@ -308,7 +247,6 @@ function overlayDefaults(){
     newsNote3: localStorage.getItem('lean_news_note3') || 'Geopolitical / macro event note'
   };
 }
-
 function fillOverlayFields(){
   const o = overlayDefaults();
   $('cfgRegime').value = o.regime;
@@ -317,7 +255,6 @@ function fillOverlayFields(){
   $('deployAmount').value = o.amount;
   setMode(o.mode);
 }
-
 function setMode(mode){
   localStorage.setItem('lean_mode', mode);
   $('modeBadge').textContent = mode;
@@ -327,19 +264,16 @@ function setMode(mode){
   $('topLeanBtn').classList.toggle('active', mode === 'LEAN');
   $('topAggBtn').classList.toggle('active', mode === 'AGG');
 }
-
 function saveOverlay(){
   localStorage.setItem('lean_overlay_regime', $('cfgRegime').value);
   localStorage.setItem('lean_overlay_credit', $('cfgCredit').value);
   localStorage.setItem('lean_overlay_news', $('cfgNews').value);
   localStorage.setItem('lean_deploy_amount', $('deployAmount').value);
 }
-
 function resetOverlay(){
   ['lean_overlay_regime','lean_overlay_credit','lean_overlay_news','lean_deploy_amount','lean_mode'].forEach(k=>localStorage.removeItem(k));
   fillOverlayFields();
 }
-
 function setTopPill(id, value, sub, cls){
   $(id+'Value').textContent = value;
   const pill = $(id+'Pill');
@@ -347,26 +281,20 @@ function setTopPill(id, value, sub, cls){
   pill.classList.add(cls);
   pill.querySelector('.miniSub').textContent = sub;
 }
-
-function pillClass(value, highGood=true){
-  if(!Number.isFinite(value)) return 'warn';
-  if(highGood) return value >= 75 ? 'ok' : value >= 55 ? 'warn' : 'danger';
-  return value <= 35 ? 'ok' : value <= 60 ? 'warn' : 'danger';
+function getColorClass(value, type){
+  if(type === 'highGood'){ if(value >= 75) return 'ok'; if(value >= 55) return 'warn'; return 'danger'; }
+  if(type === 'lowGood'){ if(value <= 35) return 'ok'; if(value <= 60) return 'warn'; return 'danger'; }
+  return 'warn';
 }
-
 let refreshCountdown = 60;
 function tickCountdown(){
   refreshCountdown -= 1;
-  if(refreshCountdown <= 0){
-    refreshCountdown = 60;
-    load();
-  }
+  if(refreshCountdown <= 0){ refreshCountdown = 60; load(); }
   $('countdownBadge').textContent = refreshCountdown + 's';
 }
 setInterval(tickCountdown, 1000);
 
-let APP = { radarRows:[], holdingsRows:[], rankingRows:[], errors:[], buys:[], trims:[], sells:[], watches:[], buyAllocations:[], plan:'LEAN', ready:0, risk:0, budget:0 };
-
+let APP = { radarRows:[], holdingsRows:[], rankingRows:[], errors:[], buys:[], trims:[], sells:[], watches:[], buyAllocations:[], plan:'LEAN', ready:0, risk:0, budget:0, monte:0 };
 function actionClass(action){
   const a = String(action || '').toUpperCase();
   if(a.includes('BUY') || a === 'ADD') return 'green';
@@ -374,11 +302,8 @@ function actionClass(action){
   if(a === 'SELL' || a === 'DEFEND') return 'red';
   return '';
 }
-
 function renderDrawer(tab){
-  const drawer = $('sideDrawer');
-  const body = $('drawerBody');
-  const title = $('drawerTitle');
+  const drawer = $('sideDrawer'), body = $('drawerBody'), title = $('drawerTitle');
   document.querySelectorAll('.railBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
   drawer.classList.add('open');
 
@@ -401,80 +326,41 @@ function renderDrawer(tab){
       localStorage.setItem('lean_news_note3', $('newsNote3').value);
     };
   }
-
   if(tab === 'errors'){
     title.textContent = 'System Errors / Diagnostics';
     const errs = APP.errors.length ? APP.errors.map(e=>`<div class="warning">${e}</div>`).join('') : '<div class="good">No major system errors detected right now.</div>';
-    body.innerHTML = `
-      ${errs}
+    body.innerHTML = `${errs}
       <div class="row"><div>Radar rows</div><div>${APP.radarRows.length}</div></div>
       <div class="row"><div>Holdings rows</div><div>${APP.holdingsRows.length}</div></div>
       <div class="row"><div>Ranking rows</div><div>${APP.rankingRows.length}</div></div>
       <div class="row"><div>Plan</div><div>${APP.plan}</div></div>
       <div class="row"><div>Ready / Risk / Budget</div><div>${APP.ready} / ${APP.risk} / ${APP.budget}</div></div>
-      <div class="small muted" style="margin-top:8px">Next phase can add stale-feed timers and column validation.</div>
-    `;
+      <div class="row"><div>Monte</div><div>${APP.monte}%</div></div>`;
   }
-
   if(tab === 'holdings'){
     title.textContent = 'Full Holdings Data';
-    body.innerHTML = APP.holdingsRows.length
-      ? APP.holdingsRows.map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'} <span class="muted">${r.Theme||r.theme||''}</span></div><div>${r.Weight||r.weight||'--'}</div></div>`).join('')
-      : '<div class="warning">No holdings data loaded.</div>';
+    body.innerHTML = APP.holdingsRows.length ? APP.holdingsRows.map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'} <span class="muted">${r.Theme||r.theme||''}</span></div><div>${r.Weight||r.weight||'--'}</div></div>`).join('') : '<div class="warning">No holdings data loaded.</div>';
   }
-
   if(tab === 'visuals'){
     title.textContent = 'Visuals';
-    const topWeights = APP.holdingsRows
-      .map(r=>({ticker:r.Ticker||r.ticker||'--', weight:num(r.Weight||r.weight)}))
-      .filter(x=>Number.isFinite(x.weight))
-      .sort((a,b)=>b.weight-a.weight)
-      .slice(0,10);
-
+    const topWeights = APP.holdingsRows.map(r=>({ticker:r.Ticker||r.ticker||'--', weight:num(r.Weight||r.weight)})).filter(x=>Number.isFinite(x.weight)).sort((a,b)=>b.weight-a.weight).slice(0,10);
     const themeCounts = {};
-    APP.holdingsRows.forEach(r=>{
-      const t = (r.Theme||r.theme||'Unlabeled').trim() || 'Unlabeled';
-      themeCounts[t] = (themeCounts[t] || 0) + 1;
-    });
+    APP.holdingsRows.forEach(r=>{ const t=(r.Theme||r.theme||'Unlabeled').trim()||'Unlabeled'; themeCounts[t]=(themeCounts[t]||0)+1; });
     const themeBars = Object.entries(themeCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
     const orderSummary = [['Buys',APP.buys.length],['Trims',APP.trims.length],['Sells',APP.sells.length],['Watches',APP.watches.length]];
-
     body.innerHTML = `
       <div class="sectionLabel">Top holding weights</div>
       <div class="barWrap">
-        ${topWeights.length ? topWeights.map(x=>`
-          <div class="barRow">
-            <div>${x.ticker}</div>
-            <div class="bar"><div class="barFill" style="width:${Math.min(100,x.weight)}%"></div></div>
-            <div>${x.weight.toFixed(1)}%</div>
-          </div>
-        `).join('') : '<div class="warning">No weight data yet.</div>'}
+        ${topWeights.length ? topWeights.map(x=>`<div class="barRow"><div>${x.ticker}</div><div class="bar"><div class="barFill" style="width:${Math.min(100,x.weight)}%"></div></div><div>${x.weight.toFixed(1)}%</div></div>`).join('') : '<div class="warning">No weight data yet.</div>'}
       </div>
-
       <div class="sectionLabel">Theme counts</div>
       <div class="barWrap">
-        ${themeBars.length ? themeBars.map(([k,v])=>`
-          <div class="barRow">
-            <div>${k}</div>
-            <div class="bar"><div class="barFill" style="width:${Math.min(100,v*12)}%"></div></div>
-            <div>${v}</div>
-          </div>
-        `).join('') : '<div class="warning">No theme labels yet.</div>'}
+        ${themeBars.length ? themeBars.map(([k,v])=>`<div class="barRow"><div>${k}</div><div class="bar"><div class="barFill" style="width:${Math.min(100,v*12)}%"></div></div><div>${v}</div></div>`).join('') : '<div class="warning">No theme labels yet.</div>'}
       </div>
-
       <div class="sectionLabel">Order mix</div>
       <div class="barWrap">
-        ${orderSummary.map(([k,v])=>`
-          <div class="barRow">
-            <div>${k}</div>
-            <div class="bar"><div class="barFill" style="width:${Math.min(100,v*18)}%"></div></div>
-            <div>${v}</div>
-          </div>
-        `).join('')}
-      </div>
-
-      <div class="small muted" style="margin-top:8px">Best next visual upgrades: treemap for themes, network map for overlap, and a 3D score-risk-momentum bubble map.</div>
-    `;
+        ${orderSummary.map(([k,v])=>`<div class="barRow"><div>${k}</div><div class="bar"><div class="barFill" style="width:${Math.min(100,v*18)}%"></div></div><div>${v}</div></div>`).join('')}
+      </div>`;
   }
 }
 
@@ -483,13 +369,8 @@ async function load(){
   try{
     const [resR,resH,resK] = await Promise.all([fetch(urls.radar),fetch(urls.holdings),fetch(urls.ranking)]);
     const [txtR,txtH,txtK] = await Promise.all([resR.text(),resH.text(),resK.text()]);
-
-    const radarRows = parseCSV(txtR);
-    const holdingsRows = parseCSV(txtH);
-    const rankingRows = parseCSV(txtK);
-    APP.radarRows = radarRows;
-    APP.holdingsRows = holdingsRows;
-    APP.rankingRows = rankingRows;
+    const radarRows = parseCSV(txtR), holdingsRows = parseCSV(txtH), rankingRows = parseCSV(txtK);
+    APP.radarRows = radarRows; APP.holdingsRows = holdingsRows; APP.rankingRows = rankingRows;
 
     if(!radarRows.length) APP.errors.push('Radar feed empty');
     if(!holdingsRows.length) APP.errors.push('Holdings feed empty');
@@ -505,8 +386,7 @@ async function load(){
     const credit = clamp(num(overlay.credit),0,100);
     const news = clamp(num(overlay.news),0,100);
     const amount = clamp(num(overlay.amount),0,1e12);
-    const qualify = 75;
-    const sellCut = 60;
+    const qualify = 75, sellCut = 60;
 
     const regimeBoost = {Goldilocks:12, Reflation:7, Stagflation:-10, Deflation:-14}[regime] ?? 0;
     const regimeRisk = {Goldilocks:-8, Reflation:-3, Stagflation:12, Deflation:15}[regime] ?? 0;
@@ -519,52 +399,57 @@ async function load(){
     let plan = mode;
     if(credit >= 65 || news >= 70 || risk >= 70 || regime === 'Deflation') plan = 'DEFEND';
 
-    APP.plan = plan; APP.ready = ready; APP.risk = risk; APP.budget = budget;
+    let monte = clamp(Math.round((ready*0.55) + ((100-risk)*0.25) + ((100-news)*0.10) + ((100-credit)*0.10)),0,100);
+
+    APP.plan = plan; APP.ready = ready; APP.risk = risk; APP.budget = budget; APP.monte = monte;
 
     const loaded = [radarRows.length, holdingsRows.length, rankingRows.length].filter(v=>v>0).length;
     const health = loaded === 3 ? 'GOOD' : loaded === 2 ? 'PART' : 'LOW';
 
-    setTopPill('ready', ready, 'deploy quality', pillClass(ready,true));
-    setTopPill('risk', risk, 'lower = safer', pillClass(risk,false));
-    setTopPill('budget', budget+'%', 'suggested deploy', budget>=60?'ok':budget>=35?'warn':'danger');
-    setTopPill('plan', plan, 'system posture', plan==='DEFEND'?'danger':plan==='AGG'?'ok':'warn');
-    setTopPill('health', health, 'feed status', health==='GOOD'?'ok':health==='PART'?'warn':'danger');
+    setTopPill('ready', ready, 'deploy quality', getColorClass(ready, 'highGood'));
+    setTopPill('risk', risk, 'lower = safer', getColorClass(risk, 'lowGood'));
+    setTopPill('budget', budget+'%', 'suggested deploy', getColorClass(budget, 'highGood'));
+
+    let planClass = 'warn';
+    if(plan === 'AGG') planClass = 'ok';
+    if(plan === 'DEFEND') planClass = 'danger';
+    setTopPill('plan', plan, 'system posture', planClass);
+
+    let healthClass = 'warn';
+    if(health === 'GOOD') healthClass = 'ok';
+    if(health === 'LOW') healthClass = 'danger';
+    setTopPill('health', health, 'feed status', healthClass);
+
+    setTopPill('deploy', amount>0 ? '$'+Math.round(amount*(budget/100)).toLocaleString() : '--', 'today\'s amount', amount<=0 ? 'warn' : getColorClass(budget,'highGood'));
+    setTopPill('monte', monte+'%', 'confidence', getColorClass(monte, 'highGood'));
 
     $('flowBox').innerHTML = `
-      <div class="row"><div>Mode</div><div>${mode}</div></div>
-      <div class="row"><div>Regime</div><div>${regime}</div></div>
-      <div class="row"><div>Credit / News</div><div>${credit} / ${news}</div></div>
+      <div class="row"><div>Mode</div><div class="${mode==='AGG'?'green':'yellow'}">${mode}</div></div>
+      <div class="row"><div>Regime</div><div class="${(regime==='Goldilocks'||regime==='Reflation')?'green':'red'}">${regime}</div></div>
+      <div class="row"><div>Credit / News</div><div class="${credit>60||news>60?'red':'yellow'}">${credit} / ${news}</div></div>
       <div class="row"><div>Plan</div><div class="${plan==='DEFEND'?'red':plan==='AGG'?'green':'yellow'}">${plan}</div></div>
     `;
 
     const holdingMap = new Map();
     holdingsRows.forEach(r=>holdingMap.set(String(r.Ticker||r.ticker||'').toUpperCase(), r));
     const radarSet = new Set(radarRows.map(r=>String(r.ticker||r.Ticker||'').toUpperCase()));
-
     const sorted = [...rankingRows].sort((a,b)=>(num(b.Score||b.score)||-999)-(num(a.Score||a.score)||-999));
     const buys=[], trims=[], sells=[], watches=[];
-
     sorted.forEach((r,idx)=>{
       const ticker = String(r.Ticker||r.ticker||'--').toUpperCase();
       const score = num(r.Score||r.score);
       const held = holdingMap.has(ticker);
       const onRadar = radarSet.has(ticker);
       if(!Number.isFinite(score)) return;
-
       if(held && score < sellCut) sells.push({ticker,score,note:'held + score < 60'});
       else if(held && score < qualify) trims.push({ticker,score,note:'held + score 60-74'});
-      else if(!held && score >= qualify) buys.push({ticker,score,note:onRadar ? 'NEW BUY from radar' : 'NEW BUY',rank:idx+1,radar:onRadar});
-      else if(held && score >= qualify) buys.push({ticker,score,note:'ADD / hold winner',rank:idx+1,radar:onRadar});
+      else if(!held && score >= qualify) buys.push({ticker,score,note:onRadar ? 'NEW BUY from radar' : 'NEW BUY',rank:idx+1});
+      else if(held && score >= qualify) buys.push({ticker,score,note:'ADD / hold winner',rank:idx+1});
       else watches.push({ticker,score,note:'watch'});
     });
-
     APP.buys = buys; APP.trims = trims; APP.sells = sells; APP.watches = watches;
 
     const deployAmount = plan==='DEFEND' ? 0 : Math.round(amount*(budget/100));
-    $('deployValue').textContent = amount>0 ? '$'+deployAmount.toLocaleString() : '--';
-    $('deployPill').classList.remove('ok','warn','danger');
-    $('deployPill').classList.add(deployAmount>=500?'ok':deployAmount>0?'warn':'danger');
-
     let buyAllocations = [];
     if(deployAmount > 0 && buys.length){
       const topBuys = buys.slice(0,3);
@@ -577,10 +462,7 @@ async function load(){
     const buildRows = (label, items, action, amountFn) => {
       if(!items.length) return `<div class="good">${label}: none</div>`;
       let s = `<div class="sectionLabel">${label}</div>`;
-      s += items.map(item=>{
-        const amt = amountFn ? amountFn(item) : action;
-        return `<div class="orderRow"><input type="checkbox" disabled><div>${item.ticker} <span class="muted">(${item.score})</span></div><div class="${actionClass(action)}">${amt}</div><div class="muted">${item.note}</div></div>`;
-      }).join('');
+      s += items.map(item=>`<div class="orderRow"><input type="checkbox" disabled><div>${item.ticker} <span class="muted">(${item.score})</span></div><div class="${actionClass(action)}">${amountFn ? amountFn(item) : action}</div><div class="muted">${item.note}</div></div>`).join('');
       return s;
     };
 
@@ -592,8 +474,8 @@ async function load(){
 
     if(amount <= 0){
       $('deployPlanBox').innerHTML = '<div class="warning">Enter a dollar amount. The terminal will show how much to deploy today and which buy names get that cash.</div>';
-    } else if(plan === 'DEFEND'){
-      $('deployPlanBox').innerHTML = '<div class="warning">Plan is DEFEND. No fresh buys suggested today. Review trims/sells and protect capital.</div>';
+    } else if(plan === 'DEFEND' || ready < 60 || risk > 70){
+      $('deployPlanBox').innerHTML = '<div class="warning">No deployment today. Conditions are not strong enough or risk is too elevated.</div>';
     } else if(!buyAllocations.length){
       $('deployPlanBox').innerHTML = '<div class="warning">No buy names currently qualify above 75.</div>';
     } else {
@@ -601,13 +483,15 @@ async function load(){
     }
 
     $('growthBox').innerHTML = `
-      <div class="row"><div>Decision engine</div><div class="green">${buys.length+trims.length+sells.length ? 'alive' : 'thin'}</div></div>
-      <div class="row"><div>New buy candidates</div><div>${buys.filter(x=>x.note.includes('NEW BUY')).length}</div></div>
-      <div class="row"><div>Trim flags</div><div>${trims.length}</div></div>
-      <div class="row"><div>Sell flags</div><div>${sells.length}</div></div>
-      <div class="row"><div>Radar names loaded</div><div>${radarRows.length}</div></div>
+      <div class="row"><div>Decision engine</div><div class="${buys.length+trims.length+sells.length ? 'green' : 'yellow'}">${buys.length+trims.length+sells.length ? 'alive' : 'thin'}</div></div>
+      <div class="row"><div>New buy candidates</div><div class="${buys.filter(x=>x.note.includes('NEW BUY')).length ? 'green' : 'muted'}">${buys.filter(x=>x.note.includes('NEW BUY')).length}</div></div>
+      <div class="row"><div>Trim flags</div><div class="${APP.trims.length ? 'yellow' : 'muted'}">${APP.trims.length}</div></div>
+      <div class="row"><div>Sell flags</div><div class="${APP.sells.length ? 'red' : 'muted'}">${APP.sells.length}</div></div>
+      <div class="row"><div>Monte</div><div class="${monte>=70?'green':monte>=40?'yellow':'red'}">${monte}%</div></div>
       <div class="small muted" style="margin-top:8px">Next phase: wire full trade log feed, history feed, and real news ingestion.</div>
     `;
+
+    $('lastUpdateBadge').textContent = new Date().toLocaleString();
 
     const openTab = document.querySelector('.railBtn.active')?.dataset.tab;
     if(openTab) renderDrawer(openTab);
@@ -620,27 +504,14 @@ async function load(){
   }
 }
 
-document.querySelectorAll('.info').forEach(el=>{
-  el.addEventListener('click', ()=>{ $('helpBar').innerHTML = HELP[el.dataset.help] || 'No help text yet.'; });
-});
-
-document.querySelectorAll('.railBtn').forEach(btn=>{
-  btn.addEventListener('click', ()=>{
-    const isActive = btn.classList.contains('active');
-    document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
-    if(isActive){
-      $('sideDrawer').classList.remove('open');
-      return;
-    }
-    btn.classList.add('active');
-    renderDrawer(btn.dataset.tab);
-  });
-});
-
-$('closeDrawerBtn').addEventListener('click', ()=>{
-  $('sideDrawer').classList.remove('open');
+document.querySelectorAll('.info').forEach(el=>el.addEventListener('click', ()=>{ $('helpBar').innerHTML = HELP[el.dataset.help] || 'No help text yet.'; }));
+document.querySelectorAll('.railBtn').forEach(btn=>btn.addEventListener('click', ()=>{
+  const isActive = btn.classList.contains('active');
   document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
-});
+  if(isActive){ $('sideDrawer').classList.remove('open'); return; }
+  btn.classList.add('active'); renderDrawer(btn.dataset.tab);
+}));
+$('closeDrawerBtn').addEventListener('click', ()=>{ $('sideDrawer').classList.remove('open'); document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active')); });
 
 function syncMode(mode){ setMode(mode); load(); }
 $('modeLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
