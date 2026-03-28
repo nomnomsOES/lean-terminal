@@ -1,707 +1,523 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-<meta charset="UTF-8" />
-<meta name="viewport" content="width=device-width, initial-scale=1.0" />
-<title>Lean Terminal v11 Grouped Orders</title>
-<style>
-:root{
-  --bg:#0b1020; --panel:#121a2b; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
-  --line:rgba(255,255,255,.08); --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6;
-  --pill:#111827; --shadow:0 10px 24px rgba(0,0,0,.22);
-}
-*{box-sizing:border-box}
-html,body{
-  margin:0;padding:0;background:var(--bg);color:var(--text);
-  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif
-}
+  <meta charset="utf-8" />
+  <meta name="viewport" content="width=device-width,initial-scale=1" />
+  <title>Lean Terminal v11.1</title>
+  <style>
+    :root{
+      --bg:#061128;
+      --bg2:#081734;
+      --panel:#0b1c3c;
+      --panel2:#0f2348;
+      --text:#eef4ff;
+      --muted:#9ab0d3;
+      --line:rgba(255,255,255,.10);
+      --line2:rgba(255,255,255,.06);
+      --green:#1ee27d;
+      --yellow:#ffb020;
+      --red:#ff5d5d;
+      --blue:#4d8dff;
+      --orange:#ff9f1a;
+      --tabW:64px;
+      --shadow:0 12px 28px rgba(0,0,0,.28);
+      --radius:22px;
+    }
 
-/* ===== TOP ===== */
-.wrap{max-width:1760px;margin:0 auto;padding:12px}
-.topbar{display:grid;grid-template-columns:1.5fr 1fr;gap:10px;margin-bottom:10px}
-.hero,.statusbar,.card,.helpbar,.sideRail,.sideDrawer{
-  background:linear-gradient(180deg,rgba(18,26,43,.98),rgba(15,23,42,.98));
-  border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)
-}
-.hero,.statusbar,.helpbar{padding:10px 12px}
-.heroTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-.titleBlock h1{margin:0;font-size:24px;font-weight:800}
-.sub{font-size:12px;color:var(--muted)}
-.topModeBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-.heroBadges{display:flex;gap:8px;flex-wrap:wrap}
-.badge{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
-.topToggle,.toggle{display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-.topToggle button,.toggle button{
-  padding:8px 14px;border:0;background:transparent;color:#fff;cursor:pointer;
-  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif
-}
-.topToggle button.active,.toggle button.active{background:#1d2a44}
+    *{box-sizing:border-box}
+    html,body{height:100%}
+    body{
+      margin:0;
+      font-family:Inter, ui-sans-serif, system-ui, -apple-system, Segoe UI, Roboto, Arial, sans-serif;
+      color:var(--text);
+      background:
+        radial-gradient(1200px 600px at 20% -10%, rgba(52,100,255,.18), transparent 60%),
+        linear-gradient(180deg, #040b1b 0%, #071127 42%, #050d20 100%);
+      letter-spacing:.1px;
+    }
 
-/* ===== PILLS ===== */
-.statusbar{padding:6px 8px}
-.pillRow{
-  display:grid;
-  grid-template-columns:repeat(7, minmax(70px,1fr));
-  gap:6px;
-}
-.miniPill{
-  background:var(--panel2);
-  border:1px solid var(--line);
-  border-radius:12px;
-  padding:8px;
-  min-height:74px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-}
-.miniHead{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}
-.miniValue{
-  font-size:18px;
-  font-weight:800;
-  line-height:1.1;
-  white-space:nowrap;
-}
-.miniSub{
-  font-size:10px;
-  color:var(--muted);
-  white-space:nowrap;
-}
-.ok{border-color:var(--green);color:var(--green)}
-.warn{border-color:var(--yellow);color:var(--yellow)}
-.danger{border-color:var(--red);color:var(--red)}
-.ok .miniValue{color:var(--green)}
-.warn .miniValue{color:var(--yellow)}
-.danger .miniValue{color:var(--red)}
+    .app{
+      width:min(1720px, calc(100vw - 28px));
+      margin:16px auto;
+      position:relative;
+      padding-right:92px;
+    }
 
-/* ===== GRID ===== */
-.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
-.card{padding:0;overflow:hidden;min-height:176px}
-.span-2{grid-column:span 2}
-.head{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line)}
-.headL{display:flex;align-items:center;gap:8px}
-.n{
-  width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);
-  display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)
-}
-.hTitle{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
-.info{
-  width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;
-  font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer
-}
-.body{padding:10px}
-.row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.row:last-child{border-bottom:0}
-.scroll{max-height:160px;overflow:auto}
-.small{font-size:12px}
-.muted{color:var(--muted)}
-.warning{
-  padding:8px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fecaca;font-size:12px
-}
-.good{
-  padding:8px 9px;border-radius:10px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#bbf7d0;font-size:12px
-}
-.chips{display:flex;gap:8px;flex-wrap:wrap}
-.pillTag{
-  display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;
-  background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)
-}
-.controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-.field{display:grid;gap:5px}
-.field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
-.field input,.field select,.field textarea{
-  width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px
-}
-.btn{background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer}
-.green{color:var(--green)}
-.yellow{color:var(--yellow)}
-.red{color:var(--red)}
-.blue{color:var(--blue)}
+    .top-row{
+      display:grid;
+      grid-template-columns: minmax(700px,1fr) auto;
+      gap:14px;
+      align-items:start;
+    }
 
-/* ===== GROUPED ORDER LINES ===== */
-.orderRow{
-  padding:8px 0;
-  border-bottom:1px solid rgba(255,255,255,.06);
-  font-size:14px;
-  line-height:1.4;
-}
-.orderCheck{
-  margin-top:2px;
-  accent-color:#22c55e;
-}
-.orderDone{
-  opacity:.55;
-  text-decoration:line-through;
-}
+    .hero, .metrics, .card, .hint{
+      background:linear-gradient(180deg, rgba(9,25,58,.96), rgba(6,18,42,.96));
+      border:1px solid var(--line);
+      border-radius:26px;
+      box-shadow:var(--shadow);
+    }
 
-/* ===== DRAWERS ===== */
-.sideRail{position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20}
-.railBtn{
-  writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);
-  background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0
-}
-.railBtn.active{background:#1d2a44}
-.sideDrawer{position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19}
-.sideDrawer.open{display:block}
-.drawerHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
-.drawerBody{padding:12px}
+    .hero{
+      padding:18px 22px 14px;
+      min-height:110px;
+    }
 
-@media (max-width:1280px){
-  .wrap{padding-right:12px}
-  .topbar{grid-template-columns:1fr}
-  .sideRail{position:static;width:auto;grid-template-columns:repeat(4,1fr);display:grid;margin-bottom:10px}
-  .railBtn{writing-mode:horizontal-tb;transform:none;height:auto;padding:10px}
-  .sideDrawer{position:static;width:auto;max-height:none;margin-bottom:10px}
-}
-@media (max-width:1200px){
-  .pillRow{grid-template-columns:repeat(3,minmax(0,1fr))}
-  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
-  .span-2{grid-column:span 1}
-  .controls{grid-template-columns:1fr 1fr}
-}
-@media (max-width:720px){
-  .pillRow,.grid,.controls{grid-template-columns:1fr}
-}
-</style>
+    .hero h1{
+      margin:0 0 2px;
+      font-size:32px;
+      line-height:1.02;
+      font-weight:800;
+    }
+
+    .sub{
+      color:var(--muted);
+      font-size:14px;
+      margin-bottom:14px;
+    }
+
+    .hero-chips{
+      display:flex;
+      flex-wrap:wrap;
+      gap:10px;
+    }
+
+    .chip{
+      padding:10px 16px;
+      border:1px solid var(--line);
+      border-radius:999px;
+      background:rgba(255,255,255,.03);
+      color:#dce7ff;
+      font-weight:600;
+      font-size:13px;
+      white-space:nowrap;
+    }
+
+    .mode-toggle{
+      display:flex;
+      overflow:hidden;
+      border-radius:999px;
+      border:1px solid var(--line);
+      background:rgba(255,255,255,.03);
+    }
+
+    .mode-toggle button{
+      border:0;
+      padding:10px 20px;
+      background:transparent;
+      color:#dce7ff;
+      font-weight:800;
+      font-size:14px;
+      cursor:pointer;
+    }
+
+    .mode-toggle button.active{
+      background:rgba(255,255,255,.09);
+    }
+
+    .metrics{
+      padding:12px;
+      display:grid;
+      grid-template-columns:repeat(6, minmax(96px, 1fr));
+      gap:10px;
+      align-self:stretch;
+    }
+
+    .metric{
+      min-height:94px;
+      border-radius:18px;
+      border:1px solid rgba(255,255,255,.14);
+      padding:12px 14px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      background:linear-gradient(180deg, rgba(255,255,255,.03), rgba(255,255,255,.015));
+      position:relative;
+    }
+
+    .metric .label{
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      color:#c8d7f2;
+      font-size:14px;
+      gap:8px;
+    }
+
+    .info{
+      width:20px;height:20px;border-radius:50%;
+      border:1px solid var(--line);
+      display:inline-flex;align-items:center;justify-content:center;
+      color:#aac0ea;font-size:12px;flex:0 0 auto;
+    }
+
+    .metric .value{
+      font-size:22px;
+      font-weight:900;
+      line-height:1;
+      margin-top:6px;
+    }
+
+    .metric .foot{
+      color:var(--muted);
+      font-size:12px;
+    }
+
+    .metric.green{box-shadow:inset 0 0 0 1px rgba(30,226,125,.35)}
+    .metric.green .value{color:var(--green)}
+    .metric.yellow{box-shadow:inset 0 0 0 1px rgba(255,176,32,.35)}
+    .metric.yellow .value{color:var(--yellow)}
+    .metric.red{box-shadow:inset 0 0 0 1px rgba(255,93,93,.35)}
+    .metric.red .value{color:var(--red)}
+    .metric.blue{box-shadow:inset 0 0 0 1px rgba(77,141,255,.35)}
+    .metric.blue .value{color:var(--blue)}
+
+    .hint{
+      margin-top:14px;
+      padding:14px 18px;
+      color:#d8e4fd;
+      font-size:15px;
+    }
+
+    .grid{
+      display:grid;
+      grid-template-columns:repeat(12, minmax(0,1fr));
+      gap:14px;
+      margin-top:14px;
+      align-items:start;
+    }
+
+    .card{
+      overflow:hidden;
+      min-height:220px;
+    }
+
+    .span-8{grid-column:span 8}
+    .span-4{grid-column:span 4}
+
+    .card-header{
+      height:54px;
+      display:flex;
+      align-items:center;
+      justify-content:space-between;
+      padding:0 16px;
+      border-bottom:1px solid var(--line2);
+      font-weight:800;
+      letter-spacing:.7px;
+    }
+
+    .title-wrap{
+      display:flex;
+      align-items:center;
+      gap:10px;
+      font-size:16px;
+    }
+
+    .num{
+      width:26px;height:26px;border-radius:999px;
+      border:1px solid var(--line);
+      display:inline-flex;align-items:center;justify-content:center;
+      color:#c8d7f2;
+      font-size:13px;
+      font-weight:800;
+      flex:0 0 auto;
+      background:rgba(255,255,255,.03);
+    }
+
+    .card-body{
+      padding:12px 14px 16px;
+    }
+
+    .list{
+      display:flex;
+      flex-direction:column;
+      gap:0;
+      margin:0;
+      padding:0;
+      list-style:none;
+    }
+
+    .row{
+      min-height:48px;
+      display:flex;
+      align-items:center;
+      gap:12px;
+      padding:8px 6px;
+      border-bottom:1px solid var(--line2);
+      font-size:18px;
+    }
+
+    .row:last-child{border-bottom:0}
+
+    .row input[type="checkbox"]{
+      width:18px;height:18px;
+      accent-color:#5f93ff;
+      flex:0 0 auto;
+    }
+
+    .sell{color:var(--red); font-weight:800}
+    .trim{color:var(--yellow); font-weight:800}
+    .watch{color:var(--blue); font-weight:800}
+
+    .simple-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+      min-height:52px;
+      padding:0 6px;
+      border-bottom:1px solid var(--line2);
+      font-size:19px;
+    }
+
+    .simple-row:last-child{border-bottom:0}
+
+    .muted{color:var(--muted)}
+    .green{color:var(--green)}
+    .yellowtxt{color:var(--yellow)}
+    .redtxt{color:var(--red)}
+    .bluetxt{color:var(--blue)}
+
+    .flow-row{
+      display:grid;
+      grid-template-columns:1fr auto;
+      gap:10px;
+      align-items:center;
+      min-height:56px;
+      border-bottom:1px solid var(--line2);
+      padding:0 2px;
+      font-size:18px;
+    }
+    .flow-row:last-child{border-bottom:0}
+
+    .alert-box{
+      margin-top:4px;
+      border-radius:16px;
+      padding:16px 18px;
+      border:1px solid rgba(255,93,93,.35);
+      background:linear-gradient(180deg, rgba(255,93,93,.10), rgba(255,93,93,.05));
+      color:#ffc4c4;
+      font-size:16px;
+      min-height:42px;
+      display:flex;
+      align-items:center;
+    }
+
+    .right-tabs{
+      position:fixed;
+      right:14px;
+      top:148px;
+      width:var(--tabW);
+      display:flex;
+      flex-direction:column;
+      gap:12px;
+      z-index:60;
+    }
+
+    .side-tab{
+      width:var(--tabW);
+      min-height:128px;
+      border-radius:20px;
+      border:1px solid var(--line);
+      background:linear-gradient(180deg, rgba(8,20,45,.96), rgba(5,14,31,.98));
+      box-shadow:var(--shadow);
+      display:flex;
+      align-items:center;
+      justify-content:center;
+      color:#e6efff;
+      font-weight:800;
+      letter-spacing:.4px;
+      writing-mode:vertical-rl;
+      transform:rotate(180deg);
+      cursor:pointer;
+      user-select:none;
+    }
+
+    .side-tab:hover{
+      border-color:rgba(77,141,255,.42);
+      background:linear-gradient(180deg, rgba(15,35,72,.98), rgba(7,20,44,.98));
+    }
+
+    @media (max-width: 1400px){
+      .top-row{grid-template-columns:1fr}
+      .metrics{grid-template-columns:repeat(6,1fr)}
+    }
+
+    @media (max-width: 1180px){
+      .app{padding-right:0}
+      .right-tabs{
+        position:static;
+        width:auto;
+        flex-direction:row;
+        flex-wrap:wrap;
+        margin-top:14px;
+      }
+      .side-tab{
+        writing-mode:horizontal-tb;
+        transform:none;
+        width:auto;
+        min-height:48px;
+        padding:0 16px;
+        border-radius:14px;
+      }
+      .span-8,.span-4{grid-column:span 12}
+    }
+
+    @media (max-width: 760px){
+      .hero h1{font-size:24px}
+      .metrics{grid-template-columns:repeat(2,1fr)}
+      .row, .simple-row, .flow-row{font-size:16px}
+    }
+  </style>
 </head>
 <body>
+  <div class="app">
+    <div class="top-row">
+      <section class="hero">
+        <h1>Lean Terminal v11.1</h1>
+        <div class="sub">Grouped orders + checkboxes • real data wired • compact pills • cleaner font stack</div>
 
-<div class="wrap">
-  <div class="topbar">
-    <section class="hero">
-      <div class="heroTop">
-        <div class="titleBlock">
-          <h1>Lean Terminal v11</h1>
-          <div class="sub">Grouped orders + checkboxes • real data wired • compact pills • cleaner font stack</div>
-        </div>
-        <div class="topModeBar">
-          <div class="topToggle">
-            <button id="topLeanBtn" class="active">LEAN</button>
-            <button id="topAggBtn">AGG</button>
+        <div class="hero-chips">
+          <div class="mode-toggle">
+            <button>LEAN</button>
+            <button class="active">AGG</button>
           </div>
-          <div class="heroBadges">
-            <div class="badge">Qualify: <span id="qualifyBadge">75+</span></div>
-            <div class="badge">Theme cap: <span id="themeCapBadge">30% Lean / 50% Agg</span></div>
-            <div class="badge">Mode: <span id="modeBadge">LEAN</span></div>
-            <div class="badge">Refresh: <span id="countdownBadge">60s</span></div>
-            <div class="badge">Last updated: <span id="lastUpdateBadge">--</span></div>
-          </div>
+
+          <div class="chip">Qualify: 75+</div>
+          <div class="chip">Theme cap: 50% Agg</div>
+          <div class="chip">Mode: AGG</div>
+          <div class="chip">Refresh: 43s</div>
+          <div class="chip">Last updated: 3/27/2026, 7:10:23 PM</div>
         </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="statusbar">
-      <div class="pillRow">
-        <div class="miniPill warn" id="readyPill"><div class="miniHead"><span>Ready</span><span class="info" data-help="ready">i</span></div><div class="miniValue" id="readyValue">--</div><div class="miniSub">quality</div></div>
-        <div class="miniPill warn" id="riskPill"><div class="miniHead"><span>Risk</span><span class="info" data-help="risk">i</span></div><div class="miniValue" id="riskValue">--</div><div class="miniSub">risk</div></div>
-        <div class="miniPill warn" id="budgetPill"><div class="miniHead"><span>Budget</span><span class="info" data-help="budget">i</span></div><div class="miniValue" id="budgetValue">--</div><div class="miniSub">budget</div></div>
-        <div class="miniPill warn" id="planPill"><div class="miniHead"><span>Plan</span><span class="info" data-help="plan">i</span></div><div class="miniValue" id="planValue">--</div><div class="miniSub">mode</div></div>
-        <div class="miniPill warn" id="healthPill"><div class="miniHead"><span>Health</span><span class="info" data-help="health">i</span></div><div class="miniValue" id="healthValue">--</div><div class="miniSub">health</div></div>
-        <div class="miniPill warn" id="deployPill"><div class="miniHead"><span>Deploy</span><span class="info" data-help="deploy">i</span></div><div class="miniValue" id="deployValue">--</div><div class="miniSub">deploy</div></div>
-        <div class="miniPill warn" id="montePill"><div class="miniHead"><span>Monte</span><span class="info" data-help="monte">i</span></div><div class="miniValue" id="monteValue">--</div><div class="miniSub">conf</div></div>
-      </div>
-    </section>
-  </div>
+      <section class="metrics">
+        <div class="metric yellow">
+          <div class="label"><span>Ready</span><span class="info">i</span></div>
+          <div class="value">66</div>
+          <div class="foot">quality</div>
+        </div>
 
-  <section class="helpbar small" id="helpBar">Tap any <strong>i</strong> to see what that part does.</section>
+        <div class="metric green">
+          <div class="label"><span>Risk</span><span class="info">i</span></div>
+          <div class="value">34</div>
+          <div class="foot">risk</div>
+        </div>
 
-  <div class="sideRail" id="sideRail">
-    <button class="railBtn" data-tab="news">News</button>
-    <button class="railBtn" data-tab="errors">Errors</button>
-    <button class="railBtn" data-tab="holdings">Full Holdings</button>
-    <button class="railBtn" data-tab="visuals">Visuals</button>
-  </div>
+        <div class="metric green">
+          <div class="label"><span>Budget</span><span class="info">i</span></div>
+          <div class="value">77%</div>
+          <div class="foot">budget</div>
+        </div>
 
-  <section class="sideDrawer" id="sideDrawer">
-    <div class="drawerHead">
-      <strong id="drawerTitle">Side Tab</strong>
-      <button class="btn" id="closeDrawerBtn">Close</button>
+        <div class="metric green">
+          <div class="label"><span>Plan</span><span class="info">i</span></div>
+          <div class="value">AGG</div>
+          <div class="foot">mode</div>
+        </div>
+
+        <div class="metric green">
+          <div class="label"><span>Health</span><span class="info">i</span></div>
+          <div class="value">GOOD</div>
+          <div class="foot">health</div>
+        </div>
+
+        <div class="metric yellow">
+          <div class="label"><span>Monte</span><span class="info">i</span></div>
+          <div class="value">68%</div>
+          <div class="foot">conf</div>
+        </div>
+      </section>
     </div>
-    <div class="drawerBody" id="drawerBody"></div>
-  </section>
 
-  <div class="grid" style="margin-top:10px">
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">1</div><div class="hTitle">Today's Orders</div></div><span class="info" data-help="orders">i</span></div>
-      <div class="body scroll" id="ordersBox"></div>
-    </section>
+    <div class="hint">Tap any i to see what that part does.</div>
 
-    <section class="card">
-      <div class="head"><div class="headL"><div class="n">2</div><div class="hTitle">Holdings</div></div><span class="info" data-help="holdings">i</span></div>
-      <div class="body scroll" id="holdingsBox"></div>
-    </section>
-
-    <section class="card">
-      <div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">Leaderboard</div></div><span class="info" data-help="leader">i</span></div>
-      <div class="body scroll" id="leaderBox"></div>
-    </section>
-
-    <section class="card">
-      <div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">Radar</div></div><span class="info" data-help="radar">i</span></div>
-      <div class="body scroll" id="radarBox"></div>
-    </section>
-
-    <section class="card">
-      <div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">Flow</div></div><span class="info" data-help="flow">i</span></div>
-      <div class="body scroll" id="flowBox"></div>
-    </section>
-
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">Deploy Planner</div></div><span class="info" data-help="deployplan">i</span></div>
-      <div class="body" id="deployPlanBox"></div>
-    </section>
-
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">Controls</div></div><span class="info" data-help="controls">i</span></div>
-      <div class="body">
-        <div class="controls">
-          <div class="field"><label>Mode</label><div class="toggle"><button id="modeLeanBtn" class="active">Lean</button><button id="modeAggBtn">Agg</button></div></div>
-          <div class="field"><label>Regime</label><select id="cfgRegime"><option>Goldilocks</option><option>Reflation</option><option>Stagflation</option><option>Deflation</option></select></div>
-          <div class="field"><label>Credit stress</label><input id="cfgCredit" type="number" min="0" max="100" step="1"></div>
-          <div class="field"><label>News shock</label><input id="cfgNews" type="number" min="0" max="100" step="1"></div>
-          <div class="field"><label>Today's amount</label><input id="deployAmount" type="number" min="0" step="1" placeholder="500"></div>
+    <main class="grid">
+      <section class="card span-8">
+        <div class="card-header">
+          <div class="title-wrap"><span class="num">1</span><span>TODAY'S ORDERS</span></div>
+          <span class="info">i</span>
         </div>
-        <div class="chips" style="margin-top:10px">
-          <div class="pillTag">Grouped BUY / SELL / TRIM lines</div>
-          <div class="pillTag">Check each line when done</div>
-          <div class="pillTag">Not yet writing to trade log</div>
+        <div class="card-body">
+          <ul class="list">
+            <li class="row"><input type="checkbox" /><span class="sell">SELL: BNTX $100, RVI $100, VXUS $100, HYFM $100, MSOS $100, TLRY $100</span></li>
+            <li class="row"><input type="checkbox" /><span class="trim">TRIM: XLE $25, QQQ $25, VOO $25, FIX $25, SVMR $25, CRH $25</span></li>
+            <li class="row"><input type="checkbox" /><span class="watch">WATCH: SGOV, AMD</span></li>
+          </ul>
         </div>
-        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-          <button class="btn" id="saveOverlayBtn">Save</button>
-          <button class="btn" id="reloadBtn">Reload now</button>
-          <button class="btn" id="resetOverlayBtn">Reset</button>
-        </div>
-      </div>
-    </section>
+      </section>
 
-    <section class="card span-2">
-      <div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">System Growth</div></div><span class="info" data-help="growth">i</span></div>
-      <div class="body" id="growthBox"></div>
-    </section>
+      <section class="card span-4">
+        <div class="card-header">
+          <div class="title-wrap"><span class="num">2</span><span>HOLDINGS</span></div>
+          <span class="info">i</span>
+        </div>
+        <div class="card-body">
+          <div class="simple-row"><span>BNTX</span><span class="muted">Load…</span></div>
+          <div class="simple-row"><span>FIX</span><span class="muted">Load…</span></div>
+          <div class="simple-row"><span>SMH</span><span class="muted">Load…</span></div>
+          <div class="simple-row"><span>QQQ</span><span class="muted">Load…</span></div>
+          <div class="simple-row"><span>CRWV</span><span class="muted">Load…</span></div>
+        </div>
+      </section>
+
+      <section class="card span-4">
+        <div class="card-header">
+          <div class="title-wrap"><span class="num">3</span><span>LEADERBOARD</span></div>
+          <span class="info">i</span>
+        </div>
+        <div class="card-body">
+          <div class="simple-row"><span>#1 NVDA</span><strong>92</strong></div>
+          <div class="simple-row"><span>#2 SMH</span><strong>88</strong></div>
+          <div class="simple-row"><span>#3 AMD</span><strong>74</strong></div>
+          <div class="simple-row"><span>#4 BNTX</span><strong>58</strong></div>
+          <div class="simple-row"><span>#5 FIX</span><strong>67</strong></div>
+        </div>
+      </section>
+
+      <section class="card span-4">
+        <div class="card-header">
+          <div class="title-wrap"><span class="num">4</span><span>RADAR</span></div>
+          <span class="info">i</span>
+        </div>
+        <div class="card-body">
+          <div class="simple-row"><span>AVGO</span><span></span></div>
+          <div class="simple-row"><span>CRWV</span><span></span></div>
+          <div class="simple-row"><span>PLTR</span><span></span></div>
+          <div class="simple-row"><span>MSFT</span><span></span></div>
+          <div class="simple-row"><span>AAPL</span><span></span></div>
+        </div>
+      </section>
+
+      <section class="card span-4">
+        <div class="card-header">
+          <div class="title-wrap"><span class="num">5</span><span>FLOW</span></div>
+          <span class="info">i</span>
+        </div>
+        <div class="card-body">
+          <div class="flow-row"><span>Mode</span><span class="green">AGG</span></div>
+          <div class="flow-row"><span>Regime</span><span class="green">Risk-on</span></div>
+          <div class="flow-row"><span>Credit / News</span><span class="yellowtxt">Mixed</span></div>
+          <div class="flow-row"><span>Plan</span><span class="green">Deploy quality leaders</span></div>
+        </div>
+      </section>
+
+      <section class="card span-4">
+        <div class="card-header">
+          <div class="title-wrap"><span class="num">6</span><span>DEPLOY PLANNER</span></div>
+          <span class="info">i</span>
+        </div>
+        <div class="card-body">
+          <div class="alert-box">No buy names currently qualify above 75.</div>
+        </div>
+      </section>
+    </main>
+
+    <aside class="right-tabs">
+      <div class="side-tab">News</div>
+      <div class="side-tab">Errors</div>
+      <div class="side-tab">Full Holdings</div>
+      <div class="side-tab">Visuals</div>
+    </aside>
   </div>
-</div>
-
-<script>
-const CONFIG = {
-  radarUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv',
-  holdingsUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv',
-  rankingUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=586162885&single=true&output=csv',
-  minScore: 75,
-  sellCut: 60,
-  refreshSeconds: 60
-};
-
-const HELP = {
-  ready:'READY = how favorable conditions are to put money to work. Higher is better.',
-  risk:'RISK = how dangerous the environment is. Lower is safer.',
-  budget:'BUDGET = suggested percent of today’s cash you should consider deploying.',
-  plan:'PLAN = posture. Lean = selective, Agg = more aggressive, Defend = preservation mode.',
-  health:'HEALTH = whether the terminal is seeing enough live data to operate cleanly.',
-  deploy:'DEPLOY = dollar amount from the amount box that the system suggests using today.',
-  monte:'MONTE = confidence level. Higher means the setup looks more resilient across simulated paths.',
-  orders:'TODAY’S ORDERS = grouped BUY / SELL / TRIM / WATCH lines with checkboxes for execution tracking.',
-  holdings:'HOLDINGS = what you already own. This anchors your real-world risk.',
-  leader:'LEADERBOARD = ranked names and scores. This is the feed the action engine reads.',
-  radar:'RADAR = watchlist / field scan. Names on deck even if not currently owned.',
-  flow:'FLOW = one-line summary of the combined environment.',
-  deployplan:'DEPLOY PLANNER = how the entered dollar amount is split across the top buy names for today.',
-  controls:'CONTROLS = manual settings until environment layers are fully wired to feeds.',
-  growth:'SYSTEM GROWTH = what the terminal can and cannot measure today.'
-};
-
-function $(id){ return document.getElementById(id); }
-
-function parseCSV(text){
-  const rows=[]; let row=[], cell='', inQuotes=false;
-  for(let i=0;i<text.length;i++){
-    const ch=text[i], next=text[i+1];
-    if(ch === '"'){
-      if(inQuotes && next === '"'){ cell += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if(ch === ',' && !inQuotes){
-      row.push(cell); cell='';
-    } else if((ch === '\n' || ch === '\r') && !inQuotes){
-      if(ch === '\r' && next === '\n') i++;
-      row.push(cell); cell='';
-      if(row.some(v => String(v).trim() !== '')) rows.push(row);
-      row=[];
-    } else {
-      cell += ch;
-    }
-  }
-  if(cell.length || row.length){
-    row.push(cell);
-    if(row.some(v => String(v).trim() !== '')) rows.push(row);
-  }
-  if(!rows.length) return [];
-  const headers = rows.shift().map(h => String(h || '').trim());
-  return rows.map(r => {
-    const o={};
-    headers.forEach((h,i)=> o[h] = (r[i] ?? '').trim());
-    return o;
-  });
-}
-
-function num(v){
-  const n=parseFloat(String(v ?? '').replace(/[$,%\s,]/g,''));
-  return Number.isFinite(n) ? n : NaN;
-}
-
-function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
-
-function overlayDefaults(){
-  return {
-    mode: localStorage.getItem('lean_mode') || 'LEAN',
-    regime: localStorage.getItem('lean_overlay_regime') || 'Reflation',
-    credit: localStorage.getItem('lean_overlay_credit') || '28',
-    news: localStorage.getItem('lean_overlay_news') || '18',
-    amount: localStorage.getItem('lean_deploy_amount') || ''
-  };
-}
-
-function fillOverlayFields(){
-  const o = overlayDefaults();
-  $('cfgRegime').value = o.regime;
-  $('cfgCredit').value = o.credit;
-  $('cfgNews').value = o.news;
-  $('deployAmount').value = o.amount;
-  setMode(o.mode);
-}
-
-function setMode(mode){
-  localStorage.setItem('lean_mode', mode);
-  $('modeBadge').textContent = mode;
-  $('themeCapBadge').textContent = mode === 'AGG' ? '50% Agg' : '30% Lean';
-  $('modeLeanBtn').classList.toggle('active', mode === 'LEAN');
-  $('modeAggBtn').classList.toggle('active', mode === 'AGG');
-  $('topLeanBtn').classList.toggle('active', mode === 'LEAN');
-  $('topAggBtn').classList.toggle('active', mode === 'AGG');
-}
-
-function saveOverlay(){
-  localStorage.setItem('lean_overlay_regime', $('cfgRegime').value);
-  localStorage.setItem('lean_overlay_credit', $('cfgCredit').value);
-  localStorage.setItem('lean_overlay_news', $('cfgNews').value);
-  localStorage.setItem('lean_deploy_amount', $('deployAmount').value);
-}
-
-function resetOverlay(){
-  ['lean_overlay_regime','lean_overlay_credit','lean_overlay_news','lean_deploy_amount','lean_mode'].forEach(k=>localStorage.removeItem(k));
-  fillOverlayFields();
-}
-
-function setTopPill(id, value, sub, cls){
-  $(id+'Value').textContent = value;
-  const pill = $(id+'Pill');
-  pill.classList.remove('ok','warn','danger');
-  pill.classList.add(cls);
-  pill.querySelector('.miniSub').textContent = sub;
-}
-
-function getColorClass(value, type){
-  if(type === 'highGood'){
-    if(value >= 75) return 'ok';
-    if(value >= 55) return 'warn';
-    return 'danger';
-  }
-  if(type === 'lowGood'){
-    if(value <= 35) return 'ok';
-    if(value <= 60) return 'warn';
-    return 'danger';
-  }
-  return 'warn';
-}
-
-function fmtDollar(n){
-  return '$' + Math.round(Number(n || 0)).toLocaleString();
-}
-
-function groupLine(label, items, colorClass, amountFn, storageKey){
-  if(!items.length) return '';
-  const checked = JSON.parse(localStorage.getItem(storageKey) || 'false');
-  const text = items.map(item => {
-    const amt = amountFn ? amountFn(item) : '';
-    return `${item.ticker} ${amt}`.trim();
-  }).join(', ');
-
-  return `
-    <div class="orderRow ${colorClass}">
-      <div style="display:flex;align-items:flex-start;gap:8px;">
-        <input type="checkbox" class="orderCheck" data-storage="${storageKey}" ${checked ? 'checked' : ''}>
-        <div class="${checked ? 'orderDone' : ''}"><strong>${label}:</strong> ${text}</div>
-      </div>
-    </div>
-  `;
-}
-
-let refreshCountdown = CONFIG.refreshSeconds;
-function tickCountdown(){
-  refreshCountdown -= 1;
-  if(refreshCountdown <= 0){
-    refreshCountdown = CONFIG.refreshSeconds;
-    load();
-  }
-  $('countdownBadge').textContent = refreshCountdown + 's';
-}
-setInterval(tickCountdown, 1000);
-
-let APP = { radarRows:[], holdingsRows:[], rankingRows:[], errors:[], buys:[], trims:[], sells:[], watches:[], buyAllocations:[], plan:'LEAN', ready:0, risk:0, budget:0, monte:0 };
-
-function actionClass(action){
-  const a = String(action || '').toUpperCase();
-  if(a.includes('BUY') || a === 'ADD') return 'green';
-  if(a === 'TRIM' || a === 'WATCH') return 'yellow';
-  if(a === 'SELL' || a === 'DEFEND') return 'red';
-  return '';
-}
-
-function wireOrderChecks(){
-  document.querySelectorAll('.orderCheck').forEach(box=>{
-    box.addEventListener('change', e=>{
-      const key = e.target.dataset.storage;
-      localStorage.setItem(key, JSON.stringify(e.target.checked));
-      const text = e.target.parentElement.querySelector('div');
-      text.classList.toggle('orderDone', e.target.checked);
-    });
-  });
-}
-
-function renderDrawer(tab){
-  const drawer = $('sideDrawer'), body = $('drawerBody'), title = $('drawerTitle');
-  document.querySelectorAll('.railBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
-  drawer.classList.add('open');
-
-  if(tab === 'news'){
-    const o = overlayDefaults();
-    title.textContent = 'News Influencing System';
-    body.innerHTML = `
-      <div class="row"><div>Regime</div><div>${o.regime}</div></div>
-      <div class="row"><div>Credit stress</div><div>${o.credit}</div></div>
-      <div class="row"><div>News shock</div><div>${o.news}</div></div>
-      <div class="warning">This tab is still a guided overlay, not a live news feed yet.</div>
-    `;
-  }
-
-  if(tab === 'errors'){
-    title.textContent = 'System Errors / Diagnostics';
-    const errs = APP.errors.length ? APP.errors.map(e=>`<div class="warning">${e}</div>`).join('') : '<div class="good">No major system errors detected right now.</div>';
-    body.innerHTML = `
-      ${errs}
-      <div class="row"><div>Radar rows</div><div>${APP.radarRows.length}</div></div>
-      <div class="row"><div>Holdings rows</div><div>${APP.holdingsRows.length}</div></div>
-      <div class="row"><div>Ranking rows</div><div>${APP.rankingRows.length}</div></div>
-      <div class="row"><div>Plan</div><div>${APP.plan}</div></div>
-      <div class="row"><div>Ready / Risk / Budget</div><div>${APP.ready} / ${APP.risk} / ${APP.budget}</div></div>
-      <div class="row"><div>Monte</div><div>${APP.monte}%</div></div>
-    `;
-  }
-
-  if(tab === 'holdings'){
-    title.textContent = 'Full Holdings Data';
-    body.innerHTML = APP.holdingsRows.length ? APP.holdingsRows.map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'} <span class="muted">${r.Theme||r.theme||''}</span></div><div>${r.Weight||r.weight||'--'}</div></div>`).join('') : '<div class="warning">No holdings data loaded.</div>';
-  }
-
-  if(tab === 'visuals'){
-    title.textContent = 'Visuals';
-    const topWeights = APP.holdingsRows
-      .map(r=>({ticker:r.Ticker||r.ticker||'--',weight:num(r.Weight||r.weight)}))
-      .filter(x=>Number.isFinite(x.weight))
-      .sort((a,b)=>b.weight-a.weight)
-      .slice(0,10);
-    body.innerHTML = topWeights.length
-      ? topWeights.map(x=>`<div class="row"><div>${x.ticker}</div><div>${x.weight.toFixed(1)}%</div></div>`).join('')
-      : '<div class="warning">No weight data yet.</div>';
-  }
-}
-
-async function load(){
-  APP.errors = [];
-  try{
-    const [resR,resH,resK] = await Promise.all([
-      fetch(CONFIG.radarUrl),
-      fetch(CONFIG.holdingsUrl),
-      fetch(CONFIG.rankingUrl)
-    ]);
-    const [txtR,txtH,txtK] = await Promise.all([resR.text(),resH.text(),resK.text()]);
-    const radarRows = parseCSV(txtR), holdingsRows = parseCSV(txtH), rankingRows = parseCSV(txtK);
-
-    APP.radarRows = radarRows;
-    APP.holdingsRows = holdingsRows;
-    APP.rankingRows = rankingRows;
-
-    if(!radarRows.length) APP.errors.push('Radar feed empty');
-    if(!holdingsRows.length) APP.errors.push('Holdings feed empty');
-    if(!rankingRows.length) APP.errors.push('Ranking feed empty');
-
-    $('holdingsBox').innerHTML = holdingsRows.slice(0,8).map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'}</div><div>${r.Weight||r.weight||'--'}</div></div>`).join('') || '<div class="warning">Holdings empty</div>';
-    $('leaderBox').innerHTML = rankingRows.slice(0,8).map((r,i)=>`<div class="row"><div>#${i+1} ${r.Ticker||r.ticker||'--'}</div><div>${r.Score||r.score||'--'}</div></div>`).join('') || '<div class="warning">Ranking empty</div>';
-    $('radarBox').innerHTML = radarRows.slice(0,8).map(r=>`<div class="row"><div>${r.ticker||r.Ticker||'--'}</div><div>${r.price||r.Price||''}</div></div>`).join('') || '<div class="warning">Radar empty</div>';
-
-    const overlay = overlayDefaults();
-    const mode = overlay.mode || 'LEAN';
-    const regime = overlay.regime;
-    const credit = clamp(num(overlay.credit),0,100);
-    const news = clamp(num(overlay.news),0,100);
-    const amount = clamp(num(overlay.amount),0,1e12);
-    const qualify = CONFIG.minScore;
-    const sellCut = CONFIG.sellCut;
-
-    const regimeBoost = {Goldilocks:12, Reflation:7, Stagflation:-10, Deflation:-14}[regime] ?? 0;
-    const regimeRisk = {Goldilocks:-8, Reflation:-3, Stagflation:12, Deflation:15}[regime] ?? 0;
-    const scores = rankingRows.map(r=>num(r.Score||r.score)).filter(Number.isFinite);
-    const avgScore = scores.length ? scores.reduce((a,b)=>a+b,0)/scores.length : 50;
-
-    let ready = clamp(Math.round(avgScore + regimeBoost - (credit*0.22) - (news*0.12) + (mode==='AGG'?4:0)),0,100);
-    let risk = clamp(Math.round((100-ready)*0.45 + credit*0.45 + news*0.18 + regimeRisk + (mode==='AGG'?6:0)),0,100);
-    let budget = clamp(Math.round(ready - risk + 45),0,100);
-    let plan = mode;
-    if(credit >= 65 || news >= 70 || risk >= 70 || regime === 'Deflation') plan = 'DEFEND';
-    let monte = clamp(Math.round((ready*0.55) + ((100-risk)*0.25) + ((100-news)*0.10) + ((100-credit)*0.10)),0,100);
-
-    APP.plan = plan; APP.ready = ready; APP.risk = risk; APP.budget = budget; APP.monte = monte;
-
-    const loaded = [radarRows.length, holdingsRows.length, rankingRows.length].filter(v=>v>0).length;
-    const health = loaded === 3 ? 'GOOD' : loaded === 2 ? 'PART' : 'LOW';
-
-    setTopPill('ready', ready, 'quality', getColorClass(ready, 'highGood'));
-    setTopPill('risk', risk, 'risk', getColorClass(risk, 'lowGood'));
-    setTopPill('budget', budget+'%', 'budget', getColorClass(budget, 'highGood'));
-
-    let planClass = 'warn';
-    if(plan === 'AGG') planClass = 'ok';
-    if(plan === 'DEFEND') planClass = 'danger';
-    setTopPill('plan', plan, 'mode', planClass);
-
-    let healthClass = 'warn';
-    if(health === 'GOOD') healthClass = 'ok';
-    if(health === 'LOW') healthClass = 'danger';
-    setTopPill('health', health, 'health', healthClass);
-
-    setTopPill('deploy', amount>0 ? '$'+Math.round(amount*(budget/100)).toLocaleString() : '--', 'deploy', amount<=0 ? 'warn' : getColorClass(budget,'highGood'));
-    setTopPill('monte', monte+'%', 'conf', getColorClass(monte, 'highGood'));
-
-    $('flowBox').innerHTML = `
-      <div class="row"><div>Mode</div><div class="${mode==='AGG'?'green':'yellow'}">${mode}</div></div>
-      <div class="row"><div>Regime</div><div class="${(regime==='Goldilocks'||regime==='Reflation')?'green':'red'}">${regime}</div></div>
-      <div class="row"><div>Credit / News</div><div class="${credit>60||news>60?'red':'yellow'}">${credit} / ${news}</div></div>
-      <div class="row"><div>Plan</div><div class="${plan==='DEFEND'?'red':plan==='AGG'?'green':'yellow'}">${plan}</div></div>
-    `;
-
-    const holdingMap = new Map();
-    holdingsRows.forEach(r=>holdingMap.set(String(r.Ticker||r.ticker||'').toUpperCase(), r));
-    const radarSet = new Set(radarRows.map(r=>String(r.ticker||r.Ticker||'').toUpperCase()));
-    const sorted = [...rankingRows].sort((a,b)=>(num(b.Score||b.score)||-999)-(num(a.Score||a.score)||-999));
-
-    const buys=[], trims=[], sells=[], watches=[];
-    sorted.forEach((r,idx)=>{
-      const ticker = String(r.Ticker||r.ticker||'--').toUpperCase();
-      const score = num(r.Score||r.score);
-      const held = holdingMap.has(ticker);
-      const onRadar = radarSet.has(ticker);
-      if(!Number.isFinite(score)) return;
-
-      const heldRow = holdingMap.get(ticker) || {};
-      const theme = String(heldRow.Theme || heldRow.theme || r.Theme || r.theme || '').trim().toUpperCase();
-      const isSafety = theme.includes('CASH') || theme.includes('SAFETY') || ticker === 'SGOV';
-
-      if(isSafety && held){
-        watches.push({ticker,score,note:'DEFENSIVE HOLD'});
-      } else if(held && score < sellCut){
-        sells.push({ticker,score,note:'held + score < 60'});
-      } else if(held && score < qualify){
-        trims.push({ticker,score,note:'held + score 60-74'});
-      } else if(!held && score >= qualify){
-        buys.push({ticker,score,note:onRadar ? 'NEW BUY from radar' : 'NEW BUY',rank:idx+1});
-      } else if(held && score >= qualify){
-        buys.push({ticker,score,note:'ADD / hold winner',rank:idx+1});
-      } else {
-        watches.push({ticker,score,note:'watch'});
-      }
-    });
-
-    APP.buys = buys; APP.trims = trims; APP.sells = sells; APP.watches = watches;
-
-    const deployAmount = plan==='DEFEND' ? 0 : Math.round(amount*(budget/100));
-    let buyAllocations = [];
-    if(deployAmount > 0 && buys.length){
-      const topBuys = buys.slice(0,3);
-      const weights = topBuys.map((_,i)=>i===0?0.45:i===1?0.35:0.20).slice(0,topBuys.length);
-      const totalW = weights.reduce((a,b)=>a+b,0);
-      buyAllocations = topBuys.map((b,i)=>({...b,dollars:Math.round(deployAmount*(weights[i]/totalW))}));
-    }
-
-    const buyGrouped = buyAllocations.map(x => ({ ticker:x.ticker, dollars:x.dollars }));
-    const sellGrouped = sells.slice(0,6).map(x => ({ ticker:x.ticker, dollars:100 }));
-    const trimGrouped = trims.slice(0,6).map(x => ({ ticker:x.ticker, dollars:25 }));
-    const watchGrouped = watches.slice(0,6).map(x => ({ ticker:x.ticker }));
-
-    $('ordersBox').innerHTML =
-      groupLine('BUY', buyGrouped, 'green', x => fmtDollar(x.dollars), 'lean_orders_buy_done') +
-      groupLine('SELL', sellGrouped, 'red', x => fmtDollar(x.dollars), 'lean_orders_sell_done') +
-      groupLine('TRIM', trimGrouped, 'yellow', x => fmtDollar(x.dollars), 'lean_orders_trim_done') +
-      (watchGrouped.length ? groupLine('WATCH', watchGrouped, 'blue', _ => '', 'lean_orders_watch_done') : '');
-
-    wireOrderChecks();
-
-    if(amount <= 0){
-      $('deployPlanBox').innerHTML = '<div class="warning">Enter a dollar amount. The terminal will show how much to deploy today and which buy names get that cash.</div>';
-    } else if(plan === 'DEFEND' || ready < 60 || risk > 70){
-      $('deployPlanBox').innerHTML = '<div class="warning">No deployment today. Conditions are not strong enough or risk is too elevated.</div>';
-    } else if(!buyAllocations.length){
-      $('deployPlanBox').innerHTML = '<div class="warning">No buy names currently qualify above 75.</div>';
-    } else {
-      $('deployPlanBox').innerHTML = buyAllocations.map(x=>`<div class="row"><div>${x.ticker}</div><div class="green">${fmtDollar(x.dollars)}</div></div>`).join('') + `<div class="row"><div>Total today</div><div>${fmtDollar(deployAmount)}</div></div>`;
-    }
-
-    $('growthBox').innerHTML = `
-      <div class="row"><div>Decision engine</div><div class="${buys.length+trims.length+sells.length ? 'green' : 'yellow'}">${buys.length+trims.length+sells.length ? 'alive' : 'thin'}</div></div>
-      <div class="row"><div>New buy candidates</div><div class="${buys.filter(x=>x.note.includes('NEW BUY')).length ? 'green' : 'muted'}">${buys.filter(x=>x.note.includes('NEW BUY')).length}</div></div>
-      <div class="row"><div>Trim flags</div><div class="${APP.trims.length ? 'yellow' : 'muted'}">${APP.trims.length}</div></div>
-      <div class="row"><div>Sell flags</div><div class="${APP.sells.length ? 'red' : 'muted'}">${APP.sells.length}</div></div>
-      <div class="row"><div>Monte</div><div class="${monte>=70?'green':monte>=40?'yellow':'red'}">${monte}%</div></div>
-      <div class="small muted" style="margin-top:8px">Grouped order lines now reduce space. Next phase: write completed actions into trade log.</div>
-    `;
-
-    $('lastUpdateBadge').textContent = new Date().toLocaleString();
-
-    const openTab = document.querySelector('.railBtn.active')?.dataset.tab;
-    if(openTab) renderDrawer(openTab);
-
-  } catch(e){
-    console.error(e);
-    APP.errors.push('Load failed: ' + e.message);
-    $('ordersBox').innerHTML = '<div class="warning">Load failed</div>';
-  }
-}
-
-document.querySelectorAll('.info').forEach(el=>el.addEventListener('click', ()=>{
-  $('helpBar').innerHTML = HELP[el.dataset.help] || 'No help text yet.';
-}));
-
-document.querySelectorAll('.railBtn').forEach(btn=>btn.addEventListener('click', ()=>{
-  const isActive = btn.classList.contains('active');
-  document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
-  if(isActive){ $('sideDrawer').classList.remove('open'); return; }
-  btn.classList.add('active');
-  renderDrawer(btn.dataset.tab);
-}));
-
-$('closeDrawerBtn').addEventListener('click', ()=>{
-  $('sideDrawer').classList.remove('open');
-  document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
-});
-
-function syncMode(mode){ setMode(mode); load(); }
-$('modeLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
-$('modeAggBtn').addEventListener('click', ()=>syncMode('AGG'));
-$('topLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
-$('topAggBtn').addEventListener('click', ()=>syncMode('AGG'));
-$('saveOverlayBtn').addEventListener('click', ()=>{ saveOverlay(); load(); });
-$('reloadBtn').addEventListener('click', ()=>{ refreshCountdown=CONFIG.refreshSeconds; load(); });
-$('resetOverlayBtn').addEventListener('click', ()=>{ resetOverlay(); load(); });
-
-fillOverlayFields();
-load();
-</script>
-
 </body>
 </html>
