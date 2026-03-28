@@ -1,177 +1,177 @@
 <!DOCTYPE html>
 <html lang="en">
 <head>
-  <meta charset="UTF-8" />
-  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lean Terminal v10 Real Data</title>
-  <style>
-    :root{
-      --bg:#0b1020; --panel:#121a2b; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
-      --line:rgba(255,255,255,.08); --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6;
-      --pill:#111827; --shadow:0 10px 24px rgba(0,0,0,.22);
-    }
-    *{box-sizing:border-box}
-    html,body{
-      margin:0;padding:0;background:var(--bg);color:var(--text);
-      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif
-    }
-    .wrap{max-width:1760px;margin:0 auto;padding:12px;padding-right:92px}
-    .topbar{display:grid;grid-template-columns:1.45fr 1fr;gap:10px;margin-bottom:10px}
-    .hero,.statusbar,.card,.helpbar,.sideRail,.sideDrawer{
-      background:linear-gradient(180deg,rgba(18,26,43,.98),rgba(15,23,42,.98));
-      border:1px solid var(--line); border-radius:18px; box-shadow:var(--shadow);
-    }
-    .hero,.statusbar,.helpbar{padding:10px 12px}
-    .heroTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-    .titleBlock h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
-    .sub{font-size:12px;color:var(--muted);margin-top:4px}
-    .heroBadges{display:flex;gap:8px;flex-wrap:wrap}
-    .badge{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
-    .topModeBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
-    .topToggle,.toggle{display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-    .topToggle button,.toggle button{
-      padding:10px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700;
-      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
-    }
-    .topToggle button.active,.toggle button.active{background:#1d2a44}
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>Lean Terminal v11 Grouped Orders</title>
+<style>
+:root{
+  --bg:#0b1020; --panel:#121a2b; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
+  --line:rgba(255,255,255,.08); --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6;
+  --pill:#111827; --shadow:0 10px 24px rgba(0,0,0,.22);
+}
+*{box-sizing:border-box}
+html,body{
+  margin:0;padding:0;background:var(--bg);color:var(--text);
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif
+}
 
-    .pillRow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
-    .miniPill{
-      background:var(--panel2);
-      border:1px solid var(--line);
-      border-radius:14px;
-      padding:12px;
-      min-height:96px;
-      display:flex;
-      flex-direction:column;
-      justify-content:space-between;
-      gap:6px;
-      transition:all .2s ease;
-    }
-    .miniHead{
-      display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);
-      letter-spacing:.6px;text-transform:uppercase
-      .miniValue{
+/* ===== TOP ===== */
+.wrap{max-width:1760px;margin:0 auto;padding:12px}
+.topbar{display:grid;grid-template-columns:1.5fr 1fr;gap:10px;margin-bottom:10px}
+.hero,.statusbar,.card,.helpbar,.sideRail,.sideDrawer{
+  background:linear-gradient(180deg,rgba(18,26,43,.98),rgba(15,23,42,.98));
+  border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow)
+}
+.hero,.statusbar,.helpbar{padding:10px 12px}
+.heroTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
+.titleBlock h1{margin:0;font-size:24px;font-weight:800}
+.sub{font-size:12px;color:var(--muted)}
+.topModeBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
+.heroBadges{display:flex;gap:8px;flex-wrap:wrap}
+.badge{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
+.topToggle,.toggle{display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden}
+.topToggle button,.toggle button{
+  padding:8px 14px;border:0;background:transparent;color:#fff;cursor:pointer;
+  font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif
+}
+.topToggle button.active,.toggle button.active{background:#1d2a44}
+
+/* ===== PILLS ===== */
+.statusbar{padding:6px 8px}
+.pillRow{
+  display:grid;
+  grid-template-columns:repeat(7, minmax(70px,1fr));
+  gap:6px;
+}
+.miniPill{
+  background:var(--panel2);
+  border:1px solid var(--line);
+  border-radius:12px;
+  padding:8px;
+  min-height:74px;
+  display:flex;
+  flex-direction:column;
+  justify-content:space-between;
+}
+.miniHead{display:flex;justify-content:space-between;align-items:center;font-size:10px;color:var(--muted)}
+.miniValue{
   font-size:18px;
   font-weight:800;
   line-height:1.1;
-  overflow:hidden;
-  text-overflow:ellipsis;
   white-space:nowrap;
 }
-
 .miniSub{
   font-size:10px;
   color:var(--muted);
-  line-height:1.2;
   white-space:nowrap;
-  overflow:hidden;
-  text-overflow:ellipsis;
 }
-    .miniSub{
-      font-size:11px;color:var(--muted);line-height:1.25;
-      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
-    }
+.ok{border-color:var(--green);color:var(--green)}
+.warn{border-color:var(--yellow);color:var(--yellow)}
+.danger{border-color:var(--red);color:var(--red)}
+.ok .miniValue{color:var(--green)}
+.warn .miniValue{color:var(--yellow)}
+.danger .miniValue{color:var(--red)}
 
-    .green{color:var(--green)} .yellow{color:var(--yellow)} .red{color:var(--red)} .blue{color:var(--blue)}
-    .ok{border-color:rgba(34,197,94,.50); box-shadow:0 0 0 1px rgba(34,197,94,.12) inset}
-    .warn{border-color:rgba(245,158,11,.50); box-shadow:0 0 0 1px rgba(245,158,11,.12) inset}
-    .danger{border-color:rgba(239,68,68,.50); box-shadow:0 0 0 1px rgba(239,68,68,.12) inset}
-    .ok .miniValue{color:var(--green)}
-    .warn .miniValue{color:var(--yellow)}
-    .danger .miniValue{color:var(--red)}
-
-    .grid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-    .card{padding:0;overflow:hidden;min-height:176px}
-    .span-1{grid-column:span 1}.span-2{grid-column:span 2}
-    .head{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line)}
-    .headL{display:flex;align-items:center;gap:8px}
-    .n{
-      width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);
-      display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)
-    }
-    .hTitle{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
-    .info{
-      width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;
-      font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer
-    }
-    .body{padding:10px}
-    .row{
-      display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)
-    }
-    .row:last-child{border-bottom:0}
-    .scroll{max-height:160px;overflow:auto}
-    .small{font-size:12px}
-    .muted{color:var(--muted)}
-    .warning{
-      padding:8px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fecaca;font-size:12px
-    }
-    .good{
-      padding:8px 9px;border-radius:10px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#bbf7d0;font-size:12px
-    }
-    .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .pillTag{
-      display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;
-      background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)
-    }
-    .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
-    .field{display:grid;gap:5px}
-    .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
-    .field input,.field select,.field textarea{
-      width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px
-    }
-    .btn{
-      background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer
-    }
-    .orderRow{
-      display:grid;grid-template-columns:20px 1.1fr .7fr .55fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)
-    }
-    .sectionLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:8px 0 4px}
-    .barWrap{display:grid;gap:6px}
-    .barRow{display:grid;grid-template-columns:86px 1fr 52px;gap:8px;align-items:center}
-    .bar{height:12px;background:#0c1426;border:1px solid var(--line);border-radius:999px;overflow:hidden}
-    .barFill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green))}
-    .sideRail{position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20}
-    .railBtn{
-      writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);
-      background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0
-    }
-    .railBtn.active{background:#1d2a44}
-    .sideDrawer{position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19}
-    .sideDrawer.open{display:block}
-    .drawerHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
-    .drawerBody{padding:12px}
-
-    @media (max-width:1280px){
-      .wrap{padding-right:12px}
-      .sideRail{position:static;width:auto;grid-template-columns:repeat(4,1fr);display:grid;margin-bottom:10px}
-      .railBtn{writing-mode:horizontal-tb;transform:none;height:auto;padding:10px}
-      .sideDrawer{position:static;width:auto;max-height:none;margin-bottom:10px}
-    }
-    @media (max-width:1200px){
-      .topbar{grid-template-columns:1fr}
-      .pillRow{
-  display:grid;
-  grid-template-columns:repeat(7,minmax(76px,1fr));
-  gap:6px;
-  align-items:stretch;
+/* ===== GRID ===== */
+.grid{display:grid;grid-template-columns:repeat(3,1fr);gap:10px}
+.card{padding:0;overflow:hidden;min-height:176px}
+.span-2{grid-column:span 2}
+.head{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line)}
+.headL{display:flex;align-items:center;gap:8px}
+.n{
+  width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);
+  display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)
 }
-    @media (max-width:720px){
-      .pillRow,.grid,.controls{grid-template-columns:1fr}
-      .miniValue{font-size:20px}
-      .orderRow{grid-template-columns:20px 1fr .7fr}
-      .orderRow>div:last-child{display:none}
-    }
-  </style>
+.hTitle{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
+.info{
+  width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;
+  font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer
+}
+.body{padding:10px}
+.row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+.row:last-child{border-bottom:0}
+.scroll{max-height:160px;overflow:auto}
+.small{font-size:12px}
+.muted{color:var(--muted)}
+.warning{
+  padding:8px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fecaca;font-size:12px
+}
+.good{
+  padding:8px 9px;border-radius:10px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#bbf7d0;font-size:12px
+}
+.chips{display:flex;gap:8px;flex-wrap:wrap}
+.pillTag{
+  display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;
+  background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)
+}
+.controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
+.field{display:grid;gap:5px}
+.field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
+.field input,.field select,.field textarea{
+  width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px
+}
+.btn{background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer}
+.green{color:var(--green)}
+.yellow{color:var(--yellow)}
+.red{color:var(--red)}
+.blue{color:var(--blue)}
+
+/* ===== GROUPED ORDER LINES ===== */
+.orderRow{
+  padding:8px 0;
+  border-bottom:1px solid rgba(255,255,255,.06);
+  font-size:14px;
+  line-height:1.4;
+}
+.orderCheck{
+  margin-top:2px;
+  accent-color:#22c55e;
+}
+.orderDone{
+  opacity:.55;
+  text-decoration:line-through;
+}
+
+/* ===== DRAWERS ===== */
+.sideRail{position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20}
+.railBtn{
+  writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);
+  background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0
+}
+.railBtn.active{background:#1d2a44}
+.sideDrawer{position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19}
+.sideDrawer.open{display:block}
+.drawerHead{display:flex;justify-content:space-between;align-items:center;padding:10px 12px;border-bottom:1px solid var(--line)}
+.drawerBody{padding:12px}
+
+@media (max-width:1280px){
+  .wrap{padding-right:12px}
+  .topbar{grid-template-columns:1fr}
+  .sideRail{position:static;width:auto;grid-template-columns:repeat(4,1fr);display:grid;margin-bottom:10px}
+  .railBtn{writing-mode:horizontal-tb;transform:none;height:auto;padding:10px}
+  .sideDrawer{position:static;width:auto;max-height:none;margin-bottom:10px}
+}
+@media (max-width:1200px){
+  .pillRow{grid-template-columns:repeat(3,minmax(0,1fr))}
+  .grid{grid-template-columns:repeat(2,minmax(0,1fr))}
+  .span-2{grid-column:span 1}
+  .controls{grid-template-columns:1fr 1fr}
+}
+@media (max-width:720px){
+  .pillRow,.grid,.controls{grid-template-columns:1fr}
+}
+</style>
 </head>
 <body>
+
 <div class="wrap">
   <div class="topbar">
     <section class="hero">
       <div class="heroTop">
         <div class="titleBlock">
-          <h1>Lean Terminal v10</h1>
-          <div class="sub">Real data wired • cleaner font stack • side tabs • top posture toggle • Monte confidence pill • radar names can surface as NEW BUY if not held and qualified</div>
+          <h1>Lean Terminal v11</h1>
+          <div class="sub">Grouped orders + checkboxes • real data wired • compact pills • cleaner font stack</div>
         </div>
         <div class="topModeBar">
           <div class="topToggle">
@@ -192,12 +192,12 @@
     <section class="statusbar">
       <div class="pillRow">
         <div class="miniPill warn" id="readyPill"><div class="miniHead"><span>Ready</span><span class="info" data-help="ready">i</span></div><div class="miniValue" id="readyValue">--</div><div class="miniSub">quality</div></div>
-        <div class="miniPill warn" id="riskPill"><div class="miniHead"><span>Risk</span><span class="info" data-help="risk">i</span></div><div class="miniValue" id="riskValue">--</div><div class="miniSub">lower = safer</div></div>
-        <div class="miniPill warn" id="budgetPill"><div class="miniHead"><span>Budget</span><span class="info" data-help="budget">i</span></div><div class="miniValue" id="budgetValue">--</div><div class="miniSub">suggested deploy</div></div>
-        <div class="miniPill warn" id="planPill"><div class="miniHead"><span>Plan</span><span class="info" data-help="plan">i</span></div><div class="miniValue" id="planValue">--</div><div class="miniSub">system posture</div></div>
-        <div class="miniPill warn" id="healthPill"><div class="miniHead"><span>Health</span><span class="info" data-help="health">i</span></div><div class="miniValue" id="healthValue">--</div><div class="miniSub">feed status</div></div>
-        <div class="miniPill warn" id="deployPill"><div class="miniHead"><span>Deploy</span><span class="info" data-help="deploy">i</span></div><div class="miniValue" id="deployValue">--</div><div class="miniSub">today's amount</div></div>
-        <div class="miniPill warn" id="montePill"><div class="miniHead"><span>Monte</span><span class="info" data-help="monte">i</span></div><div class="miniValue" id="monteValue">--</div><div class="miniSub">confidence</div></div>
+        <div class="miniPill warn" id="riskPill"><div class="miniHead"><span>Risk</span><span class="info" data-help="risk">i</span></div><div class="miniValue" id="riskValue">--</div><div class="miniSub">risk</div></div>
+        <div class="miniPill warn" id="budgetPill"><div class="miniHead"><span>Budget</span><span class="info" data-help="budget">i</span></div><div class="miniValue" id="budgetValue">--</div><div class="miniSub">budget</div></div>
+        <div class="miniPill warn" id="planPill"><div class="miniHead"><span>Plan</span><span class="info" data-help="plan">i</span></div><div class="miniValue" id="planValue">--</div><div class="miniSub">mode</div></div>
+        <div class="miniPill warn" id="healthPill"><div class="miniHead"><span>Health</span><span class="info" data-help="health">i</span></div><div class="miniValue" id="healthValue">--</div><div class="miniSub">health</div></div>
+        <div class="miniPill warn" id="deployPill"><div class="miniHead"><span>Deploy</span><span class="info" data-help="deploy">i</span></div><div class="miniValue" id="deployValue">--</div><div class="miniSub">deploy</div></div>
+        <div class="miniPill warn" id="montePill"><div class="miniHead"><span>Monte</span><span class="info" data-help="monte">i</span></div><div class="miniValue" id="monteValue">--</div><div class="miniSub">conf</div></div>
       </div>
     </section>
   </div>
@@ -220,33 +220,63 @@
   </section>
 
   <div class="grid" style="margin-top:10px">
-    <section class="card span-2"><div class="head"><div class="headL"><div class="n">1</div><div class="hTitle">Today's Orders</div></div><span class="info" data-help="orders">i</span></div><div class="body scroll" id="ordersBox"></div></section>
-    <section class="card span-1"><div class="head"><div class="headL"><div class="n">2</div><div class="hTitle">Holdings</div></div><span class="info" data-help="holdings">i</span></div><div class="body scroll" id="holdingsBox"></div></section>
-    <section class="card span-1"><div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">Leaderboard</div></div><span class="info" data-help="leader">i</span></div><div class="body scroll" id="leaderBox"></div></section>
-    <section class="card span-1"><div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">Radar</div></div><span class="info" data-help="radar">i</span></div><div class="body scroll" id="radarBox"></div></section>
-    <section class="card span-1"><div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">Flow</div></div><span class="info" data-help="flow">i</span></div><div class="body scroll" id="flowBox"></div></section>
-    <section class="card span-2"><div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">Deploy Planner</div></div><span class="info" data-help="deployplan">i</span></div><div class="body" id="deployPlanBox"></div></section>
-    <section class="card span-2"><div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">Controls</div></div><span class="info" data-help="controls">i</span></div><div class="body">
-      <div class="controls">
-        <div class="field"><label>Mode</label><div class="toggle"><button id="modeLeanBtn" class="active">Lean</button><button id="modeAggBtn">Agg</button></div></div>
-        <div class="field"><label>Regime</label><select id="cfgRegime"><option>Goldilocks</option><option>Reflation</option><option>Stagflation</option><option>Deflation</option></select></div>
-        <div class="field"><label>Credit stress</label><input id="cfgCredit" type="number" min="0" max="100" step="1"></div>
-        <div class="field"><label>News shock</label><input id="cfgNews" type="number" min="0" max="100" step="1"></div>
-        <div class="field"><label>Today's amount</label><input id="deployAmount" type="number" min="0" step="1" placeholder="500"></div>
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">1</div><div class="hTitle">Today's Orders</div></div><span class="info" data-help="orders">i</span></div>
+      <div class="body scroll" id="ordersBox"></div>
+    </section>
+
+    <section class="card">
+      <div class="head"><div class="headL"><div class="n">2</div><div class="hTitle">Holdings</div></div><span class="info" data-help="holdings">i</span></div>
+      <div class="body scroll" id="holdingsBox"></div>
+    </section>
+
+    <section class="card">
+      <div class="head"><div class="headL"><div class="n">3</div><div class="hTitle">Leaderboard</div></div><span class="info" data-help="leader">i</span></div>
+      <div class="body scroll" id="leaderBox"></div>
+    </section>
+
+    <section class="card">
+      <div class="head"><div class="headL"><div class="n">4</div><div class="hTitle">Radar</div></div><span class="info" data-help="radar">i</span></div>
+      <div class="body scroll" id="radarBox"></div>
+    </section>
+
+    <section class="card">
+      <div class="head"><div class="headL"><div class="n">5</div><div class="hTitle">Flow</div></div><span class="info" data-help="flow">i</span></div>
+      <div class="body scroll" id="flowBox"></div>
+    </section>
+
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">6</div><div class="hTitle">Deploy Planner</div></div><span class="info" data-help="deployplan">i</span></div>
+      <div class="body" id="deployPlanBox"></div>
+    </section>
+
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">7</div><div class="hTitle">Controls</div></div><span class="info" data-help="controls">i</span></div>
+      <div class="body">
+        <div class="controls">
+          <div class="field"><label>Mode</label><div class="toggle"><button id="modeLeanBtn" class="active">Lean</button><button id="modeAggBtn">Agg</button></div></div>
+          <div class="field"><label>Regime</label><select id="cfgRegime"><option>Goldilocks</option><option>Reflation</option><option>Stagflation</option><option>Deflation</option></select></div>
+          <div class="field"><label>Credit stress</label><input id="cfgCredit" type="number" min="0" max="100" step="1"></div>
+          <div class="field"><label>News shock</label><input id="cfgNews" type="number" min="0" max="100" step="1"></div>
+          <div class="field"><label>Today's amount</label><input id="deployAmount" type="number" min="0" step="1" placeholder="500"></div>
+        </div>
+        <div class="chips" style="margin-top:10px">
+          <div class="pillTag">Grouped BUY / SELL / TRIM lines</div>
+          <div class="pillTag">Check each line when done</div>
+          <div class="pillTag">Not yet writing to trade log</div>
+        </div>
+        <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn" id="saveOverlayBtn">Save</button>
+          <button class="btn" id="reloadBtn">Reload now</button>
+          <button class="btn" id="resetOverlayBtn">Reset</button>
+        </div>
       </div>
-      <div class="chips" style="margin-top:10px">
-        <div class="pillTag">Qualify = score 75+</div>
-        <div class="pillTag">New radar name + not held + qualify = NEW BUY</div>
-        <div class="pillTag">Held + 60-74 = TRIM</div>
-        <div class="pillTag">Held + below 60 = SELL</div>
-      </div>
-      <div style="margin-top:10px;display:flex;gap:8px;flex-wrap:wrap">
-        <button class="btn" id="saveOverlayBtn">Save</button>
-        <button class="btn" id="reloadBtn">Reload now</button>
-        <button class="btn" id="resetOverlayBtn">Reset</button>
-      </div>
-    </div></section>
-    <section class="card span-2"><div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">System Growth</div></div><span class="info" data-help="growth">i</span></div><div class="body" id="growthBox"></div></section>
+    </section>
+
+    <section class="card span-2">
+      <div class="head"><div class="headL"><div class="n">8</div><div class="hTitle">System Growth</div></div><span class="info" data-help="growth">i</span></div>
+      <div class="body" id="growthBox"></div>
+    </section>
   </div>
 </div>
 
@@ -268,7 +298,7 @@ const HELP = {
   health:'HEALTH = whether the terminal is seeing enough live data to operate cleanly.',
   deploy:'DEPLOY = dollar amount from the amount box that the system suggests using today.',
   monte:'MONTE = confidence level. Higher means the setup looks more resilient across simulated paths.',
-  orders:'TODAY’S ORDERS = the simple answer box. New buys, adds, trims, sells, and watch names.',
+  orders:'TODAY’S ORDERS = grouped BUY / SELL / TRIM / WATCH lines with checkboxes for execution tracking.',
   holdings:'HOLDINGS = what you already own. This anchors your real-world risk.',
   leader:'LEADERBOARD = ranked names and scores. This is the feed the action engine reads.',
   radar:'RADAR = watchlist / field scan. Names on deck even if not currently owned.',
@@ -381,6 +411,28 @@ function getColorClass(value, type){
   return 'warn';
 }
 
+function fmtDollar(n){
+  return '$' + Math.round(Number(n || 0)).toLocaleString();
+}
+
+function groupLine(label, items, colorClass, amountFn, storageKey){
+  if(!items.length) return '';
+  const checked = JSON.parse(localStorage.getItem(storageKey) || 'false');
+  const text = items.map(item => {
+    const amt = amountFn ? amountFn(item) : '';
+    return `${item.ticker} ${amt}`.trim();
+  }).join(', ');
+
+  return `
+    <div class="orderRow ${colorClass}">
+      <div style="display:flex;align-items:flex-start;gap:8px;">
+        <input type="checkbox" class="orderCheck" data-storage="${storageKey}" ${checked ? 'checked' : ''}>
+        <div class="${checked ? 'orderDone' : ''}"><strong>${label}:</strong> ${text}</div>
+      </div>
+    </div>
+  `;
+}
+
 let refreshCountdown = CONFIG.refreshSeconds;
 function tickCountdown(){
   refreshCountdown -= 1;
@@ -400,6 +452,17 @@ function actionClass(action){
   if(a === 'TRIM' || a === 'WATCH') return 'yellow';
   if(a === 'SELL' || a === 'DEFEND') return 'red';
   return '';
+}
+
+function wireOrderChecks(){
+  document.querySelectorAll('.orderCheck').forEach(box=>{
+    box.addEventListener('change', e=>{
+      const key = e.target.dataset.storage;
+      localStorage.setItem(key, JSON.stringify(e.target.checked));
+      const text = e.target.parentElement.querySelector('div');
+      text.classList.toggle('orderDone', e.target.checked);
+    });
+  });
 }
 
 function renderDrawer(tab){
@@ -500,7 +563,7 @@ async function load(){
     const health = loaded === 3 ? 'GOOD' : loaded === 2 ? 'PART' : 'LOW';
 
     setTopPill('ready', ready, 'quality', getColorClass(ready, 'highGood'));
-    setTopPill('risk', risk, 'lower = safer', getColorClass(risk, 'lowGood'));
+    setTopPill('risk', risk, 'risk', getColorClass(risk, 'lowGood'));
     setTopPill('budget', budget+'%', 'budget', getColorClass(budget, 'highGood'));
 
     let planClass = 'warn';
@@ -565,20 +628,19 @@ async function load(){
       const totalW = weights.reduce((a,b)=>a+b,0);
       buyAllocations = topBuys.map((b,i)=>({...b,dollars:Math.round(deployAmount*(weights[i]/totalW))}));
     }
-    APP.buyAllocations = buyAllocations;
 
-    const buildRows = (label, items, action, amountFn) => {
-      if(!items.length) return `<div class="good">${label}: none</div>`;
-      let s = `<div class="sectionLabel">${label}</div>`;
-      s += items.map(item=>`<div class="orderRow"><input type="checkbox" disabled><div>${item.ticker} <span class="muted">(${item.score})</span></div><div class="${actionClass(action)}">${amountFn ? amountFn(item) : action}</div><div class="muted">${item.note}</div></div>`).join('');
-      return s;
-    };
+    const buyGrouped = buyAllocations.map(x => ({ ticker:x.ticker, dollars:x.dollars }));
+    const sellGrouped = sells.slice(0,6).map(x => ({ ticker:x.ticker, dollars:100 }));
+    const trimGrouped = trims.slice(0,6).map(x => ({ ticker:x.ticker, dollars:25 }));
+    const watchGrouped = watches.slice(0,6).map(x => ({ ticker:x.ticker }));
 
     $('ordersBox').innerHTML =
-      buildRows('Buys', buyAllocations, 'BUY', x=>'$'+x.dollars.toLocaleString()) +
-      buildRows('Trims', trims.slice(0,3), 'TRIM', _=>'25%') +
-      buildRows('Sells', sells.slice(0,3), 'SELL', _=>'exit') +
-      buildRows('Watch', watches.slice(0,4), 'WATCH', _=>'watch');
+      groupLine('BUY', buyGrouped, 'green', x => fmtDollar(x.dollars), 'lean_orders_buy_done') +
+      groupLine('SELL', sellGrouped, 'red', x => fmtDollar(x.dollars), 'lean_orders_sell_done') +
+      groupLine('TRIM', trimGrouped, 'yellow', x => fmtDollar(x.dollars), 'lean_orders_trim_done') +
+      (watchGrouped.length ? groupLine('WATCH', watchGrouped, 'blue', _ => '', 'lean_orders_watch_done') : '');
+
+    wireOrderChecks();
 
     if(amount <= 0){
       $('deployPlanBox').innerHTML = '<div class="warning">Enter a dollar amount. The terminal will show how much to deploy today and which buy names get that cash.</div>';
@@ -587,7 +649,7 @@ async function load(){
     } else if(!buyAllocations.length){
       $('deployPlanBox').innerHTML = '<div class="warning">No buy names currently qualify above 75.</div>';
     } else {
-      $('deployPlanBox').innerHTML = buyAllocations.map(x=>`<div class="row"><div>${x.ticker}</div><div class="green">$${x.dollars.toLocaleString()}</div></div>`).join('') + `<div class="row"><div>Total today</div><div>$${deployAmount.toLocaleString()}</div></div>`;
+      $('deployPlanBox').innerHTML = buyAllocations.map(x=>`<div class="row"><div>${x.ticker}</div><div class="green">${fmtDollar(x.dollars)}</div></div>`).join('') + `<div class="row"><div>Total today</div><div>${fmtDollar(deployAmount)}</div></div>`;
     }
 
     $('growthBox').innerHTML = `
@@ -596,7 +658,7 @@ async function load(){
       <div class="row"><div>Trim flags</div><div class="${APP.trims.length ? 'yellow' : 'muted'}">${APP.trims.length}</div></div>
       <div class="row"><div>Sell flags</div><div class="${APP.sells.length ? 'red' : 'muted'}">${APP.sells.length}</div></div>
       <div class="row"><div>Monte</div><div class="${monte>=70?'green':monte>=40?'yellow':'red'}">${monte}%</div></div>
-      <div class="small muted" style="margin-top:8px">Next phase: wire full trade log feed, history feed, and real news ingestion.</div>
+      <div class="small muted" style="margin-top:8px">Grouped order lines now reduce space. Next phase: write completed actions into trade log.</div>
     `;
 
     $('lastUpdateBadge').textContent = new Date().toLocaleString();
@@ -611,7 +673,10 @@ async function load(){
   }
 }
 
-document.querySelectorAll('.info').forEach(el=>el.addEventListener('click', ()=>{ $('helpBar').innerHTML = HELP[el.dataset.help] || 'No help text yet.'; }));
+document.querySelectorAll('.info').forEach(el=>el.addEventListener('click', ()=>{
+  $('helpBar').innerHTML = HELP[el.dataset.help] || 'No help text yet.';
+}));
+
 document.querySelectorAll('.railBtn').forEach(btn=>btn.addEventListener('click', ()=>{
   const isActive = btn.classList.contains('active');
   document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
@@ -619,7 +684,11 @@ document.querySelectorAll('.railBtn').forEach(btn=>btn.addEventListener('click',
   btn.classList.add('active');
   renderDrawer(btn.dataset.tab);
 }));
-$('closeDrawerBtn').addEventListener('click', ()=>{ $('sideDrawer').classList.remove('open'); document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active')); });
+
+$('closeDrawerBtn').addEventListener('click', ()=>{
+  $('sideDrawer').classList.remove('open');
+  document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
+});
 
 function syncMode(mode){ setMode(mode); load(); }
 $('modeLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
@@ -633,5 +702,6 @@ $('resetOverlayBtn').addEventListener('click', ()=>{ resetOverlay(); load(); });
 fillOverlayFields();
 load();
 </script>
+
 </body>
 </html>
