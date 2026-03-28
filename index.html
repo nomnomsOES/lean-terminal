@@ -3,7 +3,7 @@
 <head>
   <meta charset="UTF-8" />
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
-  <title>Lean Terminal v09 Mood Colors</title>
+  <title>Lean Terminal v10 Real Data</title>
   <style>
     :root{
       --bg:#0b1020; --panel:#121a2b; --panel2:#0f172a; --text:#e5e7eb; --muted:#94a3b8;
@@ -11,8 +11,11 @@
       --pill:#111827; --shadow:0 10px 24px rgba(0,0,0,.22);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    .wrap{max-width:1760px;margin:0 auto;padding:12px;padding-right:84px}
+    html,body{
+      margin:0;padding:0;background:var(--bg);color:var(--text);
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif
+    }
+    .wrap{max-width:1760px;margin:0 auto;padding:12px;padding-right:92px}
     .topbar{display:grid;grid-template-columns:1.45fr 1fr;gap:10px;margin-bottom:10px}
     .hero,.statusbar,.card,.helpbar,.sideRail,.sideDrawer{
       background:linear-gradient(180deg,rgba(18,26,43,.98),rgba(15,23,42,.98));
@@ -20,30 +23,44 @@
     }
     .hero,.statusbar,.helpbar{padding:10px 12px}
     .heroTop{display:flex;justify-content:space-between;align-items:center;gap:10px;flex-wrap:wrap}
-    .titleBlock h1{margin:0;font-size:22px}
+    .titleBlock h1{margin:0;font-size:24px;font-weight:800;letter-spacing:-.02em}
     .sub{font-size:12px;color:var(--muted);margin-top:4px}
     .heroBadges{display:flex;gap:8px;flex-wrap:wrap}
     .badge{border:1px solid var(--line);padding:6px 10px;border-radius:999px;font-size:12px;color:var(--muted)}
     .topModeBar{display:flex;align-items:center;gap:10px;flex-wrap:wrap}
     .topToggle,.toggle{display:flex;background:#0c1426;border:1px solid var(--line);border-radius:14px;overflow:hidden}
-    .topToggle button,.toggle button{padding:10px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700}
+    .topToggle button,.toggle button{
+      padding:10px 16px;border:0;background:transparent;color:var(--text);cursor:pointer;font-weight:700;
+      font-family:Inter,system-ui,-apple-system,"Segoe UI",Roboto,Arial,sans-serif;
+    }
     .topToggle button.active,.toggle button.active{background:#1d2a44}
 
     .pillRow{display:grid;grid-template-columns:repeat(7,minmax(0,1fr));gap:8px}
     .miniPill{
-  background:var(--panel2);
-  border:1px solid var(--line);
-  border-radius:14px;
-  padding:12px;
-  min-height:90px;
-  display:flex;
-  flex-direction:column;
-  justify-content:space-between;
-  gap:6px;
-}
-    .miniHead{display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);letter-spacing:.6px;text-transform:uppercase}
-    .miniValue{font-size:22px;font-weight:800;line-height:1}
-    .miniSub{font-size:12px;color:var(--muted)}
+      background:var(--panel2);
+      border:1px solid var(--line);
+      border-radius:14px;
+      padding:12px;
+      min-height:96px;
+      display:flex;
+      flex-direction:column;
+      justify-content:space-between;
+      gap:6px;
+      transition:all .2s ease;
+    }
+    .miniHead{
+      display:flex;justify-content:space-between;align-items:center;font-size:11px;color:var(--muted);
+      letter-spacing:.6px;text-transform:uppercase
+    }
+    .miniValue{
+      font-size:22px;font-weight:800;line-height:1.15;
+      overflow:hidden;text-overflow:ellipsis;white-space:nowrap
+    }
+    .miniSub{
+      font-size:11px;color:var(--muted);line-height:1.25;
+      white-space:nowrap;overflow:hidden;text-overflow:ellipsis
+    }
+
     .green{color:var(--green)} .yellow{color:var(--yellow)} .red{color:var(--red)} .blue{color:var(--blue)}
     .ok{border-color:rgba(34,197,94,.50); box-shadow:0 0 0 1px rgba(34,197,94,.12) inset}
     .warn{border-color:rgba(245,158,11,.50); box-shadow:0 0 0 1px rgba(245,158,11,.12) inset}
@@ -57,32 +74,56 @@
     .span-1{grid-column:span 1}.span-2{grid-column:span 2}
     .head{display:flex;justify-content:space-between;align-items:center;padding:9px 10px;border-bottom:1px solid var(--line)}
     .headL{display:flex;align-items:center;gap:8px}
-    .n{width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)}
+    .n{
+      width:22px;height:22px;border-radius:8px;background:var(--pill);border:1px solid var(--line);
+      display:grid;place-items:center;font-size:11px;font-weight:800;color:var(--muted)
+    }
     .hTitle{font-size:12px;font-weight:800;letter-spacing:.7px;text-transform:uppercase}
-    .info{width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer}
+    .info{
+      width:18px;height:18px;border-radius:999px;border:1px solid var(--line);display:grid;place-items:center;
+      font-size:11px;color:var(--muted);background:var(--pill);cursor:pointer
+    }
     .body{padding:10px}
-    .row{display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+    .row{
+      display:flex;justify-content:space-between;gap:10px;padding:6px 0;border-bottom:1px solid rgba(255,255,255,.06)
+    }
     .row:last-child{border-bottom:0}
-    .scroll{max-height:128px;overflow:auto}
+    .scroll{max-height:160px;overflow:auto}
     .small{font-size:12px}
     .muted{color:var(--muted)}
-    .warning{padding:8px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fecaca;font-size:12px}
-    .good{padding:8px 9px;border-radius:10px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#bbf7d0;font-size:12px}
+    .warning{
+      padding:8px 9px;border-radius:10px;border:1px solid rgba(239,68,68,.25);background:rgba(239,68,68,.08);color:#fecaca;font-size:12px
+    }
+    .good{
+      padding:8px 9px;border-radius:10px;border:1px solid rgba(34,197,94,.25);background:rgba(34,197,94,.08);color:#bbf7d0;font-size:12px
+    }
     .chips{display:flex;gap:8px;flex-wrap:wrap}
-    .pillTag{display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)}
+    .pillTag{
+      display:inline-flex;align-items:center;padding:4px 8px;border:1px solid var(--line);border-radius:999px;
+      background:rgba(255,255,255,.03);font-size:11px;color:var(--muted)
+    }
     .controls{display:grid;grid-template-columns:repeat(5,minmax(0,1fr));gap:8px}
     .field{display:grid;gap:5px}
     .field label{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px}
-    .field input,.field select,.field textarea{width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px}
-    .btn{background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer}
-    .orderRow{display:grid;grid-template-columns:20px 1.1fr .7fr .55fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)}
+    .field input,.field select,.field textarea{
+      width:100%;background:#0c1426;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px
+    }
+    .btn{
+      background:#172033;color:var(--text);border:1px solid var(--line);padding:8px 10px;border-radius:10px;cursor:pointer
+    }
+    .orderRow{
+      display:grid;grid-template-columns:20px 1.1fr .7fr .55fr;gap:8px;align-items:center;padding:7px 0;border-bottom:1px solid rgba(255,255,255,.06)
+    }
     .sectionLabel{font-size:11px;color:var(--muted);text-transform:uppercase;letter-spacing:.7px;margin:8px 0 4px}
     .barWrap{display:grid;gap:6px}
     .barRow{display:grid;grid-template-columns:86px 1fr 52px;gap:8px;align-items:center}
     .bar{height:12px;background:#0c1426;border:1px solid var(--line);border-radius:999px;overflow:hidden}
     .barFill{height:100%;background:linear-gradient(90deg,var(--blue),var(--green))}
     .sideRail{position:fixed;right:12px;top:110px;width:60px;padding:8px;display:grid;gap:8px;z-index:20}
-    .railBtn{writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0}
+    .railBtn{
+      writing-mode:vertical-rl;transform:rotate(180deg);height:104px;border-radius:12px;border:1px solid var(--line);
+      background:#111827;color:var(--text);cursor:pointer;font-size:12px;padding:8px 0
+    }
     .railBtn.active{background:#1d2a44}
     .sideDrawer{position:fixed;top:80px;right:84px;width:430px;max-height:calc(100vh - 100px);overflow:auto;display:none;z-index:19}
     .sideDrawer.open{display:block}
@@ -116,8 +157,8 @@
     <section class="hero">
       <div class="heroTop">
         <div class="titleBlock">
-          <h1>Lean Terminal v09</h1>
-          <div class="sub">Mood color upgrade • side tabs • top posture toggle • Monte confidence pill • radar names can surface as NEW BUY if not held and qualified</div>
+          <h1>Lean Terminal v10</h1>
+          <div class="sub">Real data wired • cleaner font stack • side tabs • top posture toggle • Monte confidence pill • radar names can surface as NEW BUY if not held and qualified</div>
         </div>
         <div class="topModeBar">
           <div class="topToggle">
@@ -137,7 +178,7 @@
 
     <section class="statusbar">
       <div class="pillRow">
-        <div class="miniPill warn" id="readyPill"><div class="miniHead"><span>Ready</span><span class="info" data-help="ready">i</span></div><div class="miniValue" id="readyValue">--</div><div class="miniSub">deploy quality</div></div>
+        <div class="miniPill warn" id="readyPill"><div class="miniHead"><span>Ready</span><span class="info" data-help="ready">i</span></div><div class="miniValue" id="readyValue">--</div><div class="miniSub">quality</div></div>
         <div class="miniPill warn" id="riskPill"><div class="miniHead"><span>Risk</span><span class="info" data-help="risk">i</span></div><div class="miniValue" id="riskValue">--</div><div class="miniSub">lower = safer</div></div>
         <div class="miniPill warn" id="budgetPill"><div class="miniHead"><span>Budget</span><span class="info" data-help="budget">i</span></div><div class="miniValue" id="budgetValue">--</div><div class="miniSub">suggested deploy</div></div>
         <div class="miniPill warn" id="planPill"><div class="miniHead"><span>Plan</span><span class="info" data-help="plan">i</span></div><div class="miniValue" id="planValue">--</div><div class="miniSub">system posture</div></div>
@@ -197,10 +238,13 @@
 </div>
 
 <script>
-const urls = {
-  radar: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv',
-  holdings: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv',
-  ranking: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=586162885&single=true&output=csv'
+const CONFIG = {
+  radarUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv',
+  holdingsUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv',
+  rankingUrl: 'https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=586162885&single=true&output=csv',
+  minScore: 75,
+  sellCut: 60,
+  refreshSeconds: 60
 };
 
 const HELP = {
@@ -222,38 +266,55 @@ const HELP = {
 };
 
 function $(id){ return document.getElementById(id); }
+
 function parseCSV(text){
   const rows=[]; let row=[], cell='', inQuotes=false;
   for(let i=0;i<text.length;i++){
     const ch=text[i], next=text[i+1];
-    if(ch === '"'){ if(inQuotes && next === '"'){ cell += '"'; i++; } else inQuotes = !inQuotes; }
-    else if(ch === ',' && !inQuotes){ row.push(cell); cell=''; }
-    else if((ch === '\n' || ch === '\r') && !inQuotes){
+    if(ch === '"'){
+      if(inQuotes && next === '"'){ cell += '"'; i++; }
+      else inQuotes = !inQuotes;
+    } else if(ch === ',' && !inQuotes){
+      row.push(cell); cell='';
+    } else if((ch === '\n' || ch === '\r') && !inQuotes){
       if(ch === '\r' && next === '\n') i++;
       row.push(cell); cell='';
       if(row.some(v => String(v).trim() !== '')) rows.push(row);
       row=[];
-    } else { cell += ch; }
+    } else {
+      cell += ch;
+    }
   }
-  if(cell.length || row.length){ row.push(cell); if(row.some(v => String(v).trim() !== '')) rows.push(row); }
+  if(cell.length || row.length){
+    row.push(cell);
+    if(row.some(v => String(v).trim() !== '')) rows.push(row);
+  }
   if(!rows.length) return [];
   const headers = rows.shift().map(h => String(h || '').trim());
-  return rows.map(r => { const o={}; headers.forEach((h,i)=> o[h] = (r[i] ?? '').trim()); return o; });
+  return rows.map(r => {
+    const o={};
+    headers.forEach((h,i)=> o[h] = (r[i] ?? '').trim());
+    return o;
+  });
 }
-function num(v){ const n=parseFloat(String(v ?? '').replace(/[$,%\s,]/g,'')); return Number.isFinite(n) ? n : NaN; }
+
+function num(v){
+  const n=parseFloat(String(v ?? '').replace(/[$,%\s,]/g,''));
+  return Number.isFinite(n) ? n : NaN;
+}
+
 function clamp(v,min,max){ return Math.max(min, Math.min(max, v)); }
+
 function overlayDefaults(){
   return {
     mode: localStorage.getItem('lean_mode') || 'LEAN',
     regime: localStorage.getItem('lean_overlay_regime') || 'Reflation',
     credit: localStorage.getItem('lean_overlay_credit') || '28',
     news: localStorage.getItem('lean_overlay_news') || '18',
-    amount: localStorage.getItem('lean_deploy_amount') || '',
-    newsNote1: localStorage.getItem('lean_news_note1') || 'Rates / liquidity / credit tone',
-    newsNote2: localStorage.getItem('lean_news_note2') || 'Sector leader / laggard note',
-    newsNote3: localStorage.getItem('lean_news_note3') || 'Geopolitical / macro event note'
+    amount: localStorage.getItem('lean_deploy_amount') || ''
   };
 }
+
 function fillOverlayFields(){
   const o = overlayDefaults();
   $('cfgRegime').value = o.regime;
@@ -262,6 +323,7 @@ function fillOverlayFields(){
   $('deployAmount').value = o.amount;
   setMode(o.mode);
 }
+
 function setMode(mode){
   localStorage.setItem('lean_mode', mode);
   $('modeBadge').textContent = mode;
@@ -271,16 +333,19 @@ function setMode(mode){
   $('topLeanBtn').classList.toggle('active', mode === 'LEAN');
   $('topAggBtn').classList.toggle('active', mode === 'AGG');
 }
+
 function saveOverlay(){
   localStorage.setItem('lean_overlay_regime', $('cfgRegime').value);
   localStorage.setItem('lean_overlay_credit', $('cfgCredit').value);
   localStorage.setItem('lean_overlay_news', $('cfgNews').value);
   localStorage.setItem('lean_deploy_amount', $('deployAmount').value);
 }
+
 function resetOverlay(){
   ['lean_overlay_regime','lean_overlay_credit','lean_overlay_news','lean_deploy_amount','lean_mode'].forEach(k=>localStorage.removeItem(k));
   fillOverlayFields();
 }
+
 function setTopPill(id, value, sub, cls){
   $(id+'Value').textContent = value;
   const pill = $(id+'Pill');
@@ -288,20 +353,34 @@ function setTopPill(id, value, sub, cls){
   pill.classList.add(cls);
   pill.querySelector('.miniSub').textContent = sub;
 }
+
 function getColorClass(value, type){
-  if(type === 'highGood'){ if(value >= 75) return 'ok'; if(value >= 55) return 'warn'; return 'danger'; }
-  if(type === 'lowGood'){ if(value <= 35) return 'ok'; if(value <= 60) return 'warn'; return 'danger'; }
+  if(type === 'highGood'){
+    if(value >= 75) return 'ok';
+    if(value >= 55) return 'warn';
+    return 'danger';
+  }
+  if(type === 'lowGood'){
+    if(value <= 35) return 'ok';
+    if(value <= 60) return 'warn';
+    return 'danger';
+  }
   return 'warn';
 }
-let refreshCountdown = 60;
+
+let refreshCountdown = CONFIG.refreshSeconds;
 function tickCountdown(){
   refreshCountdown -= 1;
-  if(refreshCountdown <= 0){ refreshCountdown = 60; load(); }
+  if(refreshCountdown <= 0){
+    refreshCountdown = CONFIG.refreshSeconds;
+    load();
+  }
   $('countdownBadge').textContent = refreshCountdown + 's';
 }
 setInterval(tickCountdown, 1000);
 
 let APP = { radarRows:[], holdingsRows:[], rankingRows:[], errors:[], buys:[], trims:[], sells:[], watches:[], buyAllocations:[], plan:'LEAN', ready:0, risk:0, budget:0, monte:0 };
+
 function actionClass(action){
   const a = String(action || '').toUpperCase();
   if(a.includes('BUY') || a === 'ADD') return 'green';
@@ -309,6 +388,7 @@ function actionClass(action){
   if(a === 'SELL' || a === 'DEFEND') return 'red';
   return '';
 }
+
 function renderDrawer(tab){
   const drawer = $('sideDrawer'), body = $('drawerBody'), title = $('drawerTitle');
   document.querySelectorAll('.railBtn').forEach(b => b.classList.toggle('active', b.dataset.tab === tab));
@@ -322,62 +402,55 @@ function renderDrawer(tab){
       <div class="row"><div>Credit stress</div><div>${o.credit}</div></div>
       <div class="row"><div>News shock</div><div>${o.news}</div></div>
       <div class="warning">This tab is still a guided overlay, not a live news feed yet.</div>
-      <div class="field"><label>Note 1</label><textarea id="newsNote1" rows="2">${o.newsNote1}</textarea></div>
-      <div class="field"><label>Note 2</label><textarea id="newsNote2" rows="2">${o.newsNote2}</textarea></div>
-      <div class="field"><label>Note 3</label><textarea id="newsNote3" rows="2">${o.newsNote3}</textarea></div>
-      <button class="btn" id="saveNewsNotesBtn">Save News Notes</button>
     `;
-    $('saveNewsNotesBtn').onclick = () => {
-      localStorage.setItem('lean_news_note1', $('newsNote1').value);
-      localStorage.setItem('lean_news_note2', $('newsNote2').value);
-      localStorage.setItem('lean_news_note3', $('newsNote3').value);
-    };
   }
+
   if(tab === 'errors'){
     title.textContent = 'System Errors / Diagnostics';
     const errs = APP.errors.length ? APP.errors.map(e=>`<div class="warning">${e}</div>`).join('') : '<div class="good">No major system errors detected right now.</div>';
-    body.innerHTML = `${errs}
+    body.innerHTML = `
+      ${errs}
       <div class="row"><div>Radar rows</div><div>${APP.radarRows.length}</div></div>
       <div class="row"><div>Holdings rows</div><div>${APP.holdingsRows.length}</div></div>
       <div class="row"><div>Ranking rows</div><div>${APP.rankingRows.length}</div></div>
       <div class="row"><div>Plan</div><div>${APP.plan}</div></div>
       <div class="row"><div>Ready / Risk / Budget</div><div>${APP.ready} / ${APP.risk} / ${APP.budget}</div></div>
-      <div class="row"><div>Monte</div><div>${APP.monte}%</div></div>`;
+      <div class="row"><div>Monte</div><div>${APP.monte}%</div></div>
+    `;
   }
+
   if(tab === 'holdings'){
     title.textContent = 'Full Holdings Data';
     body.innerHTML = APP.holdingsRows.length ? APP.holdingsRows.map(r=>`<div class="row"><div>${r.Ticker||r.ticker||'--'} <span class="muted">${r.Theme||r.theme||''}</span></div><div>${r.Weight||r.weight||'--'}</div></div>`).join('') : '<div class="warning">No holdings data loaded.</div>';
   }
+
   if(tab === 'visuals'){
     title.textContent = 'Visuals';
-    const topWeights = APP.holdingsRows.map(r=>({ticker:r.Ticker||r.ticker||'--', weight:num(r.Weight||r.weight)})).filter(x=>Number.isFinite(x.weight)).sort((a,b)=>b.weight-a.weight).slice(0,10);
-    const themeCounts = {};
-    APP.holdingsRows.forEach(r=>{ const t=(r.Theme||r.theme||'Unlabeled').trim()||'Unlabeled'; themeCounts[t]=(themeCounts[t]||0)+1; });
-    const themeBars = Object.entries(themeCounts).sort((a,b)=>b[1]-a[1]).slice(0,8);
-    const orderSummary = [['Buys',APP.buys.length],['Trims',APP.trims.length],['Sells',APP.sells.length],['Watches',APP.watches.length]];
-    body.innerHTML = `
-      <div class="sectionLabel">Top holding weights</div>
-      <div class="barWrap">
-        ${topWeights.length ? topWeights.map(x=>`<div class="barRow"><div>${x.ticker}</div><div class="bar"><div class="barFill" style="width:${Math.min(100,x.weight)}%"></div></div><div>${x.weight.toFixed(1)}%</div></div>`).join('') : '<div class="warning">No weight data yet.</div>'}
-      </div>
-      <div class="sectionLabel">Theme counts</div>
-      <div class="barWrap">
-        ${themeBars.length ? themeBars.map(([k,v])=>`<div class="barRow"><div>${k}</div><div class="bar"><div class="barFill" style="width:${Math.min(100,v*12)}%"></div></div><div>${v}</div></div>`).join('') : '<div class="warning">No theme labels yet.</div>'}
-      </div>
-      <div class="sectionLabel">Order mix</div>
-      <div class="barWrap">
-        ${orderSummary.map(([k,v])=>`<div class="barRow"><div>${k}</div><div class="bar"><div class="barFill" style="width:${Math.min(100,v*18)}%"></div></div><div>${v}</div></div>`).join('')}
-      </div>`;
+    const topWeights = APP.holdingsRows
+      .map(r=>({ticker:r.Ticker||r.ticker||'--',weight:num(r.Weight||r.weight)}))
+      .filter(x=>Number.isFinite(x.weight))
+      .sort((a,b)=>b.weight-a.weight)
+      .slice(0,10);
+    body.innerHTML = topWeights.length
+      ? topWeights.map(x=>`<div class="row"><div>${x.ticker}</div><div>${x.weight.toFixed(1)}%</div></div>`).join('')
+      : '<div class="warning">No weight data yet.</div>';
   }
 }
 
 async function load(){
   APP.errors = [];
   try{
-    const [resR,resH,resK] = await Promise.all([fetch(urls.radar),fetch(urls.holdings),fetch(urls.ranking)]);
+    const [resR,resH,resK] = await Promise.all([
+      fetch(CONFIG.radarUrl),
+      fetch(CONFIG.holdingsUrl),
+      fetch(CONFIG.rankingUrl)
+    ]);
     const [txtR,txtH,txtK] = await Promise.all([resR.text(),resH.text(),resK.text()]);
     const radarRows = parseCSV(txtR), holdingsRows = parseCSV(txtH), rankingRows = parseCSV(txtK);
-    APP.radarRows = radarRows; APP.holdingsRows = holdingsRows; APP.rankingRows = rankingRows;
+
+    APP.radarRows = radarRows;
+    APP.holdingsRows = holdingsRows;
+    APP.rankingRows = rankingRows;
 
     if(!radarRows.length) APP.errors.push('Radar feed empty');
     if(!holdingsRows.length) APP.errors.push('Holdings feed empty');
@@ -393,7 +466,8 @@ async function load(){
     const credit = clamp(num(overlay.credit),0,100);
     const news = clamp(num(overlay.news),0,100);
     const amount = clamp(num(overlay.amount),0,1e12);
-    const qualify = 75, sellCut = 60;
+    const qualify = CONFIG.minScore;
+    const sellCut = CONFIG.sellCut;
 
     const regimeBoost = {Goldilocks:12, Reflation:7, Stagflation:-10, Deflation:-14}[regime] ?? 0;
     const regimeRisk = {Goldilocks:-8, Reflation:-3, Stagflation:12, Deflation:15}[regime] ?? 0;
@@ -405,7 +479,6 @@ async function load(){
     let budget = clamp(Math.round(ready - risk + 45),0,100);
     let plan = mode;
     if(credit >= 65 || news >= 70 || risk >= 70 || regime === 'Deflation') plan = 'DEFEND';
-
     let monte = clamp(Math.round((ready*0.55) + ((100-risk)*0.25) + ((100-news)*0.10) + ((100-credit)*0.10)),0,100);
 
     APP.plan = plan; APP.ready = ready; APP.risk = risk; APP.budget = budget; APP.monte = monte;
@@ -413,22 +486,22 @@ async function load(){
     const loaded = [radarRows.length, holdingsRows.length, rankingRows.length].filter(v=>v>0).length;
     const health = loaded === 3 ? 'GOOD' : loaded === 2 ? 'PART' : 'LOW';
 
-    setTopPill('ready', ready, 'deploy quality', getColorClass(ready, 'highGood'));
+    setTopPill('ready', ready, 'quality', getColorClass(ready, 'highGood'));
     setTopPill('risk', risk, 'lower = safer', getColorClass(risk, 'lowGood'));
-    setTopPill('budget', budget+'%', 'suggested deploy', getColorClass(budget, 'highGood'));
+    setTopPill('budget', budget+'%', 'budget', getColorClass(budget, 'highGood'));
 
     let planClass = 'warn';
     if(plan === 'AGG') planClass = 'ok';
     if(plan === 'DEFEND') planClass = 'danger';
-    setTopPill('plan', plan, 'system posture', planClass);
+    setTopPill('plan', plan, 'mode', planClass);
 
     let healthClass = 'warn';
     if(health === 'GOOD') healthClass = 'ok';
     if(health === 'LOW') healthClass = 'danger';
-    setTopPill('health', health, 'feed status', healthClass);
+    setTopPill('health', health, 'health', healthClass);
 
-    setTopPill('deploy', amount>0 ? '$'+Math.round(amount*(budget/100)).toLocaleString() : '--', 'today\'s amount', amount<=0 ? 'warn' : getColorClass(budget,'highGood'));
-    setTopPill('monte', monte+'%', 'confidence', getColorClass(monte, 'highGood'));
+    setTopPill('deploy', amount>0 ? '$'+Math.round(amount*(budget/100)).toLocaleString() : '--', 'deploy', amount<=0 ? 'warn' : getColorClass(budget,'highGood'));
+    setTopPill('monte', monte+'%', 'conf', getColorClass(monte, 'highGood'));
 
     $('flowBox').innerHTML = `
       <div class="row"><div>Mode</div><div class="${mode==='AGG'?'green':'yellow'}">${mode}</div></div>
@@ -441,6 +514,7 @@ async function load(){
     holdingsRows.forEach(r=>holdingMap.set(String(r.Ticker||r.ticker||'').toUpperCase(), r));
     const radarSet = new Set(radarRows.map(r=>String(r.ticker||r.Ticker||'').toUpperCase()));
     const sorted = [...rankingRows].sort((a,b)=>(num(b.Score||b.score)||-999)-(num(a.Score||a.score)||-999));
+
     const buys=[], trims=[], sells=[], watches=[];
     sorted.forEach((r,idx)=>{
       const ticker = String(r.Ticker||r.ticker||'--').toUpperCase();
@@ -448,12 +522,26 @@ async function load(){
       const held = holdingMap.has(ticker);
       const onRadar = radarSet.has(ticker);
       if(!Number.isFinite(score)) return;
-      if(held && score < sellCut) sells.push({ticker,score,note:'held + score < 60'});
-      else if(held && score < qualify) trims.push({ticker,score,note:'held + score 60-74'});
-      else if(!held && score >= qualify) buys.push({ticker,score,note:onRadar ? 'NEW BUY from radar' : 'NEW BUY',rank:idx+1});
-      else if(held && score >= qualify) buys.push({ticker,score,note:'ADD / hold winner',rank:idx+1});
-      else watches.push({ticker,score,note:'watch'});
+
+      const heldRow = holdingMap.get(ticker) || {};
+      const theme = String(heldRow.Theme || heldRow.theme || r.Theme || r.theme || '').trim().toUpperCase();
+      const isSafety = theme.includes('CASH') || theme.includes('SAFETY') || ticker === 'SGOV';
+
+      if(isSafety && held){
+        watches.push({ticker,score,note:'DEFENSIVE HOLD'});
+      } else if(held && score < sellCut){
+        sells.push({ticker,score,note:'held + score < 60'});
+      } else if(held && score < qualify){
+        trims.push({ticker,score,note:'held + score 60-74'});
+      } else if(!held && score >= qualify){
+        buys.push({ticker,score,note:onRadar ? 'NEW BUY from radar' : 'NEW BUY',rank:idx+1});
+      } else if(held && score >= qualify){
+        buys.push({ticker,score,note:'ADD / hold winner',rank:idx+1});
+      } else {
+        watches.push({ticker,score,note:'watch'});
+      }
     });
+
     APP.buys = buys; APP.trims = trims; APP.sells = sells; APP.watches = watches;
 
     const deployAmount = plan==='DEFEND' ? 0 : Math.round(amount*(budget/100));
@@ -477,7 +565,7 @@ async function load(){
       buildRows('Buys', buyAllocations, 'BUY', x=>'$'+x.dollars.toLocaleString()) +
       buildRows('Trims', trims.slice(0,3), 'TRIM', _=>'25%') +
       buildRows('Sells', sells.slice(0,3), 'SELL', _=>'exit') +
-      buildRows('Watch', watches.slice(0,3), 'WATCH', _=>'watch');
+      buildRows('Watch', watches.slice(0,4), 'WATCH', _=>'watch');
 
     if(amount <= 0){
       $('deployPlanBox').innerHTML = '<div class="warning">Enter a dollar amount. The terminal will show how much to deploy today and which buy names get that cash.</div>';
@@ -506,7 +594,6 @@ async function load(){
   } catch(e){
     console.error(e);
     APP.errors.push('Load failed: ' + e.message);
-    $('healthValue').textContent = 'ERR';
     $('ordersBox').innerHTML = '<div class="warning">Load failed</div>';
   }
 }
@@ -516,7 +603,8 @@ document.querySelectorAll('.railBtn').forEach(btn=>btn.addEventListener('click',
   const isActive = btn.classList.contains('active');
   document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active'));
   if(isActive){ $('sideDrawer').classList.remove('open'); return; }
-  btn.classList.add('active'); renderDrawer(btn.dataset.tab);
+  btn.classList.add('active');
+  renderDrawer(btn.dataset.tab);
 }));
 $('closeDrawerBtn').addEventListener('click', ()=>{ $('sideDrawer').classList.remove('open'); document.querySelectorAll('.railBtn').forEach(b=>b.classList.remove('active')); });
 
@@ -526,7 +614,7 @@ $('modeAggBtn').addEventListener('click', ()=>syncMode('AGG'));
 $('topLeanBtn').addEventListener('click', ()=>syncMode('LEAN'));
 $('topAggBtn').addEventListener('click', ()=>syncMode('AGG'));
 $('saveOverlayBtn').addEventListener('click', ()=>{ saveOverlay(); load(); });
-$('reloadBtn').addEventListener('click', ()=>{ refreshCountdown=60; load(); });
+$('reloadBtn').addEventListener('click', ()=>{ refreshCountdown=CONFIG.refreshSeconds; load(); });
 $('resetOverlayBtn').addEventListener('click', ()=>{ resetOverlay(); load(); });
 
 fillOverlayFields();
