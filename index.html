@@ -3,238 +3,350 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal v10 - Multi CSV Merge Engine</title>
+  <title>Lean Terminal v11 - Clean Shell + Multi CSV Engine</title>
   <style>
     :root{
-      --bg:#0b1020;
-      --panel:#121a2b;
-      --panel2:#172033;
-      --pill:#101827;
+      --bg:#0a0f1c;
+      --panel:#0f1728;
+      --panel2:#131d31;
+      --pill:#0c1423;
       --line:rgba(255,255,255,.08);
       --text:#e5e7eb;
-      --muted:#94a3b8;
+      --muted:#8ea0bf;
       --green:#22c55e;
       --yellow:#f59e0b;
       --red:#ef4444;
       --blue:#3b82f6;
       --cyan:#06b6d4;
+      --shadow:0 12px 28px rgba(0,0,0,.28);
     }
     *{box-sizing:border-box}
-    html,body{margin:0;padding:0;background:var(--bg);color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif}
-    body{padding:14px}
-    .wrap{max-width:1650px;margin:0 auto}
-    .topbar{display:flex;gap:10px;justify-content:space-between;align-items:center;flex-wrap:wrap;margin-bottom:14px}
-    .titleBox h1{margin:0;font-size:24px}
-    .titleBox p{margin:4px 0 0;color:var(--muted);font-size:12px}
-    .controls{display:flex;gap:8px;flex-wrap:wrap}
-    button,input{
-      background:var(--panel);color:var(--text);border:1px solid var(--line);
-      border-radius:10px;padding:10px 12px;font-size:13px
+    html,body{
+      margin:0;padding:0;background:linear-gradient(180deg,#09111f 0%, #0a0f1c 100%);
+      color:var(--text);font-family:Inter,system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
+    }
+    body{padding:12px}
+    .wrap{max-width:1680px;margin:0 auto}
+    .topbar{
+      display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;
+      margin-bottom:12px
+    }
+    .brand h1{margin:0;font-size:22px;letter-spacing:.02em}
+    .brand p{margin:3px 0 0;color:var(--muted);font-size:11px}
+    .toolbar{display:flex;gap:8px;flex-wrap:wrap}
+    button,input,select{
+      background:#111a2c;color:var(--text);border:1px solid var(--line);
+      border-radius:10px;padding:9px 12px;font-size:12px
     }
     button{cursor:pointer}
     button:hover{border-color:rgba(255,255,255,.18)}
     .grid{display:grid;gap:12px;grid-template-columns:repeat(12,minmax(0,1fr))}
-    .card{
-      background:linear-gradient(180deg,var(--panel),var(--panel2));
-      border:1px solid var(--line);
-      border-radius:16px;
-      padding:12px;
-      box-shadow:0 12px 30px rgba(0,0,0,.2);
-      min-width:0;
-    }
     .span-12{grid-column:span 12}
+    .span-9{grid-column:span 9}
     .span-8{grid-column:span 8}
     .span-6{grid-column:span 6}
     .span-4{grid-column:span 4}
-    @media (max-width:1100px){
-      .span-8,.span-6,.span-4{grid-column:span 12}
+    .span-3{grid-column:span 3}
+    @media (max-width:1200px){
+      .span-9,.span-8,.span-6,.span-4,.span-3{grid-column:span 12}
     }
-    .cardTitle{
+
+    .panel{
+      background:linear-gradient(180deg,var(--panel),var(--panel2));
+      border:1px solid var(--line);
+      border-radius:16px;
+      box-shadow:var(--shadow);
+      min-width:0;
+    }
+    .panelHead{
       display:flex;align-items:center;justify-content:space-between;gap:8px;
-      margin-bottom:10px;font-size:13px;font-weight:800;letter-spacing:.04em;text-transform:uppercase
+      padding:10px 12px;border-bottom:1px solid var(--line)
     }
-    .subtle{color:var(--muted);font-size:12px}
-    .small{font-size:11px;color:var(--muted)}
-    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+    .panelTitle{
+      font-size:12px;font-weight:800;letter-spacing:.06em;text-transform:uppercase
+    }
+    .subtle{font-size:11px;color:var(--muted)}
+    .panelBody{padding:12px}
+    .compactBody{padding:10px}
     .tag{
-      display:inline-flex;align-items:center;gap:6px;padding:5px 8px;border-radius:999px;
-      border:1px solid var(--line);font-size:11px;background:rgba(255,255,255,.04)
+      display:inline-flex;align-items:center;gap:5px;
+      padding:4px 8px;border-radius:999px;border:1px solid var(--line);
+      background:rgba(255,255,255,.04);font-size:10px
     }
-    .tag.green{color:#bbf7d0;border-color:rgba(34,197,94,.55)}
-    .tag.yellow{color:#fde68a;border-color:rgba(245,158,11,.55)}
-    .tag.red{color:#fecaca;border-color:rgba(239,68,68,.55)}
-    .tag.blue{color:#bfdbfe;border-color:rgba(59,130,246,.55)}
-    .metricRow{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-    @media (max-width:1100px){.metricRow{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    .metric{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:14px;padding:10px}
-    .metric .label{font-size:11px;color:var(--muted);text-transform:uppercase}
-    .metric .value{font-size:23px;font-weight:800;margin-top:4px}
-    .metric .sub{font-size:11px;color:var(--muted);margin-top:4px}
-    .good{border-color:rgba(34,197,94,.45)!important}
-    .warn{border-color:rgba(245,158,11,.45)!important}
-    .bad{border-color:rgba(239,68,68,.55)!important}
-    .blue{border-color:rgba(59,130,246,.45)!important}
-    .settingsGrid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
-    @media (max-width:950px){.settingsGrid{grid-template-columns:1fr}}
-    .tableWrap{overflow:auto;max-height:580px;border-radius:12px}
-    table{width:100%;border-collapse:collapse;font-size:13px}
-    th,td{padding:9px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap}
-    th{position:sticky;top:0;background:rgba(11,16,32,.98);z-index:2;font-size:12px}
+    .tag.green{color:#bbf7d0;border-color:rgba(34,197,94,.45)}
+    .tag.yellow{color:#fde68a;border-color:rgba(245,158,11,.45)}
+    .tag.red{color:#fecaca;border-color:rgba(239,68,68,.5)}
+    .tag.blue{color:#bfdbfe;border-color:rgba(59,130,246,.5)}
+
+    .pillRow{
+      display:grid;grid-template-columns:repeat(8,minmax(0,1fr));gap:10px
+    }
+    @media (max-width:1350px){.pillRow{grid-template-columns:repeat(4,minmax(0,1fr));}}
+    @media (max-width:760px){.pillRow{grid-template-columns:repeat(2,minmax(0,1fr));}}
+
+    .pill{
+      background:linear-gradient(180deg,#0d1525,#101a2d);
+      border:1px solid var(--line);
+      border-radius:14px;padding:10px 11px;min-width:0
+    }
+    .pill.good{border-color:rgba(34,197,94,.45)}
+    .pill.warn{border-color:rgba(245,158,11,.45)}
+    .pill.bad{border-color:rgba(239,68,68,.52)}
+    .pill.blue{border-color:rgba(59,130,246,.45)}
+    .pillLabel{font-size:10px;color:var(--muted);text-transform:uppercase;letter-spacing:.06em}
+    .pillValue{font-size:22px;font-weight:800;line-height:1.1;margin-top:4px}
+    .pillSub{font-size:10px;color:var(--muted);margin-top:4px;white-space:nowrap;overflow:hidden;text-overflow:ellipsis}
+
+    .hero{
+      display:grid;grid-template-columns:2.15fr .85fr;gap:12px
+    }
+    @media (max-width:1200px){.hero{grid-template-columns:1fr}}
+
+    .tableWrap{
+      overflow:auto;max-height:680px;border-radius:12px
+    }
+    table{width:100%;border-collapse:collapse;font-size:12px}
+    th,td{
+      padding:8px 8px;border-bottom:1px solid var(--line);text-align:left;white-space:nowrap
+    }
+    th{
+      position:sticky;top:0;background:rgba(9,15,28,.98);z-index:2;
+      font-size:11px;letter-spacing:.04em
+    }
     tr:hover td{background:rgba(255,255,255,.03)}
-    .pillGrid{display:grid;grid-template-columns:repeat(6,minmax(0,1fr));gap:10px}
-    @media (max-width:1100px){.pillGrid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    .pill{background:var(--pill);border:1px solid var(--line);border-radius:14px;padding:10px}
-    .pillLabel{font-size:11px;color:var(--muted);text-transform:uppercase}
-    .pillValue{font-size:22px;font-weight:800;margin-top:4px}
-    .pillSub{font-size:11px;color:var(--muted);margin-top:5px}
-    .mcGrid{display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px}
-    @media (max-width:900px){.mcGrid{grid-template-columns:repeat(2,minmax(0,1fr));}}
-    .mcItem{background:rgba(255,255,255,.03);border:1px solid var(--line);border-radius:12px;padding:8px}
-    .mcItem span{display:block;color:var(--muted);font-size:11px;margin-bottom:4px}
-    .mcItem strong{font-size:14px}
-    .footerNote{margin-top:10px;font-size:11px;color:var(--muted);line-height:1.5}
-    textarea{
-      width:100%;min-height:120px;background:var(--panel);color:var(--text);border:1px solid var(--line);
-      border-radius:12px;padding:10px;font-size:12px
+    .mono{font-family:ui-monospace,SFMono-Regular,Menlo,Consolas,monospace}
+
+    .split{
+      display:grid;grid-template-columns:1fr 1fr;gap:12px
     }
+    @media (max-width:980px){.split{grid-template-columns:1fr}}
+
+    .miniGrid{
+      display:grid;grid-template-columns:repeat(3,minmax(0,1fr));gap:8px
+    }
+    @media (max-width:760px){.miniGrid{grid-template-columns:repeat(2,minmax(0,1fr));}}
+    .miniBox{
+      background:rgba(255,255,255,.03);
+      border:1px solid var(--line);
+      border-radius:12px;
+      padding:8px
+    }
+    .miniBox span{display:block;font-size:10px;color:var(--muted);margin-bottom:4px}
+    .miniBox strong{font-size:13px}
+
+    .listItem{
+      padding:8px 0;border-bottom:1px solid var(--line)
+    }
+    .small{font-size:11px;color:var(--muted)}
     .successText{color:#bbf7d0}
     .dangerText{color:#fecaca}
     .warnText{color:#fde68a}
+
+    /* right tabs */
+    .sideRail{
+      position:fixed;right:0;top:115px;z-index:40;display:flex;flex-direction:column;gap:8px
+    }
+    .railBtn{
+      writing-mode:vertical-rl;transform:rotate(180deg);
+      background:#111a2c;border:1px solid rgba(255,255,255,.12);
+      color:var(--text);padding:10px 8px;border-radius:10px 0 0 10px;
+      font-size:11px;letter-spacing:.06em;text-transform:uppercase;cursor:pointer
+    }
+    .drawer{
+      position:fixed;top:0;right:0;height:100vh;width:360px;max-width:92vw;
+      background:linear-gradient(180deg,#0d1525,#10182a);
+      border-left:1px solid var(--line);
+      box-shadow:-18px 0 32px rgba(0,0,0,.35);
+      transform:translateX(102%);
+      transition:transform .22s ease;
+      z-index:55;display:flex;flex-direction:column
+    }
+    .drawer.open{transform:translateX(0)}
+    .drawerHead{
+      display:flex;align-items:center;justify-content:space-between;gap:8px;
+      padding:12px;border-bottom:1px solid var(--line)
+    }
+    .drawerBody{padding:12px;overflow:auto}
+    .drawerGrid{display:grid;gap:10px}
+    .drawerGrid input{width:100%}
+    .drawerNote{font-size:11px;color:var(--muted);line-height:1.45;margin-top:10px}
+    .overlay{
+      position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:50;display:none
+    }
+    .overlay.show{display:block}
+
+    textarea{
+      width:100%;min-height:170px;background:#0f182a;color:var(--text);
+      border:1px solid var(--line);border-radius:12px;padding:10px;font-size:12px
+    }
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
-    <div class="titleBox">
-      <h1>Lean Terminal v10</h1>
-      <p>Multi-CSV merge engine • Edge Score • Monte Carlo • Radar promotion</p>
+    <div class="brand">
+      <h1>Lean Terminal v11</h1>
+      <p>clean shell • multi-csv engine • edge score • monte carlo • radar promotion</p>
     </div>
-    <div class="controls">
-      <button id="loadDefaultsBtn">Load Saved Links</button>
-      <button id="loadDemoBtn">Load Demo</button>
-      <button id="reloadBtn">Reload All CSVs</button>
-      <button id="toggleModeBtn">Mode: AGG</button>
-      <button id="exportBtn">Export Ranked CSV</button>
+    <div class="toolbar">
+      <button id="loadSavedBtn">Load Saved</button>
+      <button id="loadDemoBtn">Demo</button>
+      <button id="reloadBtn">Reload</button>
+      <button id="modeBtn">Mode: AGG</button>
+      <button id="exportBtn">Export</button>
     </div>
   </div>
 
-  <div class="grid">
-    <div class="card span-12">
-      <div class="cardTitle">
-        <span>Data Settings</span>
-        <span class="subtle">All 7 CSV links are wired in below</span>
-      </div>
-      <div class="settingsGrid">
-        <div>
-          <div class="small">Holdings URL</div>
-          <input id="holdingsUrl" style="width:100%" />
-        </div>
-        <div>
-          <div class="small">Flow URL</div>
-          <input id="flowUrl" style="width:100%" />
-        </div>
-        <div>
-          <div class="small">AI Filter URL</div>
-          <input id="aiUrl" style="width:100%" />
-        </div>
-        <div>
-          <div class="small">Size Engine URL</div>
-          <input id="sizeUrl" style="width:100%" />
-        </div>
-        <div>
-          <div class="small">Radar URL</div>
-          <input id="radarUrl" style="width:100%" />
-        </div>
-        <div>
-          <div class="small">Radar Results URL</div>
-          <input id="radarResultsUrl" style="width:100%" />
-        </div>
-        <div>
-          <div class="small">Radar Log URL</div>
-          <input id="radarLogUrl" style="width:100%" />
-        </div>
-      </div>
+  <div class="panel span-12" style="margin-bottom:12px">
+    <div class="panelBody compactBody">
+      <div class="pillRow" id="topPills"></div>
+    </div>
+  </div>
 
-      <div class="footerNote">
-        Merge priority:
-        <span class="mono">holdings → flow → ai → size engine → radar results → radar</span>.
-        Radar Log is loaded for audit count only, not ranking priority.
-        <br><br>
-        Best base columns on your sheets:
-        <span class="mono">ticker | shares | price | rankScore | momentumScore | flowScore | aiScore | riskScore | rsScore | assetReturn | benchmarkReturn | theme | notes | sizeScore | targetWeight</span>
+  <div class="hero">
+    <div class="panel">
+      <div class="panelHead">
+        <div>
+          <div class="panelTitle">Ranked Engine Output</div>
+          <div class="subtle">main board • sorted by edge score</div>
+        </div>
+        <div>
+          <span id="statusTag" class="tag blue">Demo</span>
+        </div>
+      </div>
+      <div class="panelBody compactBody">
+        <div class="tableWrap">
+          <table>
+            <thead>
+              <tr>
+                <th>#</th>
+                <th>Ticker</th>
+                <th>Action</th>
+                <th>Source</th>
+                <th>Edge</th>
+                <th>MC</th>
+                <th>Win %</th>
+                <th>Risk</th>
+                <th>Flow</th>
+                <th>AI</th>
+                <th>Size</th>
+                <th>Bench</th>
+                <th>Price</th>
+                <th>Shares</th>
+              </tr>
+            </thead>
+            <tbody id="rankingBody"></tbody>
+          </table>
+        </div>
       </div>
     </div>
 
-    <div class="card span-12">
-      <div class="cardTitle">
-        <span>Master To-Do</span>
-        <span class="tag blue">Build Order</span>
+    <div style="display:grid;gap:12px">
+      <div class="panel">
+        <div class="panelHead">
+          <div>
+            <div class="panelTitle">Selected Ticker</div>
+            <div class="subtle" id="selectedSub">click a row</div>
+          </div>
+          <span id="selectedTag" class="tag blue">None</span>
+        </div>
+        <div class="panelBody compactBody" id="selectedPanel">
+          <div class="small">Click a row to inspect the detail view.</div>
+        </div>
       </div>
-      <textarea id="todoBox" readonly></textarea>
-    </div>
 
-    <div class="card span-12">
-      <div class="cardTitle">
-        <span>System Scoreboard</span>
-        <span id="statusTag" class="tag blue">Waiting</span>
+      <div class="panel">
+        <div class="panelHead">
+          <div class="panelTitle">Top Buys / Watch Buys</div>
+          <span class="tag green">Horse Race</span>
+        </div>
+        <div class="panelBody compactBody" id="buyList"></div>
       </div>
-      <div class="metricRow" id="summaryMetrics"></div>
-    </div>
 
-    <div class="card span-8">
-      <div class="cardTitle">
-        <span>Ranked Engine Output</span>
-        <span class="subtle">Edge Score sorted</span>
+      <div class="panel">
+        <div class="panelHead">
+          <div class="panelTitle">Reduce / Risk Watch</div>
+          <span class="tag red">Attention</span>
+        </div>
+        <div class="panelBody compactBody" id="sellList"></div>
       </div>
-      <div class="tableWrap">
-        <table>
-          <thead>
-            <tr>
-              <th>#</th>
-              <th>Ticker</th>
-              <th>Action</th>
-              <th>Source</th>
-              <th>Edge</th>
-              <th>Band</th>
-              <th>MC</th>
-              <th>Win %</th>
-              <th>Risk</th>
-              <th>Flow</th>
-              <th>AI</th>
-              <th>Size</th>
-              <th>Bench</th>
-              <th>Price</th>
-              <th>Shares</th>
-            </tr>
-          </thead>
-          <tbody id="rankingBody"></tbody>
-        </table>
+    </div>
+  </div>
+
+  <div class="split" style="margin-top:12px">
+    <div class="panel">
+      <div class="panelHead">
+        <div class="panelTitle">Build Checklist</div>
+        <span class="tag blue">Locked</span>
+      </div>
+      <div class="panelBody compactBody">
+        <textarea id="todoBox" readonly></textarea>
       </div>
     </div>
 
-    <div class="card span-4">
-      <div class="cardTitle">
-        <span>Selected Ticker View</span>
-        <span id="selectedTag" class="tag">None</span>
+    <div class="panel">
+      <div class="panelHead">
+        <div class="panelTitle">System Notes</div>
+        <span class="tag yellow">Current Engine</span>
       </div>
-      <div id="selectedPanel" class="small">Click a row to inspect it.</div>
+      <div class="panelBody compactBody">
+        <div class="small" style="line-height:1.55">
+          This rebuild keeps the newer intelligence layer but restores a tighter terminal shell. 
+          CSV settings are hidden in the right-side drawer so they do not push pills downward. 
+          Radar Log is audit-only. Holdings, Flow, AI, Size, Radar Results, and Radar merge by ticker.
+          Monte Carlo here is still the proxy version, so later we can upgrade it to a true historical-close model.
+        </div>
+      </div>
     </div>
+  </div>
+</div>
 
-    <div class="card span-6">
-      <div class="cardTitle">
-        <span>Top Buys / Watch Buys</span>
-        <span class="tag green">Horse Race</span>
-      </div>
-      <div id="buyList" class="small"></div>
-    </div>
+<div class="sideRail">
+  <button class="railBtn" data-drawer="settingsDrawer">Settings</button>
+  <button class="railBtn" data-drawer="auditDrawer">Audit</button>
+</div>
 
-    <div class="card span-6">
-      <div class="cardTitle">
-        <span>Reduce / Risk Watch</span>
-        <span class="tag red">Attention</span>
-      </div>
-      <div id="sellList" class="small"></div>
+<div id="overlay" class="overlay"></div>
+
+<div id="settingsDrawer" class="drawer">
+  <div class="drawerHead">
+    <div>
+      <div class="panelTitle">Data Settings</div>
+      <div class="subtle">hidden from main terminal by design</div>
     </div>
+    <button data-close>Close</button>
+  </div>
+  <div class="drawerBody">
+    <div class="drawerGrid">
+      <div><div class="small">Holdings URL</div><input id="holdingsUrl" /></div>
+      <div><div class="small">Flow URL</div><input id="flowUrl" /></div>
+      <div><div class="small">AI Filter URL</div><input id="aiUrl" /></div>
+      <div><div class="small">Size Engine URL</div><input id="sizeUrl" /></div>
+      <div><div class="small">Radar URL</div><input id="radarUrl" /></div>
+      <div><div class="small">Radar Results URL</div><input id="radarResultsUrl" /></div>
+      <div><div class="small">Radar Log URL</div><input id="radarLogUrl" /></div>
+    </div>
+    <div style="height:10px"></div>
+    <button id="saveLinksBtn">Save Links</button>
+    <button id="loadDefaultsBtn">Restore Defaults</button>
+    <div class="drawerNote">
+      Merge priority:
+      <span class="mono">holdings → flow → ai → size → radar_results → radar</span>.
+      Radar Log loads for audit count only.
+    </div>
+  </div>
+</div>
+
+<div id="auditDrawer" class="drawer">
+  <div class="drawerHead">
+    <div>
+      <div class="panelTitle">Audit / Source Counts</div>
+      <div class="subtle">for troubleshooting only</div>
+    </div>
+    <button data-close>Close</button>
+  </div>
+  <div class="drawerBody">
+    <div id="auditPanel" class="small">No audit data yet.</div>
   </div>
 </div>
 
@@ -270,31 +382,31 @@ const MASTER_TODO = [
   "18. Resume / System Framing"
 ]
 
-const LS_PREFIX = "lean_v10_"
+const LS_PREFIX = "lean_v11_"
 let currentMode = localStorage.getItem(LS_PREFIX + "mode") || "AGG"
 let currentRows = []
 let selectedTicker = null
-let auditStats = { radarLogCount: 0, sourceCounts: {} }
+let auditStats = { radarLogCount:0, sourceCounts:{} }
 
 const DEMO_ROWS = [
-  { ticker:"NVDA", shares:8, price:118.42, rankScore:91, momentumScore:88, flowScore:84, aiScore:90, riskScore:42, rsScore:86, sizeScore:74, assetReturn:17.4, benchmarkReturn:9.8, sourceType:"holdings" },
-  { ticker:"SMH", shares:5, price:281.15, rankScore:86, momentumScore:82, flowScore:80, aiScore:79, riskScore:38, rsScore:78, sizeScore:68, assetReturn:14.2, benchmarkReturn:9.8, sourceType:"holdings" },
-  { ticker:"NOC", shares:9, price:486.20, rankScore:74, momentumScore:68, flowScore:63, aiScore:71, riskScore:31, rsScore:59, sizeScore:52, assetReturn:6.1, benchmarkReturn:5.8, sourceType:"holdings" },
-  { ticker:"CRWV", shares:11, price:42.90, rankScore:88, momentumScore:86, flowScore:76, aiScore:73, riskScore:61, rsScore:75, sizeScore:64, assetReturn:22.4, benchmarkReturn:8.6, sourceType:"radar_results" },
-  { ticker:"REMX", shares:12, price:45.13, rankScore:63, momentumScore:59, flowScore:61, aiScore:57, riskScore:54, rsScore:47, sizeScore:44, assetReturn:2.2, benchmarkReturn:4.8, sourceType:"radar" },
-  { ticker:"PICK", shares:7, price:39.44, rankScore:67, momentumScore:64, flowScore:60, aiScore:61, riskScore:48, rsScore:50, sizeScore:49, assetReturn:5.0, benchmarkReturn:4.8, sourceType:"holdings" },
-  { ticker:"TRC", shares:4, price:17.31, rankScore:81, momentumScore:72, flowScore:74, aiScore:70, riskScore:45, rsScore:63, sizeScore:57, assetReturn:8.7, benchmarkReturn:4.2, sourceType:"radar_results" },
-  { ticker:"TSLA", shares:3, price:171.09, rankScore:62, momentumScore:58, flowScore:49, aiScore:65, riskScore:74, rsScore:41, sizeScore:34, assetReturn:-3.4, benchmarkReturn:7.5, sourceType:"holdings" }
+  { ticker:"NVDA", shares:8, price:118.42, rankScore:91, momentumScore:88, flowScore:84, aiScore:90, riskScore:42, rsScore:86, sizeScore:74, assetReturn:17.4, benchmarkReturn:9.8, sourceType:"holdings", sourceStack:["holdings"] },
+  { ticker:"SMH", shares:5, price:281.15, rankScore:86, momentumScore:82, flowScore:80, aiScore:79, riskScore:38, rsScore:78, sizeScore:68, assetReturn:14.2, benchmarkReturn:9.8, sourceType:"holdings", sourceStack:["holdings"] },
+  { ticker:"CRWV", shares:11, price:42.90, rankScore:88, momentumScore:86, flowScore:76, aiScore:73, riskScore:61, rsScore:75, sizeScore:64, assetReturn:22.4, benchmarkReturn:8.6, sourceType:"radar_results", sourceStack:["radar_results"] },
+  { ticker:"NOC", shares:9, price:486.20, rankScore:74, momentumScore:68, flowScore:63, aiScore:71, riskScore:31, rsScore:59, sizeScore:52, assetReturn:6.1, benchmarkReturn:5.8, sourceType:"holdings", sourceStack:["holdings"] },
+  { ticker:"TRC", shares:4, price:17.31, rankScore:81, momentumScore:72, flowScore:74, aiScore:70, riskScore:45, rsScore:63, sizeScore:57, assetReturn:8.7, benchmarkReturn:4.2, sourceType:"radar_results", sourceStack:["radar_results"] },
+  { ticker:"PICK", shares:7, price:39.44, rankScore:67, momentumScore:64, flowScore:60, aiScore:61, riskScore:48, rsScore:50, sizeScore:49, assetReturn:5.0, benchmarkReturn:4.8, sourceType:"holdings", sourceStack:["holdings"] },
+  { ticker:"REMX", shares:12, price:45.13, rankScore:63, momentumScore:59, flowScore:61, aiScore:57, riskScore:54, rsScore:47, sizeScore:44, assetReturn:2.2, benchmarkReturn:4.8, sourceType:"radar", sourceStack:["radar"] },
+  { ticker:"TSLA", shares:3, price:171.09, rankScore:62, momentumScore:58, flowScore:49, aiScore:65, riskScore:74, rsScore:41, sizeScore:34, assetReturn:-3.4, benchmarkReturn:7.5, sourceType:"holdings", sourceStack:["holdings"] }
 ]
 
 function $(id){ return document.getElementById(id) }
-function clamp(n,min,max){ return Math.max(min, Math.min(max, Number.isFinite(+n) ? +n : 0)) }
 function toNum(v, fallback=0){
   if(v === null || v === undefined || v === "") return fallback
   const cleaned = String(v).replace(/[$,%]/g,"").trim()
   const n = parseFloat(cleaned)
   return Number.isFinite(n) ? n : fallback
 }
+function clamp(n,min,max){ return Math.max(min, Math.min(max, Number.isFinite(+n) ? +n : 0)) }
 function fmtNum(v,d=1){ return toNum(v).toFixed(d) }
 function fmtPct(v){ const n = toNum(v); return (n>0?"+":"") + n.toFixed(1) + "%" }
 function mean(arr){ const a = arr.filter(Number.isFinite); return a.length ? a.reduce((s,v)=>s+v,0)/a.length : 0 }
@@ -346,20 +458,21 @@ function toneClass(score){
   const c = band(score).color
   return c === "green" ? "good" : c === "yellow" ? "warn" : "bad"
 }
-
+function sourceTag(sourceType){
+  if(sourceType === "holdings") return tag("HOLD","green")
+  if(sourceType === "radar_results") return tag("RADAR+","blue")
+  if(sourceType === "radar") return tag("RADAR","yellow")
+  return tag("UNK","red")
+}
+function actionTag(action){
+  if(action === "BUY") return tag(action,"green")
+  if(action === "WATCH BUY") return tag(action,"blue")
+  if(/SELL|REDUCE|TRIM/.test(action)) return tag(action,"red")
+  return tag(action,"yellow")
+}
 function setStatus(text,color="blue"){
   $("statusTag").className = "tag " + color
   $("statusTag").textContent = text
-}
-
-function metric(label, value, sub, tone="blue"){
-  return `
-    <div class="metric ${tone}">
-      <div class="label">${safeText(label)}</div>
-      <div class="value">${safeText(value)}</div>
-      <div class="sub">${safeText(sub)}</div>
-    </div>
-  `
 }
 
 function parseCSV(text){
@@ -391,7 +504,6 @@ function parseCSV(text){
     return obj
   })
 }
-
 function pick(obj, keys, fallback=""){
   const map = {}
   Object.keys(obj).forEach(k => map[k.toLowerCase().replace(/\s|_|-/g,"")] = obj[k])
@@ -401,7 +513,6 @@ function pick(obj, keys, fallback=""){
   }
   return fallback
 }
-
 function normalizeRow(raw, sourceType="unknown"){
   return {
     ticker: String(pick(raw, ["ticker","symbol","stock","name"], "")).trim().toUpperCase(),
@@ -423,7 +534,6 @@ function normalizeRow(raw, sourceType="unknown"){
     sourceRaw: raw
   }
 }
-
 async function fetchCsvRows(url){
   const res = await fetch(url, { cache:"no-store" })
   if(!res.ok) throw new Error("Fetch failed: " + res.status)
@@ -432,29 +542,16 @@ async function fetchCsvRows(url){
 
 function mergeRows(linkData){
   const byTicker = new Map()
-  auditStats = { radarLogCount: linkData.radarLog.length, sourceCounts: {} }
+  auditStats = { radarLogCount: linkData.radarLog.length, sourceCounts:{} }
 
   function ensureBase(normalized){
     if(!normalized.ticker) return null
     if(!byTicker.has(normalized.ticker)){
       byTicker.set(normalized.ticker, {
         ticker: normalized.ticker,
-        shares: 0,
-        price: 0,
-        rankScore: 50,
-        momentumScore: 50,
-        flowScore: 50,
-        aiScore: 50,
-        riskScore: 50,
-        rsScore: 50,
-        sizeScore: 50,
-        targetWeight: 0,
-        assetReturn: 0,
-        benchmarkReturn: 0,
-        theme: "",
-        notes: "",
-        sourceType: normalized.sourceType,
-        sourceStack: []
+        shares: 0, price: 0, rankScore: 50, momentumScore: 50, flowScore: 50, aiScore: 50,
+        riskScore: 50, rsScore: 50, sizeScore: 50, targetWeight: 0, assetReturn: 0,
+        benchmarkReturn: 0, theme: "", notes: "", sourceType: normalized.sourceType, sourceStack:[]
       })
     }
     return byTicker.get(normalized.ticker)
@@ -486,7 +583,6 @@ function mergeRows(linkData){
     ["radar_results", linkData.radarResults],
     ["radar", linkData.radar]
   ]
-
   for(const [sourceName, rows] of order){
     auditStats.sourceCounts[sourceName] = rows.length
     for(const raw of rows){
@@ -494,13 +590,11 @@ function mergeRows(linkData){
       if(!normalized.ticker) continue
       const target = ensureBase(normalized)
       applyPatch(target, normalized, sourceName)
-
       if(sourceName === "holdings") target.sourceType = "holdings"
       else if(sourceName === "radar_results" && target.sourceType !== "holdings") target.sourceType = "radar_results"
-      else if(sourceName === "radar" && !target.sourceType) target.sourceType = "radar"
+      else if(sourceName === "radar" && target.sourceType !== "holdings" && target.sourceType !== "radar_results") target.sourceType = "radar"
     }
   }
-
   return Array.from(byTicker.values())
 }
 
@@ -508,34 +602,13 @@ function calcBenchmarkScore(row){
   const diff = toNum(row.assetReturn) - toNum(row.benchmarkReturn)
   return clamp(50 + diff * 4, 0, 100)
 }
-function calcEdgeScore(row){
-  const rank = norm100(row.rankScore)
-  const momentum = norm100(row.momentumScore)
-  const flow = norm100(row.flowScore)
-  const ai = norm100(row.aiScore)
-  const risk = norm100(row.riskScore)
-  const rs = norm100(row.rsScore)
-  const mc = norm100(row.mcScore ?? 50)
-  const size = norm100(row.sizeScore ?? 50)
-  return clamp(
-    (0.20*rank) +
-    (0.16*momentum) +
-    (0.16*flow) +
-    (0.13*ai) +
-    (0.10*rs) +
-    (0.10*mc) +
-    (0.07*size) -
-    (0.08*risk),
-    0, 100
-  )
-}
 function gaussianRandom(){
-  let u = 0, v = 0
-  while(u === 0) u = Math.random()
-  while(v === 0) v = Math.random()
-  return Math.sqrt(-2 * Math.log(u)) * Math.cos(2 * Math.PI * v)
+  let u=0,v=0
+  while(u===0) u=Math.random()
+  while(v===0) v=Math.random()
+  return Math.sqrt(-2*Math.log(u))*Math.cos(2*Math.PI*v)
 }
-function runMonteCarloProxy(row, {runs=600, days=20}={}){
+function runMonteCarloProxy(row,{runs=600,days=20}={}){
   const rank = norm100(row.rankScore)
   const momentum = norm100(row.momentumScore)
   const flow = norm100(row.flowScore)
@@ -546,20 +619,13 @@ function runMonteCarloProxy(row, {runs=600, days=20}={}){
   const bench = calcBenchmarkScore(row)
 
   const baseEdge =
-    (0.24*rank) +
-    (0.20*momentum) +
-    (0.17*flow) +
-    (0.12*ai) +
-    (0.09*rs) +
-    (0.08*bench) +
-    (0.06*size) -
-    (0.18*risk)
+    (0.24*rank)+(0.20*momentum)+(0.17*flow)+(0.12*ai)+(0.09*rs)+(0.08*bench)+(0.06*size)-(0.18*risk)
 
   const exp20 = ((baseEdge - 50) / 50) * 0.10
   const dailyDrift = exp20 / Math.max(days,1)
-  const dailyVol = 0.012 + (risk/100)*0.025
-
+  const dailyVol = 0.012 + (risk/100) * 0.025
   const finalReturns = []
+
   for(let r=0;r<runs;r++){
     let price = 1
     for(let d=0; d<days; d++){
@@ -572,10 +638,10 @@ function runMonteCarloProxy(row, {runs=600, days=20}={}){
 
   const meanReturnPct = mean(finalReturns)
   const medianReturnPct = median(finalReturns)
-  const modeReturnPct = modeRounded(finalReturns, 1)
+  const modeReturnPct = modeRounded(finalReturns,1)
   const winRate = (finalReturns.filter(v=>v>0).length / finalReturns.length) * 100
-  const p05 = percentile(finalReturns, 0.05)
-  const p95 = percentile(finalReturns, 0.95)
+  const p05 = percentile(finalReturns, .05)
+  const p95 = percentile(finalReturns, .95)
   const tailRisk = Math.abs(Math.min(0, p05))
 
   const rawScore =
@@ -585,7 +651,6 @@ function runMonteCarloProxy(row, {runs=600, days=20}={}){
     (0.15 * clamp(tailRisk * 4, 0, 100))
 
   const mcScore = clamp(rawScore, 0, 100)
-
   let interpretation = "Mixed profile"
   if(mcScore >= 80 && winRate >= 60 && p05 > -8) interpretation = "Strong probability profile"
   else if(mcScore >= 65 && winRate >= 55) interpretation = "Constructive with manageable risk"
@@ -593,23 +658,36 @@ function runMonteCarloProxy(row, {runs=600, days=20}={}){
 
   return { meanReturnPct, medianReturnPct, modeReturnPct, winRate, p05, p95, tailRisk, mcScore, interpretation }
 }
-
+function calcEdgeScore(row){
+  const rank = norm100(row.rankScore)
+  const momentum = norm100(row.momentumScore)
+  const flow = norm100(row.flowScore)
+  const ai = norm100(row.aiScore)
+  const risk = norm100(row.riskScore)
+  const rs = norm100(row.rsScore)
+  const mc = norm100(row.mcScore ?? 50)
+  const size = norm100(row.sizeScore ?? 50)
+  return clamp((0.20*rank)+(0.16*momentum)+(0.16*flow)+(0.13*ai)+(0.10*rs)+(0.10*mc)+(0.07*size)-(0.08*risk),0,100)
+}
 function inferAction(row, index){
-  const s = toNum(row.edgeScore)
-  const risk = toNum(row.riskScore, 50)
-  const win = toNum(row.mcWinRate, 50)
-
+  const s = toNum(row.edgeScore), risk = toNum(row.riskScore,50), win = toNum(row.mcWinRate,50)
   if(currentMode === "LEAN"){
     if(index <= 1 && s >= 80 && win >= 55 && risk <= 40) return "BUY"
     if(s >= 75 && win >= 52 && risk <= 50) return "WATCH BUY"
     if(s < 60 || win < 45 || risk >= 68) return "TRIM / WAIT"
     return "HOLD"
   }
-
   if(index <= 2 && s >= 80 && win >= 55 && risk <= 45) return "BUY"
   if(s >= 75 && win >= 52 && risk <= 55) return "WATCH BUY"
   if(s < 60 || win < 45 || risk >= 70) return "SELL / REDUCE"
   return "HOLD"
+}
+function systemGrade(avgEdge){
+  if(avgEdge >= 85) return ["A","green"]
+  if(avgEdge >= 78) return ["A-","green"]
+  if(avgEdge >= 72) return ["B+","yellow"]
+  if(avgEdge >= 65) return ["B","yellow"]
+  return ["C","red"]
 }
 
 function processRows(rows, sourceLabel="Loaded"){
@@ -635,63 +713,47 @@ function processRows(rows, sourceLabel="Loaded"){
       return enriched
     })
     .sort((a,b)=>toNum(b.edgeScore)-toNum(a.edgeScore))
-    .map((r,idx)=>({ ...r, rankPosition: idx + 1 }))
+    .map((r,idx)=>({ ...r, rankPosition: idx+1 }))
     .map((r,idx)=>({ ...r, action: inferAction(r, idx) }))
 
   render(sourceLabel)
 }
 
-function systemGrade(avgEdge){
-  if(avgEdge >= 85) return ["A", "green"]
-  if(avgEdge >= 78) return ["A-", "green"]
-  if(avgEdge >= 72) return ["B+", "yellow"]
-  if(avgEdge >= 65) return ["B", "yellow"]
-  return ["C", "red"]
-}
-
-function renderSummary(sourceLabel){
-  const rows = currentRows
-  const avgEdge = mean(rows.map(r=>toNum(r.edgeScore)))
-  const avgMc = mean(rows.map(r=>toNum(r.mcScore)))
-  const avgWin = mean(rows.map(r=>toNum(r.mcWinRate)))
-  const avgRisk = mean(rows.map(r=>toNum(r.riskScore)))
-  const buys = rows.filter(r=>r.action==="BUY").length
-  const reduces = rows.filter(r=>/SELL|REDUCE|TRIM/.test(r.action)).length
-  const promotions = rows.filter(r=>r.sourceType==="radar_results" || r.sourceType==="radar").length
+function renderTopPills(sourceLabel){
+  const avgEdge = mean(currentRows.map(r=>toNum(r.edgeScore)))
+  const avgMc = mean(currentRows.map(r=>toNum(r.mcScore)))
+  const avgRisk = mean(currentRows.map(r=>toNum(r.riskScore)))
+  const avgWin = mean(currentRows.map(r=>toNum(r.mcWinRate)))
+  const buys = currentRows.filter(r=>r.action==="BUY").length
+  const reduce = currentRows.filter(r=>/SELL|REDUCE|TRIM/.test(r.action)).length
+  const promoted = currentRows.filter(r=>r.sourceType==="radar_results" || r.sourceType==="radar").length
   const [grade, gradeColor] = systemGrade(avgEdge)
-
   setStatus(sourceLabel + " • " + currentMode + " • Grade " + grade, gradeColor)
 
-  $("summaryMetrics").innerHTML = [
-    metric("Plan", currentMode, avgEdge >= 75 ? "System leaning offense" : "System staying selective"),
-    metric("AGG Grade", grade, "Average Edge " + fmtNum(avgEdge,1), gradeColor),
-    metric("Avg MC", fmtNum(avgMc,1), "Model confidence"),
-    metric("Avg Win %", fmtNum(avgWin,0) + "%", "Monte Carlo proxy win rate", avgWin >= 55 ? "green" : "yellow"),
-    metric("Avg Risk", fmtNum(avgRisk,1), "Lower safer", avgRisk <= 45 ? "green" : avgRisk <= 60 ? "yellow" : "red"),
-    metric("Buy / Reduce", buys + " / " + reduces, "Horse-race outputs", reduces > buys ? "red" : "blue"),
-    metric("Radar Names", promotions, "New candidates merged in", promotions ? "blue" : "yellow"),
-    metric("Radar Log", auditStats.radarLogCount, "Audit count only", "blue")
+  $("topPills").innerHTML = [
+    pill("READY", fmtNum(avgEdge,1), avgEdge >= 75 ? "system qualified" : "below ideal", avgEdge >= 75 ? "good" : avgEdge >= 65 ? "warn" : "bad"),
+    pill("RISK", fmtNum(avgRisk,1), "lower safer", avgRisk <= 45 ? "good" : avgRisk <= 60 ? "warn" : "bad"),
+    pill("PLAN", currentMode, avgEdge >= 75 ? "offense allowed" : "stay selective", "blue"),
+    pill("AGG GRADE", grade, "avg edge " + fmtNum(avgEdge,1), gradeColor === "green" ? "good" : gradeColor === "yellow" ? "warn" : "bad"),
+    pill("MC AVG", fmtNum(avgMc,1), "probability layer", avgMc >= 70 ? "good" : avgMc >= 60 ? "warn" : "bad"),
+    pill("WIN %", fmtNum(avgWin,0) + "%", "avg mc win rate", avgWin >= 55 ? "good" : "warn"),
+    pill("BUYS / REDUCE", buys + " / " + reduce, "horse race outputs", reduce > buys ? "bad" : "blue"),
+    pill("RADAR NAMES", promoted, "new candidates merged", promoted ? "blue" : "warn")
   ].join("")
 }
-
-function sourceTag(sourceType){
-  if(sourceType === "holdings") return tag("HOLD", "green")
-  if(sourceType === "radar_results") return tag("RADAR+", "blue")
-  if(sourceType === "radar") return tag("RADAR", "yellow")
-  return tag(sourceType || "UNK", "red")
-}
-
-function actionTag(action){
-  if(action === "BUY") return tag(action, "green")
-  if(action === "WATCH BUY") return tag(action, "blue")
-  if(/SELL|REDUCE|TRIM/.test(action)) return tag(action, "red")
-  return tag(action, "yellow")
+function pill(label, value, sub, tone="blue"){
+  return `
+    <div class="pill ${tone}">
+      <div class="pillLabel">${safeText(label)}</div>
+      <div class="pillValue">${safeText(value)}</div>
+      <div class="pillSub">${safeText(sub)}</div>
+    </div>
+  `
 }
 
 function renderRanking(){
   $("rankingBody").innerHTML = currentRows.map(row=>{
     const benchDiff = toNum(row.assetReturn) - toNum(row.benchmarkReturn)
-    const bandColor = row.edgeBand.color === "green" ? "green" : row.edgeBand.color === "yellow" ? "yellow" : "red"
     return `
       <tr data-ticker="${safeText(row.ticker)}">
         <td>${row.rankPosition}</td>
@@ -699,7 +761,6 @@ function renderRanking(){
         <td>${actionTag(row.action)}</td>
         <td>${sourceTag(row.sourceType)}</td>
         <td>${fmtNum(row.edgeScore,1)}</td>
-        <td>${tag(row.edgeBand.label, bandColor)}</td>
         <td>${fmtNum(row.mcScore,1)}</td>
         <td>${fmtNum(row.mcWinRate,0)}%</td>
         <td>${fmtNum(row.riskScore,0)}</td>
@@ -723,15 +784,20 @@ function renderRanking(){
 
 function renderSelected(){
   const row = currentRows.find(r=>r.ticker===selectedTicker) || currentRows[0]
-  $("selectedTag").textContent = row ? row.ticker : "None"
   if(!row){
-    $("selectedPanel").innerHTML = "Nothing selected."
+    $("selectedPanel").innerHTML = `<div class="small">No selection.</div>`
+    $("selectedTag").textContent = "None"
+    $("selectedSub").textContent = "click a row"
     return
   }
+  $("selectedTag").textContent = row.ticker
+  $("selectedSub").textContent = row.action + " • " + row.edgeBand.label
+
   const benchDiff = toNum(row.assetReturn) - toNum(row.benchmarkReturn)
   const dangerTone = row.mcTailRisk >= 10 || row.mcWinRate < 50 ? "bad" : row.mcScore >= 70 ? "good" : "warn"
+
   $("selectedPanel").innerHTML = `
-    <div class="pillGrid">
+    <div class="pillRow" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
       <div class="pill ${toneClass(row.edgeScore)}">
         <div class="pillLabel">Edge</div>
         <div class="pillValue">${fmtNum(row.edgeScore,1)}</div>
@@ -740,62 +806,40 @@ function renderSelected(){
       <div class="pill ${row.riskScore <= 45 ? 'good' : row.riskScore <= 60 ? 'warn' : 'bad'}">
         <div class="pillLabel">Risk</div>
         <div class="pillValue">${fmtNum(row.riskScore,0)}</div>
-        <div class="pillSub">Lower safer</div>
+        <div class="pillSub">lower safer</div>
       </div>
-      <div class="pill ${row.flowScore >= 70 ? 'good' : row.flowScore >= 55 ? 'warn' : 'bad'}">
-        <div class="pillLabel">Flow</div>
-        <div class="pillValue">${fmtNum(row.flowScore,0)}</div>
-        <div class="pillSub">Flow contribution</div>
-      </div>
-      <div class="pill ${row.aiScore >= 70 ? 'good' : row.aiScore >= 55 ? 'warn' : 'bad'}">
-        <div class="pillLabel">AI</div>
-        <div class="pillValue">${fmtNum(row.aiScore,0)}</div>
-        <div class="pillSub">AI filter input</div>
-      </div>
-      <div class="pill ${row.sizeScore >= 65 ? 'good' : row.sizeScore >= 45 ? 'warn' : 'bad'}">
-        <div class="pillLabel">Size</div>
-        <div class="pillValue">${fmtNum(row.sizeScore,0)}</div>
-        <div class="pillSub">Sizing support</div>
-      </div>
-      <div class="pill ${benchDiff >= 0 ? 'good' : 'bad'}">
-        <div class="pillLabel">Benchmark</div>
-        <div class="pillValue">${fmtPct(benchDiff)}</div>
-        <div class="pillSub">${benchDiff >= 0 ? "Outperforming" : "Lagging"}</div>
+      <div class="pill ${dangerTone}">
+        <div class="pillLabel">MC</div>
+        <div class="pillValue">${fmtNum(row.mcScore,1)}</div>
+        <div class="pillSub">${safeText(row.mcInterpretation)}</div>
       </div>
     </div>
 
-    <div style="height:12px"></div>
+    <div style="height:10px"></div>
 
-    <div class="card ${dangerTone}" style="padding:10px">
-      <div class="cardTitle"><span>Monte Carlo</span><span class="subtle">20-day proxy</span></div>
-      <div class="mcGrid">
-        <div class="mcItem"><span>Mean</span><strong>${fmtPct(row.mcMean)}</strong></div>
-        <div class="mcItem"><span>Median</span><strong>${fmtPct(row.mcMedian)}</strong></div>
-        <div class="mcItem"><span>Mode</span><strong>${fmtPct(row.mcMode)}</strong></div>
-        <div class="mcItem"><span>Win %</span><strong>${fmtNum(row.mcWinRate,0)}%</strong></div>
-        <div class="mcItem"><span>P05</span><strong>${fmtPct(row.mcP05)}</strong></div>
-        <div class="mcItem"><span>P95</span><strong>${fmtPct(row.mcP95)}</strong></div>
-      </div>
-      <div class="footerNote">
-        Interpretation: <strong>${safeText(row.mcInterpretation)}</strong>.
-        Tail risk proxy: <strong>${fmtNum(row.mcTailRisk,1)}%</strong>.
-      </div>
+    <div class="miniGrid">
+      <div class="miniBox"><span>Mean</span><strong>${fmtPct(row.mcMean)}</strong></div>
+      <div class="miniBox"><span>Median</span><strong>${fmtPct(row.mcMedian)}</strong></div>
+      <div class="miniBox"><span>Mode</span><strong>${fmtPct(row.mcMode)}</strong></div>
+      <div class="miniBox"><span>Win %</span><strong>${fmtNum(row.mcWinRate,0)}%</strong></div>
+      <div class="miniBox"><span>P05</span><strong>${fmtPct(row.mcP05)}</strong></div>
+      <div class="miniBox"><span>P95</span><strong>${fmtPct(row.mcP95)}</strong></div>
     </div>
 
-    <div style="height:12px"></div>
+    <div style="height:10px"></div>
 
-    <div class="card blue" style="padding:10px">
-      <div class="cardTitle"><span>Merge Details</span><span class="subtle">Where this ticker came from</span></div>
-      <div class="mcGrid">
-        <div class="mcItem"><span>Primary Source</span><strong>${safeText(row.sourceType || "")}</strong></div>
-        <div class="mcItem"><span>Sources Merged</span><strong>${safeText((row.sourceStack || []).join(", "))}</strong></div>
-        <div class="mcItem"><span>Target Weight</span><strong>${fmtNum(row.targetWeight,1)}</strong></div>
-        <div class="mcItem"><span>Theme</span><strong>${safeText(row.theme || "-")}</strong></div>
-        <div class="mcItem"><span>Price</span><strong>$${fmtNum(row.price,2)}</strong></div>
-        <div class="mcItem"><span>Shares</span><strong>${fmtNum(row.shares,0)}</strong></div>
-      </div>
-      <div class="footerNote">${safeText(row.notes || "No notes")}</div>
+    <div class="miniGrid">
+      <div class="miniBox"><span>Flow</span><strong>${fmtNum(row.flowScore,0)}</strong></div>
+      <div class="miniBox"><span>AI</span><strong>${fmtNum(row.aiScore,0)}</strong></div>
+      <div class="miniBox"><span>Size</span><strong>${fmtNum(row.sizeScore,0)}</strong></div>
+      <div class="miniBox"><span>Benchmark</span><strong class="${benchDiff >= 0 ? 'successText' : 'dangerText'}">${fmtPct(benchDiff)}</strong></div>
+      <div class="miniBox"><span>Source</span><strong>${safeText(row.sourceType)}</strong></div>
+      <div class="miniBox"><span>Theme</span><strong>${safeText(row.theme || "-")}</strong></div>
     </div>
+
+    <div style="height:10px"></div>
+    <div class="small">Sources merged: <span class="mono">${safeText((row.sourceStack || []).join(", "))}</span></div>
+    <div class="small">Notes: ${safeText(row.notes || "No notes")}</div>
   `
 }
 
@@ -804,41 +848,59 @@ function renderLists(){
   const sells = currentRows.filter(r => /SELL|REDUCE|TRIM/.test(r.action)).slice(0,8)
 
   $("buyList").innerHTML = buys.length ? buys.map(r => `
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">
+    <div class="listItem">
       <strong class="mono">${safeText(r.ticker)}</strong> ${actionTag(r.action)} ${sourceTag(r.sourceType)}
       <div class="small">Edge ${fmtNum(r.edgeScore,1)} • MC ${fmtNum(r.mcScore,1)} • Win ${fmtNum(r.mcWinRate,0)}% • Risk ${fmtNum(r.riskScore,0)}</div>
     </div>
-  `).join("") : "No buys currently."
+  `).join("") : `<div class="small">No buys currently.</div>`
 
   $("sellList").innerHTML = sells.length ? sells.map(r => `
-    <div style="padding:8px 0;border-bottom:1px solid var(--line)">
+    <div class="listItem">
       <strong class="mono">${safeText(r.ticker)}</strong> ${actionTag(r.action)}
       <div class="small">Edge ${fmtNum(r.edgeScore,1)} • Tail ${fmtNum(r.mcTailRisk,1)}% • Risk ${fmtNum(r.riskScore,0)}</div>
     </div>
-  `).join("") : "No reduce flags currently."
+  `).join("") : `<div class="small">No reduce flags currently.</div>`
+}
+
+function renderAuditPanel(){
+  const sourceCounts = auditStats.sourceCounts || {}
+  $("auditPanel").innerHTML = `
+    <div class="miniGrid">
+      <div class="miniBox"><span>Holdings</span><strong>${sourceCounts.holdings || 0}</strong></div>
+      <div class="miniBox"><span>Flow</span><strong>${sourceCounts.flow || 0}</strong></div>
+      <div class="miniBox"><span>AI</span><strong>${sourceCounts.ai || 0}</strong></div>
+      <div class="miniBox"><span>Size</span><strong>${sourceCounts.size || 0}</strong></div>
+      <div class="miniBox"><span>Radar Results</span><strong>${sourceCounts.radar_results || 0}</strong></div>
+      <div class="miniBox"><span>Radar</span><strong>${sourceCounts.radar || 0}</strong></div>
+      <div class="miniBox"><span>Radar Log</span><strong>${auditStats.radarLogCount || 0}</strong></div>
+      <div class="miniBox"><span>Merged Universe</span><strong>${currentRows.length}</strong></div>
+    </div>
+    <div class="drawerNote" style="margin-top:12px">
+      Use this panel only for troubleshooting when a sheet changes shape or a feed seems thin.
+    </div>
+  `
 }
 
 function render(sourceLabel){
-  renderSummary(sourceLabel)
+  renderTopPills(sourceLabel)
   renderRanking()
   if(!selectedTicker && currentRows[0]) selectedTicker = currentRows[0].ticker
   renderSelected()
   renderLists()
+  renderAuditPanel()
 }
 
 function saveInputs(){
   Object.keys(DEFAULT_LINKS).forEach(id => localStorage.setItem(LS_PREFIX + id, $(id).value.trim()))
 }
-function loadInputs(){
-  Object.keys(DEFAULT_LINKS).forEach(id => {
-    $(id).value = localStorage.getItem(LS_PREFIX + id) || DEFAULT_LINKS[id]
+function loadInputs(useDefaults=false){
+  Object.keys(DEFAULT_LINKS).forEach(id=>{
+    $(id).value = useDefaults ? DEFAULT_LINKS[id] : (localStorage.getItem(LS_PREFIX + id) || DEFAULT_LINKS[id])
   })
 }
-
 async function loadAllCsvs(){
   saveInputs()
-  setStatus("Loading all CSVs...", "blue")
-
+  setStatus("Loading...", "blue")
   const urls = {}
   Object.keys(DEFAULT_LINKS).forEach(id => urls[id] = $(id).value.trim())
 
@@ -851,90 +913,102 @@ async function loadAllCsvs(){
     ["radarResults", urls.radarResultsUrl],
     ["radarLog", urls.radarLogUrl]
   ]
-
   const data = { holdings:[], flow:[], ai:[], size:[], radar:[], radarResults:[], radarLog:[] }
 
   for(const [key,url] of jobs){
     if(!url) continue
-    try{
-      data[key] = await fetchCsvRows(url)
-    }catch(err){
-      console.warn("Failed loading", key, err)
-    }
+    try{ data[key] = await fetchCsvRows(url) } catch(err){ console.warn("load failed", key, err) }
   }
-
-  if(!data.holdings.length && !data.radarResults.length && !data.radar.length){
+  if(!data.holdings.length && !data.radar.length && !data.radarResults.length){
     throw new Error("No usable CSV data loaded.")
   }
-
   const merged = mergeRows(data)
   processRows(merged, "Merged CSV")
 }
-
 function exportRankedCsv(){
   if(!currentRows.length) return
-  const headers = ["rankPosition","ticker","action","sourceType","edgeScore","edgeBand","mcScore","mcWinRate","mcMean","mcMedian","mcMode","mcP05","mcP95","mcTailRisk","rankScore","momentumScore","flowScore","aiScore","riskScore","rsScore","sizeScore","targetWeight","assetReturn","benchmarkReturn","price","shares","theme","notes","sourceStack"]
+  const headers = ["rankPosition","ticker","action","sourceType","edgeScore","mcScore","mcWinRate","mcMean","mcMedian","mcMode","mcP05","mcP95","mcTailRisk","rankScore","momentumScore","flowScore","aiScore","riskScore","rsScore","sizeScore","targetWeight","assetReturn","benchmarkReturn","price","shares","theme","notes","sourceStack"]
   const lines = [headers.join(",")]
   currentRows.forEach(r=>{
     lines.push(headers.map(h=>{
-      let v = h === "edgeBand" ? r.edgeBand.label : h === "sourceStack" ? (r.sourceStack || []).join("|") : r[h]
+      let v = h === "sourceStack" ? (r.sourceStack || []).join("|") : r[h]
       v = String(v ?? "")
-      return /[,"\n]/.test(v) ? '"' + v.replace(/"/g, '""') + '"' : v
+      return /[,"\n]/.test(v) ? '"' + v.replace(/"/g,'""') + '"' : v
     }).join(","))
   })
-  const blob = new Blob([lines.join("\n")], { type:"text/csv;charset=utf-8;" })
+  const blob = new Blob([lines.join("\n")], {type:"text/csv;charset=utf-8;"})
   const url = URL.createObjectURL(blob)
   const a = document.createElement("a")
   a.href = url
-  a.download = "lean_terminal_v10_ranked_export.csv"
+  a.download = "lean_terminal_v11_ranked_export.csv"
   a.click()
   URL.revokeObjectURL(url)
 }
 
+/* drawer controls */
+const overlay = $("overlay")
+function closeDrawers(){
+  document.querySelectorAll(".drawer").forEach(d => d.classList.remove("open"))
+  overlay.classList.remove("show")
+}
+function openDrawer(id){
+  closeDrawers()
+  $(id).classList.add("open")
+  overlay.classList.add("show")
+}
+document.querySelectorAll(".railBtn").forEach(btn=>{
+  btn.addEventListener("click", ()=>openDrawer(btn.dataset.drawer))
+})
+document.querySelectorAll("[data-close]").forEach(btn=>{
+  btn.addEventListener("click", closeDrawers)
+})
+overlay.addEventListener("click", closeDrawers)
+
+/* init */
 $("todoBox").value = MASTER_TODO.join("\n")
 loadInputs()
-$("toggleModeBtn").textContent = "Mode: " + currentMode
+$("modeBtn").textContent = "Mode: " + currentMode
 
-Object.keys(DEFAULT_LINKS).forEach(id=>{
-  $(id).addEventListener("change", saveInputs)
+$("loadSavedBtn").addEventListener("click", ()=>{
+  loadInputs(false)
+  setStatus("Saved links loaded", "blue")
 })
-
 $("loadDefaultsBtn").addEventListener("click", ()=>{
-  loadInputs()
-  setStatus("Saved/default links loaded", "blue")
+  loadInputs(true)
+  saveInputs()
+  setStatus("Default links restored", "blue")
 })
-
+$("saveLinksBtn").addEventListener("click", ()=>{
+  saveInputs()
+  setStatus("Links saved", "blue")
+})
 $("loadDemoBtn").addEventListener("click", ()=>{
-  auditStats = { radarLogCount: 12, sourceCounts: {} }
-  processRows(DEMO_ROWS.map(r=>({...r, sourceStack:[r.sourceType]})), "Demo")
+  auditStats = { radarLogCount: 12, sourceCounts:{ holdings:5, flow:5, ai:5, size:5, radar_results:2, radar:1 } }
+  processRows(DEMO_ROWS.map(r=>({...r})), "Demo")
 })
-
 $("reloadBtn").addEventListener("click", async ()=>{
-  try{
-    await loadAllCsvs()
-  }catch(err){
+  try{ await loadAllCsvs() }
+  catch(err){
     console.error(err)
     setStatus("Load failed", "red")
     alert("CSV load failed.\n\n" + (err.message || err))
   }
 })
-
-$("toggleModeBtn").addEventListener("click", ()=>{
+$("modeBtn").addEventListener("click", ()=>{
   currentMode = currentMode === "AGG" ? "LEAN" : "AGG"
   localStorage.setItem(LS_PREFIX + "mode", currentMode)
-  $("toggleModeBtn").textContent = "Mode: " + currentMode
+  $("modeBtn").textContent = "Mode: " + currentMode
   if(currentRows.length){
     currentRows = currentRows
       .sort((a,b)=>toNum(b.edgeScore)-toNum(a.edgeScore))
-      .map((r,idx)=>({ ...r, rankPosition: idx + 1 }))
+      .map((r,idx)=>({ ...r, rankPosition: idx+1 }))
       .map((r,idx)=>({ ...r, action: inferAction(r, idx) }))
     render("Loaded")
   }
 })
-
 $("exportBtn").addEventListener("click", exportRankedCsv)
 
-processRows(DEMO_ROWS.map(r=>({...r, sourceStack:[r.sourceType]})), "Demo")
+processRows(DEMO_ROWS.map(r=>({...r})), "Demo")
 </script>
 </body>
 </html>
