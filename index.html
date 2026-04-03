@@ -3,7 +3,7 @@
 <head>
   <meta charset="utf-8" />
   <meta name="viewport" content="width=device-width,initial-scale=1" />
-  <title>Lean Terminal v11 - Clean Shell + Multi CSV Engine</title>
+  <title>Lean Terminal v12 - Street Patch + Portfolio View</title>
   <style>
     :root{
       --bg:#0a0f1c;
@@ -179,25 +179,46 @@
       width:100%;min-height:170px;background:#0f182a;color:var(--text);
       border:1px solid var(--line);border-radius:12px;padding:10px;font-size:12px
     }
+  
+    .pillShell{position:relative}
+    .pillInfo{
+      position:absolute;top:8px;right:8px;width:18px;height:18px;border-radius:999px;
+      display:flex;align-items:center;justify-content:center;font-size:10px;padding:0;
+      background:rgba(255,255,255,.05)
+    }
+    .pillCollapsed{display:none}
+    .toolbar .ghostBtn{background:#0d1525}
+    .layoutList{display:grid;gap:8px}
+    .layoutItem{display:grid;grid-template-columns:22px 1fr auto auto;gap:8px;align-items:center;padding:8px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03)}
+    .layoutItem .drag{cursor:grab;color:var(--muted);font-size:16px;text-align:center}
+    .layoutItem button{padding:6px 8px;font-size:11px}
+    .helpCard{padding:10px;border:1px solid var(--line);border-radius:12px;background:rgba(255,255,255,.03);margin-bottom:10px}
+    .helpCard h4{margin:0 0 6px;font-size:13px}
+    .healthGrid{display:grid;grid-template-columns:repeat(2,minmax(0,1fr));gap:8px}
+    .metricBar{height:8px;border-radius:999px;background:rgba(255,255,255,.08);overflow:hidden;margin-top:6px}
+    .metricBar > span{display:block;height:100%;background:linear-gradient(90deg,var(--blue),var(--cyan))}
+
   </style>
 </head>
 <body>
 <div class="wrap">
   <div class="topbar">
     <div class="brand">
-      <h1>Lean Terminal v11</h1>
-      <p>clean shell • multi-csv engine • edge score • monte carlo • radar promotion</p>
+      <h1>Lean Terminal v12</h1>
+      <p>street patch • ecs • vs market • portfolio • feedback</p>
     </div>
     <div class="toolbar">
       <button id="loadSavedBtn">Load Saved</button>
       <button id="loadDemoBtn">Demo</button>
       <button id="reloadBtn">Reload</button>
       <button id="modeBtn">Mode: AGG</button>
+      <button id="togglePillsBtn" class="ghostBtn">Hide Pills</button>
+      <button id="layoutBtn" class="ghostBtn">Layout</button>
       <button id="exportBtn">Export</button>
     </div>
   </div>
 
-  <div class="panel span-12" style="margin-bottom:12px">
+  <div class="panel span-12" style="margin-bottom:12px" id="pillPanel">
     <div class="panelBody compactBody">
       <div class="pillRow" id="topPills"></div>
     </div>
@@ -207,8 +228,8 @@
     <div class="panel">
       <div class="panelHead">
         <div>
-          <div class="panelTitle">Ranked Engine Output</div>
-          <div class="subtle">main board • sorted by edge score</div>
+          <div class="panelTitle">Main Board</div>
+          <div class="subtle">street view • strongest names up top</div>
         </div>
         <div>
           <span id="statusTag" class="tag blue">Demo</span>
@@ -245,8 +266,8 @@
       <div class="panel">
         <div class="panelHead">
           <div>
-            <div class="panelTitle">Selected Ticker</div>
-            <div class="subtle" id="selectedSub">click a row</div>
+            <div class="panelTitle">Ticker Breakdown</div>
+            <div class="subtle" id="selectedSub">tap a row</div>
           </div>
           <span id="selectedTag" class="tag blue">None</span>
         </div>
@@ -257,7 +278,7 @@
 
       <div class="panel">
         <div class="panelHead">
-          <div class="panelTitle">Top Buys / Watch Buys</div>
+          <div class="panelTitle">What Looks Buyable</div>
           <span class="tag green">Horse Race</span>
         </div>
         <div class="panelBody compactBody" id="buyList"></div>
@@ -265,7 +286,7 @@
 
       <div class="panel">
         <div class="panelHead">
-          <div class="panelTitle">Reduce / Risk Watch</div>
+          <div class="panelTitle">What Looks Shaky</div>
           <span class="tag red">Attention</span>
         </div>
         <div class="panelBody compactBody" id="sellList"></div>
@@ -276,7 +297,7 @@
   <div class="split" style="margin-top:12px">
     <div class="panel">
       <div class="panelHead">
-        <div class="panelTitle">Build Checklist</div>
+        <div class="panelTitle">Master Checklist</div>
         <span class="tag blue">Locked</span>
       </div>
       <div class="panelBody compactBody">
@@ -286,7 +307,7 @@
 
     <div class="panel">
       <div class="panelHead">
-        <div class="panelTitle">System Notes</div>
+        <div class="panelTitle">Street Notes</div>
         <span class="tag yellow">Current Engine</span>
       </div>
       <div class="panelBody compactBody">
@@ -304,6 +325,8 @@
 <div class="sideRail">
   <button class="railBtn" data-drawer="settingsDrawer">Settings</button>
   <button class="railBtn" data-drawer="auditDrawer">Audit</button>
+  <button class="railBtn" data-drawer="healthDrawer">Health</button>
+  <button class="railBtn" data-drawer="layoutDrawer">Layout</button>
 </div>
 
 <div id="overlay" class="overlay"></div>
@@ -350,6 +373,46 @@
   </div>
 </div>
 
+<div id="healthDrawer" class="drawer">
+  <div class="drawerHead">
+    <div>
+      <div class="panelTitle">System Health</div>
+      <div class="subtle">what is clean, what needs love</div>
+    </div>
+    <button data-close>Close</button>
+  </div>
+  <div class="drawerBody">
+    <div id="healthPanel" class="small">No health data yet.</div>
+  </div>
+</div>
+
+<div id="layoutDrawer" class="drawer">
+  <div class="drawerHead">
+    <div>
+      <div class="panelTitle">Pill Layout</div>
+      <div class="subtle">hide, show, move stuff around</div>
+    </div>
+    <button data-close>Close</button>
+  </div>
+  <div class="drawerBody">
+    <div class="drawerNote" style="margin-bottom:10px">Turn pills on or off, then move them up or down. This only changes your view.</div>
+    <div id="layoutList" class="layoutList"></div>
+  </div>
+</div>
+
+<div id="infoDrawer" class="drawer">
+  <div class="drawerHead">
+    <div>
+      <div class="panelTitle" id="infoTitle">Pill Help</div>
+      <div class="subtle">plain English / street speak</div>
+    </div>
+    <button data-close>Close</button>
+  </div>
+  <div class="drawerBody">
+    <div id="infoPanel" class="small">Tap an i button on a pill.</div>
+  </div>
+</div>
+
 <script>
 const DEFAULT_LINKS = {
   holdingsUrl: "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv",
@@ -362,24 +425,24 @@ const DEFAULT_LINKS = {
 }
 
 const MASTER_TODO = [
-  "1. Edge Score (core engine)",
-  "2. Monte Carlo Pill (with interpretation)",
-  "3. Benchmark Comparison Pill",
-  "4. Correlation Heatmap",
-  "5. Risk Contribution Panel",
-  "6. Volatility Traffic Light (refined)",
-  "7. Trade Feedback Loop",
-  "8. Agent Simulation v1",
-  "9. Ranking System Refinement",
-  "10. Multi-Reality Simulation Module",
-  "11. Cluster Map / Similarity Engine",
-  "12. Backtesting Layer",
-  "13. Performance History Panel",
-  "14. Correlation Line Tool",
-  "15. Critical Pill Highlighting (finalize)",
-  "16. Radar → Buy Promotion Logic",
-  "17. Daily System Grade",
-  "18. Resume / System Framing"
+  "🟢 Edge Score core engine",
+  "🟡 Monte Carlo pill tune-up",
+  "🟡 Benchmark compare / vs market",
+  "🟡 Trade feedback loop",
+  "🟡 ECS pill",
+  "🟡 Portfolio tracker",
+  "🟡 Street-speak labels + i help",
+  "🟡 Top 4 mission logic",
+  "🟡 Exit intelligence",
+  "🟡 System health right tab",
+  "🟡 Ranking refinement",
+  "🟡 Backtesting layer",
+  "🟡 Correlation heatmap",
+  "🟡 Risk contribution panel",
+  "🟡 Cluster / similarity engine",
+  "🟡 Agent simulation",
+  "🟢 Daily system grade",
+  "🟢 Clean feed merge shell"
 ]
 
 const LS_PREFIX = "lean_v11_"
@@ -387,6 +450,22 @@ let currentMode = localStorage.getItem(LS_PREFIX + "mode") || "AGG"
 let currentRows = []
 let selectedTicker = null
 let auditStats = { radarLogCount:0, sourceCounts:{} }
+let currentSummary = {}
+const PILL_HELP = {
+  ready:{title:"READY", text:"How ready the whole board looks right now. Higher = more setups acting right. Low = chill mode."},
+  risk:{title:"RISK", text:"Danger meter. Lower is cleaner. Higher means more slip-and-fall risk."},
+  plan:{title:"PLAN", text:"System posture. LEAN = safer and picky. AGG = more offense."},
+  ecs:{title:"ECS", text:"Execution Confidence Score. Final green-light score for whether a name looks worth pressing."},
+  port:{title:"PORT", text:"Your bag right now. Shows account value, open names, and quick score on how the basket is acting."},
+  vsmkt:{title:"VS MKT", text:"Us versus the market. Positive spread means your basket is beating the tape."},
+  feedback:{title:"FEEDBACK", text:"What is actually hitting. It checks how many live names are beating the market and whether the board is rewarding you."},
+  mc:{title:"SIM SCORE", text:"Probability vibe from the Monte Carlo layer. Higher means the path looks more constructive."},
+  win:{title:"WIN %", text:"How often the sim ends green. Not a promise — just the model vibe."},
+  buys:{title:"BUY FLOW", text:"How many names are getting green lights versus how many are shaky."},
+  radar:{title:"RADAR", text:"How many outside names are being merged into the universe."}
+}
+const DEFAULT_PILL_ORDER = ["ready","risk","plan","ecs","port","vsmkt","feedback","mc","win","buys","radar"]
+let pillState = JSON.parse(localStorage.getItem(LS_PREFIX + "pillState") || "null") || { order:[...DEFAULT_PILL_ORDER], hidden:[], collapsed:false }
 
 const DEMO_ROWS = [
   { ticker:"NVDA", shares:8, price:118.42, rankScore:91, momentumScore:88, flowScore:84, aiScore:90, riskScore:42, rsScore:86, sizeScore:74, assetReturn:17.4, benchmarkReturn:9.8, sourceType:"holdings", sourceStack:["holdings"] },
@@ -709,6 +788,7 @@ function processRows(rows, sourceLabel="Loaded"){
         mcInterpretation: mc.interpretation
       }
       enriched.edgeScore = calcEdgeScore(enriched)
+      enriched.ecsScore = clamp((0.30*toNum(enriched.edgeScore)) + (0.20*toNum(enriched.mcScore)) + (0.20*toNum(enriched.mcWinRate)) + (0.15*(100-toNum(enriched.riskScore))) + (0.15*toNum(enriched.rankScore)),0,100)
       enriched.edgeBand = band(enriched.edgeScore)
       return enriched
     })
@@ -720,33 +800,50 @@ function processRows(rows, sourceLabel="Loaded"){
 }
 
 function renderTopPills(sourceLabel){
+  currentSummary.sourceLabel = sourceLabel
   const avgEdge = mean(currentRows.map(r=>toNum(r.edgeScore)))
   const avgMc = mean(currentRows.map(r=>toNum(r.mcScore)))
   const avgRisk = mean(currentRows.map(r=>toNum(r.riskScore)))
   const avgWin = mean(currentRows.map(r=>toNum(r.mcWinRate)))
-  const buys = currentRows.filter(r=>r.action==="BUY").length
+  const buys = currentRows.filter(r=>r.action==="BUY" || r.action==="WATCH BUY").length
   const reduce = currentRows.filter(r=>/SELL|REDUCE|TRIM/.test(r.action)).length
   const promoted = currentRows.filter(r=>r.sourceType==="radar_results" || r.sourceType==="radar").length
   const [grade, gradeColor] = systemGrade(avgEdge)
+  const ecsAvg = mean(currentRows.map(r=>toNum(r.ecsScore)))
+  const port = getPortfolioStats()
+  const feedbackScore = currentRows.length ? (currentRows.filter(r=>toNum(r.assetReturn) > toNum(r.benchmarkReturn)).length / currentRows.length) * 100 : 0
   setStatus(sourceLabel + " • " + currentMode + " • Grade " + grade, gradeColor)
 
-  $("topPills").innerHTML = [
-    pill("READY", fmtNum(avgEdge,1), avgEdge >= 75 ? "system qualified" : "below ideal", avgEdge >= 75 ? "good" : avgEdge >= 65 ? "warn" : "bad"),
-    pill("RISK", fmtNum(avgRisk,1), "lower safer", avgRisk <= 45 ? "good" : avgRisk <= 60 ? "warn" : "bad"),
-    pill("PLAN", currentMode, avgEdge >= 75 ? "offense allowed" : "stay selective", "blue"),
-    pill("AGG GRADE", grade, "avg edge " + fmtNum(avgEdge,1), gradeColor === "green" ? "good" : gradeColor === "yellow" ? "warn" : "bad"),
-    pill("MC AVG", fmtNum(avgMc,1), "probability layer", avgMc >= 70 ? "good" : avgMc >= 60 ? "warn" : "bad"),
-    pill("WIN %", fmtNum(avgWin,0) + "%", "avg mc win rate", avgWin >= 55 ? "good" : "warn"),
-    pill("BUYS / REDUCE", buys + " / " + reduce, "horse race outputs", reduce > buys ? "bad" : "blue"),
-    pill("RADAR NAMES", promoted, "new candidates merged", promoted ? "blue" : "warn")
-  ].join("")
+  const defs = {
+    ready:{label:"READY", value:fmtNum(avgEdge,1), sub:avgEdge >= 75 ? "board looks tradable" : "not much juice", tone: avgEdge >= 75 ? "good" : avgEdge >= 65 ? "warn" : "bad"},
+    risk:{label:"RISK", value:fmtNum(avgRisk,1), sub:"danger meter — lower safer", tone: avgRisk <= 45 ? "good" : avgRisk <= 60 ? "warn" : "bad"},
+    plan:{label:"PLAN", value:currentMode, sub:avgEdge >= 75 ? "push when setups behave" : "stay picky", tone:"blue"},
+    ecs:{label:"ECS", value:fmtNum(ecsAvg,1), sub:ecsAvg >= 85 ? "green light score" : ecsAvg >= 75 ? "almost there" : "not ready yet", tone: ecsAvg >= 85 ? "good" : ecsAvg >= 75 ? "warn" : "bad"},
+    port:{label:"PORT", value: port.value ? "$" + Math.round(port.value).toLocaleString() : "$0", sub:`${port.held.length} live names • avg edge ${fmtNum(port.avgEdgeHeld,1)}`, tone: port.held.length ? "blue" : "warn"},
+    vsmkt:{label:"VS MKT", value: fmtPct(port.spread), sub:`us ${fmtPct(port.weightedAsset)} vs tape ${fmtPct(port.weightedBench)}`, tone: port.spread >= 0 ? "good" : "bad"},
+    feedback:{label:"FEEDBACK", value: fmtNum(feedbackScore,0) + "%", sub:`${port.beaters}/${Math.max(port.held.length,0)} live names beating market`, tone: feedbackScore >= 55 ? "good" : feedbackScore >= 45 ? "warn" : "bad"},
+    mc:{label:"SIM SCORE", value:fmtNum(avgMc,1), sub:"probability vibe", tone: avgMc >= 70 ? "good" : avgMc >= 60 ? "warn" : "bad"},
+    win:{label:"WIN %", value:fmtNum(avgWin,0) + "%", sub:"sim win rate", tone: avgWin >= 55 ? "good" : "warn"},
+    buys:{label:"BUY FLOW", value: buys + " / " + reduce, sub:"go names / shaky names", tone: buys > 0 ? "good" : reduce > buys ? "bad" : "blue"},
+    radar:{label:"RADAR", value:promoted, sub:"outside names merged", tone: promoted ? "blue" : "warn"}
+  }
+  const html = pillState.order
+    .filter(id => !pillState.hidden.includes(id) && defs[id])
+    .map(id => pill(defs[id].label, defs[id].value, defs[id].sub, defs[id].tone, id))
+    .join("")
+  $("topPills").innerHTML = html
+  $("pillPanel").classList.toggle("pillCollapsed", !!pillState.collapsed)
+  $("togglePillsBtn").textContent = pillState.collapsed ? "Show Pills" : "Hide Pills"
 }
-function pill(label, value, sub, tone="blue"){
+function pill(label, value, sub, tone="blue", infoId=""){
   return `
-    <div class="pill ${tone}">
-      <div class="pillLabel">${safeText(label)}</div>
-      <div class="pillValue">${safeText(value)}</div>
-      <div class="pillSub">${safeText(sub)}</div>
+    <div class="pillShell">
+      <div class="pill ${tone}">
+        <button class="pillInfo" onclick="openInfo('${safeText(infoId)}')">i</button>
+        <div class="pillLabel">${safeText(label)}</div>
+        <div class="pillValue">${safeText(value)}</div>
+        <div class="pillSub">${safeText(sub)}</div>
+      </div>
     </div>
   `
 }
@@ -787,29 +884,34 @@ function renderSelected(){
   if(!row){
     $("selectedPanel").innerHTML = `<div class="small">No selection.</div>`
     $("selectedTag").textContent = "None"
-    $("selectedSub").textContent = "click a row"
+    $("selectedSub").textContent = "tap a row"
     return
   }
   $("selectedTag").textContent = row.ticker
-  $("selectedSub").textContent = row.action + " • " + row.edgeBand.label
+  $("selectedSub").textContent = row.action + " • " + row.edgeBand.label + " • ECS " + fmtNum(row.ecsScore,1)
 
   const benchDiff = toNum(row.assetReturn) - toNum(row.benchmarkReturn)
   const dangerTone = row.mcTailRisk >= 10 || row.mcWinRate < 50 ? "bad" : row.mcScore >= 70 ? "good" : "warn"
 
   $("selectedPanel").innerHTML = `
-    <div class="pillRow" style="grid-template-columns:repeat(3,minmax(0,1fr));gap:8px">
+    <div class="pillRow" style="grid-template-columns:repeat(4,minmax(0,1fr));gap:8px">
       <div class="pill ${toneClass(row.edgeScore)}">
-        <div class="pillLabel">Edge</div>
+        <div class="pillLabel">Setup Juice</div>
         <div class="pillValue">${fmtNum(row.edgeScore,1)}</div>
         <div class="pillSub">${safeText(row.edgeBand.label)}</div>
       </div>
       <div class="pill ${row.riskScore <= 45 ? 'good' : row.riskScore <= 60 ? 'warn' : 'bad'}">
-        <div class="pillLabel">Risk</div>
+        <div class="pillLabel">Danger</div>
         <div class="pillValue">${fmtNum(row.riskScore,0)}</div>
         <div class="pillSub">lower safer</div>
       </div>
+      <div class="pill ${row.ecsScore >= 85 ? 'good' : row.ecsScore >= 75 ? 'warn' : 'bad'}">
+        <div class="pillLabel">ECS</div>
+        <div class="pillValue">${fmtNum(row.ecsScore,1)}</div>
+        <div class="pillSub">green light score</div>
+      </div>
       <div class="pill ${dangerTone}">
-        <div class="pillLabel">MC</div>
+        <div class="pillLabel">Sim Score</div>
         <div class="pillValue">${fmtNum(row.mcScore,1)}</div>
         <div class="pillSub">${safeText(row.mcInterpretation)}</div>
       </div>
@@ -852,14 +954,14 @@ function renderLists(){
       <strong class="mono">${safeText(r.ticker)}</strong> ${actionTag(r.action)} ${sourceTag(r.sourceType)}
       <div class="small">Edge ${fmtNum(r.edgeScore,1)} • MC ${fmtNum(r.mcScore,1)} • Win ${fmtNum(r.mcWinRate,0)}% • Risk ${fmtNum(r.riskScore,0)}</div>
     </div>
-  `).join("") : `<div class="small">No buys currently.</div>`
+  `).join("") : `<div class="small">No real green lights yet.</div>`
 
   $("sellList").innerHTML = sells.length ? sells.map(r => `
     <div class="listItem">
       <strong class="mono">${safeText(r.ticker)}</strong> ${actionTag(r.action)}
       <div class="small">Edge ${fmtNum(r.edgeScore,1)} • Tail ${fmtNum(r.mcTailRisk,1)}% • Risk ${fmtNum(r.riskScore,0)}</div>
     </div>
-  `).join("") : `<div class="small">No reduce flags currently.</div>`
+  `).join("") : `<div class="small">No danger names right now.</div>`
 }
 
 function renderAuditPanel(){
@@ -888,6 +990,8 @@ function render(sourceLabel){
   renderSelected()
   renderLists()
   renderAuditPanel()
+  renderHealthPanel()
+  renderLayoutPanel()
 }
 
 function saveInputs(){
@@ -1007,6 +1111,8 @@ $("modeBtn").addEventListener("click", ()=>{
   }
 })
 $("exportBtn").addEventListener("click", exportRankedCsv)
+$("togglePillsBtn").addEventListener("click", ()=>{ pillState.collapsed = !pillState.collapsed; savePillState(); renderTopPills(currentSummary.sourceLabel || "Loaded") })
+$("layoutBtn").addEventListener("click", ()=>openDrawer("layoutDrawer"))
 
 processRows(DEMO_ROWS.map(r=>({...r})), "Demo")
 </script>
