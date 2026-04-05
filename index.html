@@ -1,370 +1,1073 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="utf-8" />
-<meta name="viewport" content="width=device-width,initial-scale=1" />
-<title>Lean Terminal v15 Full Shell Parity Candidate</title>
-<style>
-:root{
-  --bg:#060c1a; --text:#e8edf7; --muted:#94a3b8; --line:rgba(255,255,255,.08); --line2:rgba(255,255,255,.14);
-  --green:#22c55e; --yellow:#f59e0b; --red:#ef4444; --blue:#3b82f6; --cyan:#37d7ff;
-  --pill:#0c1425; --shadow:0 14px 36px rgba(0,0,0,.28);
-}
-*{box-sizing:border-box} html,body{height:100%}
-body{
-  margin:0;color:var(--text);
-  background:radial-gradient(circle at top left,#0a1730 0%,#060c1a 42%,#040915 100%);
-  font-family:system-ui,-apple-system,Segoe UI,Roboto,Arial,sans-serif
-}
-.wrap{max-width:1680px;margin:0 auto;padding:12px}
-.topbar{display:flex;align-items:flex-start;justify-content:space-between;gap:10px;margin-bottom:8px}
-.brand h1{margin:0 0 2px 0;font-size:1.25rem;font-weight:800}
-.sub{color:var(--muted);font-size:.85rem}
-.toolbar{display:flex;gap:8px;flex-wrap:wrap;justify-content:flex-end;align-items:center}
-.chip,.btn{
-  border:1px solid var(--line2);
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.01));
-  color:var(--text);border-radius:14px;padding:8px 11px;font:inherit;font-size:.78rem;box-shadow:var(--shadow)
-}
-.btn{cursor:pointer;font-weight:700}
-.btn.aggressive{
-  background:linear-gradient(180deg,rgba(59,130,246,.28),rgba(59,130,246,.12));
-  border-color:rgba(59,130,246,.55)
-}
-.btn.aggressive.active{
-  background:linear-gradient(180deg,rgba(59,130,246,.46),rgba(59,130,246,.2));
-}
-.strip{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:8px}
-.pill{
-  display:inline-flex;align-items:center;gap:7px;border-radius:999px;border:1px solid var(--line2);
-  background:var(--pill);padding:6px 10px;font-size:.72rem;white-space:nowrap
-}
-.dot{width:10px;height:10px;border-radius:50%;display:inline-block}
-.g{background:var(--green)} .y{background:var(--yellow)} .r{background:var(--red)} .b{background:var(--blue)} .c{background:var(--cyan)}
-.tooltipWrap{position:relative;display:inline-flex;align-items:center;justify-content:center;flex:0 0 auto}
-.info{
-  display:inline-flex;align-items:center;justify-content:center;width:16px;height:16px;border-radius:50%;
-  border:1px solid rgba(255,255,255,.16);color:#bfd1ea;font-size:.68rem;line-height:1;font-weight:800;
-  cursor:pointer;background:rgba(255,255,255,.03)
-}
-.tooltipBox{
-  position:absolute;bottom:130%;left:50%;transform:translateX(-50%);
-  background:#0b1222;border:1px solid rgba(255,255,255,.15);padding:9px 11px;border-radius:10px;
-  font-size:.72rem;color:#dbe6f5;white-space:normal;width:230px;line-height:1.35;opacity:0;
-  pointer-events:none;transition:all .15s ease;z-index:9999;box-shadow:0 10px 20px rgba(0,0,0,.4)
-}
-.tooltipBox::after{
-  content:"";position:absolute;top:100%;left:50%;transform:translateX(-50%);
-  border-width:6px;border-style:solid;border-color:#0b1222 transparent transparent transparent
-}
-.tooltipWrap:hover .tooltipBox,.tooltipWrap.mobile-open .tooltipBox{
-  opacity:1;transform:translateX(-50%) translateY(-4px);pointer-events:auto
-}
-.grid{display:grid;gap:8px}
-.topGrid{grid-template-columns:3fr 1fr;margin-bottom:8px}
-.mainGrid{grid-template-columns:280px minmax(0,1fr) 250px}
-.actionHoldRow{display:grid;grid-template-columns:1.1fr .9fr;gap:8px}
-.midPair{display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:8px}
-.triple{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px;margin-top:8px}
-.pillMetrics{display:grid;grid-template-columns:repeat(4,1fr);gap:8px}
-@media (max-width:1320px){.topGrid,.mainGrid,.actionHoldRow,.midPair,.triple,.pillMetrics{grid-template-columns:1fr}}
-.card{
-  min-width:0;border:1px solid var(--line);border-radius:22px;
-  background:linear-gradient(180deg,rgba(255,255,255,.03),rgba(255,255,255,.015));
-  box-shadow:var(--shadow);padding:12px
-}
-.cardTitle{display:flex;align-items:center;justify-content:space-between;gap:8px;margin-bottom:8px}
-.titleLeft{display:flex;align-items:center;gap:6px;min-width:0}
-.cardTitle h2,.cardTitle h3{margin:0;font-size:.95rem;font-weight:800}
-.heroDate{font-size:.68rem;color:#d5e1f2;padding:6px 10px;border-radius:999px;border:1px solid var(--line2);background:rgba(255,255,255,.02)}
-.heroValue{font-size:1rem;line-height:1.15;font-weight:700;margin:2px 0 10px 0}
-.heroMeta{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
-.mini{border:1px solid var(--line);background:rgba(255,255,255,.015);border-radius:999px;padding:5px 10px;font-size:.72rem;color:#d9e4f4}
-.gradientBar{width:100%;height:6px;border-radius:999px;background:rgba(255,255,255,.09);overflow:hidden}
-.gradientFill{height:100%;width:0%;background:linear-gradient(90deg,#ff4d4d 0%,#ff9f0a 42%,#f6c000 60%,#2fc96b 100%);border-radius:999px;transition:width .2s ease}
-.metricCard{border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:18px;padding:10px;min-height:88px}
-.metricLabel{display:flex;align-items:center;gap:5px;color:var(--muted);font-size:.68rem;margin-bottom:5px}
-.metricValue{font-size:1rem;font-weight:900;line-height:1.15;word-break:break-word}
-.metricSub{font-size:.68rem;color:var(--muted);margin-top:5px;line-height:1.25}
-.table{display:grid;gap:0;border:1px solid var(--line);border-radius:14px;overflow:hidden;background:rgba(255,255,255,.015)}
-.trow{display:grid;grid-template-columns:1fr auto;gap:10px;padding:7px 10px;border-top:1px solid rgba(255,255,255,.055);align-items:center;min-width:0}
-.trow:first-child{border-top:none}
-.tlabel{color:#dce7f6;font-size:.76rem;min-width:0;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.tval{font-weight:800;font-size:.76rem;white-space:nowrap}
-.scrollArea{max-height:175px;overflow:auto;padding-right:4px;scrollbar-width:thin;scrollbar-color:rgba(255,255,255,.18) transparent}
-.scrollArea::-webkit-scrollbar{width:8px}.scrollArea::-webkit-scrollbar-thumb{background:rgba(255,255,255,.16);border-radius:999px}
-.tallScroll{max-height:360px}
-.rowGrid{display:grid;grid-template-columns:72px minmax(0,1fr) 70px 90px 92px;gap:7px;align-items:center;padding:7px 8px;border:1px solid var(--line);background:rgba(255,255,255,.02);border-radius:12px;margin-bottom:7px}
-.rowGrid .name{font-size:.76rem;font-weight:800;overflow:hidden;text-overflow:ellipsis;white-space:nowrap;color:#fff}
-.rowGrid .subname{font-size:.68rem;color:var(--muted);overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-.miniPill{font-size:.65rem;padding:4px 7px;min-width:52px;text-align:center;border:1px solid var(--line2);border-radius:999px;background:#101827;white-space:nowrap}
-.chartBox{height:190px;border:1px solid var(--line);border-radius:14px;background:linear-gradient(180deg,rgba(0,0,0,.10),rgba(255,255,255,.01));overflow:hidden}
-svg{width:100%;height:100%;display:block}.chartMeta{margin-top:7px;display:flex;gap:7px;flex-wrap:wrap}
-.note{border:1px solid var(--line);border-radius:12px;padding:9px;font-size:.72rem;color:var(--muted);background:rgba(255,255,255,.015)}
-.actionBox{border-radius:18px;padding:12px;border:1px solid rgba(255,255,255,.08);background:rgba(255,255,255,.02);margin-bottom:8px}
-.orderLine{display:grid;grid-template-columns:18px 1fr auto;gap:8px;align-items:start;padding:8px 0;border-bottom:1px solid rgba(255,255,255,.06)}
-.orderLine:last-child{border-bottom:none}.orderLine input{accent-color:var(--green);margin-top:3px}.done{opacity:.55;text-decoration:line-through}
-.kicker{font-size:.66rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.rail{position:fixed;right:12px;top:120px;display:grid;gap:8px;z-index:30}.railBtn{border:1px solid var(--line2);background:#0d1628;color:var(--text);border-radius:12px;padding:10px 8px;font-size:.74rem;cursor:pointer;writing-mode:vertical-rl;transform:rotate(180deg);min-height:96px}.railBtn.active{background:#14233f}.drawer{position:fixed;top:16px;right:74px;width:430px;max-width:calc(100vw - 24px);max-height:calc(100vh - 32px);overflow:auto;background:linear-gradient(180deg,rgba(16,29,54,.98),rgba(10,19,37,.98));border:1px solid var(--line);border-radius:18px;box-shadow:var(--shadow);display:none;z-index:29}.drawer.open{display:block}.drawerHead{display:flex;justify-content:space-between;align-items:center;padding:12px;border-bottom:1px solid var(--line)}.drawerBody{padding:12px}.field{display:grid;gap:4px;margin-bottom:10px}.field label{font-size:.68rem;color:var(--muted);text-transform:uppercase;letter-spacing:.08em}.field input,.field select{background:#0c1527;color:var(--text);border:1px solid var(--line);border-radius:10px;padding:9px 10px}.btnRow{display:flex;gap:8px;flex-wrap:wrap}.warnBox{padding:10px 11px;border-radius:14px;border:1px solid rgba(255,102,102,.28);background:rgba(255,102,102,.08);color:#ffd0d0;font-size:13px}.goodBox{padding:10px 11px;border-radius:14px;border:1px solid rgba(39,210,125,.28);background:rgba(39,210,125,.08);color:#d8ffe8;font-size:13px}.footer{margin-top:8px;color:var(--muted);font-size:.72rem;text-align:right}
-@media (max-width:1280px){.rail{position:static;grid-template-columns:repeat(4,1fr)}.railBtn{writing-mode:horizontal-tb;transform:none;min-height:auto}.drawer{position:static;width:auto;max-height:none;margin-top:8px}}
-</style>
-</head>
-<body>
-<div class="wrap">
-  <div class="topbar">
-    <div class="brand">
-      <h1>Lean Terminal v15</h1>
-      <div class="sub">full shell parity candidate • buy / hold / sell labels • sgov override • monte layers • visuals tab intact</div>
-    </div>
-    <div class="toolbar">
-      <div class="chip">Auto refresh • <span id="clockNow">--:--:--</span></div>
-      <div class="chip" id="updatedChip">LAST UPDATED: --:--:--</div>
-      <button class="btn aggressive active" id="aggressiveToggle">MODE: AGG</button>
-      <button class="btn" id="refreshBtn">Reload</button>
-      <button class="btn" id="settingsBtn">Settings</button>
-    </div>
-  </div>
+import React, { useEffect, useMemo, useState } from "react";
 
-  <div class="grid topGrid">
-    <div class="card">
-      <div class="cardTitle">
-        <div class="titleLeft">
-          <h2>Campaign Snapshot</h2>
-          <span class="tooltipWrap"><span class="info" data-help="snapshot">i</span><span class="tooltipBox">Quick read. Are we parked, watching, or pressing? Candidate build only until you confirm.</span></span>
-        </div>
-        <div class="heroDate" id="heroDate">—</div>
-      </div>
-      <div class="heroValue" id="heroStatus">Lean engine online</div>
-      <div class="heroMeta" id="heroMeta"></div>
-      <div class="gradientBar"><div class="gradientFill" id="convictionFill"></div></div>
-    </div>
-    <div class="card">
-      <div class="cardTitle"><div class="titleLeft"><h3>Core Pills</h3></div></div>
-      <div class="pillMetrics">
-        <div class="metricCard" id="pillReady"><div class="metricLabel">READY <span class="tooltipWrap"><span class="info" data-help="ready">i</span><span class="tooltipBox">How good the whole track looks. Higher = more friendly.</span></span></div><div class="metricValue" id="readyVal">--</div><div class="metricSub" id="readySub">how good the track looks</div></div>
-        <div class="metricCard" id="pillRisk"><div class="metricLabel">RISK <span class="tooltipWrap"><span class="info" data-help="risk">i</span><span class="tooltipBox">Danger meter. Lower is safer.</span></span></div><div class="metricValue" id="riskVal">--</div><div class="metricSub" id="riskSub">danger meter</div></div>
-        <div class="metricCard" id="pillEcs"><div class="metricLabel">ECS <span class="tooltipWrap"><span class="info" data-help="ecs">i</span><span class="tooltipBox">Green-light score. Combines edge, Monte, win rate, and risk inverse.</span></span></div><div class="metricValue" id="ecsVal">--</div><div class="metricSub" id="ecsSub">green-light score</div></div>
-        <div class="metricCard" id="pillPort"><div class="metricLabel">PORT <span class="tooltipWrap"><span class="info" data-help="port">i</span><span class="tooltipBox">Your pilot bag right now with explicit P/L.</span></span></div><div class="metricValue" id="portVal">--</div><div class="metricSub" id="portSub">bag + explicit p/l</div></div>
-        <div class="metricCard" id="pillPositions"><div class="metricLabel">WHAT TO DO <span class="tooltipWrap"><span class="info" data-help="positions">i</span><span class="tooltipBox">Review queue only. Not a dump-everything button.</span></span></div><div class="metricValue" id="positionsVal">--</div><div class="metricSub" id="positionsSub">what to do with positions</div></div>
-        <div class="metricCard" id="pillMoves"><div class="metricLabel">TODAY'S MOVES <span class="tooltipWrap"><span class="info" data-help="moves">i</span><span class="tooltipBox">BUY / HOLD / SELL grouped for today.</span></span></div><div class="metricValue" id="movesVal">--</div><div class="metricSub" id="movesSub">buy / hold / sell</div></div>
-        <div class="metricCard" id="pillVs"><div class="metricLabel">VS MARKET <span class="tooltipWrap"><span class="info" data-help="vsmkt">i</span><span class="tooltipBox">You vs SPY and QQQ.</span></span></div><div class="metricValue" id="vsVal">--</div><div class="metricSub" id="vsSub">you vs spy / qqq</div></div>
-        <div class="metricCard" id="pillFeedback"><div class="metricLabel">FEEDBACK <span class="tooltipWrap"><span class="info" data-help="feedback">i</span><span class="tooltipBox">Trade log scorecard or live model quality.</span></span></div><div class="metricValue" id="feedbackVal">--</div><div class="metricSub" id="feedbackSub">what's actually hitting</div></div>
-      </div>
-    </div>
-  </div>
+/**
+ * Lean Terminal v09
+ * Updated single-file React component
+ *
+ * What this build adds:
+ * - Right-side side tabs: News, Errors, Full Holdings, Visuals
+ * - READY / RISK / PLAN / MIN SCORE / THEME CAP pills
+ * - Horse-race ranking + Action pill with manual checkboxes
+ * - Top 3 Winners / Bottom 3 Movers strip
+ * - Turbo Quant layer
+ * - Monte Carlo summary layer
+ * - State / Next Move / Wire Chart ingestion preview
+ * - Street-speak tooltips via inline "i" buttons
+ * - CSV wiring slots for holdings / ranking / radar / radar results / chart modules
+ *
+ * Notes:
+ * - Replace CSV URLs below with your latest published Google Sheet CSV links.
+ * - This file is intentionally self-contained for easy GitHub upload.
+ * - Safe fallback handling included when a CSV is missing or fails.
+ */
 
-  <div class="strip" style="justify-content:flex-end">
-    <div class="pill">REGIME</div><div class="pill">VOL</div><div class="pill">DD</div><div class="pill">BRAKE</div>
-    <div class="pill">MC</div><div class="pill">CORR</div><div class="pill">CVAR</div><div class="pill">BAYES</div>
-  </div>
-
-  <div class="rail" id="sideRail">
-    <button class="railBtn" data-drawer="system">System</button>
-    <button class="railBtn" data-drawer="settings">Settings</button>
-    <button class="railBtn" data-drawer="fullholdings">Holdings</button>
-    <button class="railBtn" data-drawer="visuals">Visuals</button>
-    <button class="railBtn" data-drawer="feedback">Feedback</button>
-  </div>
-
-  <div class="drawer" id="sideDrawer">
-    <div class="drawerHead"><strong id="drawerTitle">Side Tab</strong><button class="btn" id="closeDrawerBtn">Close</button></div>
-    <div class="drawerBody" id="drawerBody"></div>
-  </div>
-
-  <div class="grid mainGrid">
-    <div class="leftRail">
-      <div class="card">
-        <div class="cardTitle"><div class="titleLeft"><h3>Posture</h3><span class="tooltipWrap"><span class="info" data-help="posture">i</span><span class="tooltipBox">Quick posture summary for mode, trigger, and weather.</span></span></div></div>
-        <div class="table" id="postureTable"></div>
-      </div>
-
-      <div class="card" style="margin-top:8px;">
-        <div class="cardTitle"><div class="titleLeft"><h3>Math Layer</h3><span class="tooltipWrap"><span class="info" data-help="math">i</span><span class="tooltipBox">Relationship-first math summary and score.</span></span></div></div>
-        <div class="table" id="mathTable"></div>
-      </div>
-
-      <div class="card" style="margin-top:8px;">
-        <div class="cardTitle"><div class="titleLeft"><h3>Deploy Planner + Monte</h3><span class="tooltipWrap"><span class="info" data-help="deploy">i</span><span class="tooltipBox">Base split 350 / 275 / 225 / 150, then system + ECS adjustment, plus portfolio and strategy Monte.</span></span></div></div>
-        <div id="deployBox"></div>
-      </div>
-    </div>
-
-    <div class="centerRail">
-      <div class="actionHoldRow">
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Top 4 Horses</h3><span class="tooltipWrap"><span class="info" data-help="horses">i</span><span class="tooltipBox">Only these are tradable horses. SGOV and hedges do not compete here.</span></span></div></div>
-          <div id="top4Box"></div>
-        </div>
-
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Today's Moves</h3><span class="tooltipWrap"><span class="info" data-help="orders">i</span><span class="tooltipBox">BUY / HOLD / SELL for today. This is the action box.</span></span></div><div class="heroDate" id="movesCount">0 lines</div></div>
-          <div class="scrollArea tallScroll" id="ordersBox"></div>
-        </div>
-      </div>
-
-      <div class="midPair">
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>Performance</h3><span class="tooltipWrap"><span class="info" data-help="perf">i</span><span class="tooltipBox">Simple path chart for the pilot and benchmark feel.</span></span></div></div>
-          <div class="chartBox"><svg id="perfSvg" viewBox="0 0 1000 220" preserveAspectRatio="none"></svg></div>
-          <div class="chartMeta" id="perfMeta"></div>
-        </div>
-        <div class="card">
-          <div class="cardTitle"><div class="titleLeft"><h3>What To Do With Positions</h3><span class="tooltipWrap"><span class="info" data-help="positioncalls">i</span><span class="tooltipBox">Held names only. HOLD / SELL (trim) / SELL (exit). SGOV shows HOLD (cash).</span></span></div></div>
-          <div class="scrollArea tallScroll" id="positionsBox"></div>
-        </div>
-      </div>
-
-      <div class="triple">
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Holdings</h3><span class="tooltipWrap"><span class="info" data-help="holdings">i</span><span class="tooltipBox">Cash and hedge buckets are separated.</span></span></div></div><div class="scrollArea tallScroll" id="holdingsList"></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>Leaderboard</h3><span class="tooltipWrap"><span class="info" data-help="leader">i</span><span class="tooltipBox">Ranked board after SGOV override and asset classification.</span></span></div></div><div class="table"><div class="scrollArea" id="leaderBoard"></div></div></div>
-        <div class="card"><div class="cardTitle"><div class="titleLeft"><h3>System Notes</h3><span class="tooltipWrap"><span class="info" data-help="notes">i</span><span class="tooltipBox">Candidate patch notes and reminders.</span></span></div></div><div id="notesBox"></div></div>
-      </div>
-    </div>
-
-    <div class="rightRail">
-      <div class="card">
-        <div class="cardTitle"><div class="titleLeft"><h3>Controls</h3><span class="tooltipWrap"><span class="info" data-help="controls">i</span><span class="tooltipBox">Pilot cash, benchmarks, mode, refresh speed.</span></span></div></div>
-        <div class="field"><label>Pilot Cash</label><input id="pilotCash" type="number" min="0" step="1" value="1000"></div>
-        <div class="field"><label>SPY today %</label><input id="spyReturn" type="number" step="0.1" value="0"></div>
-        <div class="field"><label>QQQ today %</label><input id="qqqReturn" type="number" step="0.1" value="0"></div>
-        <div class="field"><label>Auto Refresh</label><select id="refreshSelect"><option value="60">60 sec</option><option value="120">120 sec</option><option value="300">300 sec</option></select></div>
-        <div class="btnRow"><button class="btn" id="saveBtn">Save</button><button class="btn" id="resetBtn">Reset</button></div>
-        <div class="note" style="margin-top:8px">Bucket 1 = $1000 pilot. Bucket 2 = freed cash from trims / sells. SGOV = cash bucket with no limit.</div>
-      </div>
-
-      <div class="card" style="margin-top:8px;">
-        <div class="cardTitle"><div class="titleLeft"><h3>Quick Warnings</h3><span class="tooltipWrap"><span class="info" data-help="warnings">i</span><span class="tooltipBox">Review queue, not panic queue.</span></span></div></div>
-        <div id="warningsBox"></div>
-      </div>
-    </div>
-  </div>
-
-  <div class="footer" id="footerStamp">Candidate loaded.</div>
-</div>
-
-<script>
-// NOTE: the script section continues in the canvas version used for this build.
-// This downloadable file is intended as your copy-paste working artifact starter.
-// If you want, I can next split the remaining JS into a second downloadable part.
-
-<script>
-
-// ===== BASIC HELP =====
-const HELP = {
-  ready: "How strong the overall setup environment is",
-  risk: "Danger level — lower is better",
-  ecs: "Final score combining edge + monte + risk",
-  port: "Your $1000 pilot performance",
-  positions: "What to do with your current holdings",
-  moves: "Today's BUY / HOLD / SELL actions",
-  vsmkt: "Performance vs SPY and QQQ",
-  feedback: "How the system is performing"
+const CSV_URLS = {
+  HOLDINGS:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_HOLDINGS/pub?output=csv",
+  RANKING:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_RANKING/pub?output=csv",
+  RADAR:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv",
+  RADAR_LOG:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=164866656&single=true&output=csv",
+  RADAR_RESULTS:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=922598618&single=true&output=csv",
+  CHART_INPUT:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_INPUT/pub?output=csv",
+  CHART_ENGINE:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_ENGINE/pub?output=csv",
+  CHART_HISTORY:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_HISTORY/pub?output=csv",
+  STATE_STATS:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_STATE_STATS/pub?output=csv",
+  CHART_TO_RANK:
+    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_TO_RANK/pub?output=csv",
 };
 
-document.addEventListener("click", e=>{
-  if(e.target.classList.contains("info")){
-    const key = e.target.dataset.help;
-    if(HELP[key]){
-      document.getElementById("helpBar").innerText = HELP[key];
+const DEFAULT_MIN_SCORE = 75;
+const LEAN_THEME_CAP = 30;
+const AGG_THEME_CAP = 50;
+
+function parseCSV(text) {
+  if (!text || typeof text !== "string") return [];
+  const rows = [];
+  let row = [];
+  let value = "";
+  let inQuotes = false;
+
+  for (let i = 0; i < text.length; i++) {
+    const char = text[i];
+    const next = text[i + 1];
+
+    if (char === '"') {
+      if (inQuotes && next === '"') {
+        value += '"';
+        i++;
+      } else {
+        inQuotes = !inQuotes;
+      }
+    } else if (char === "," && !inQuotes) {
+      row.push(value);
+      value = "";
+    } else if ((char === "\n" || char === "\r") && !inQuotes) {
+      if (char === "\r" && next === "\n") i++;
+      row.push(value);
+      if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+      row = [];
+      value = "";
+    } else {
+      value += char;
     }
   }
-});
 
-// ===== UTILS =====
-const $ = id => document.getElementById(id);
-const num = v => Number(v || 0);
+  if (value.length || row.length) {
+    row.push(value);
+    if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
+  }
 
-// ===== MOCK DATA (TEMP UNTIL FULL WIRING) =====
-const MOCK = [
-  {ticker:"SMH", edge:82, risk:40, monte:65, price:250},
-  {ticker:"XLE", edge:70, risk:50, monte:58, price:90},
-  {ticker:"QQQ", edge:75, risk:45, monte:60, price:400},
-  {ticker:"NVDA", edge:85, risk:55, monte:62, price:900}
-];
-
-// ===== CORE ENGINE =====
-function buildSystem(){
-
-  let rows = MOCK.map(r => ({
-    ...r,
-    action: getAction(r),
-    ecs: Math.round((r.edge * 0.5) + (r.monte * 0.3) + ((100-r.risk)*0.2))
-  }));
-
-  rows.sort((a,b)=>b.ecs-a.ecs);
-
-  let top4 = rows.slice(0,4);
-
-  render(top4, rows);
+  if (!rows.length) return [];
+  const headers = rows[0].map((h) => String(h || "").trim());
+  return rows.slice(1).map((r) => {
+    const obj = {};
+    headers.forEach((header, idx) => {
+      obj[header || `col_${idx}`] = r[idx] ?? "";
+    });
+    return obj;
+  });
 }
 
-// ===== ACTION LOGIC =====
-function getAction(r){
-  if(r.monte > 65 && r.edge > 80) return "BUY (starter)";
-  if(r.monte > 60) return "HOLD";
-  if(r.edge < 65) return "SELL (trim)";
-  return "SELL (exit)";
+function num(v, fallback = 0) {
+  if (typeof v === "number") return Number.isFinite(v) ? v : fallback;
+  const cleaned = String(v ?? "")
+    .replace(/[%,$\s]/g, "")
+    .replace(/,/g, "");
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : fallback;
 }
 
-// ===== RENDER =====
-function render(top4, rows){
-
-  // ===== PILLS =====
-  $("readyVal").innerText = "65";
-  $("riskVal").innerText = "45";
-  $("ecsVal").innerText = "72";
-
-  let port = 1000;
-  $("portVal").innerText = "$" + port;
-  $("portSub").innerText = "P/L: $0 (0%)";
-
-  $("positionsVal").innerText = "2 trim / 1 sell";
-  $("movesVal").innerText = "2 buy / 1 sell";
-
-  $("vsVal").innerText = "+0.5%";
-  $("feedbackVal").innerText = "61%";
-
-  // ===== TOP 4 =====
-  $("top4Box").innerHTML = top4.map((r,i)=>`
-    <div class="row">
-      <div>#${i+1} ${r.ticker}</div>
-      <div class="green">BUY</div>
-    </div>
-    <div class="small">MONTE: BUY $${[350,275,225,150][i]} — ${r.monte}%</div>
-  `).join("");
-
-  // ===== MOVES =====
-  $("ordersBox").innerHTML = rows.map(r=>`
-    <div class="row">
-      <div>${r.ticker}</div>
-      <div>${r.action}</div>
-    </div>
-  `).join("");
-
-  // ===== POSITIONS =====
-  $("positionsBox").innerHTML = rows.map(r=>`
-    <div class="row">
-      <div>${r.ticker}</div>
-      <div>${r.action}</div>
-    </div>
-  `).join("");
-
-  // ===== LEADERBOARD =====
-  $("leaderBoard").innerHTML = rows.map((r,i)=>`
-    <div class="row">
-      <div>#${i+1} ${r.ticker}</div>
-      <div>${r.ecs}</div>
-    </div>
-  `).join("");
-
+function clamp(value, min, max) {
+  return Math.min(max, Math.max(min, value));
 }
 
-// ===== INIT =====
-buildSystem();
+function avg(arr) {
+  if (!arr.length) return 0;
+  return arr.reduce((sum, n) => sum + n, 0) / arr.length;
+}
 
-</script>
+function tooltipText(key) {
+  const map = {
+    ready:
+      "How close the whole setup is to being game-ready. Higher = cleaner setups.",
+    risk:
+      "Danger meter. Lower is safer. Red means slow down and respect the smoke.",
+    plan:
+      "System suggestion for the day. LEAN = controlled. AGG = more gas.",
+    turbo:
+      "Second-layer brain. It checks forward odds, stability, and promote/demote pressure.",
+    monte:
+      "Rough scenario tester. Think: how this basket might survive different market moods.",
+    state:
+      "Tells you what kind of behavior state a ticker is in right now.",
+    nextmove:
+      "Shows the usual move range before the next flip in direction.",
+    action:
+      "Fast lane. This is where to look first for buy/sell suggestions and sizing.",
+    chartwire:
+      "Chart reads turned into structured scores so the engine can actually use them.",
+    checklist:
+      "Build order. Keeps us from adding shiny stuff before wiring and validation are tight.",
+  };
+  return map[key] || "More info.";
+}
 
-</script>
-</body>
-</html>
+function InfoButton({ label }) {
+  const [open, setOpen] = useState(false);
+  return (
+    <div className="relative inline-block">
+      <button
+        className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[11px] text-slate-300 hover:bg-white/10"
+        onClick={() => setOpen((s) => !s)}
+        title="more info"
+      >
+        i
+      </button>
+      {open && (
+        <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-white/10 bg-slate-900 p-3 text-xs text-slate-200 shadow-2xl">
+          {tooltipText(label)}
+        </div>
+      )}
+    </div>
+  );
+}
 
+function useCsvData(label, url) {
+  const [data, setData] = useState([]);
+  const [loading, setLoading] = useState(Boolean(url));
+  const [error, setError] = useState("");
 
+  useEffect(() => {
+    let active = true;
+
+    async function load() {
+      if (!url || String(url).includes("REPLACE_")) {
+        setLoading(false);
+        setData([]);
+        setError(`${label} CSV not wired yet`);
+        return;
+      }
+
+      try {
+        setLoading(true);
+        setError("");
+        const res = await fetch(url, { cache: "no-store" });
+        if (!res.ok) throw new Error(`${label} failed: ${res.status}`);
+        const text = await res.text();
+        const parsed = parseCSV(text);
+        if (active) setData(parsed);
+      } catch (err) {
+        if (active) {
+          setError(err.message || `Failed loading ${label}`);
+          setData([]);
+        }
+      } finally {
+        if (active) setLoading(false);
+      }
+    }
+
+    load();
+    const timer = setInterval(load, 120000);
+    return () => {
+      active = false;
+      clearInterval(timer);
+    };
+  }, [label, url]);
+
+  return { data, loading, error };
+}
+
+function getTicker(row) {
+  return (
+    row.Ticker ||
+    row.ticker ||
+    row.Symbol ||
+    row.symbol ||
+    row.Name ||
+    row.name ||
+    "N/A"
+  );
+}
+
+function normalizeHolding(row, idx = 0) {
+  const ticker = getTicker(row);
+  const score =
+    num(row.FINAL_RANK_SCORE) ||
+    num(row.Score) ||
+    num(row.score) ||
+    num(row.RANK_SCORE) ||
+    0;
+
+  const dayChange =
+    num(row.DAY_CHANGE_PCT) ||
+    num(row.DailyChangePct) ||
+    num(row["% Change"]) ||
+    num(row.ChangePct) ||
+    0;
+
+  const price = num(row.Price) || num(row.price) || num(row.Last) || 0;
+  const shares = num(row.Shares) || num(row.shares) || 0;
+  const marketValue =
+    num(row.MarketValue) || num(row.market_value) || price * shares;
+
+  const setup = num(row.SETUP_SCORE) || num(row.Setup) || score;
+  const momentum = num(row.MOMENTUM_SCORE) || num(row.Momentum) || score;
+  const risk = num(row.RISK_SCORE) || num(row.Risk) || 50;
+  const capital = num(row.CAPITAL_SCORE) || num(row.Capital) || 50;
+  const theme = row.Theme || row.theme || "General";
+
+  return {
+    id: `${ticker}-${idx}`,
+    ticker,
+    score,
+    dayChange,
+    price,
+    shares,
+    marketValue,
+    setup,
+    momentum,
+    risk,
+    capital,
+    theme,
+    source: row,
+  };
+}
+
+function deriveTurboScore(item) {
+  const stability = clamp(100 - item.risk, 0, 100);
+  const turbo = avg([item.score, item.setup, item.momentum, stability]);
+  const promote = turbo >= 85 && item.dayChange > -3;
+  const demote = turbo < 65 || item.risk >= 70;
+  return {
+    turbo: Math.round(turbo),
+    stability: Math.round(stability),
+    promote,
+    demote,
+    state:
+      turbo >= 85 ? "HOT" : turbo >= 75 ? "GREEN" : turbo >= 65 ? "MID" : "SHADY",
+  };
+}
+
+function deriveMonteCarlo(item) {
+  const baseWin = clamp(item.score * 0.75 + (100 - item.risk) * 0.25, 0, 100);
+  const swing = Math.abs(item.dayChange);
+  const confidence = clamp(baseWin - swing * 2, 0, 100);
+  return {
+    pass: Math.round(confidence),
+    expectedBand:
+      confidence >= 80 ? "+4% to +9%" : confidence >= 65 ? "+2% to +6%" : "-3% to +4%",
+    regimeFit:
+      item.risk < 40 ? "Good in chop" : item.risk < 65 ? "Needs trend" : "Fragile",
+  };
+}
+
+function deriveStateProfile(item) {
+  const score = item.score;
+  const change = item.dayChange;
+  if (score >= 85 && change > 0) {
+    return { state: "Trend Up", nextMove: "+3% to +7%", recovery: "Fast" };
+  }
+  if (score >= 75 && change <= 0) {
+    return { state: "Pullback Watch", nextMove: "-2% to +4%", recovery: "1-3 days" };
+  }
+  if (score < 75 && item.risk >= 65) {
+    return { state: "Fragile", nextMove: "-6% to +2%", recovery: "Slow" };
+  }
+  return { state: "Neutral Drift", nextMove: "-3% to +3%", recovery: "Mixed" };
+}
+
+function pillToneFromScore(score, invert = false) {
+  const v = invert ? 100 - score : score;
+  if (v >= 80) return "border-green-500/40 bg-green-500/10 text-green-300";
+  if (v >= 60) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-300";
+  return "border-red-500/40 bg-red-500/10 text-red-300";
+}
+
+function formatMoney(v) {
+  return v.toLocaleString(undefined, {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  });
+}
+
+function SmallPill({ title, value, helper, tone = "" }) {
+  return (
+    <div className={`rounded-2xl border p-4 shadow-lg ${tone || "border-white/10 bg-slate-900/70"}`}>
+      <div className="mb-1 flex items-center text-xs uppercase tracking-[0.2em] text-slate-400">
+        {title}
+      </div>
+      <div className="text-2xl font-bold text-white">{value}</div>
+      {helper ? <div className="mt-1 text-xs text-slate-400">{helper}</div> : null}
+    </div>
+  );
+}
+
+function SectionCard({ title, infoKey, right, children, className = "" }) {
+  return (
+    <div className={`rounded-3xl border border-white/10 bg-slate-950/70 p-4 shadow-2xl ${className}`}>
+      <div className="mb-4 flex items-center justify-between gap-3">
+        <div className="flex items-center text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
+          {title}
+          {infoKey ? <InfoButton label={infoKey} /> : null}
+        </div>
+        {right}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function DataStatus({ label, loading, error, rows }) {
+  return (
+    <div className="flex items-center gap-2 text-xs">
+      <span className="font-medium text-slate-300">{label}</span>
+      {loading ? (
+        <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-300">
+          Loading
+        </span>
+      ) : error ? (
+        <span className="rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-red-300">
+          {error}
+        </span>
+      ) : (
+        <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-green-300">
+          {rows} rows
+        </span>
+      )}
+    </div>
+  );
+}
+
+function SideTabButton({ active, onClick, children, count }) {
+  return (
+    <button
+      onClick={onClick}
+      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-sm transition ${
+        active
+          ? "border-green-500/30 bg-green-500/10 text-green-300"
+          : "border-white/10 bg-slate-900/60 text-slate-300 hover:bg-white/5"
+      }`}
+    >
+      <span>{children}</span>
+      {typeof count === "number" ? (
+        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">{count}</span>
+      ) : null}
+    </button>
+  );
+}
+
+export default function LeanTerminalV09() {
+  const [mode, setMode] = useState("LEAN");
+  const [sideTab, setSideTab] = useState("news");
+  const [checkedActions, setCheckedActions] = useState({});
+  const [search, setSearch] = useState("");
+
+  const holdingsFeed = useCsvData("HOLDINGS", CSV_URLS.HOLDINGS);
+  const rankingFeed = useCsvData("RANKING", CSV_URLS.RANKING);
+  const radarFeed = useCsvData("RADAR", CSV_URLS.RADAR);
+  const radarResultsFeed = useCsvData("RADAR_RESULTS", CSV_URLS.RADAR_RESULTS);
+  const chartInputFeed = useCsvData("CHART_INPUT", CSV_URLS.CHART_INPUT);
+  const chartEngineFeed = useCsvData("CHART_ENGINE", CSV_URLS.CHART_ENGINE);
+  const stateStatsFeed = useCsvData("STATE_STATS", CSV_URLS.STATE_STATS);
+  const chartToRankFeed = useCsvData("CHART_TO_RANK", CSV_URLS.CHART_TO_RANK);
+
+  const normalizedHoldings = useMemo(() => {
+    const base = (holdingsFeed.data?.length ? holdingsFeed.data : rankingFeed.data || []).map(
+      normalizeHolding
+    );
+    return base.filter((x) => x.ticker && x.ticker !== "N/A");
+  }, [holdingsFeed.data, rankingFeed.data]);
+
+  const radarCandidates = useMemo(() => {
+    return (radarResultsFeed.data?.length ? radarResultsFeed.data : radarFeed.data || [])
+      .map(normalizeHolding)
+      .filter((x) => x.ticker && x.score >= DEFAULT_MIN_SCORE);
+  }, [radarFeed.data, radarResultsFeed.data]);
+
+  const mergedUniverse = useMemo(() => {
+    const map = new Map();
+    [...normalizedHoldings, ...radarCandidates].forEach((item) => {
+      if (!map.has(item.ticker) || map.get(item.ticker).score < item.score) {
+        map.set(item.ticker, item);
+      }
+    });
+    return Array.from(map.values()).map((item) => {
+      const turbo = deriveTurboScore(item);
+      const monte = deriveMonteCarlo(item);
+      const state = deriveStateProfile(item);
+      return { ...item, ...turbo, monte, stateProfile: state };
+    });
+  }, [normalizedHoldings, radarCandidates]);
+
+  const filteredUniverse = useMemo(() => {
+    const q = search.trim().toUpperCase();
+    if (!q) return mergedUniverse;
+    return mergedUniverse.filter(
+      (item) =>
+        item.ticker.toUpperCase().includes(q) ||
+        String(item.theme).toUpperCase().includes(q)
+    );
+  }, [mergedUniverse, search]);
+
+  const ranked = useMemo(() => {
+    return [...filteredUniverse]
+      .filter((item) => item.score >= DEFAULT_MIN_SCORE)
+      .sort((a, b) => b.turbo - a.turbo || b.score - a.score || b.dayChange - a.dayChange)
+      .map((item, idx) => ({ ...item, rank: idx + 1 }));
+  }, [filteredUniverse]);
+
+  const topBuys = ranked.slice(0, 4);
+  const sellList = [...ranked]
+    .filter((x) => x.rank > 4 || x.risk >= 70 || x.demote)
+    .sort((a, b) => b.risk - a.risk || a.score - b.score)
+    .slice(0, 4);
+
+  const readyScore = useMemo(() => {
+    if (!ranked.length) return 0;
+    const top = ranked.slice(0, 6);
+    return Math.round(
+      avg(top.map((x) => avg([x.score, x.setup, x.momentum, x.capital])))
+    );
+  }, [ranked]);
+
+  const riskScore = useMemo(() => {
+    if (!ranked.length) return 100;
+    return Math.round(avg(ranked.slice(0, 6).map((x) => x.risk)));
+  }, [ranked]);
+
+  const plan = useMemo(() => {
+    if (readyScore >= 82 && riskScore <= 40) return "AGG";
+    if (readyScore >= 72 && riskScore <= 58) return "LEAN";
+    return "LEAN";
+  }, [readyScore, riskScore]);
+
+  const totalMarketValue = useMemo(() => {
+    return normalizedHoldings.reduce((sum, item) => sum + item.marketValue, 0);
+  }, [normalizedHoldings]);
+
+  const top3 = ranked.slice(0, 3);
+  const bottom3 = [...ranked].sort((a, b) => a.dayChange - b.dayChange).slice(0, 3);
+
+  const themeCap = mode === "AGG" ? AGG_THEME_CAP : LEAN_THEME_CAP;
+
+  const actionRows = useMemo(() => {
+    const buys = topBuys.map((item) => ({
+      key: `buy-${item.ticker}`,
+      side: "BUY",
+      ticker: item.ticker,
+      rank: item.rank,
+      note:
+        item.promote
+          ? "Top horse. Promote flag on."
+          : item.state === "HOT"
+          ? "Hot setup."
+          : "Qualified setup.",
+      size:
+        mode === "AGG"
+          ? Math.max(8, Math.round(100 / Math.max(1, topBuys.length) - 5))
+          : Math.max(5, Math.round(100 / Math.max(1, topBuys.length) - 10)),
+    }));
+
+    const sells = sellList.map((item) => ({
+      key: `sell-${item.ticker}`,
+      side: "SELL",
+      ticker: item.ticker,
+      rank: item.rank,
+      note:
+        item.demote
+          ? "Demote flag / weak shape."
+          : item.risk >= 70
+          ? "Risk too hot."
+          : "Fell behind in the race.",
+      size: Math.min(100, Math.max(10, Math.round(item.risk))),
+    }));
+
+    return [...buys, ...sells];
+  }, [topBuys, sellList, mode]);
+
+  const chartWireSummary = useMemo(() => {
+    return {
+      input: chartInputFeed.data.length,
+      engine: chartEngineFeed.data.length,
+      states: stateStatsFeed.data.length,
+      out: chartToRankFeed.data.length,
+    };
+  }, [
+    chartInputFeed.data.length,
+    chartEngineFeed.data.length,
+    stateStatsFeed.data.length,
+    chartToRankFeed.data.length,
+  ]);
+
+  const errorItems = [
+    holdingsFeed.error,
+    rankingFeed.error,
+    radarFeed.error,
+    radarResultsFeed.error,
+    chartInputFeed.error,
+    chartEngineFeed.error,
+    stateStatsFeed.error,
+    chartToRankFeed.error,
+  ].filter(Boolean);
+
+  const newsItems = [
+    "Check macro heat before going AGG.",
+    "Watch if top-ranked names are still above MIN SCORE 75.",
+    "If RISK goes red, tighten loss rules and slow size.",
+    "Radar names not in holdings can still qualify as NEW BUY ideas.",
+    "Wiring + validation comes before stacking more features.",
+  ];
+
+  const checklist = [
+    "1. Confirm all CSV links are live and published.",
+    "2. Validate holdings, ranking, radar, and radar results row counts.",
+    "3. Wire CHART_INPUT → CHART_ENGINE → STATE_STATS → CHART_TO_RANK.",
+    "4. Confirm READY and RISK pills respond to live data changes.",
+    "5. Test horse-race ranking with at least 4 qualified names.",
+    "6. Verify BUY/SELL manual checkboxes work without auto-checking.",
+    "7. Stress-test missing CSV fallback behavior.",
+    "8. Validate Turbo Quant promote/demote flags.",
+    "9. Validate Monte Carlo and State panels against sample names.",
+    "10. Only after wiring passes: refine visuals and add deeper math.",
+  ];
+
+  const toggleCheck = (key) => {
+    setCheckedActions((prev) => ({ ...prev, [key]: !prev[key] }));
+  };
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-7xl p-4 md:p-6">
+        <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_280px]">
+          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-950 p-5 shadow-2xl">
+            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
+              <div>
+                <div className="text-xs uppercase tracking-[0.25em] text-green-400">
+                  Lean Terminal v09
+                </div>
+                <h1 className="mt-1 text-3xl font-black tracking-tight">
+                  Group A / Lean 2.0 Control Deck
+                </h1>
+                <p className="mt-2 max-w-3xl text-sm text-slate-400">
+                  Street-speak dashboard. Fast actions first, deep pills second.
+                </p>
+              </div>
+
+              <div className="flex flex-wrap items-center gap-2">
+                <button
+                  onClick={() => setMode("LEAN")}
+                  className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${
+                    mode === "LEAN"
+                      ? "border-green-500/40 bg-green-500/10 text-green-300"
+                      : "border-white/10 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  LEAN
+                </button>
+                <button
+                  onClick={() => setMode("AGG")}
+                  className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${
+                    mode === "AGG"
+                      ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
+                      : "border-white/10 bg-slate-900 text-slate-300"
+                  }`}
+                >
+                  AGG
+                </button>
+                <input
+                  value={search}
+                  onChange={(e) => setSearch(e.target.value)}
+                  placeholder="Search ticker or theme"
+                  className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-white outline-none placeholder:text-slate-500"
+                />
+              </div>
+            </div>
+
+            <div className="mt-5 grid gap-3 md:grid-cols-5">
+              <SmallPill
+                title="READY"
+                value={readyScore}
+                helper="Higher = cleaner field"
+                tone={pillToneFromScore(readyScore)}
+              />
+              <SmallPill
+                title="RISK"
+                value={riskScore}
+                helper="Lower is safer"
+                tone={pillToneFromScore(riskScore, true)}
+              />
+              <SmallPill
+                title="PLAN"
+                value={plan}
+                helper="System suggestion"
+                tone={plan === "AGG" ? "border-orange-500/40 bg-orange-500/10 text-orange-300" : "border-green-500/40 bg-green-500/10 text-green-300"}
+              />
+              <SmallPill
+                title="MIN SCORE"
+                value={DEFAULT_MIN_SCORE}
+                helper="Locked qualifier"
+                tone="border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
+              />
+              <SmallPill
+                title="THEME CAP"
+                value={`${themeCap}%`}
+                helper={`${mode} mode max`}
+                tone="border-violet-500/40 bg-violet-500/10 text-violet-300"
+              />
+            </div>
+          </div>
+
+          <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-4 shadow-2xl">
+            <div className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-400">
+              Feed Status
+            </div>
+            <div className="space-y-2">
+              <DataStatus label="Holdings" loading={holdingsFeed.loading} error={holdingsFeed.error} rows={holdingsFeed.data.length} />
+              <DataStatus label="Ranking" loading={rankingFeed.loading} error={rankingFeed.error} rows={rankingFeed.data.length} />
+              <DataStatus label="Radar" loading={radarFeed.loading} error={radarFeed.error} rows={radarFeed.data.length} />
+              <DataStatus label="Radar Results" loading={radarResultsFeed.loading} error={radarResultsFeed.error} rows={radarResultsFeed.data.length} />
+              <DataStatus label="Chart Input" loading={chartInputFeed.loading} error={chartInputFeed.error} rows={chartInputFeed.data.length} />
+              <DataStatus label="Chart Engine" loading={chartEngineFeed.loading} error={chartEngineFeed.error} rows={chartEngineFeed.data.length} />
+              <DataStatus label="State Stats" loading={stateStatsFeed.loading} error={stateStatsFeed.error} rows={stateStatsFeed.data.length} />
+              <DataStatus label="Chart→Rank" loading={chartToRankFeed.loading} error={chartToRankFeed.error} rows={chartToRankFeed.data.length} />
+            </div>
+          </div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1fr_300px]">
+          <div className="space-y-4">
+            <SectionCard
+              title="Action Pill"
+              infoKey="action"
+              right={
+                <div className="text-xs text-slate-400">
+                  Holdings Value: <span className="font-semibold text-white">{formatMoney(totalMarketValue)}</span>
+                </div>
+              }
+            >
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-3">
+                  <div className="mb-2 text-xs uppercase tracking-[0.2em] text-green-300">
+                    BUY lane
+                  </div>
+                  <div className="space-y-2">
+                    {topBuys.length ? (
+                      topBuys.map((item) => {
+                        const key = `buy-${item.ticker}`;
+                        return (
+                          <label
+                            key={key}
+                            className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-3"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={Boolean(checkedActions[key])}
+                              onChange={() => toggleCheck(key)}
+                              className="mt-1"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="font-semibold text-white">
+                                  #{item.rank} {item.ticker}
+                                </div>
+                                <div className="text-sm text-green-300">
+                                  {Math.max(5, Math.round(100 / Math.max(1, topBuys.length) - (mode === "AGG" ? 5 : 10)))}%
+                                </div>
+                              </div>
+                              <div className="mt-1 text-sm text-slate-300">
+                                Score {item.score} • Turbo {item.turbo} • {item.state}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-400">
+                                {item.promote ? "Promote flag on." : "Qualified setup."}
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 text-sm text-slate-400">
+                        No buys yet. Wire live ranking data or lower friction in the qualifying field.
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-3">
+                  <div className="mb-2 text-xs uppercase tracking-[0.2em] text-red-300">
+                    SELL lane
+                  </div>
+                  <div className="space-y-2">
+                    {sellList.length ? (
+                      sellList.map((item) => {
+                        const key = `sell-${item.ticker}`;
+                        return (
+                          <label
+                            key={key}
+                            className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-3"
+                          >
+                            <input
+                              type="checkbox"
+                              checked={Boolean(checkedActions[key])}
+                              onChange={() => toggleCheck(key)}
+                              className="mt-1"
+                            />
+                            <div className="min-w-0 flex-1">
+                              <div className="flex items-center justify-between gap-3">
+                                <div className="font-semibold text-white">
+                                  #{item.rank} {item.ticker}
+                                </div>
+                                <div className="text-sm text-red-300">Risk {item.risk}</div>
+                              </div>
+                              <div className="mt-1 text-sm text-slate-300">
+                                Score {item.score} • Turbo {item.turbo} • {item.state}
+                              </div>
+                              <div className="mt-1 text-xs text-slate-400">
+                                {item.demote ? "Demote flag / weak shape." : "Fell behind in the race."}
+                              </div>
+                            </div>
+                          </label>
+                        );
+                      })
+                    ) : (
+                      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 text-sm text-slate-400">
+                        No clear sells. That can be good, or it can mean your live feed is asleep.
+                      </div>
+                    )}
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <SectionCard title="Top 3 Winners" className="lg:col-span-1">
+                <div className="space-y-2">
+                  {top3.map((item) => (
+                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold">{item.ticker}</div>
+                        <div className="text-green-300">#{item.rank}</div>
+                      </div>
+                      <div className="mt-1 text-sm text-slate-400">
+                        Turbo {item.turbo} • Score {item.score}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Bottom 3 Movers" className="lg:col-span-1">
+                <div className="space-y-2">
+                  {bottom3.map((item) => (
+                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold">{item.ticker}</div>
+                        <div className="text-red-300">{item.dayChange.toFixed(2)}%</div>
+                      </div>
+                      <div className="mt-1 text-sm text-slate-400">
+                        Risk {item.risk} • State {item.state}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Checklist" infoKey="checklist" className="lg:col-span-1">
+                <div className="space-y-2 text-sm text-slate-300">
+                  {checklist.slice(0, 5).map((item) => (
+                    <div key={item} className="rounded-2xl border border-white/10 bg-slate-900/60 p-2">
+                      {item}
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+            </div>
+
+            <div className="grid gap-4 lg:grid-cols-3">
+              <SectionCard title="Turbo Quant" infoKey="turbo">
+                <div className="space-y-2">
+                  {ranked.slice(0, 5).map((item) => (
+                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold">{item.ticker}</div>
+                        <div className="text-sm text-cyan-300">Turbo {item.turbo}</div>
+                      </div>
+                      <div className="mt-1 text-sm text-slate-400">
+                        State {item.state} • Stability {item.stability}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        {item.promote ? "Promote" : item.demote ? "Demote" : "Hold lane"}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title="Monte Carlo" infoKey="monte">
+                <div className="space-y-2">
+                  {ranked.slice(0, 5).map((item) => (
+                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold">{item.ticker}</div>
+                        <div className="text-sm text-violet-300">Pass {item.monte.pass}%</div>
+                      </div>
+                      <div className="mt-1 text-sm text-slate-400">
+                        {item.monte.expectedBand}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">{item.monte.regimeFit}</div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+
+              <SectionCard title="State / Next Move" infoKey="state">
+                <div className="space-y-2">
+                  {ranked.slice(0, 5).map((item) => (
+                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+                      <div className="flex items-center justify-between">
+                        <div className="font-semibold">{item.ticker}</div>
+                        <div className="text-sm text-amber-300">{item.stateProfile.state}</div>
+                      </div>
+                      <div className="mt-1 text-sm text-slate-400">
+                        Next {item.stateProfile.nextMove}
+                      </div>
+                      <div className="mt-1 text-xs text-slate-500">
+                        Recovery: {item.stateProfile.recovery}
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </SectionCard>
+            </div>
+
+            <SectionCard
+              title="Horse-Race Rankings"
+              right={<div className="text-xs text-slate-500">Only score {DEFAULT_MIN_SCORE}+ qualify</div>}
+            >
+              <div className="overflow-hidden rounded-2xl border border-white/10">
+                <div className="grid grid-cols-7 gap-2 bg-slate-900 px-3 py-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                  <div>Rank</div>
+                  <div>Ticker</div>
+                  <div>Score</div>
+                  <div>Turbo</div>
+                  <div>Risk</div>
+                  <div>Theme</div>
+                  <div>State</div>
+                </div>
+                <div className="divide-y divide-white/5">
+                  {ranked.slice(0, 20).map((item) => (
+                    <div key={item.ticker} className="grid grid-cols-7 gap-2 px-3 py-3 text-sm">
+                      <div className="font-semibold text-green-300">#{item.rank}</div>
+                      <div className="font-semibold text-white">{item.ticker}</div>
+                      <div>{item.score}</div>
+                      <div>{item.turbo}</div>
+                      <div className={item.risk >= 70 ? "text-red-300" : item.risk >= 50 ? "text-yellow-300" : "text-green-300"}>
+                        {item.risk}
+                      </div>
+                      <div className="truncate text-slate-400">{item.theme}</div>
+                      <div className="text-slate-400">{item.state}</div>
+                    </div>
+                  ))}
+                  {!ranked.length ? (
+                    <div className="px-3 py-6 text-sm text-slate-500">
+                      No ranked names yet. Most likely reason: missing or placeholder CSV links.
+                    </div>
+                  ) : null}
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Wire Chart Ingestion" infoKey="chartwire">
+              <div className="grid gap-4 md:grid-cols-4">
+                <SmallPill
+                  title="Chart Input"
+                  value={chartWireSummary.input}
+                  helper="Raw chart reads"
+                  tone="border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
+                />
+                <SmallPill
+                  title="Chart Engine"
+                  value={chartWireSummary.engine}
+                  helper="Structured scoring"
+                  tone="border-blue-500/30 bg-blue-500/10 text-blue-300"
+                />
+                <SmallPill
+                  title="State Stats"
+                  value={chartWireSummary.states}
+                  helper="State profiles"
+                  tone="border-amber-500/30 bg-amber-500/10 text-amber-300"
+                />
+                <SmallPill
+                  title="Chart→Rank"
+                  value={chartWireSummary.out}
+                  helper="Feeds rank layer"
+                  tone="border-violet-500/30 bg-violet-500/10 text-violet-300"
+                />
+              </div>
+              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-300">
+                Goal: turn chart observations into structured engine fuel so ranking, Turbo Quant,
+                Monte Carlo, State Score, Next Move, READY, RISK, and Action can all use the same
+                language.
+              </div>
+            </SectionCard>
+          </div>
+
+          <div className="space-y-4">
+            <SectionCard title="Right Side Tabs">
+              <div className="space-y-2">
+                <SideTabButton active={sideTab === "news"} onClick={() => setSideTab("news")} count={newsItems.length}>
+                  News
+                </SideTabButton>
+                <SideTabButton active={sideTab === "errors"} onClick={() => setSideTab("errors")} count={errorItems.length}>
+                  Errors
+                </SideTabButton>
+                <SideTabButton active={sideTab === "holdings"} onClick={() => setSideTab("holdings")} count={normalizedHoldings.length}>
+                  Full Holdings
+                </SideTabButton>
+                <SideTabButton active={sideTab === "visuals"} onClick={() => setSideTab("visuals")} count={4}>
+                  Visuals
+                </SideTabButton>
+              </div>
+
+              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-3">
+                {sideTab === "news" && (
+                  <div className="space-y-2">
+                    {newsItems.map((item) => (
+                      <div key={item} className="rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm text-slate-300">
+                        {item}
+                      </div>
+                    ))}
+                  </div>
+                )}
+
+                {sideTab === "errors" && (
+                  <div className="space-y-2">
+                    {errorItems.length ? (
+                      errorItems.map((item, idx) => (
+                        <div key={`${item}-${idx}`} className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-200">
+                          {item}
+                        </div>
+                      ))
+                    ) : (
+                      <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-200">
+                        No feed errors right now.
+                      </div>
+                    )}
+                  </div>
+                )}
+
+                {sideTab === "holdings" && (
+                  <div className="space-y-2">
+                    {normalizedHoldings.length ? (
+                      normalizedHoldings.map((item) => (
+                        <div key={item.id} className="rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm">
+                          <div className="flex items-center justify-between">
+                            <div className="font-semibold text-white">{item.ticker}</div>
+                            <div className="text-slate-400">{formatMoney(item.marketValue)}</div>
+                          </div>
+                          <div className="mt-1 text-xs text-slate-500">
+                            Price {item.price || "-"} • Shares {item.shares || "-"} • Score {item.score}
+                          </div>
+                        </div>
+                      ))
+                    ) : (
+                      <div className="text-sm text-slate-500">No holdings loaded.</div>
+                    )}
+                  </div>
+                )}
+
+                {sideTab === "visuals" && (
+                  <div className="space-y-3">
+                    <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
+                      <div className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                        Rank Spread
+                      </div>
+                      <div className="space-y-2">
+                        {ranked.slice(0, 6).map((item) => (
+                          <div key={item.ticker}>
+                            <div className="mb-1 flex items-center justify-between text-xs">
+                              <span>{item.ticker}</span>
+                              <span>{item.turbo}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-white/5">
+                              <div
+                                className="h-2 rounded-full bg-green-400"
+                                style={{ width: `${clamp(item.turbo, 0, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+
+                    <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
+                      <div className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">
+                        Risk Heat
+                      </div>
+                      <div className="space-y-2">
+                        {ranked.slice(0, 6).map((item) => (
+                          <div key={`${item.ticker}-risk`}>
+                            <div className="mb-1 flex items-center justify-between text-xs">
+                              <span>{item.ticker}</span>
+                              <span>{item.risk}</span>
+                            </div>
+                            <div className="h-2 rounded-full bg-white/5">
+                              <div
+                                className={`h-2 rounded-full ${
+                                  item.risk >= 70 ? "bg-red-400" : item.risk >= 50 ? "bg-yellow-400" : "bg-green-400"
+                                }`}
+                                style={{ width: `${clamp(item.risk, 0, 100)}%` }}
+                              />
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  </div>
+                )}
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Master To-Do">
+              <div className="space-y-2 text-sm text-slate-300">
+                {checklist.map((item) => (
+                  <div key={item} className="rounded-2xl border border-white/10 bg-slate-900/60 p-2">
+                    {item}
+                  </div>
+                ))}
+              </div>
+            </SectionCard>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
