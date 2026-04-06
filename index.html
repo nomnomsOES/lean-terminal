@@ -1,1073 +1,181 @@
-import React, { useEffect, useMemo, useState } from "react";
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>Lean Terminal Clean Build</title>
 
-/**
- * Lean Terminal v09
- * Updated single-file React component
- *
- * What this build adds:
- * - Right-side side tabs: News, Errors, Full Holdings, Visuals
- * - READY / RISK / PLAN / MIN SCORE / THEME CAP pills
- * - Horse-race ranking + Action pill with manual checkboxes
- * - Top 3 Winners / Bottom 3 Movers strip
- * - Turbo Quant layer
- * - Monte Carlo summary layer
- * - State / Next Move / Wire Chart ingestion preview
- * - Street-speak tooltips via inline "i" buttons
- * - CSV wiring slots for holdings / ranking / radar / radar results / chart modules
- *
- * Notes:
- * - Replace CSV URLs below with your latest published Google Sheet CSV links.
- * - This file is intentionally self-contained for easy GitHub upload.
- * - Safe fallback handling included when a CSV is missing or fails.
- */
+<style>
+body{
+  margin:0;
+  font-family:Arial;
+  background:#0b1220;
+  color:#e5ecff;
+}
+.wrap{padding:16px; max-width:1200px; margin:auto;}
+h1{margin:0; font-size:20px;}
+.sub{color:#9aa7c7; font-size:12px; margin-bottom:10px;}
 
-const CSV_URLS = {
-  HOLDINGS:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_HOLDINGS/pub?output=csv",
-  RANKING:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_RANKING/pub?output=csv",
-  RADAR:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv",
-  RADAR_LOG:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=164866656&single=true&output=csv",
-  RADAR_RESULTS:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=922598618&single=true&output=csv",
-  CHART_INPUT:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_INPUT/pub?output=csv",
-  CHART_ENGINE:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_ENGINE/pub?output=csv",
-  CHART_HISTORY:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_HISTORY/pub?output=csv",
-  STATE_STATS:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_STATE_STATS/pub?output=csv",
-  CHART_TO_RANK:
-    "https://docs.google.com/spreadsheets/d/e/REPLACE_CHART_TO_RANK/pub?output=csv",
-};
+.grid{display:grid; gap:10px;}
+.pills{grid-template-columns:repeat(4,1fr); display:grid; gap:10px;}
 
-const DEFAULT_MIN_SCORE = 75;
-const LEAN_THEME_CAP = 30;
-const AGG_THEME_CAP = 50;
+.card{
+  background:#121c33;
+  border-radius:10px;
+  padding:12px;
+}
 
-function parseCSV(text) {
-  if (!text || typeof text !== "string") return [];
-  const rows = [];
-  let row = [];
-  let value = "";
-  let inQuotes = false;
+.title{font-size:12px; color:#9aa7c7;}
+.value{font-size:18px; font-weight:bold;}
 
-  for (let i = 0; i < text.length; i++) {
-    const char = text[i];
-    const next = text[i + 1];
+.row{
+  display:flex;
+  justify-content:space-between;
+  padding:6px 0;
+  border-bottom:1px solid rgba(255,255,255,0.05);
+}
 
-    if (char === '"') {
-      if (inQuotes && next === '"') {
-        value += '"';
-        i++;
-      } else {
-        inQuotes = !inQuotes;
-      }
-    } else if (char === "," && !inQuotes) {
-      row.push(value);
-      value = "";
-    } else if ((char === "\n" || char === "\r") && !inQuotes) {
-      if (char === "\r" && next === "\n") i++;
-      row.push(value);
-      if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
-      row = [];
-      value = "";
-    } else {
-      value += char;
-    }
-  }
+.green{color:#22c55e}
+.red{color:#ef4444}
+.yellow{color:#f59e0b}
+.blue{color:#3b82f6}
 
-  if (value.length || row.length) {
-    row.push(value);
-    if (row.some((cell) => String(cell).trim() !== "")) rows.push(row);
-  }
+.section{margin-top:12px;}
 
-  if (!rows.length) return [];
-  const headers = rows[0].map((h) => String(h || "").trim());
-  return rows.slice(1).map((r) => {
-    const obj = {};
-    headers.forEach((header, idx) => {
-      obj[header || `col_${idx}`] = r[idx] ?? "";
-    });
-    return obj;
+.small{font-size:12px;color:#9aa7c7}
+
+</style>
+</head>
+
+<body>
+<div class="wrap">
+
+<h1>Lean Terminal</h1>
+<div class="sub">clean stable build • buy / hold / sell • monte active</div>
+
+<!-- PILLS -->
+<div class="pills">
+
+<div class="card">
+  <div class="title">READY</div>
+  <div class="value green" id="ready">--</div>
+</div>
+
+<div class="card">
+  <div class="title">RISK</div>
+  <div class="value yellow" id="risk">--</div>
+</div>
+
+<div class="card">
+  <div class="title">PORT</div>
+  <div class="value" id="port">--</div>
+  <div class="small" id="pl"></div>
+</div>
+
+<div class="card">
+  <div class="title">VS MARKET</div>
+  <div class="value" id="vs">--</div>
+</div>
+
+</div>
+
+<!-- TOP 4 -->
+<div class="card section">
+<h3>Top 4 Horses</h3>
+<div id="top4"></div>
+</div>
+
+<!-- MOVES -->
+<div class="card section">
+<h3>Today's Moves</h3>
+<div id="moves"></div>
+</div>
+
+<!-- POSITIONS -->
+<div class="card section">
+<h3>What To Do With Positions</h3>
+<div id="positions"></div>
+</div>
+
+</div>
+
+<script>
+
+// ===== MOCK DATA =====
+const DATA = [
+  {ticker:"SMH", edge:85, risk:40, monte:68},
+  {ticker:"QQQ", edge:75, risk:45, monte:62},
+  {ticker:"XLE", edge:70, risk:55, monte:58},
+  {ticker:"NVDA", edge:82, risk:60, monte:60},
+  {ticker:"SGOV", edge:10, risk:5, monte:50, cash:true}
+];
+
+// ===== ENGINE =====
+function build(){
+
+  let rows = DATA.map(r => {
+    let ecs = Math.round((r.edge*0.5)+(r.monte*0.3)+((100-r.risk)*0.2));
+    return {...r, ecs, action:getAction(r, ecs)};
   });
+
+  rows.sort((a,b)=>b.ecs-a.ecs);
+
+  let horses = rows.filter(r=>!r.cash).slice(0,4);
+
+  render(rows, horses);
 }
 
-function num(v, fallback = 0) {
-  if (typeof v === "number") return Number.isFinite(v) ? v : fallback;
-  const cleaned = String(v ?? "")
-    .replace(/[%,$\s]/g, "")
-    .replace(/,/g, "");
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : fallback;
+// ===== ACTION LOGIC =====
+function getAction(r, ecs){
+
+  if(r.cash) return "HOLD (cash)";
+
+  if(r.monte > 65 && ecs > 75) return "BUY (starter)";
+  if(r.monte > 60) return "HOLD";
+  if(ecs < 65) return "SELL (trim)";
+  return "SELL (exit)";
 }
 
-function clamp(value, min, max) {
-  return Math.min(max, Math.max(min, value));
-}
+// ===== RENDER =====
+function render(rows, horses){
 
-function avg(arr) {
-  if (!arr.length) return 0;
-  return arr.reduce((sum, n) => sum + n, 0) / arr.length;
-}
+  document.getElementById("ready").innerText = 70;
+  document.getElementById("risk").innerText = 45;
+  document.getElementById("port").innerText = "$1000";
+  document.getElementById("pl").innerText = "P/L: $0 (0%)";
+  document.getElementById("vs").innerText = "+0.5%";
 
-function tooltipText(key) {
-  const map = {
-    ready:
-      "How close the whole setup is to being game-ready. Higher = cleaner setups.",
-    risk:
-      "Danger meter. Lower is safer. Red means slow down and respect the smoke.",
-    plan:
-      "System suggestion for the day. LEAN = controlled. AGG = more gas.",
-    turbo:
-      "Second-layer brain. It checks forward odds, stability, and promote/demote pressure.",
-    monte:
-      "Rough scenario tester. Think: how this basket might survive different market moods.",
-    state:
-      "Tells you what kind of behavior state a ticker is in right now.",
-    nextmove:
-      "Shows the usual move range before the next flip in direction.",
-    action:
-      "Fast lane. This is where to look first for buy/sell suggestions and sizing.",
-    chartwire:
-      "Chart reads turned into structured scores so the engine can actually use them.",
-    checklist:
-      "Build order. Keeps us from adding shiny stuff before wiring and validation are tight.",
-  };
-  return map[key] || "More info.";
-}
-
-function InfoButton({ label }) {
-  const [open, setOpen] = useState(false);
-  return (
-    <div className="relative inline-block">
-      <button
-        className="ml-2 inline-flex h-5 w-5 items-center justify-center rounded-full border border-white/20 text-[11px] text-slate-300 hover:bg-white/10"
-        onClick={() => setOpen((s) => !s)}
-        title="more info"
-      >
-        i
-      </button>
-      {open && (
-        <div className="absolute right-0 z-50 mt-2 w-64 rounded-2xl border border-white/10 bg-slate-900 p-3 text-xs text-slate-200 shadow-2xl">
-          {tooltipText(label)}
-        </div>
-      )}
-    </div>
-  );
-}
-
-function useCsvData(label, url) {
-  const [data, setData] = useState([]);
-  const [loading, setLoading] = useState(Boolean(url));
-  const [error, setError] = useState("");
-
-  useEffect(() => {
-    let active = true;
-
-    async function load() {
-      if (!url || String(url).includes("REPLACE_")) {
-        setLoading(false);
-        setData([]);
-        setError(`${label} CSV not wired yet`);
-        return;
-      }
-
-      try {
-        setLoading(true);
-        setError("");
-        const res = await fetch(url, { cache: "no-store" });
-        if (!res.ok) throw new Error(`${label} failed: ${res.status}`);
-        const text = await res.text();
-        const parsed = parseCSV(text);
-        if (active) setData(parsed);
-      } catch (err) {
-        if (active) {
-          setError(err.message || `Failed loading ${label}`);
-          setData([]);
-        }
-      } finally {
-        if (active) setLoading(false);
-      }
-    }
-
-    load();
-    const timer = setInterval(load, 120000);
-    return () => {
-      active = false;
-      clearInterval(timer);
-    };
-  }, [label, url]);
-
-  return { data, loading, error };
-}
-
-function getTicker(row) {
-  return (
-    row.Ticker ||
-    row.ticker ||
-    row.Symbol ||
-    row.symbol ||
-    row.Name ||
-    row.name ||
-    "N/A"
-  );
-}
-
-function normalizeHolding(row, idx = 0) {
-  const ticker = getTicker(row);
-  const score =
-    num(row.FINAL_RANK_SCORE) ||
-    num(row.Score) ||
-    num(row.score) ||
-    num(row.RANK_SCORE) ||
-    0;
-
-  const dayChange =
-    num(row.DAY_CHANGE_PCT) ||
-    num(row.DailyChangePct) ||
-    num(row["% Change"]) ||
-    num(row.ChangePct) ||
-    0;
-
-  const price = num(row.Price) || num(row.price) || num(row.Last) || 0;
-  const shares = num(row.Shares) || num(row.shares) || 0;
-  const marketValue =
-    num(row.MarketValue) || num(row.market_value) || price * shares;
-
-  const setup = num(row.SETUP_SCORE) || num(row.Setup) || score;
-  const momentum = num(row.MOMENTUM_SCORE) || num(row.Momentum) || score;
-  const risk = num(row.RISK_SCORE) || num(row.Risk) || 50;
-  const capital = num(row.CAPITAL_SCORE) || num(row.Capital) || 50;
-  const theme = row.Theme || row.theme || "General";
-
-  return {
-    id: `${ticker}-${idx}`,
-    ticker,
-    score,
-    dayChange,
-    price,
-    shares,
-    marketValue,
-    setup,
-    momentum,
-    risk,
-    capital,
-    theme,
-    source: row,
-  };
-}
-
-function deriveTurboScore(item) {
-  const stability = clamp(100 - item.risk, 0, 100);
-  const turbo = avg([item.score, item.setup, item.momentum, stability]);
-  const promote = turbo >= 85 && item.dayChange > -3;
-  const demote = turbo < 65 || item.risk >= 70;
-  return {
-    turbo: Math.round(turbo),
-    stability: Math.round(stability),
-    promote,
-    demote,
-    state:
-      turbo >= 85 ? "HOT" : turbo >= 75 ? "GREEN" : turbo >= 65 ? "MID" : "SHADY",
-  };
-}
-
-function deriveMonteCarlo(item) {
-  const baseWin = clamp(item.score * 0.75 + (100 - item.risk) * 0.25, 0, 100);
-  const swing = Math.abs(item.dayChange);
-  const confidence = clamp(baseWin - swing * 2, 0, 100);
-  return {
-    pass: Math.round(confidence),
-    expectedBand:
-      confidence >= 80 ? "+4% to +9%" : confidence >= 65 ? "+2% to +6%" : "-3% to +4%",
-    regimeFit:
-      item.risk < 40 ? "Good in chop" : item.risk < 65 ? "Needs trend" : "Fragile",
-  };
-}
-
-function deriveStateProfile(item) {
-  const score = item.score;
-  const change = item.dayChange;
-  if (score >= 85 && change > 0) {
-    return { state: "Trend Up", nextMove: "+3% to +7%", recovery: "Fast" };
-  }
-  if (score >= 75 && change <= 0) {
-    return { state: "Pullback Watch", nextMove: "-2% to +4%", recovery: "1-3 days" };
-  }
-  if (score < 75 && item.risk >= 65) {
-    return { state: "Fragile", nextMove: "-6% to +2%", recovery: "Slow" };
-  }
-  return { state: "Neutral Drift", nextMove: "-3% to +3%", recovery: "Mixed" };
-}
-
-function pillToneFromScore(score, invert = false) {
-  const v = invert ? 100 - score : score;
-  if (v >= 80) return "border-green-500/40 bg-green-500/10 text-green-300";
-  if (v >= 60) return "border-yellow-500/40 bg-yellow-500/10 text-yellow-300";
-  return "border-red-500/40 bg-red-500/10 text-red-300";
-}
-
-function formatMoney(v) {
-  return v.toLocaleString(undefined, {
-    style: "currency",
-    currency: "USD",
-    maximumFractionDigits: 0,
-  });
-}
-
-function SmallPill({ title, value, helper, tone = "" }) {
-  return (
-    <div className={`rounded-2xl border p-4 shadow-lg ${tone || "border-white/10 bg-slate-900/70"}`}>
-      <div className="mb-1 flex items-center text-xs uppercase tracking-[0.2em] text-slate-400">
-        {title}
+  // TOP 4
+  document.getElementById("top4").innerHTML =
+    horses.map((r,i)=>`
+      <div class="row">
+        <div>#${i+1} ${r.ticker}</div>
+        <div class="green">BUY $${[350,275,225,150][i]}</div>
       </div>
-      <div className="text-2xl font-bold text-white">{value}</div>
-      {helper ? <div className="mt-1 text-xs text-slate-400">{helper}</div> : null}
-    </div>
-  );
-}
+      <div class="small">MONTE: ${r.monte}% green path</div>
+    `).join("");
 
-function SectionCard({ title, infoKey, right, children, className = "" }) {
-  return (
-    <div className={`rounded-3xl border border-white/10 bg-slate-950/70 p-4 shadow-2xl ${className}`}>
-      <div className="mb-4 flex items-center justify-between gap-3">
-        <div className="flex items-center text-sm font-semibold uppercase tracking-[0.2em] text-slate-300">
-          {title}
-          {infoKey ? <InfoButton label={infoKey} /> : null}
-        </div>
-        {right}
+  // MOVES
+  document.getElementById("moves").innerHTML =
+    rows.map(r=>`
+      <div class="row">
+        <div>${r.ticker}</div>
+        <div>${r.action}</div>
       </div>
-      {children}
-    </div>
-  );
-}
+    `).join("");
 
-function DataStatus({ label, loading, error, rows }) {
-  return (
-    <div className="flex items-center gap-2 text-xs">
-      <span className="font-medium text-slate-300">{label}</span>
-      {loading ? (
-        <span className="rounded-full border border-blue-500/30 bg-blue-500/10 px-2 py-0.5 text-blue-300">
-          Loading
-        </span>
-      ) : error ? (
-        <span className="rounded-full border border-red-500/30 bg-red-500/10 px-2 py-0.5 text-red-300">
-          {error}
-        </span>
-      ) : (
-        <span className="rounded-full border border-green-500/30 bg-green-500/10 px-2 py-0.5 text-green-300">
-          {rows} rows
-        </span>
-      )}
-    </div>
-  );
-}
-
-function SideTabButton({ active, onClick, children, count }) {
-  return (
-    <button
-      onClick={onClick}
-      className={`flex w-full items-center justify-between rounded-2xl border px-3 py-2 text-left text-sm transition ${
-        active
-          ? "border-green-500/30 bg-green-500/10 text-green-300"
-          : "border-white/10 bg-slate-900/60 text-slate-300 hover:bg-white/5"
-      }`}
-    >
-      <span>{children}</span>
-      {typeof count === "number" ? (
-        <span className="rounded-full bg-white/10 px-2 py-0.5 text-xs">{count}</span>
-      ) : null}
-    </button>
-  );
-}
-
-export default function LeanTerminalV09() {
-  const [mode, setMode] = useState("LEAN");
-  const [sideTab, setSideTab] = useState("news");
-  const [checkedActions, setCheckedActions] = useState({});
-  const [search, setSearch] = useState("");
-
-  const holdingsFeed = useCsvData("HOLDINGS", CSV_URLS.HOLDINGS);
-  const rankingFeed = useCsvData("RANKING", CSV_URLS.RANKING);
-  const radarFeed = useCsvData("RADAR", CSV_URLS.RADAR);
-  const radarResultsFeed = useCsvData("RADAR_RESULTS", CSV_URLS.RADAR_RESULTS);
-  const chartInputFeed = useCsvData("CHART_INPUT", CSV_URLS.CHART_INPUT);
-  const chartEngineFeed = useCsvData("CHART_ENGINE", CSV_URLS.CHART_ENGINE);
-  const stateStatsFeed = useCsvData("STATE_STATS", CSV_URLS.STATE_STATS);
-  const chartToRankFeed = useCsvData("CHART_TO_RANK", CSV_URLS.CHART_TO_RANK);
-
-  const normalizedHoldings = useMemo(() => {
-    const base = (holdingsFeed.data?.length ? holdingsFeed.data : rankingFeed.data || []).map(
-      normalizeHolding
-    );
-    return base.filter((x) => x.ticker && x.ticker !== "N/A");
-  }, [holdingsFeed.data, rankingFeed.data]);
-
-  const radarCandidates = useMemo(() => {
-    return (radarResultsFeed.data?.length ? radarResultsFeed.data : radarFeed.data || [])
-      .map(normalizeHolding)
-      .filter((x) => x.ticker && x.score >= DEFAULT_MIN_SCORE);
-  }, [radarFeed.data, radarResultsFeed.data]);
-
-  const mergedUniverse = useMemo(() => {
-    const map = new Map();
-    [...normalizedHoldings, ...radarCandidates].forEach((item) => {
-      if (!map.has(item.ticker) || map.get(item.ticker).score < item.score) {
-        map.set(item.ticker, item);
-      }
-    });
-    return Array.from(map.values()).map((item) => {
-      const turbo = deriveTurboScore(item);
-      const monte = deriveMonteCarlo(item);
-      const state = deriveStateProfile(item);
-      return { ...item, ...turbo, monte, stateProfile: state };
-    });
-  }, [normalizedHoldings, radarCandidates]);
-
-  const filteredUniverse = useMemo(() => {
-    const q = search.trim().toUpperCase();
-    if (!q) return mergedUniverse;
-    return mergedUniverse.filter(
-      (item) =>
-        item.ticker.toUpperCase().includes(q) ||
-        String(item.theme).toUpperCase().includes(q)
-    );
-  }, [mergedUniverse, search]);
-
-  const ranked = useMemo(() => {
-    return [...filteredUniverse]
-      .filter((item) => item.score >= DEFAULT_MIN_SCORE)
-      .sort((a, b) => b.turbo - a.turbo || b.score - a.score || b.dayChange - a.dayChange)
-      .map((item, idx) => ({ ...item, rank: idx + 1 }));
-  }, [filteredUniverse]);
-
-  const topBuys = ranked.slice(0, 4);
-  const sellList = [...ranked]
-    .filter((x) => x.rank > 4 || x.risk >= 70 || x.demote)
-    .sort((a, b) => b.risk - a.risk || a.score - b.score)
-    .slice(0, 4);
-
-  const readyScore = useMemo(() => {
-    if (!ranked.length) return 0;
-    const top = ranked.slice(0, 6);
-    return Math.round(
-      avg(top.map((x) => avg([x.score, x.setup, x.momentum, x.capital])))
-    );
-  }, [ranked]);
-
-  const riskScore = useMemo(() => {
-    if (!ranked.length) return 100;
-    return Math.round(avg(ranked.slice(0, 6).map((x) => x.risk)));
-  }, [ranked]);
-
-  const plan = useMemo(() => {
-    if (readyScore >= 82 && riskScore <= 40) return "AGG";
-    if (readyScore >= 72 && riskScore <= 58) return "LEAN";
-    return "LEAN";
-  }, [readyScore, riskScore]);
-
-  const totalMarketValue = useMemo(() => {
-    return normalizedHoldings.reduce((sum, item) => sum + item.marketValue, 0);
-  }, [normalizedHoldings]);
-
-  const top3 = ranked.slice(0, 3);
-  const bottom3 = [...ranked].sort((a, b) => a.dayChange - b.dayChange).slice(0, 3);
-
-  const themeCap = mode === "AGG" ? AGG_THEME_CAP : LEAN_THEME_CAP;
-
-  const actionRows = useMemo(() => {
-    const buys = topBuys.map((item) => ({
-      key: `buy-${item.ticker}`,
-      side: "BUY",
-      ticker: item.ticker,
-      rank: item.rank,
-      note:
-        item.promote
-          ? "Top horse. Promote flag on."
-          : item.state === "HOT"
-          ? "Hot setup."
-          : "Qualified setup.",
-      size:
-        mode === "AGG"
-          ? Math.max(8, Math.round(100 / Math.max(1, topBuys.length) - 5))
-          : Math.max(5, Math.round(100 / Math.max(1, topBuys.length) - 10)),
-    }));
-
-    const sells = sellList.map((item) => ({
-      key: `sell-${item.ticker}`,
-      side: "SELL",
-      ticker: item.ticker,
-      rank: item.rank,
-      note:
-        item.demote
-          ? "Demote flag / weak shape."
-          : item.risk >= 70
-          ? "Risk too hot."
-          : "Fell behind in the race.",
-      size: Math.min(100, Math.max(10, Math.round(item.risk))),
-    }));
-
-    return [...buys, ...sells];
-  }, [topBuys, sellList, mode]);
-
-  const chartWireSummary = useMemo(() => {
-    return {
-      input: chartInputFeed.data.length,
-      engine: chartEngineFeed.data.length,
-      states: stateStatsFeed.data.length,
-      out: chartToRankFeed.data.length,
-    };
-  }, [
-    chartInputFeed.data.length,
-    chartEngineFeed.data.length,
-    stateStatsFeed.data.length,
-    chartToRankFeed.data.length,
-  ]);
-
-  const errorItems = [
-    holdingsFeed.error,
-    rankingFeed.error,
-    radarFeed.error,
-    radarResultsFeed.error,
-    chartInputFeed.error,
-    chartEngineFeed.error,
-    stateStatsFeed.error,
-    chartToRankFeed.error,
-  ].filter(Boolean);
-
-  const newsItems = [
-    "Check macro heat before going AGG.",
-    "Watch if top-ranked names are still above MIN SCORE 75.",
-    "If RISK goes red, tighten loss rules and slow size.",
-    "Radar names not in holdings can still qualify as NEW BUY ideas.",
-    "Wiring + validation comes before stacking more features.",
-  ];
-
-  const checklist = [
-    "1. Confirm all CSV links are live and published.",
-    "2. Validate holdings, ranking, radar, and radar results row counts.",
-    "3. Wire CHART_INPUT → CHART_ENGINE → STATE_STATS → CHART_TO_RANK.",
-    "4. Confirm READY and RISK pills respond to live data changes.",
-    "5. Test horse-race ranking with at least 4 qualified names.",
-    "6. Verify BUY/SELL manual checkboxes work without auto-checking.",
-    "7. Stress-test missing CSV fallback behavior.",
-    "8. Validate Turbo Quant promote/demote flags.",
-    "9. Validate Monte Carlo and State panels against sample names.",
-    "10. Only after wiring passes: refine visuals and add deeper math.",
-  ];
-
-  const toggleCheck = (key) => {
-    setCheckedActions((prev) => ({ ...prev, [key]: !prev[key] }));
-  };
-
-  return (
-    <div className="min-h-screen bg-slate-950 text-slate-100">
-      <div className="mx-auto max-w-7xl p-4 md:p-6">
-        <div className="mb-6 grid gap-4 lg:grid-cols-[1fr_280px]">
-          <div className="rounded-3xl border border-white/10 bg-gradient-to-br from-slate-900 to-slate-950 p-5 shadow-2xl">
-            <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-              <div>
-                <div className="text-xs uppercase tracking-[0.25em] text-green-400">
-                  Lean Terminal v09
-                </div>
-                <h1 className="mt-1 text-3xl font-black tracking-tight">
-                  Group A / Lean 2.0 Control Deck
-                </h1>
-                <p className="mt-2 max-w-3xl text-sm text-slate-400">
-                  Street-speak dashboard. Fast actions first, deep pills second.
-                </p>
-              </div>
-
-              <div className="flex flex-wrap items-center gap-2">
-                <button
-                  onClick={() => setMode("LEAN")}
-                  className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${
-                    mode === "LEAN"
-                      ? "border-green-500/40 bg-green-500/10 text-green-300"
-                      : "border-white/10 bg-slate-900 text-slate-300"
-                  }`}
-                >
-                  LEAN
-                </button>
-                <button
-                  onClick={() => setMode("AGG")}
-                  className={`rounded-2xl border px-4 py-2 text-sm font-semibold ${
-                    mode === "AGG"
-                      ? "border-orange-500/40 bg-orange-500/10 text-orange-300"
-                      : "border-white/10 bg-slate-900 text-slate-300"
-                  }`}
-                >
-                  AGG
-                </button>
-                <input
-                  value={search}
-                  onChange={(e) => setSearch(e.target.value)}
-                  placeholder="Search ticker or theme"
-                  className="rounded-2xl border border-white/10 bg-slate-900 px-4 py-2 text-sm text-white outline-none placeholder:text-slate-500"
-                />
-              </div>
-            </div>
-
-            <div className="mt-5 grid gap-3 md:grid-cols-5">
-              <SmallPill
-                title="READY"
-                value={readyScore}
-                helper="Higher = cleaner field"
-                tone={pillToneFromScore(readyScore)}
-              />
-              <SmallPill
-                title="RISK"
-                value={riskScore}
-                helper="Lower is safer"
-                tone={pillToneFromScore(riskScore, true)}
-              />
-              <SmallPill
-                title="PLAN"
-                value={plan}
-                helper="System suggestion"
-                tone={plan === "AGG" ? "border-orange-500/40 bg-orange-500/10 text-orange-300" : "border-green-500/40 bg-green-500/10 text-green-300"}
-              />
-              <SmallPill
-                title="MIN SCORE"
-                value={DEFAULT_MIN_SCORE}
-                helper="Locked qualifier"
-                tone="border-cyan-500/40 bg-cyan-500/10 text-cyan-300"
-              />
-              <SmallPill
-                title="THEME CAP"
-                value={`${themeCap}%`}
-                helper={`${mode} mode max`}
-                tone="border-violet-500/40 bg-violet-500/10 text-violet-300"
-              />
-            </div>
-          </div>
-
-          <div className="rounded-3xl border border-white/10 bg-slate-950/70 p-4 shadow-2xl">
-            <div className="mb-3 text-xs uppercase tracking-[0.2em] text-slate-400">
-              Feed Status
-            </div>
-            <div className="space-y-2">
-              <DataStatus label="Holdings" loading={holdingsFeed.loading} error={holdingsFeed.error} rows={holdingsFeed.data.length} />
-              <DataStatus label="Ranking" loading={rankingFeed.loading} error={rankingFeed.error} rows={rankingFeed.data.length} />
-              <DataStatus label="Radar" loading={radarFeed.loading} error={radarFeed.error} rows={radarFeed.data.length} />
-              <DataStatus label="Radar Results" loading={radarResultsFeed.loading} error={radarResultsFeed.error} rows={radarResultsFeed.data.length} />
-              <DataStatus label="Chart Input" loading={chartInputFeed.loading} error={chartInputFeed.error} rows={chartInputFeed.data.length} />
-              <DataStatus label="Chart Engine" loading={chartEngineFeed.loading} error={chartEngineFeed.error} rows={chartEngineFeed.data.length} />
-              <DataStatus label="State Stats" loading={stateStatsFeed.loading} error={stateStatsFeed.error} rows={stateStatsFeed.data.length} />
-              <DataStatus label="Chart→Rank" loading={chartToRankFeed.loading} error={chartToRankFeed.error} rows={chartToRankFeed.data.length} />
-            </div>
-          </div>
-        </div>
-
-        <div className="grid gap-4 xl:grid-cols-[1fr_300px]">
-          <div className="space-y-4">
-            <SectionCard
-              title="Action Pill"
-              infoKey="action"
-              right={
-                <div className="text-xs text-slate-400">
-                  Holdings Value: <span className="font-semibold text-white">{formatMoney(totalMarketValue)}</span>
-                </div>
-              }
-            >
-              <div className="grid gap-4 lg:grid-cols-2">
-                <div className="rounded-2xl border border-green-500/20 bg-green-500/5 p-3">
-                  <div className="mb-2 text-xs uppercase tracking-[0.2em] text-green-300">
-                    BUY lane
-                  </div>
-                  <div className="space-y-2">
-                    {topBuys.length ? (
-                      topBuys.map((item) => {
-                        const key = `buy-${item.ticker}`;
-                        return (
-                          <label
-                            key={key}
-                            className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-3"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={Boolean(checkedActions[key])}
-                              onChange={() => toggleCheck(key)}
-                              className="mt-1"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="font-semibold text-white">
-                                  #{item.rank} {item.ticker}
-                                </div>
-                                <div className="text-sm text-green-300">
-                                  {Math.max(5, Math.round(100 / Math.max(1, topBuys.length) - (mode === "AGG" ? 5 : 10)))}%
-                                </div>
-                              </div>
-                              <div className="mt-1 text-sm text-slate-300">
-                                Score {item.score} • Turbo {item.turbo} • {item.state}
-                              </div>
-                              <div className="mt-1 text-xs text-slate-400">
-                                {item.promote ? "Promote flag on." : "Qualified setup."}
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })
-                    ) : (
-                      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 text-sm text-slate-400">
-                        No buys yet. Wire live ranking data or lower friction in the qualifying field.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/5 p-3">
-                  <div className="mb-2 text-xs uppercase tracking-[0.2em] text-red-300">
-                    SELL lane
-                  </div>
-                  <div className="space-y-2">
-                    {sellList.length ? (
-                      sellList.map((item) => {
-                        const key = `sell-${item.ticker}`;
-                        return (
-                          <label
-                            key={key}
-                            className="flex items-start gap-3 rounded-2xl border border-white/10 bg-slate-900/60 p-3"
-                          >
-                            <input
-                              type="checkbox"
-                              checked={Boolean(checkedActions[key])}
-                              onChange={() => toggleCheck(key)}
-                              className="mt-1"
-                            />
-                            <div className="min-w-0 flex-1">
-                              <div className="flex items-center justify-between gap-3">
-                                <div className="font-semibold text-white">
-                                  #{item.rank} {item.ticker}
-                                </div>
-                                <div className="text-sm text-red-300">Risk {item.risk}</div>
-                              </div>
-                              <div className="mt-1 text-sm text-slate-300">
-                                Score {item.score} • Turbo {item.turbo} • {item.state}
-                              </div>
-                              <div className="mt-1 text-xs text-slate-400">
-                                {item.demote ? "Demote flag / weak shape." : "Fell behind in the race."}
-                              </div>
-                            </div>
-                          </label>
-                        );
-                      })
-                    ) : (
-                      <div className="rounded-2xl border border-white/10 bg-slate-900/60 p-3 text-sm text-slate-400">
-                        No clear sells. That can be good, or it can mean your live feed is asleep.
-                      </div>
-                    )}
-                  </div>
-                </div>
-              </div>
-            </SectionCard>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              <SectionCard title="Top 3 Winners" className="lg:col-span-1">
-                <div className="space-y-2">
-                  {top3.map((item) => (
-                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold">{item.ticker}</div>
-                        <div className="text-green-300">#{item.rank}</div>
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        Turbo {item.turbo} • Score {item.score}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Bottom 3 Movers" className="lg:col-span-1">
-                <div className="space-y-2">
-                  {bottom3.map((item) => (
-                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold">{item.ticker}</div>
-                        <div className="text-red-300">{item.dayChange.toFixed(2)}%</div>
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        Risk {item.risk} • State {item.state}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Checklist" infoKey="checklist" className="lg:col-span-1">
-                <div className="space-y-2 text-sm text-slate-300">
-                  {checklist.slice(0, 5).map((item) => (
-                    <div key={item} className="rounded-2xl border border-white/10 bg-slate-900/60 p-2">
-                      {item}
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-            </div>
-
-            <div className="grid gap-4 lg:grid-cols-3">
-              <SectionCard title="Turbo Quant" infoKey="turbo">
-                <div className="space-y-2">
-                  {ranked.slice(0, 5).map((item) => (
-                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold">{item.ticker}</div>
-                        <div className="text-sm text-cyan-300">Turbo {item.turbo}</div>
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        State {item.state} • Stability {item.stability}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        {item.promote ? "Promote" : item.demote ? "Demote" : "Hold lane"}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="Monte Carlo" infoKey="monte">
-                <div className="space-y-2">
-                  {ranked.slice(0, 5).map((item) => (
-                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold">{item.ticker}</div>
-                        <div className="text-sm text-violet-300">Pass {item.monte.pass}%</div>
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        {item.monte.expectedBand}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">{item.monte.regimeFit}</div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-
-              <SectionCard title="State / Next Move" infoKey="state">
-                <div className="space-y-2">
-                  {ranked.slice(0, 5).map((item) => (
-                    <div key={item.ticker} className="rounded-2xl border border-white/10 bg-slate-900/60 p-3">
-                      <div className="flex items-center justify-between">
-                        <div className="font-semibold">{item.ticker}</div>
-                        <div className="text-sm text-amber-300">{item.stateProfile.state}</div>
-                      </div>
-                      <div className="mt-1 text-sm text-slate-400">
-                        Next {item.stateProfile.nextMove}
-                      </div>
-                      <div className="mt-1 text-xs text-slate-500">
-                        Recovery: {item.stateProfile.recovery}
-                      </div>
-                    </div>
-                  ))}
-                </div>
-              </SectionCard>
-            </div>
-
-            <SectionCard
-              title="Horse-Race Rankings"
-              right={<div className="text-xs text-slate-500">Only score {DEFAULT_MIN_SCORE}+ qualify</div>}
-            >
-              <div className="overflow-hidden rounded-2xl border border-white/10">
-                <div className="grid grid-cols-7 gap-2 bg-slate-900 px-3 py-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                  <div>Rank</div>
-                  <div>Ticker</div>
-                  <div>Score</div>
-                  <div>Turbo</div>
-                  <div>Risk</div>
-                  <div>Theme</div>
-                  <div>State</div>
-                </div>
-                <div className="divide-y divide-white/5">
-                  {ranked.slice(0, 20).map((item) => (
-                    <div key={item.ticker} className="grid grid-cols-7 gap-2 px-3 py-3 text-sm">
-                      <div className="font-semibold text-green-300">#{item.rank}</div>
-                      <div className="font-semibold text-white">{item.ticker}</div>
-                      <div>{item.score}</div>
-                      <div>{item.turbo}</div>
-                      <div className={item.risk >= 70 ? "text-red-300" : item.risk >= 50 ? "text-yellow-300" : "text-green-300"}>
-                        {item.risk}
-                      </div>
-                      <div className="truncate text-slate-400">{item.theme}</div>
-                      <div className="text-slate-400">{item.state}</div>
-                    </div>
-                  ))}
-                  {!ranked.length ? (
-                    <div className="px-3 py-6 text-sm text-slate-500">
-                      No ranked names yet. Most likely reason: missing or placeholder CSV links.
-                    </div>
-                  ) : null}
-                </div>
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Wire Chart Ingestion" infoKey="chartwire">
-              <div className="grid gap-4 md:grid-cols-4">
-                <SmallPill
-                  title="Chart Input"
-                  value={chartWireSummary.input}
-                  helper="Raw chart reads"
-                  tone="border-cyan-500/30 bg-cyan-500/10 text-cyan-300"
-                />
-                <SmallPill
-                  title="Chart Engine"
-                  value={chartWireSummary.engine}
-                  helper="Structured scoring"
-                  tone="border-blue-500/30 bg-blue-500/10 text-blue-300"
-                />
-                <SmallPill
-                  title="State Stats"
-                  value={chartWireSummary.states}
-                  helper="State profiles"
-                  tone="border-amber-500/30 bg-amber-500/10 text-amber-300"
-                />
-                <SmallPill
-                  title="Chart→Rank"
-                  value={chartWireSummary.out}
-                  helper="Feeds rank layer"
-                  tone="border-violet-500/30 bg-violet-500/10 text-violet-300"
-                />
-              </div>
-              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-4 text-sm text-slate-300">
-                Goal: turn chart observations into structured engine fuel so ranking, Turbo Quant,
-                Monte Carlo, State Score, Next Move, READY, RISK, and Action can all use the same
-                language.
-              </div>
-            </SectionCard>
-          </div>
-
-          <div className="space-y-4">
-            <SectionCard title="Right Side Tabs">
-              <div className="space-y-2">
-                <SideTabButton active={sideTab === "news"} onClick={() => setSideTab("news")} count={newsItems.length}>
-                  News
-                </SideTabButton>
-                <SideTabButton active={sideTab === "errors"} onClick={() => setSideTab("errors")} count={errorItems.length}>
-                  Errors
-                </SideTabButton>
-                <SideTabButton active={sideTab === "holdings"} onClick={() => setSideTab("holdings")} count={normalizedHoldings.length}>
-                  Full Holdings
-                </SideTabButton>
-                <SideTabButton active={sideTab === "visuals"} onClick={() => setSideTab("visuals")} count={4}>
-                  Visuals
-                </SideTabButton>
-              </div>
-
-              <div className="mt-4 rounded-2xl border border-white/10 bg-slate-900/60 p-3">
-                {sideTab === "news" && (
-                  <div className="space-y-2">
-                    {newsItems.map((item) => (
-                      <div key={item} className="rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm text-slate-300">
-                        {item}
-                      </div>
-                    ))}
-                  </div>
-                )}
-
-                {sideTab === "errors" && (
-                  <div className="space-y-2">
-                    {errorItems.length ? (
-                      errorItems.map((item, idx) => (
-                        <div key={`${item}-${idx}`} className="rounded-xl border border-red-500/20 bg-red-500/5 p-3 text-sm text-red-200">
-                          {item}
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded-xl border border-green-500/20 bg-green-500/5 p-3 text-sm text-green-200">
-                        No feed errors right now.
-                      </div>
-                    )}
-                  </div>
-                )}
-
-                {sideTab === "holdings" && (
-                  <div className="space-y-2">
-                    {normalizedHoldings.length ? (
-                      normalizedHoldings.map((item) => (
-                        <div key={item.id} className="rounded-xl border border-white/10 bg-slate-950/70 p-3 text-sm">
-                          <div className="flex items-center justify-between">
-                            <div className="font-semibold text-white">{item.ticker}</div>
-                            <div className="text-slate-400">{formatMoney(item.marketValue)}</div>
-                          </div>
-                          <div className="mt-1 text-xs text-slate-500">
-                            Price {item.price || "-"} • Shares {item.shares || "-"} • Score {item.score}
-                          </div>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="text-sm text-slate-500">No holdings loaded.</div>
-                    )}
-                  </div>
-                )}
-
-                {sideTab === "visuals" && (
-                  <div className="space-y-3">
-                    <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
-                      <div className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                        Rank Spread
-                      </div>
-                      <div className="space-y-2">
-                        {ranked.slice(0, 6).map((item) => (
-                          <div key={item.ticker}>
-                            <div className="mb-1 flex items-center justify-between text-xs">
-                              <span>{item.ticker}</span>
-                              <span>{item.turbo}</span>
-                            </div>
-                            <div className="h-2 rounded-full bg-white/5">
-                              <div
-                                className="h-2 rounded-full bg-green-400"
-                                style={{ width: `${clamp(item.turbo, 0, 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-
-                    <div className="rounded-xl border border-white/10 bg-slate-950/70 p-3">
-                      <div className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">
-                        Risk Heat
-                      </div>
-                      <div className="space-y-2">
-                        {ranked.slice(0, 6).map((item) => (
-                          <div key={`${item.ticker}-risk`}>
-                            <div className="mb-1 flex items-center justify-between text-xs">
-                              <span>{item.ticker}</span>
-                              <span>{item.risk}</span>
-                            </div>
-                            <div className="h-2 rounded-full bg-white/5">
-                              <div
-                                className={`h-2 rounded-full ${
-                                  item.risk >= 70 ? "bg-red-400" : item.risk >= 50 ? "bg-yellow-400" : "bg-green-400"
-                                }`}
-                                style={{ width: `${clamp(item.risk, 0, 100)}%` }}
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
-                    </div>
-                  </div>
-                )}
-              </div>
-            </SectionCard>
-
-            <SectionCard title="Master To-Do">
-              <div className="space-y-2 text-sm text-slate-300">
-                {checklist.map((item) => (
-                  <div key={item} className="rounded-2xl border border-white/10 bg-slate-900/60 p-2">
-                    {item}
-                  </div>
-                ))}
-              </div>
-            </SectionCard>
-          </div>
-        </div>
+  // POSITIONS
+  document.getElementById("positions").innerHTML =
+    rows.map(r=>`
+      <div class="row">
+        <div>${r.ticker}</div>
+        <div>${r.action}</div>
       </div>
-    </div>
-  );
+    `).join("");
 }
+
+// INIT
+build();
+
+</script>
+</body>
+</html>
