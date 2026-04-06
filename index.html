@@ -1,181 +1,1194 @@
-<!DOCTYPE html>
-<html lang="en">
-<head>
-<meta charset="UTF-8">
-<title>Lean Terminal Clean Build</title>
 
-<style>
-body{
-  margin:0;
-  font-family:Arial;
-  background:#0b1220;
-  color:#e5ecff;
-}
-.wrap{padding:16px; max-width:1200px; margin:auto;}
-h1{margin:0; font-size:20px;}
-.sub{color:#9aa7c7; font-size:12px; margin-bottom:10px;}
+import React, { useEffect, useMemo, useState } from "react";
 
-.grid{display:grid; gap:10px;}
-.pills{grid-template-columns:repeat(4,1fr); display:grid; gap:10px;}
+/**
+ * Lean Terminal — Final Merged Build
+ * ----------------------------------
+ * Trimmed, single-file React component:
+ * - HOLDINGS + RADAR + RADAR_LOG + RADAR_RESULTS feeds
+ * - DNA popup with radar visual / overlap / closest matches
+ * - Right-side tabs: Visuals, I, Holdings, Errors
+ * - "I" tab = simple street explanation
+ * - Click any ranked row or holding to open DNA popup
+ *
+ * No new Apps Script is required for this version.
+ * It works with published Google Sheets CSV tabs.
+ * Add a single Apps Script later only if you want:
+ * - private data (no published CSVs)
+ * - one JSON endpoint instead of multiple CSV tabs
+ */
 
-.card{
-  background:#121c33;
-  border-radius:10px;
-  padding:12px;
-}
+const CSV_URLS = {
+  HOLDINGS:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv",
+  RADAR:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv",
+  RADAR_LOG:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=164866656&single=true&output=csv",
+  RADAR_RESULTS:
+    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=922598618&single=true&output=csv",
+  // Publish these tabs from the final workbook when ready.
+  DNA_EXPORT: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6ljzsJw8pzgyykEXPIYBdfmU-i8J_wHMCT5J6lGRBy2UAgsxgMlB9FUAdlwmMLxuRdY4o_qmB9xKG/pub?gid=936180431&single=true&output=csv",
+  DNA_HISTORY: "https://docs.google.com/spreadsheets/d/e/2PACX-1vQ6ljzsJw8pzgyykEXPIYBdfmU-i8J_wHMCT5J6lGRBy2UAgsxgMlB9FUAdlwmMLxuRdY4o_qmB9xKG/pub?gid=637207992&single=true&output=csv",
+};
 
-.title{font-size:12px; color:#9aa7c7;}
-.value{font-size:18px; font-weight:bold;}
-
-.row{
-  display:flex;
-  justify-content:space-between;
-  padding:6px 0;
-  border-bottom:1px solid rgba(255,255,255,0.05);
-}
-
-.green{color:#22c55e}
-.red{color:#ef4444}
-.yellow{color:#f59e0b}
-.blue{color:#3b82f6}
-
-.section{margin-top:12px;}
-
-.small{font-size:12px;color:#9aa7c7}
-
-</style>
-</head>
-
-<body>
-<div class="wrap">
-
-<h1>Lean Terminal</h1>
-<div class="sub">clean stable build • buy / hold / sell • monte active</div>
-
-<!-- PILLS -->
-<div class="pills">
-
-<div class="card">
-  <div class="title">READY</div>
-  <div class="value green" id="ready">--</div>
-</div>
-
-<div class="card">
-  <div class="title">RISK</div>
-  <div class="value yellow" id="risk">--</div>
-</div>
-
-<div class="card">
-  <div class="title">PORT</div>
-  <div class="value" id="port">--</div>
-  <div class="small" id="pl"></div>
-</div>
-
-<div class="card">
-  <div class="title">VS MARKET</div>
-  <div class="value" id="vs">--</div>
-</div>
-
-</div>
-
-<!-- TOP 4 -->
-<div class="card section">
-<h3>Top 4 Horses</h3>
-<div id="top4"></div>
-</div>
-
-<!-- MOVES -->
-<div class="card section">
-<h3>Today's Moves</h3>
-<div id="moves"></div>
-</div>
-
-<!-- POSITIONS -->
-<div class="card section">
-<h3>What To Do With Positions</h3>
-<div id="positions"></div>
-</div>
-
-</div>
-
-<script>
-
-// ===== MOCK DATA =====
-const DATA = [
-  {ticker:"SMH", edge:85, risk:40, monte:68},
-  {ticker:"QQQ", edge:75, risk:45, monte:62},
-  {ticker:"XLE", edge:70, risk:55, monte:58},
-  {ticker:"NVDA", edge:82, risk:60, monte:60},
-  {ticker:"SGOV", edge:10, risk:5, monte:50, cash:true}
+const RIDGES = [
+  { key: "shortMom", label: "5D Mom", group: "Trend" },
+  { key: "midMom", label: "20D Mom", group: "Trend" },
+  { key: "relStrength", label: "Rel Strength", group: "Trend" },
+  { key: "realizedVol", label: "Realized Vol", group: "Risk" },
+  { key: "downsideVol", label: "Downside Vol", group: "Risk" },
+  { key: "drawdown", label: "Drawdown", group: "Risk" },
+  { key: "volumeExp", label: "Volume Exp", group: "Flow" },
+  { key: "accumDist", label: "Accum/Dist", group: "Flow" },
+  { key: "recovery", label: "Recovery", group: "Behavior" },
+  { key: "continuation", label: "Continuation", group: "Behavior" },
+  { key: "fakeout", label: "Fakeout", group: "Behavior" },
+  { key: "sectorFit", label: "Mkt/Sector Fit", group: "Behavior" },
 ];
 
-// ===== ENGINE =====
-function build(){
+const FALLBACK_HOLDINGS = [
+  { ticker: "NVDA", shares: 1.5, price: 924, score: 88, day_change_pct: 2.1, theme: "AI", state_score: 84, chart_confidence: 86, monte_pass: 92, risk_score: 31 },
+  { ticker: "PLTR", shares: 8, price: 25.2, score: 83, day_change_pct: 1.2, theme: "AI", state_score: 79, chart_confidence: 78, monte_pass: 87, risk_score: 40 },
+  { ticker: "TSM", shares: 3, price: 146.8, score: 80, day_change_pct: 0.4, theme: "Chips", state_score: 76, chart_confidence: 74, monte_pass: 85, risk_score: 35 },
+  { ticker: "PICK", shares: 5, price: 41.2, score: 72, day_change_pct: -0.6, theme: "Materials", state_score: 64, chart_confidence: 60, monte_pass: 68, risk_score: 48 },
+];
 
-  let rows = DATA.map(r => {
-    let ecs = Math.round((r.edge*0.5)+(r.monte*0.3)+((100-r.risk)*0.2));
-    return {...r, ecs, action:getAction(r, ecs)};
+const FALLBACK_RADAR = [
+  { ticker: "SMCI", score: 91, theme: "AI", state_score: 88, chart_confidence: 90, monte_pass: 95, risk_score: 44, price: 1020 },
+  { ticker: "MU", score: 86, theme: "Memory", state_score: 81, chart_confidence: 82, monte_pass: 88, risk_score: 37, price: 124 },
+  { ticker: "AMD", score: 84, theme: "AI", state_score: 78, chart_confidence: 79, monte_pass: 83, risk_score: 43, price: 181 },
+  { ticker: "NOC", score: 74, theme: "Defense", state_score: 71, chart_confidence: 68, monte_pass: 70, risk_score: 28, price: 454 },
+];
+
+const FALLBACK_DNA = [
+  {
+    ticker: "SMCI",
+    sourcePool: "Radar",
+    theme: "AI Infra",
+    dnaScore: 89,
+    mcScore: 83,
+    horseRead: "Strong runner, healthy flow, high family overlap with AI momentum leaders.",
+    ridges: { shortMom: 82, midMom: 76, relStrength: 88, realizedVol: 58, downsideVol: 43, drawdown: 52, volumeExp: 71, accumDist: 79, recovery: 84, continuation: 74, fakeout: 31, sectorFit: 81 },
+  },
+  {
+    ticker: "NVDA",
+    sourcePool: "Holding",
+    theme: "AI Infra",
+    dnaScore: 92,
+    mcScore: 88,
+    horseRead: "Leader DNA. Cleaner trend, lower family risk than weaker cousins.",
+    ridges: { shortMom: 86, midMom: 81, relStrength: 92, realizedVol: 55, downsideVol: 41, drawdown: 49, volumeExp: 73, accumDist: 82, recovery: 80, continuation: 76, fakeout: 27, sectorFit: 86 },
+  },
+  {
+    ticker: "AMD",
+    sourcePool: "Radar",
+    theme: "AI / Semis",
+    dnaScore: 84,
+    mcScore: 77,
+    horseRead: "Same family, slightly weaker recovery and less dominant leadership.",
+    ridges: { shortMom: 73, midMom: 70, relStrength: 77, realizedVol: 61, downsideVol: 47, drawdown: 58, volumeExp: 68, accumDist: 72, recovery: 69, continuation: 66, fakeout: 39, sectorFit: 78 },
+  },
+  {
+    ticker: "PLTR",
+    sourcePool: "Holding",
+    theme: "AI Software",
+    dnaScore: 74,
+    mcScore: 71,
+    horseRead: "Different enough to diversify some, but still momentum-sensitive.",
+    ridges: { shortMom: 61, midMom: 66, relStrength: 63, realizedVol: 64, downsideVol: 52, drawdown: 61, volumeExp: 70, accumDist: 76, recovery: 78, continuation: 71, fakeout: 42, sectorFit: 69 },
+  },
+  {
+    ticker: "MU",
+    sourcePool: "Radar",
+    theme: "Memory",
+    dnaScore: 81,
+    mcScore: 79,
+    horseRead: "Supportive cyclical DNA, less pure AI crowding than leader names.",
+    ridges: { shortMom: 69, midMom: 73, relStrength: 75, realizedVol: 54, downsideVol: 40, drawdown: 45, volumeExp: 66, accumDist: 70, recovery: 76, continuation: 69, fakeout: 32, sectorFit: 74 },
+  },
+];
+
+const FALLBACK_DNA_HISTORY = [
+  { ticker: "SMCI", slice: "Now", dnaScore: 89, ridges: { shortMom: 82, midMom: 76, relStrength: 88, realizedVol: 58, downsideVol: 43, drawdown: 52, volumeExp: 71, accumDist: 79, recovery: 84, continuation: 74, fakeout: 31, sectorFit: 81 } },
+  { ticker: "SMCI", slice: "3M Ago", dnaScore: 72, ridges: { shortMom: 65, midMom: 61, relStrength: 70, realizedVol: 66, downsideVol: 54, drawdown: 61, volumeExp: 59, accumDist: 62, recovery: 66, continuation: 58, fakeout: 43, sectorFit: 71 } },
+];
+
+const POSITIVE_WORDS = ["buy", "bull", "go", "strong", "leader", "uptrend", "green"];
+const NEGATIVE_WORDS = ["sell", "risk", "warning", "weak", "downtrend", "red", "break"];
+const BUY_ALLOCATIONS = [350, 275, 225, 150];
+
+function classNames(...parts) {
+  return parts.filter(Boolean).join(" ");
+}
+
+function toKey(value) {
+  return String(value ?? "").trim().toLowerCase().replace(/\s+/g, "_");
+}
+
+function parseNumber(value, fallback = 0) {
+  if (value === null || value === undefined || value === "") return fallback;
+  const cleaned = String(value).replace(/[%,$]/g, "").replace(/,/g, "").trim();
+  const n = Number(cleaned);
+  return Number.isFinite(n) ? n : fallback;
+}
+
+function safeRound(n, digits = 1) {
+  const factor = 10 ** digits;
+  return Math.round((Number(n) || 0) * factor) / factor;
+}
+
+function normalizeHeaderMap(row) {
+  const map = {};
+  Object.keys(row || {}).forEach((k) => {
+    map[toKey(k)] = row[k];
+  });
+  return map;
+}
+
+function pick(row, aliases, fallback = "") {
+  const keyed = normalizeHeaderMap(row);
+  for (const alias of aliases) {
+    const found = keyed[toKey(alias)];
+    if (found !== undefined && found !== null && found !== "") return found;
+  }
+  return fallback;
+}
+
+function parseCSVLine(line) {
+  const out = [];
+  let current = "";
+  let inQuotes = false;
+  for (let i = 0; i < line.length; i += 1) {
+    const char = line[i];
+    const next = line[i + 1];
+    if (char === '"' && inQuotes && next === '"') {
+      current += '"';
+      i += 1;
+    } else if (char === '"') {
+      inQuotes = !inQuotes;
+    } else if (char === "," && !inQuotes) {
+      out.push(current);
+      current = "";
+    } else {
+      current += char;
+    }
+  }
+  out.push(current);
+  return out.map((cell) => cell.trim());
+}
+
+function parseCSV(text) {
+  const rows = text.split(/\r?\n/).map((line) => line.trim()).filter(Boolean);
+  if (!rows.length) return [];
+  const headers = parseCSVLine(rows[0]);
+  return rows.slice(1).map((line) => {
+    const values = parseCSVLine(line);
+    const row = {};
+    headers.forEach((h, idx) => {
+      row[h] = values[idx] ?? "";
+    });
+    return row;
+  });
+}
+
+async function fetchCSV(url) {
+  const res = await fetch(url, { cache: "no-store" });
+  if (!res.ok) throw new Error(`Fetch failed: ${res.status}`);
+  return parseCSV(await res.text());
+}
+
+function normalizeTicker(raw) {
+  const ticker = String(raw || "").trim().toUpperCase();
+  return ticker === "TEJON" ? "TRC" : ticker;
+}
+
+function normalizeHolding(row) {
+  const ticker = normalizeTicker(pick(row, ["ticker", "symbol", "stock", "name", "holding"], ""));
+  return {
+    ticker,
+    shares: parseNumber(pick(row, ["shares", "qty", "quantity", "position_size"], 0)),
+    price: parseNumber(pick(row, ["price", "current_price", "last", "last_price", "close"], 0)),
+    score: parseNumber(pick(row, ["score", "final_rank_score", "rank_score", "turbo_score", "base_score"], 0)),
+    base_score: parseNumber(pick(row, ["base_score"], 0)),
+    turbo_score: parseNumber(pick(row, ["turbo_score"], 0)),
+    day_change_pct: parseNumber(pick(row, ["day_change_pct", "change_pct", "pct_change", "daily_change_pct"], 0)),
+    theme: pick(row, ["theme", "bucket", "sector_theme", "group"], "General"),
+    state_score: parseNumber(pick(row, ["state_score", "state", "trend_score"], 0)),
+    chart_confidence: parseNumber(pick(row, ["chart_confidence", "signal_confidence", "trend_confidence"], 0)),
+    monte_pass: parseNumber(pick(row, ["monte_pass", "monte_carlo_pass", "simulation_pass", "mc_pass"], 0)),
+    risk_score: parseNumber(pick(row, ["risk_score", "risk", "danger_score"], 0)),
+    support: parseNumber(pick(row, ["support"], 0)),
+    resistance: parseNumber(pick(row, ["resistance"], 0)),
+    note: pick(row, ["note", "notes", "comment"], ""),
+    source: "holding",
+  };
+}
+
+function normalizeRadar(row) {
+  const ticker = normalizeTicker(pick(row, ["ticker", "symbol", "stock", "name"], ""));
+  return {
+    ticker,
+    shares: 0,
+    price: parseNumber(pick(row, ["price", "current_price", "last"], 0)),
+    score: parseNumber(pick(row, ["score", "radar_score", "setup_score", "final_rank_score", "rank_score"], 0)),
+    base_score: parseNumber(pick(row, ["base_score"], 0)),
+    turbo_score: parseNumber(pick(row, ["turbo_score"], 0)),
+    day_change_pct: parseNumber(pick(row, ["day_change_pct", "change_pct", "pct_change", "daily_change_pct"], 0)),
+    theme: pick(row, ["theme", "bucket", "sector_theme", "group"], "Radar"),
+    state_score: parseNumber(pick(row, ["state_score", "state", "trend_score"], 0)),
+    chart_confidence: parseNumber(pick(row, ["chart_confidence", "signal_confidence", "trend_confidence"], 0)),
+    monte_pass: parseNumber(pick(row, ["monte_pass", "monte_carlo_pass", "simulation_pass", "mc_pass"], 0)),
+    risk_score: parseNumber(pick(row, ["risk_score", "risk", "danger_score"], 0)),
+    support: parseNumber(pick(row, ["support"], 0)),
+    resistance: parseNumber(pick(row, ["resistance"], 0)),
+    note: pick(row, ["note", "notes", "comment"], ""),
+    source: "radar",
+  };
+}
+
+function ridgeValueFromRow(row, aliases, fallback = 0) {
+  return parseNumber(pick(row, aliases, fallback), fallback);
+}
+
+function normalizeDNARecord(row) {
+  const ticker = normalizeTicker(pick(row, ["ticker", "symbol"], ""));
+  if (!ticker) return null;
+
+  const ridges = {
+    shortMom: ridgeValueFromRow(row, ["5d_mom", "5d mom", "shortmom", "short_mom"]),
+    midMom: ridgeValueFromRow(row, ["20d_mom", "20d mom", "midmom", "mid_mom"]),
+    relStrength: ridgeValueFromRow(row, ["rel_strength", "rel strength"]),
+    realizedVol: ridgeValueFromRow(row, ["realized_vol", "realized vol"]),
+    downsideVol: ridgeValueFromRow(row, ["downside_vol", "downside vol"]),
+    drawdown: ridgeValueFromRow(row, ["drawdown"]),
+    volumeExp: ridgeValueFromRow(row, ["volume_exp", "volume exp"]),
+    accumDist: ridgeValueFromRow(row, ["accum_dist", "accum/dist", "accum dist"]),
+    recovery: ridgeValueFromRow(row, ["recovery"]),
+    continuation: ridgeValueFromRow(row, ["continuation"]),
+    fakeout: ridgeValueFromRow(row, ["fakeout"]),
+    sectorFit: ridgeValueFromRow(row, ["mkt_sector_fit", "mkt/sector fit", "sector_fit", "fit"]),
+  };
+
+  const dnaScore =
+    parseNumber(pick(row, ["dna_score", "dna score"], 0)) ||
+    safeRound(average(Object.values(ridges)), 1);
+
+  return {
+    ticker,
+    sourcePool: pick(row, ["source_pool", "source pool", "pool"], ""),
+    theme: pick(row, ["theme", "sector", "group"], ""),
+    dnaScore,
+    mcScore: parseNumber(pick(row, ["mc_score", "mc score", "monte", "monte_score"], 0)),
+    horseRead: pick(row, ["horse_read", "horse read", "street_read", "street read"], ""),
+    ridges,
+  };
+}
+
+function normalizeDNAHistory(row) {
+  const ticker = normalizeTicker(pick(row, ["ticker", "symbol"], ""));
+  if (!ticker) return null;
+  return {
+    ticker,
+    slice: pick(row, ["slice", "date_segment", "date/segment", "date"], ""),
+    dnaScore: parseNumber(pick(row, ["dna_score", "dna score"], 0)),
+    ridges: normalizeDNARecord(row)?.ridges || {},
+  };
+}
+
+function compactCurrency(n) {
+  return new Intl.NumberFormat("en-US", {
+    style: "currency",
+    currency: "USD",
+    maximumFractionDigits: 0,
+  }).format(Number(n) || 0);
+}
+
+function average(nums) {
+  if (!nums.length) return 0;
+  return nums.reduce((sum, x) => sum + x, 0) / nums.length;
+}
+
+function stdDev(nums) {
+  if (nums.length <= 1) return 0;
+  const avg = average(nums);
+  const variance = average(nums.map((n) => (n - avg) ** 2));
+  return Math.sqrt(variance);
+}
+
+function calculateMaxDrawdown(returnSeries) {
+  if (!returnSeries.length) return 0;
+  let equity = 1;
+  let peak = 1;
+  let maxDD = 0;
+  returnSeries.forEach((r) => {
+    equity *= 1 + r / 100;
+    peak = Math.max(peak, equity);
+    const dd = ((equity - peak) / peak) * 100;
+    maxDD = Math.min(maxDD, dd);
+  });
+  return Math.abs(maxDD);
+}
+
+function deriveQualityScore(item) {
+  const score = item.score || 0;
+  const state = item.state_score || 0;
+  const chart = item.chart_confidence || 0;
+  const monte = item.monte_pass || 0;
+  const risk = item.risk_score || 0;
+  const day = item.day_change_pct || 0;
+  const derived =
+    score * 0.38 +
+    state * 0.18 +
+    chart * 0.18 +
+    monte * 0.16 +
+    Math.max(0, 50 - risk) * 0.08 +
+    Math.max(-5, Math.min(5, day)) * 0.4;
+  return safeRound(derived, 1);
+}
+
+function buildMergedUniverse(holdings, radar, radarResults) {
+  const byTicker = new Map();
+  const mergeIn = (rawItem) => {
+    if (!rawItem?.ticker) return;
+    const prior = byTicker.get(rawItem.ticker) || {};
+    byTicker.set(rawItem.ticker, { ...prior, ...rawItem });
+  };
+  holdings.forEach((row) => mergeIn(normalizeHolding(row)));
+  radar.forEach((row) => mergeIn(normalizeRadar(row)));
+  radarResults.forEach((row) => {
+    const ticker = normalizeTicker(pick(row, ["ticker", "symbol", "stock"], ""));
+    if (!ticker) return;
+    mergeIn({
+      ticker,
+      chart_confidence: parseNumber(pick(row, ["chart_confidence", "signal_confidence", "trend_confidence"], 0)),
+      state_score: parseNumber(pick(row, ["state_score", "trend_score"], 0)),
+      support: parseNumber(pick(row, ["support"], 0)),
+      resistance: parseNumber(pick(row, ["resistance"], 0)),
+      note: pick(row, ["setup_type", "note", "notes"], ""),
+      source: "radar_result",
+    });
   });
 
-  rows.sort((a,b)=>b.ecs-a.ecs);
-
-  let horses = rows.filter(r=>!r.cash).slice(0,4);
-
-  render(rows, horses);
+  return Array.from(byTicker.values())
+    .map((item) => ({ ...item, score: item.score || deriveQualityScore(item) }))
+    .sort((a, b) => (b.score || 0) - (a.score || 0));
 }
 
-// ===== ACTION LOGIC =====
-function getAction(r, ecs){
-
-  if(r.cash) return "HOLD (cash)";
-
-  if(r.monte > 65 && ecs > 75) return "BUY (starter)";
-  if(r.monte > 60) return "HOLD";
-  if(ecs < 65) return "SELL (trim)";
-  return "SELL (exit)";
+function generatePseudoReturns(items) {
+  return items
+    .map((item) => {
+      const base = item.day_change_pct || 0;
+      const stateDrift = (item.state_score - 50) / 40;
+      const riskPenalty = -(item.risk_score - 35) / 50;
+      return safeRound(base + stateDrift + riskPenalty, 2);
+    })
+    .filter((n) => Number.isFinite(n));
 }
 
-// ===== RENDER =====
-function render(rows, horses){
-
-  document.getElementById("ready").innerText = 70;
-  document.getElementById("risk").innerText = 45;
-  document.getElementById("port").innerText = "$1000";
-  document.getElementById("pl").innerText = "P/L: $0 (0%)";
-  document.getElementById("vs").innerText = "+0.5%";
-
-  // TOP 4
-  document.getElementById("top4").innerHTML =
-    horses.map((r,i)=>`
-      <div class="row">
-        <div>#${i+1} ${r.ticker}</div>
-        <div class="green">BUY $${[350,275,225,150][i]}</div>
-      </div>
-      <div class="small">MONTE: ${r.monte}% green path</div>
-    `).join("");
-
-  // MOVES
-  document.getElementById("moves").innerHTML =
-    rows.map(r=>`
-      <div class="row">
-        <div>${r.ticker}</div>
-        <div>${r.action}</div>
-      </div>
-    `).join("");
-
-  // POSITIONS
-  document.getElementById("positions").innerHTML =
-    rows.map(r=>`
-      <div class="row">
-        <div>${r.ticker}</div>
-        <div>${r.action}</div>
-      </div>
-    `).join("");
+function computePerfMetrics(items) {
+  const returns = generatePseudoReturns(items);
+  const avgRet = average(returns);
+  const vol = stdDev(returns);
+  const sharpe = vol ? avgRet / vol : 0;
+  const downside = stdDev(returns.filter((r) => r < 0));
+  const sortino = downside ? avgRet / downside : avgRet;
+  const maxDD = calculateMaxDrawdown(returns);
+  const winRate = returns.length ? (returns.filter((r) => r > 0).length / returns.length) * 100 : 0;
+  const consistency = Math.max(0, Math.min(100, 50 + sharpe * 18 + sortino * 10 + (winRate - 50) * 0.6 - maxDD * 0.5));
+  return {
+    vol: safeRound(vol, 2),
+    sharpe: safeRound(sharpe, 2),
+    sortino: safeRound(sortino, 2),
+    maxDD: safeRound(maxDD, 2),
+    winRate: safeRound(winRate, 1),
+    consistency: safeRound(consistency, 1),
+  };
 }
 
-// INIT
-build();
+function inferNewsSentiment(logRows) {
+  const joined = logRows.map((row) => JSON.stringify(row).toLowerCase()).join(" | ");
+  let score = 50;
+  POSITIVE_WORDS.forEach((word) => { if (joined.includes(word)) score += 4; });
+  NEGATIVE_WORDS.forEach((word) => { if (joined.includes(word)) score -= 5; });
+  return Math.max(0, Math.min(100, score));
+}
 
-</script>
-</body>
-</html>
+function planFromReadyRisk(ready, risk) {
+  if (ready >= 80 && risk <= 40) return "AGG";
+  if (ready >= 68 && risk <= 55) return "LEAN";
+  return "DEFEND";
+}
+
+function deriveThemeExposure(items) {
+  const themeTotals = {};
+  let totalValue = 0;
+  items.forEach((item) => {
+    const value = (item.shares || 0) * (item.price || 0);
+    totalValue += value;
+    themeTotals[item.theme] = (themeTotals[item.theme] || 0) + value;
+  });
+  return Object.entries(themeTotals)
+    .map(([theme, value]) => ({ theme, value, pct: totalValue ? (value / totalValue) * 100 : 0 }))
+    .sort((a, b) => b.value - a.value);
+}
+
+function scoreColor(score) {
+  if (score >= 85) return "bg-green-500/20 text-green-300 border-green-400/30";
+  if (score >= 75) return "bg-yellow-500/20 text-yellow-200 border-yellow-400/30";
+  return "bg-red-500/20 text-red-300 border-red-400/30";
+}
+
+function overlapPercent(a, b) {
+  if (!a || !b) return 0;
+  const diffs = RIDGES.map(({ key }) => Math.abs((a.ridges?.[key] || 0) - (b.ridges?.[key] || 0)));
+  return Math.max(0, safeRound(100 - average(diffs), 1));
+}
+
+function familyRead(overlap) {
+  if (overlap >= 85) return "Near-duplicate";
+  if (overlap >= 70) return "Related family";
+  if (overlap >= 50) return "Partial overlap";
+  return "Different animal";
+}
+
+function duplicateWarning(overlap) {
+  if (overlap >= 85) return "Avoid doubling same-family risk.";
+  if (overlap >= 70) return "Size carefully. This is related exposure.";
+  return "This adds enough differentiation.";
+}
+
+function streetRead(overlap) {
+  if (overlap >= 85) return "These are basically the same horse in different uniforms.";
+  if (overlap >= 70) return "Related horses. Compare entry, risk, and follow-through.";
+  return "Different setup. This is real diversification.";
+}
+
+function betterHorseSummary(stockA, stockB) {
+  if (!stockA || !stockB) return "";
+  if (stockA.dnaScore > stockB.dnaScore) return stockA.ticker;
+  if (stockB.dnaScore > stockA.dnaScore) return stockB.ticker;
+  return (stockA.mcScore || 0) >= (stockB.mcScore || 0) ? stockA.ticker : stockB.ticker;
+}
+
+function polar(angle, radius, center) {
+  return {
+    x: center + radius * Math.cos(angle - Math.PI / 2),
+    y: center + radius * Math.sin(angle - Math.PI / 2),
+  };
+}
+
+function buildPolygon(values, radius, center) {
+  return values.map((value, index) => {
+    const angle = (Math.PI * 2 * index) / values.length;
+    const point = polar(angle, (value / 100) * radius, center);
+    return `${point.x},${point.y}`;
+  }).join(" ");
+}
+
+function buildClosestMatches(target, records) {
+  if (!target) return [];
+  return records
+    .filter((r) => r.ticker !== target.ticker)
+    .map((r) => ({
+      ticker: r.ticker,
+      theme: r.theme,
+      overlap: overlapPercent(target, r),
+      family: familyRead(overlapPercent(target, r)),
+      read: r.horseRead,
+    }))
+    .sort((a, b) => b.overlap - a.overlap)
+    .slice(0, 5);
+}
+
+function ridgeGroupStats(record) {
+  if (!record) return {};
+  return {
+    Trend: safeRound(average([record.ridges.shortMom, record.ridges.midMom, record.ridges.relStrength]), 0),
+    Risk: safeRound(average([record.ridges.realizedVol, record.ridges.downsideVol, record.ridges.drawdown]), 0),
+    Flow: safeRound(average([record.ridges.volumeExp, record.ridges.accumDist]), 0),
+    Behavior: safeRound(average([record.ridges.recovery, record.ridges.continuation, record.ridges.fakeout, record.ridges.sectorFit]), 0),
+  };
+}
+
+function Pill({ title, value, subtitle, tone = "neutral", urgent = false }) {
+  const toneMap = {
+    neutral: "bg-slate-900 border-slate-700 text-slate-100",
+    green: "bg-green-500/10 border-green-400/30 text-green-200",
+    yellow: "bg-yellow-500/10 border-yellow-400/30 text-yellow-100",
+    red: "bg-red-500/10 border-red-400/40 text-red-200",
+    blue: "bg-sky-500/10 border-sky-400/30 text-sky-100",
+  };
+  return (
+    <div className={classNames("rounded-2xl border p-3 shadow-sm", toneMap[tone] || toneMap.neutral, urgent && "ring-2 ring-red-400/50")}>
+      <div className="text-[10px] uppercase tracking-[0.18em] opacity-70">{title}</div>
+      <div className="mt-1 text-2xl font-bold">{value}</div>
+      {subtitle ? <div className="mt-1 text-xs opacity-75">{subtitle}</div> : null}
+    </div>
+  );
+}
+
+function SectionCard({ title, children, right }) {
+  return (
+    <div className="rounded-3xl border border-slate-800 bg-slate-950/70 p-4 shadow-xl">
+      <div className="mb-3 flex items-center justify-between gap-3">
+        <h2 className="text-sm font-semibold tracking-wide text-slate-100">{title}</h2>
+        {right}
+      </div>
+      {children}
+    </div>
+  );
+}
+
+function TabButton({ active, onClick, children }) {
+  return (
+    <button
+      type="button"
+      onClick={onClick}
+      className={classNames(
+        "rounded-full px-3 py-1.5 text-xs font-semibold transition",
+        active ? "bg-white text-slate-950" : "bg-slate-900 text-slate-300 hover:bg-slate-800"
+      )}
+    >
+      {children}
+    </button>
+  );
+}
+
+function MiniBar({ label, value }) {
+  const width = Math.max(0, Math.min(100, value));
+  const tone = value >= 80 ? "bg-green-400" : value >= 65 ? "bg-yellow-400" : "bg-red-400";
+  return (
+    <div className="space-y-1">
+      <div className="flex items-center justify-between text-xs text-slate-300">
+        <span>{label}</span>
+        <span>{safeRound(value, 0)}</span>
+      </div>
+      <div className="h-2 rounded-full bg-slate-800">
+        <div className={classNames("h-2 rounded-full", tone)} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+}
+
+function RankRow({ item, rank, checked, onToggle, onOpenDNA, allocation = null, labelOverride = null }) {
+  const buy = labelOverride ? labelOverride.includes("BUY") : (rank <= 4 && item.score >= 75);
+  return (
+    <div className="grid grid-cols-[auto_1fr_auto_auto] items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+      <button
+        type="button"
+        onClick={() => onOpenDNA?.(item.ticker)}
+        className="text-sm font-bold text-slate-400 hover:text-white"
+        title="Open DNA popup"
+      >
+        #{rank}
+      </button>
+      <button type="button" onClick={() => onOpenDNA?.(item.ticker)} className="text-left">
+        <div className="flex items-center gap-2">
+          <span className="text-base font-semibold text-white">{item.ticker}</span>
+          <span className={classNames("rounded-full border px-2 py-0.5 text-[10px]", scoreColor(item.score))}>{item.score}</span>
+          <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">{item.theme || "General"}</span>
+        </div>
+        <div className="mt-1 flex flex-wrap gap-2 text-xs text-slate-400">
+          <span>Chart {safeRound(item.chart_confidence || 0, 0)}</span>
+          <span>State {safeRound(item.state_score || 0, 0)}</span>
+          <span>Monte {safeRound(item.monte_pass || 0, 0)}</span>
+          <span>Risk {safeRound(item.risk_score || 0, 0)}</span>
+        </div>
+      </button>
+      <div className={classNames("rounded-full px-2 py-1 text-xs font-semibold text-right", buy ? "bg-green-500/20 text-green-300" : "bg-red-500/20 text-red-300")}>
+        <div>{labelOverride || (buy ? "🚀 BUY NOW" : "⚠️ WAIT")}</div>
+        {buy && allocation !== null ? <div className="text-[10px] opacity-80">{compactCurrency(allocation)}</div> : null}
+      </div>
+      <label className="flex items-center gap-2 text-xs text-slate-300">
+        <input type="checkbox" className="h-4 w-4 rounded border-slate-600 bg-slate-900" checked={checked} onChange={onToggle} />
+        Done
+      </label>
+    </div>
+  );
+}
+
+function DnaRadar({ recordA, recordB }) {
+  const size = 360;
+  const center = size / 2;
+  const radius = 122;
+  const valuesA = recordA ? RIDGES.map(({ key }) => recordA.ridges[key]) : new Array(RIDGES.length).fill(0);
+  const valuesB = recordB ? RIDGES.map(({ key }) => recordB.ridges[key]) : new Array(RIDGES.length).fill(0);
+  const polyA = buildPolygon(valuesA, radius, center);
+  const polyB = buildPolygon(valuesB, radius, center);
+
+  return (
+    <svg width={size} height={size} className="overflow-visible">
+      {Array.from({ length: 5 }).map((_, levelIndex) => {
+        const ringRadius = ((levelIndex + 1) / 5) * radius;
+        const ring = RIDGES.map((_, index) => {
+          const angle = (Math.PI * 2 * index) / RIDGES.length;
+          const point = polar(angle, ringRadius, center);
+          return `${point.x},${point.y}`;
+        }).join(" ");
+        return <polygon key={levelIndex} points={ring} fill="none" stroke="rgba(148,163,184,0.16)" />;
+      })}
+      {RIDGES.map((ridge, index) => {
+        const angle = (Math.PI * 2 * index) / RIDGES.length;
+        const edge = polar(angle, radius, center);
+        const label = polar(angle, radius + 28, center);
+        return (
+          <g key={ridge.key}>
+            <line x1={center} y1={center} x2={edge.x} y2={edge.y} stroke="rgba(148,163,184,0.16)" />
+            <text x={label.x} y={label.y} textAnchor="middle" className="fill-slate-400 text-[10px]">
+              {ridge.label}
+            </text>
+          </g>
+        );
+      })}
+      <polygon points={polyA} fill="rgba(74,222,128,0.25)" stroke="rgba(74,222,128,0.9)" strokeWidth="2" />
+      {recordB ? <polygon points={polyB} fill="rgba(96,165,250,0.20)" stroke="rgba(96,165,250,0.95)" strokeWidth="2" /> : null}
+    </svg>
+  );
+}
+
+function DnaPopup({ isOpen, onClose, records, history, initialTicker }) {
+  const [tickerA, setTickerA] = useState(initialTicker || records[0]?.ticker || "");
+  const [tickerB, setTickerB] = useState(records[1]?.ticker || "");
+  const [historySlice, setHistorySlice] = useState("");
+  const [mode, setMode] = useState("compare");
+
+  useEffect(() => {
+    if (initialTicker) setTickerA(initialTicker);
+  }, [initialTicker]);
+
+  const recordA = useMemo(() => records.find((r) => r.ticker === tickerA), [records, tickerA]);
+  const recordB = useMemo(() => records.find((r) => r.ticker === tickerB), [records, tickerB]);
+  const historySlices = useMemo(() => history.filter((row) => row.ticker === tickerA), [history, tickerA]);
+  useEffect(() => {
+    if (!historySlice && historySlices[0]?.slice) setHistorySlice(historySlices[0].slice);
+  }, [historySlice, historySlices]);
+  const historyRecord = useMemo(() => historySlices.find((r) => r.slice === historySlice) || null, [historySlice, historySlices]);
+  const activeB = mode === "history" && historyRecord ? { ticker: historyRecord.slice, dnaScore: historyRecord.dnaScore, mcScore: 0, horseRead: "", ridges: historyRecord.ridges } : recordB;
+  const overlap = useMemo(() => overlapPercent(recordA, activeB), [recordA, activeB]);
+  const matches = useMemo(() => buildClosestMatches(recordA, records), [recordA, records]);
+  const betterHorse = useMemo(() => betterHorseSummary(recordA, activeB), [recordA, activeB]);
+  const groupA = ridgeGroupStats(recordA);
+
+  if (!isOpen) return null;
+
+  return (
+    <div className="fixed inset-0 z-50 bg-black/70 backdrop-blur-sm p-4 md:p-8">
+      <div className="mx-auto max-w-7xl rounded-3xl border border-slate-800 bg-slate-950 text-slate-100 shadow-2xl">
+        <div className="flex items-center justify-between border-b border-slate-800 px-6 py-4">
+          <div>
+            <div className="text-xs uppercase tracking-[0.3em] text-slate-400">Lean Terminal / DNA Popup</div>
+            <div className="mt-1 text-2xl font-semibold">Stock DNA / Key Signature</div>
+          </div>
+          <div className="flex items-center gap-2">
+            <button type="button" onClick={() => setMode("compare")} className={classNames("rounded-2xl border px-4 py-2 text-sm", mode === "compare" ? "border-slate-600 bg-slate-900" : "border-slate-700")}>Compare</button>
+            <button type="button" onClick={() => setMode("history")} className={classNames("rounded-2xl border px-4 py-2 text-sm", mode === "history" ? "border-slate-600 bg-slate-900" : "border-slate-700")}>History</button>
+            <button onClick={onClose} className="rounded-2xl border border-slate-700 px-4 py-2 text-sm hover:bg-slate-900">Close</button>
+          </div>
+        </div>
+
+        <div className="grid gap-6 p-6 xl:grid-cols-12">
+          <div className="xl:col-span-8 space-y-6">
+            <div className="grid gap-3 md:grid-cols-3">
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">Ticker A</div>
+                <select value={tickerA} onChange={(e) => setTickerA(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2">
+                  {records.map((r) => <option key={r.ticker} value={r.ticker}>{r.ticker}</option>)}
+                </select>
+                <div className="mt-2 text-xs text-slate-400">{recordA?.theme || "Primary horse"}</div>
+              </div>
+
+              <div className="rounded-2xl border border-slate-800 bg-slate-900 p-4">
+                <div className="text-xs uppercase tracking-[0.2em] text-slate-500">{mode === "history" ? "History Slice" : "Ticker B"}</div>
+                {mode === "history" ? (
+                  <select value={historySlice} onChange={(e) => setHistorySlice(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2">
+                    {historySlices.map((r) => <option key={r.slice} value={r.slice}>{r.slice}</option>)}
+                  </select>
+                ) : (
+                  <select value={tickerB} onChange={(e) => setTickerB(e.target.value)} className="mt-2 w-full rounded-xl border border-slate-700 bg-slate-950 px-3 py-2">
+                    {records.map((r) => <option key={r.ticker} value={r.ticker}>{r.ticker}</option>)}
+                  </select>
+                )}
+                <div className="mt-2 text-xs text-slate-400">{mode === "history" ? "Evolution view" : recordB?.theme || "Comparison horse"}</div>
+              </div>
+
+              <div className="rounded-2xl border border-amber-400/20 bg-amber-500/10 p-4">
+                <div className="text-xs uppercase tracking-[0.2em] text-amber-300">Overlap Read</div>
+                <div className="mt-2 text-2xl font-semibold text-amber-100">{overlap}% DNA Match</div>
+                <div className="mt-1 text-sm text-amber-200/80">{familyRead(overlap)}</div>
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+              <div className="grid items-center gap-8 lg:grid-cols-2">
+                <div className="flex justify-center">
+                  <DnaRadar recordA={recordA} recordB={activeB} />
+                </div>
+
+                <div className="space-y-4">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                    <div className="text-sm uppercase tracking-[0.2em] text-slate-400">Street Read</div>
+                    <div className="mt-2 leading-7">{recordA?.horseRead || streetRead(overlap)}</div>
+                    <div className="mt-2 text-sm text-slate-400">{streetRead(overlap)}</div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                      <div className="text-xs text-slate-400">DNA Score</div>
+                      <div className="mt-1 text-xl font-semibold">{recordA?.ticker}: {recordA?.dnaScore ?? "-"}</div>
+                      <div className="text-lg font-semibold">{mode === "history" ? `${historySlice || "-"}: ${historyRecord?.dnaScore ?? "-"}` : `${recordB?.ticker || "-"}: ${recordB?.dnaScore ?? "-"}`}</div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                      <div className="text-xs text-slate-400">Better Horse</div>
+                      <div className="mt-1 text-xl font-semibold">{mode === "history" ? (overlap >= 80 ? "DNA intact" : "DNA changed") : (betterHorse || recordA?.ticker || "-")}</div>
+                      <div className="text-sm text-slate-400">{mode === "history" ? "Behavior drift check" : "Cleaner runner right now"}</div>
+                    </div>
+                  </div>
+
+                  <div className="grid gap-3 sm:grid-cols-2">
+                    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                      <div className="font-semibold">Trend</div>
+                      <div className="mt-2 space-y-2">
+                        <MiniBar label="5D Mom" value={recordA?.ridges.shortMom || 0} />
+                        <MiniBar label="20D Mom" value={recordA?.ridges.midMom || 0} />
+                        <MiniBar label="Rel Strength" value={recordA?.ridges.relStrength || 0} />
+                      </div>
+                    </div>
+                    <div className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                      <div className="font-semibold">Risk</div>
+                      <div className="mt-2 space-y-2">
+                        <MiniBar label="Realized Vol" value={recordA?.ridges.realizedVol || 0} />
+                        <MiniBar label="Downside Vol" value={recordA?.ridges.downsideVol || 0} />
+                        <MiniBar label="Drawdown" value={recordA?.ridges.drawdown || 0} />
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </div>
+          </div>
+
+          <div className="xl:col-span-4 space-y-6">
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+              <div className="text-xl font-semibold">Closest DNA Matches</div>
+              <div className="mt-4 space-y-3">
+                {matches.map((match) => (
+                  <div key={match.ticker} className="rounded-2xl border border-slate-800 bg-slate-950/70 p-4">
+                    <div className="flex items-start justify-between gap-2">
+                      <div className="text-2xl font-semibold">{match.ticker}</div>
+                      <div className="text-lg text-emerald-300">{match.overlap}% match</div>
+                    </div>
+                    <div className="mt-2 text-sm text-slate-300">{match.family}</div>
+                    <div className="mt-1 text-xs text-slate-400">{match.read}</div>
+                  </div>
+                ))}
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-slate-800 bg-slate-900/80 p-5">
+              <div className="text-xl font-semibold">Industry Driver Variance</div>
+              <div className="mt-4 space-y-3">
+                <MiniBar label="AI Capex" value={recordA?.ridges.sectorFit || 0} />
+                <MiniBar label="Rates" value={100 - (recordA?.ridges.realizedVol || 0)} />
+                <MiniBar label="Index Beta" value={safeRound((recordA?.ridges.relStrength || 0) * 0.85, 0)} />
+                <MiniBar label="Crowd Spec" value={safeRound(100 - (recordA?.ridges.fakeout || 0), 0)} />
+                <MiniBar label="Cycle Timing" value={safeRound((recordA?.ridges.recovery || 0) * 0.9, 0)} />
+              </div>
+            </div>
+
+            <div className="rounded-3xl border border-rose-400/30 bg-rose-500/15 p-5">
+              <div className="text-xl font-semibold text-rose-100">Portfolio Warning</div>
+              <div className="mt-3 text-sm text-rose-100/90">{duplicateWarning(overlap)}</div>
+              <div className="mt-2 text-xs text-rose-100/70">
+                If overlap is high and you already own both, treat it like same-family risk.
+              </div>
+            </div>
+          </div>
+        </div>
+      </div>
+    </div>
+  );
+}
+
+export default function LeanTerminalFinalMerged() {
+  const [loading, setLoading] = useState(true);
+  const [errors, setErrors] = useState([]);
+  const [holdingsRows, setHoldingsRows] = useState([]);
+  const [radarRows, setRadarRows] = useState([]);
+  const [radarLogRows, setRadarLogRows] = useState([]);
+  const [radarResultRows, setRadarResultRows] = useState([]);
+  const [dnaRows, setDnaRows] = useState([]);
+  const [dnaHistoryRows, setDnaHistoryRows] = useState([]);
+  const [selectedPanel, setSelectedPanel] = useState("visuals");
+  const [checkedMap, setCheckedMap] = useState({});
+  const [mode, setMode] = useState("AGG");
+  const [selectedTicker, setSelectedTicker] = useState("");
+  const [dnaOpen, setDnaOpen] = useState(false);
+
+  useEffect(() => {
+    let cancelled = false;
+    async function loadAll() {
+      setLoading(true);
+      setErrors([]);
+      const nextErrors = [];
+
+      const loadOne = async (name, url, setter, fallback, normalizer) => {
+        if (!url) {
+          if (!cancelled) setter(fallback);
+          return;
+        }
+        try {
+          const data = await fetchCSV(url);
+          const normalized = normalizer ? data.map(normalizer).filter(Boolean) : data;
+          if (!cancelled) setter(normalized);
+        } catch (err) {
+          nextErrors.push(`${name}: ${err.message}`);
+          if (!cancelled) setter(fallback);
+        }
+      };
+
+      await Promise.all([
+        loadOne("HOLDINGS", CSV_URLS.HOLDINGS, setHoldingsRows, FALLBACK_HOLDINGS, null),
+        loadOne("RADAR", CSV_URLS.RADAR, setRadarRows, FALLBACK_RADAR, null),
+        loadOne("RADAR_LOG", CSV_URLS.RADAR_LOG, setRadarLogRows, [], null),
+        loadOne("RADAR_RESULTS", CSV_URLS.RADAR_RESULTS, setRadarResultRows, [], null),
+        loadOne("DNA_EXPORT", CSV_URLS.DNA_EXPORT, setDnaRows, FALLBACK_DNA, normalizeDNARecord),
+        loadOne("DNA_HISTORY", CSV_URLS.DNA_HISTORY, setDnaHistoryRows, FALLBACK_DNA_HISTORY, normalizeDNAHistory),
+      ]);
+
+      if (!cancelled) {
+        setErrors(nextErrors);
+        setLoading(false);
+      }
+    }
+
+    loadAll();
+    const id = setInterval(loadAll, 120000);
+    return () => {
+      cancelled = true;
+      clearInterval(id);
+    };
+  }, []);
+
+  const normalizedHoldings = useMemo(() => {
+    const rows = Array.isArray(holdingsRows) && holdingsRows.length ? holdingsRows : FALLBACK_HOLDINGS;
+    return rows.map((r) => normalizeHolding(r)).filter((r) => r.ticker);
+  }, [holdingsRows]);
+
+  const universe = useMemo(() => {
+    const holdings = Array.isArray(holdingsRows) && holdingsRows.length ? holdingsRows : FALLBACK_HOLDINGS;
+    const radar = Array.isArray(radarRows) && radarRows.length ? radarRows : FALLBACK_RADAR;
+    const results = Array.isArray(radarResultRows) ? radarResultRows : [];
+    return buildMergedUniverse(holdings, radar, results);
+  }, [holdingsRows, radarRows, radarResultRows]);
+
+  const dnaRecords = useMemo(() => {
+    const rows = Array.isArray(dnaRows) && dnaRows.length ? dnaRows : FALLBACK_DNA;
+    return rows.filter(Boolean);
+  }, [dnaRows]);
+
+  const qualified = useMemo(() => universe.filter((item) => (item.score || 0) >= 75).sort((a, b) => (b.score || 0) - (a.score || 0)), [universe]);
+  const topBuys = useMemo(() => {
+    return qualified
+      .slice(0, 6)
+      .sort((a, b) => {
+        const monteDiff = (b.monte_pass || 0) - (a.monte_pass || 0);
+        return monteDiff !== 0 ? monteDiff : (b.score || 0) - (a.score || 0);
+      })
+      .slice(0, 4);
+  }, [qualified]);
+
+  const sellCandidates = useMemo(() => {
+    return normalizedHoldings
+      .filter((item) => {
+        const universeItem = universe.find((u) => u.ticker === item.ticker) || item;
+        if (topBuys.find((b) => b.ticker === item.ticker)) return false;
+        return (universeItem.score || 0) < 75 || (universeItem.risk_score || 0) >= 60 || (universeItem.chart_confidence || 0) < 60;
+      })
+      .sort((a, b) => (a.score || 0) - (b.score || 0))
+      .slice(0, 4);
+  }, [normalizedHoldings, universe, topBuys]);
+
+  const perf = useMemo(() => computePerfMetrics(universe), [universe]);
+  const radarSentiment = useMemo(() => inferNewsSentiment(radarLogRows), [radarLogRows]);
+  const themeExposure = useMemo(() => deriveThemeExposure(normalizedHoldings), [normalizedHoldings]);
+  const selectedDNA = useMemo(() => dnaRecords.find((r) => r.ticker === selectedTicker) || dnaRecords[0] || null, [dnaRecords, selectedTicker]);
+  const selectedMatches = useMemo(() => buildClosestMatches(selectedDNA, dnaRecords), [selectedDNA, dnaRecords]);
+
+  const readyScore = useMemo(() => {
+    const topScores = topBuys.map((i) => i.score || 0);
+    return Math.max(0, Math.min(100, safeRound(average(topScores), 0)));
+  }, [topBuys]);
+
+  const riskScore = useMemo(() => {
+    const avgRisk = average(universe.slice(0, 8).map((i) => i.risk_score || 45));
+    const ddPenalty = perf.maxDD * 1.4;
+    const weakChartPenalty = average(universe.slice(0, 8).map((i) => Math.max(0, 70 - (i.chart_confidence || 0)))) * 0.25;
+    return Math.max(0, Math.min(100, safeRound(avgRisk + ddPenalty + weakChartPenalty, 0)));
+  }, [universe, perf.maxDD]);
+
+  const chartConfidence = useMemo(() => Math.max(0, Math.min(100, safeRound(average(qualified.slice(0, 8).map((i) => i.chart_confidence || 0)), 0))), [qualified]);
+  const montePill = useMemo(() => Math.max(0, Math.min(100, safeRound(average(qualified.slice(0, 8).map((i) => i.monte_pass || 0)), 0))), [qualified]);
+  const plan = useMemo(() => planFromReadyRisk(readyScore, riskScore), [readyScore, riskScore]);
+  const dnaExportLive = Boolean(CSV_URLS.DNA_EXPORT);
+  const dnaHistoryLive = Boolean(CSV_URLS.DNA_HISTORY);
+  const dnaLive = dnaExportLive && dnaHistoryLive;
+
+  const checklist = useMemo(() => {
+    const items = [
+      "Confirm published CSV links",
+      "Review top 4 BUY names",
+      "Check DNA overlap before doubling same family",
+      "Review sell / trim list",
+      "Open market with size matched to RISK pill",
+    ];
+    if (!dnaLive) items.unshift("DNA is in starter mode: publish DNA_EXPORT and DNA_HISTORY CSVs to turn on live DNA.");
+    if (errors.length) items.unshift("Fix broken data links first");
+    if (riskScore >= 60) items.unshift("Risk elevated: size down new adds");
+    return items;
+  }, [errors.length, riskScore, dnaLive]);
+
+  useEffect(() => {
+    if (!selectedTicker && qualified[0]?.ticker) setSelectedTicker(qualified[0].ticker);
+  }, [selectedTicker, qualified]);
+
+  const onToggleDone = (key) => setCheckedMap((prev) => ({ ...prev, [key]: !prev[key] }));
+  const openDNA = (ticker) => {
+    setSelectedTicker(ticker);
+    setDnaOpen(true);
+  };
+
+  const exposureCap = mode === "AGG" ? 50 : 30;
+  const capBreaches = themeExposure.filter((x) => x.pct > exposureCap);
+  const selectedOverlapTop = selectedMatches[0]?.overlap || 0;
+
+  return (
+    <div className="min-h-screen bg-slate-950 text-slate-100">
+      <div className="mx-auto max-w-7xl p-3 sm:p-5">
+        <div className="mb-4 flex flex-col gap-3 rounded-3xl border border-slate-800 bg-gradient-to-br from-slate-950 via-slate-900 to-slate-950 p-4 shadow-2xl">
+          <div className="flex flex-wrap items-center justify-between gap-3">
+            <div>
+              <div className="text-[11px] uppercase tracking-[0.28em] text-slate-400">Lean Terminal</div>
+              <h1 className="mt-1 text-2xl font-bold tracking-tight">Final Merged Dashboard</h1>
+              <div className="mt-1 text-sm text-slate-400">Trimmed • DNA aware • street-speak I tab • visuals • market-open ready</div>
+            </div>
+            <div className="flex items-center gap-2">
+              <button type="button" onClick={() => setMode("LEAN")} className={classNames("rounded-full px-4 py-2 text-sm font-semibold", mode === "LEAN" ? "bg-white text-slate-950" : "bg-slate-900 text-slate-300")}>LEAN</button>
+              <button type="button" onClick={() => setMode("AGG")} className={classNames("rounded-full px-4 py-2 text-sm font-semibold", mode === "AGG" ? "bg-white text-slate-950" : "bg-slate-900 text-slate-300")}>AGG</button>
+              <button type="button" onClick={() => setDnaOpen(true)} className="rounded-full bg-emerald-500/15 px-4 py-2 text-sm font-semibold text-emerald-200 border border-emerald-400/30">Open Popup</button>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-3 md:grid-cols-6">
+            <Pill title="READY" value={readyScore} subtitle={readyScore >= 80 ? "Fast setup board" : readyScore >= 68 ? "Playable board" : "Thin board"} tone={readyScore >= 80 ? "green" : readyScore >= 68 ? "yellow" : "red"} urgent={readyScore < 60} />
+            <Pill title="RISK" value={riskScore} subtitle={riskScore <= 40 ? "Safer" : riskScore <= 55 ? "Watch size" : "Danger rising"} tone={riskScore <= 40 ? "green" : riskScore <= 55 ? "yellow" : "red"} urgent={riskScore >= 60} />
+            <Pill title="PLAN" value={plan} subtitle="System posture" tone={plan === "AGG" ? "green" : plan === "LEAN" ? "yellow" : "red"} />
+            <Pill title="MIN SCORE" value="75" subtitle="Locked qualifier" tone="blue" />
+            <Pill title="CHART CONF" value={chartConfidence} subtitle={chartConfidence >= 80 ? "Trend aligned" : chartConfidence >= 65 ? "Mixed structure" : "Chop / weak"} tone={chartConfidence >= 80 ? "green" : chartConfidence >= 65 ? "yellow" : "red"} />
+            <Pill title="MONTE" value={montePill} subtitle={montePill >= 90 ? "Graduated" : montePill >= 75 ? "Usable" : "Needs proof"} tone={montePill >= 90 ? "green" : montePill >= 75 ? "yellow" : "red"} />
+          </div>
+        </div>
+
+        <div className="grid gap-4 xl:grid-cols-[1.4fr_0.9fr]">
+          <div className="space-y-4">
+            <SectionCard title="Action Pill — Horse Race Model" right={<div className="text-xs text-slate-400">Click a ticker to open DNA. Top-ranked get BUYs.</div>}>
+              <div className="grid gap-4 lg:grid-cols-2">
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-green-300">BUY FIRST</div>
+                  <div className="space-y-2">
+                    {topBuys.length ? topBuys.map((item, idx) => {
+                      const key = `buy-${item.ticker}`;
+                      return <RankRow key={key} item={item} rank={idx + 1} allocation={BUY_ALLOCATIONS[idx] ?? null} checked={!!checkedMap[key]} onToggle={() => onToggleDone(key)} onOpenDNA={openDNA} labelOverride="🚀 BUY NOW" />;
+                    }) : <div className="rounded-2xl border border-slate-800 p-3 text-sm text-slate-400">No qualified buys above 75.</div>}
+                  </div>
+                </div>
+
+                <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-3">
+                  <div className="mb-2 text-xs font-semibold uppercase tracking-[0.2em] text-red-300">SELL / TRIM REVIEW</div>
+                  <div className="space-y-2">
+                    {sellCandidates.length ? sellCandidates.map((item) => {
+                      const key = `sell-${item.ticker}`;
+                      return (
+                        <div key={key} className="grid grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-800 bg-slate-950/70 p-3">
+                          <button type="button" onClick={() => openDNA(item.ticker)} className="text-left">
+                            <div className="flex items-center gap-2">
+                              <span className="font-semibold">{item.ticker}</span>
+                              <span className={classNames("rounded-full border px-2 py-0.5 text-[10px]", scoreColor(item.score || 0))}>Score {item.score || 0}</span>
+                            </div>
+                            <div className="mt-1 text-xs text-slate-400">Risk {safeRound(item.risk_score || 0, 0)} • Chart {safeRound(item.chart_confidence || 0, 0)}</div>
+                          </button>
+                          <label className="flex items-center gap-2 text-xs text-slate-300">
+                            <input type="checkbox" className="h-4 w-4 rounded border-slate-600 bg-slate-900" checked={!!checkedMap[key]} onChange={() => onToggleDone(key)} />
+                            Done
+                          </label>
+                        </div>
+                      );
+                    }) : <div className="rounded-2xl border border-slate-800 p-3 text-sm text-slate-400">No immediate sell review names triggered.</div>}
+                  </div>
+                </div>
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Signal Ranking" right={<div className="text-xs text-slate-400">{qualified.length} qualified above 75</div>}>
+              <div className="space-y-2">
+                {qualified.slice(0, 10).map((item, idx) => {
+                  const key = `rank-${item.ticker}`;
+                  return <RankRow key={key} item={item} rank={idx + 1} allocation={BUY_ALLOCATIONS[idx] ?? null} checked={!!checkedMap[key]} onToggle={() => onToggleDone(key)} onOpenDNA={openDNA} labelOverride="🚀 BUY NOW" />;
+                })}
+              </div>
+            </SectionCard>
+
+            <SectionCard title="Performance / Validation Engine">
+              <div className="grid gap-3 md:grid-cols-3">
+                <Pill title="Sharpe" value={perf.sharpe} subtitle="Risk-adjusted path" tone={perf.sharpe >= 1 ? "green" : perf.sharpe >= 0.3 ? "yellow" : "red"} />
+                <Pill title="Sortino" value={perf.sortino} subtitle="Downside-aware" tone={perf.sortino >= 1 ? "green" : "yellow"} />
+                <Pill title="Max DD" value={`${perf.maxDD}%`} subtitle="Worst pullback proxy" tone={perf.maxDD <= 8 ? "green" : perf.maxDD <= 16 ? "yellow" : "red"} urgent={perf.maxDD > 16} />
+                <Pill title="Win Rate" value={`${perf.winRate}%`} subtitle="Positive bar share" tone={perf.winRate >= 60 ? "green" : perf.winRate >= 50 ? "yellow" : "red"} />
+                <Pill title="Vol" value={`${perf.vol}%`} subtitle="Return spread proxy" tone={perf.vol <= 3 ? "green" : perf.vol <= 6 ? "yellow" : "red"} />
+                <Pill title="Consistency" value={perf.consistency} subtitle="Street-score stability" tone={perf.consistency >= 75 ? "green" : perf.consistency >= 60 ? "yellow" : "red"} />
+              </div>
+            </SectionCard>
+          </div>
+
+          <div className="space-y-4">
+            <SectionCard
+              title="Right Rail"
+              right={
+                <div className="flex flex-wrap gap-2">
+                  <TabButton active={selectedPanel === "visuals"} onClick={() => setSelectedPanel("visuals")}>Visuals</TabButton>
+                  <TabButton active={selectedPanel === "i"} onClick={() => setSelectedPanel("i")}>I / Street</TabButton>
+                  <TabButton active={selectedPanel === "holdings"} onClick={() => setSelectedPanel("holdings")}>Holdings</TabButton>
+                  <TabButton active={selectedPanel === "errors"} onClick={() => setSelectedPanel("errors")}>Errors</TabButton>
+                </div>
+              }
+            >
+              {selectedPanel === "visuals" && (
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+                    <div className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">Theme Exposure</div>
+                    <div className="space-y-2">
+                      {themeExposure.length ? themeExposure.map((x) => <MiniBar key={x.theme} label={x.theme} value={x.pct} />) : <div className="text-sm text-slate-400">No holdings loaded.</div>}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+                    <div className="mb-2 flex items-center justify-between text-xs uppercase tracking-[0.2em] text-slate-400">
+                      <span>DNA Watch — {selectedDNA?.ticker || "n/a"}</span>
+                      <button type="button" onClick={() => setDnaOpen(true)} className="rounded-full border border-slate-700 px-2 py-1 text-[10px] text-slate-300">Open</button>
+                    </div>
+                    {selectedDNA ? (
+                      <div className="space-y-2">
+                        <MiniBar label="DNA Score" value={selectedDNA.dnaScore} />
+                        <MiniBar label="MC Score" value={selectedDNA.mcScore} />
+                        <MiniBar label="Top overlap" value={selectedOverlapTop} />
+                        {!dnaLive ? <div className="rounded-xl border border-yellow-400/20 bg-yellow-500/10 p-2 text-[11px] text-yellow-100">Starter DNA mode — publish DNA tabs to replace fallback with live sheet data.</div> : null}
+                        <div className="rounded-xl bg-slate-950/70 p-3 text-xs text-slate-300">{selectedDNA.horseRead}</div>
+                      </div>
+                    ) : <div className="text-sm text-slate-400">No DNA rows loaded yet.</div>}
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+                    <div className="mb-2 text-xs uppercase tracking-[0.2em] text-slate-400">Engine Health</div>
+                    <div className="space-y-2">
+                      <MiniBar label="Ready board" value={readyScore} />
+                      <MiniBar label="Chart confidence" value={chartConfidence} />
+                      <MiniBar label="Monte graduation" value={montePill} />
+                      <MiniBar label="Radar sentiment" value={radarSentiment} />
+                      <MiniBar label="Consistency" value={perf.consistency} />
+                      <MiniBar label="Capital safety" value={100 - riskScore} />
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedPanel === "i" && (
+                <div className="space-y-3">
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+                    <div className="text-xs uppercase tracking-[0.2em] text-slate-400">Simple Street Explanation / I Tab</div>
+                    <div className="mt-2 text-sm leading-6 text-slate-200">
+                      {plan === "AGG"
+                        ? "Board is strong enough to lean in, but still check DNA overlap before stacking same-family names."
+                        : plan === "LEAN"
+                        ? "Board is playable, but stay selective. Buy leaders, trim laggards, and keep family overlap under control."
+                        : "Board is defensive. Protect capital first, avoid forcing fresh size, and let cleaner setups prove themselves."}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3">
+                    <div className="font-semibold">How to use it tomorrow</div>
+                    <div className="mt-2 space-y-2 text-sm text-slate-300">
+                      {checklist.map((item, idx) => <div key={idx}>• {item}</div>)}
+                    </div>
+                  </div>
+
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/60 p-3 text-sm text-slate-300">
+                    <div className="font-semibold text-white">DNA rule</div>
+                    <div className="mt-2">
+                      If two names show high overlap, do not treat them like true diversification. Pick the cleaner horse or size down both.
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {selectedPanel === "holdings" && (
+                <div className="space-y-2">
+                  {normalizedHoldings.map((item) => (
+                    <button key={item.ticker} type="button" onClick={() => openDNA(item.ticker)} className="grid w-full grid-cols-[1fr_auto] items-center gap-3 rounded-2xl border border-slate-800 bg-slate-900/60 p-3 text-left">
+                      <div>
+                        <div className="flex items-center gap-2">
+                          <span className="font-semibold text-white">{item.ticker}</span>
+                          <span className="rounded-full border border-slate-700 px-2 py-0.5 text-[10px] text-slate-300">{item.theme}</span>
+                        </div>
+                        <div className="mt-1 text-xs text-slate-400">Shares {safeRound(item.shares, 2)} • Price {compactCurrency(item.price)} • Value {compactCurrency((item.shares || 0) * (item.price || 0))}</div>
+                      </div>
+                      <div className={classNames("rounded-full border px-2 py-1 text-xs", scoreColor(item.score || 0))}>Score {item.score || 0}</div>
+                    </button>
+                  ))}
+                </div>
+              )}
+
+              {selectedPanel === "errors" && (
+                <div className="space-y-2">
+                  {!dnaLive ? (
+                    <div className="rounded-2xl border border-yellow-400/20 bg-yellow-500/10 p-3 text-sm text-yellow-100">
+                      DNA is in starter mode. Publish DNA_EXPORT and DNA_HISTORY as CSV, then paste those URLs into CSV_URLS to turn on live overlap and history.
+                    </div>
+                  ) : null}
+                  {errors.length ? errors.map((error, idx) => (
+                    <div key={idx} className="rounded-2xl border border-red-400/20 bg-red-500/10 p-3 text-sm text-red-200">{error}</div>
+                  )) : <div className="rounded-2xl border border-green-400/20 bg-green-500/10 p-3 text-sm text-green-200">No active fetch errors.</div>}
+                  <div className="rounded-2xl border border-slate-800 bg-slate-900/50 p-3 text-xs text-slate-400">
+                    No new Apps Script needed. Keep the street-speak, the I tab, and the DNA popup. Publish workbook tabs as CSV and paste those URLs into CSV_URLS.
+                  </div>
+                </div>
+              )}
+            </SectionCard>
+
+            <SectionCard title="Exposure / Cap Check">
+              <div className="text-xs text-slate-400 mb-3">{mode} theme cap = {exposureCap}%</div>
+              {capBreaches.length ? (
+                <div className="rounded-2xl border border-red-400/30 bg-red-500/10 p-3 text-sm text-red-200">
+                  Over cap: {capBreaches.map((x) => `${x.theme} ${safeRound(x.pct, 1)}%`).join(" • ")}
+                </div>
+              ) : (
+                <div className="rounded-2xl border border-green-400/20 bg-green-500/10 p-3 text-sm text-green-200">
+                  Theme exposure is within cap.
+                </div>
+              )}
+            </SectionCard>
+          </div>
+        </div>
+
+        {loading ? <div className="mt-4 rounded-2xl border border-sky-400/20 bg-sky-500/10 p-3 text-sm text-sky-200">Refreshing sheet data...</div> : null}
+      </div>
+
+      <DnaPopup
+        isOpen={dnaOpen}
+        onClose={() => setDnaOpen(false)}
+        records={dnaRecords}
+        history={dnaHistoryRows}
+        initialTicker={selectedTicker || dnaRecords[0]?.ticker}
+      />
+    </div>
+  );
+}
