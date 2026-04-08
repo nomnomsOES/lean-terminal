@@ -1,1133 +1,344 @@
-import React, { useEffect, useMemo, useState } from "react";
-
-/**
- * Lean Agg / Stock DNA Terminal
- * Final trimmed merged build
- * Date: 2026-04-06
- *
- * Notes:
- * - Single-file React component for StackBlitz / GitHub
- * - Right-side tabs preserved
- * - Visuals tab preserved
- * - "I" tab = street-speak explanations
- * - Loading Dock tab included
- * - DNA visuals kept as popup/modal
- * - Built to be easy to wire to your published Google Sheet CSV tabs
- *
- * HOW TO USE:
- * 1) Drop this into a React project as LeanAggTerminal.tsx (or keep as txt for backup)
- * 2) Render <LeanAggTerminal />
- * 3) Replace CSV_URLS with your latest links when ready
- *
- * If some tabs are not wired yet, the UI still runs with fallback mock data.
- */
+import React, { useMemo, useState } from "react";
 
 type Mode = "LEAN" | "AGG";
-type Plan = "LEAN" | "AGG";
-type SideTab =
-  | "NEWS"
-  | "ERRORS"
-  | "HOLDINGS"
-  | "VISUALS"
-  | "I"
-  | "LOADING_DOCK";
+type SideTab = "NEWS" | "ERRORS" | "HOLDINGS" | "VISUALS" | "I" | "DOCK";
 
-type DockStatus = "Approved" | "Pending" | "Rejected" | "Needs Testing";
-
-type TickerRow = {
+type Row = {
   ticker: string;
-  name?: string;
-  theme?: string;
-  price?: number;
-  changePct?: number;
-  score?: number;
-  risk?: number;
-  turboScore?: number;
-  dnaScore?: number;
-  ready?: number;
-  positionValue?: number;
-  action?: "BUY" | "SELL" | "HOLD" | "WATCH";
-  rank?: number;
-  source?: "HOLDINGS" | "RADAR";
-  notes?: string;
+  name: string;
+  score: number;
+  risk: number;
+  turbo: number;
+  dna: number;
+  ready: number;
+  action: "BUY" | "SELL" | "HOLD" | "WATCH";
+  rank: number;
+  source: "HOLDINGS" | "RADAR";
 };
 
-type DockItem = {
-  id: number;
-  item: string;
-  status: DockStatus;
-  notes?: string;
-};
-
-type PillTone = "green" | "yellow" | "red" | "blue" | "gray";
-
-const CSV_URLS = {
-  holdings:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=0&single=true&output=csv",
-  radar:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=495614439&single=true&output=csv",
-  radarLog:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=164866656&single=true&output=csv",
-  radarResults:
-    "https://docs.google.com/spreadsheets/d/e/2PACX-1vTVxYTh77y3Ql1Inf4hTfJDXODt7cgTZWtFLkAKXEkReX8i7dTqdtfXlqsRCFcvUPdAa7iJaex3R_Z3/pub?gid=922598618&single=true&output=csv",
-  engine: "",
-  ranking: "",
-  chartInput: "",
-  chartEngine: "",
-  chartHistory: "",
-  stateStats: "",
-  chartToRank: "",
-};
-
-const FALLBACK_ROWS: TickerRow[] = [
-  {
-    ticker: "PLTR",
-    name: "Palantir",
-    theme: "AI / Defense",
-    price: 38.2,
-    changePct: 1.8,
-    score: 88,
-    risk: 34,
-    turboScore: 84,
-    dnaScore: 89,
-    ready: 87,
-    positionValue: 230,
-    action: "BUY",
-    rank: 1,
-    source: "HOLDINGS",
-    notes: "Strong trend + good posture",
-  },
-  {
-    ticker: "NVDA",
-    name: "NVIDIA",
-    theme: "AI / Semis",
-    price: 121.3,
-    changePct: 0.7,
-    score: 84,
-    risk: 41,
-    turboScore: 82,
-    dnaScore: 90,
-    ready: 83,
-    positionValue: 210,
-    action: "BUY",
-    rank: 2,
-    source: "HOLDINGS",
-    notes: "Leadership still strong",
-  },
-  {
-    ticker: "REMX",
-    name: "VanEck Rare Earth/Strategic Metals ETF",
-    theme: "Materials",
-    price: 45.9,
-    changePct: -0.5,
-    score: 78,
-    risk: 46,
-    turboScore: 74,
-    dnaScore: 77,
-    ready: 75,
-    positionValue: 0,
-    action: "WATCH",
-    rank: 3,
-    source: "RADAR",
-    notes: "Radar candidate / not in play yet",
-  },
-  {
-    ticker: "TSLA",
-    name: "Tesla",
-    theme: "EV / AI",
-    price: 168.4,
-    changePct: -2.4,
-    score: 69,
-    risk: 63,
-    turboScore: 66,
-    dnaScore: 73,
-    ready: 61,
-    positionValue: 140,
-    action: "SELL",
-    rank: 6,
-    source: "HOLDINGS",
-    notes: "Below min score",
-  },
+const rows: Row[] = [
+  { ticker: "PLTR", name: "Palantir", score: 88, risk: 34, turbo: 84, dna: 89, ready: 87, action: "BUY", rank: 1, source: "HOLDINGS" },
+  { ticker: "NVDA", name: "NVIDIA", score: 84, risk: 41, turbo: 82, dna: 90, ready: 83, action: "BUY", rank: 2, source: "HOLDINGS" },
+  { ticker: "REMX", name: "Rare Earth ETF", score: 78, risk: 46, turbo: 74, dna: 77, ready: 75, action: "WATCH", rank: 3, source: "RADAR" },
+  { ticker: "TSLA", name: "Tesla", score: 69, risk: 63, turbo: 66, dna: 73, ready: 61, action: "SELL", rank: 6, source: "HOLDINGS" },
 ];
 
-const FALLBACK_DOCK: DockItem[] = [
-  { id: 1, item: "Turbo Quant pill", status: "Approved", notes: "Second-layer engine" },
-  { id: 2, item: "Agent Simulation v1", status: "Approved", notes: "Bull / bear / risk debate" },
-  { id: 3, item: "Wire Chart Ingestion", status: "Approved", notes: "Feeds rank + state tools" },
-  { id: 4, item: "Stock DNA / Key Signature Engine", status: "Approved", notes: "Fingerprint layer" },
-  { id: 5, item: "Multi-Reality Simulation Module", status: "Pending", notes: "Scenario stress test" },
-  { id: 6, item: "Temporal Pattern Engine", status: "Needs Testing", notes: "Time-of-week behavior" },
-  { id: 7, item: "Next Move Distribution Engine", status: "Needs Testing", notes: "Move until next reversal" },
-  { id: 8, item: "Unused legacy widgets", status: "Rejected", notes: "Trim redundancy" },
+const dock = [
+  { id: 1, item: "Turbo Quant pill", status: "Approved" },
+  { id: 2, item: "Agent Simulation v1", status: "Approved" },
+  { id: 3, item: "Wire Chart Ingestion", status: "Approved" },
+  { id: 4, item: "Stock DNA Engine", status: "Approved" },
+  { id: 5, item: "Multi-Reality Simulation", status: "Pending" },
 ];
 
-function classNames(...parts: Array<string | false | null | undefined>) {
-  return parts.filter(Boolean).join(" ");
+const s = {
+  page: {
+    minHeight: "100vh",
+    background: "#0b0b0f",
+    color: "#f4f4f5",
+    fontFamily: "Arial, Helvetica, sans-serif",
+    padding: 16,
+    boxSizing: "border-box" as const,
+  },
+  shell: {
+    maxWidth: 1450,
+    margin: "0 auto",
+    display: "grid",
+    gridTemplateColumns: "1fr 340px",
+    gap: 16,
+  },
+  leftCol: { display: "flex", flexDirection: "column" as const, gap: 16 },
+  rightCol: { display: "flex", flexDirection: "column" as const, gap: 12 },
+  card: {
+    background: "#15151b",
+    border: "1px solid #2a2a33",
+    borderRadius: 20,
+    padding: 16,
+    boxShadow: "0 8px 24px rgba(0,0,0,0.25)",
+  },
+  title: { fontSize: 34, fontWeight: 800 as const, margin: "8px 0 6px" },
+  sub: { fontSize: 14, color: "#a1a1aa" },
+  buttonRow: { display: "flex", gap: 8, flexWrap: "wrap" as const },
+  pillGrid: { display: "grid", gridTemplateColumns: "repeat(6, minmax(0, 1fr))", gap: 12 },
+  pill: {
+    background: "#15151b",
+    border: "1px solid #2a2a33",
+    borderRadius: 18,
+    padding: 14,
+  },
+  pillLabel: { fontSize: 11, letterSpacing: 1.6, color: "#a1a1aa", textTransform: "uppercase" as const },
+  pillValue: { fontSize: 30, fontWeight: 800 as const, marginTop: 8 },
+  pillSub: { fontSize: 12, color: "#a1a1aa", marginTop: 4 },
+  sectionTitle: { fontSize: 14, letterSpacing: 1.8, color: "#d4d4d8", textTransform: "uppercase" as const, fontWeight: 700 as const, marginBottom: 12 },
+  twoCol: { display: "grid", gridTemplateColumns: "1fr 1fr", gap: 16 },
+  listBox: { background: "#101015", border: "1px solid #2a2a33", borderRadius: 18, padding: 12 },
+  row: {
+    display: "grid",
+    gridTemplateColumns: "90px 1.2fr repeat(7, minmax(0, 1fr))",
+    gap: 12,
+    padding: "10px 12px",
+    borderBottom: "1px solid #23232b",
+    alignItems: "center",
+    fontSize: 14,
+  },
+  tableHead: {
+    display: "grid",
+    gridTemplateColumns: "90px 1.2fr repeat(7, minmax(0, 1fr))",
+    gap: 12,
+    padding: "10px 12px",
+    background: "#1a1a22",
+    borderBottom: "1px solid #2a2a33",
+    fontSize: 11,
+    color: "#a1a1aa",
+    letterSpacing: 1.4,
+    textTransform: "uppercase" as const,
+  },
+  input: {
+    background: "#101015",
+    color: "#f4f4f5",
+    border: "1px solid #2a2a33",
+    borderRadius: 12,
+    padding: "10px 12px",
+    width: 220,
+  },
+  tabGrid: { display: "grid", gridTemplateColumns: "repeat(3, 1fr)", gap: 8 },
+  tabButton: {
+    borderRadius: 14,
+    padding: "12px 10px",
+    border: "1px solid #2a2a33",
+    background: "#15151b",
+    color: "#d4d4d8",
+    fontSize: 12,
+    fontWeight: 700 as const,
+    letterSpacing: 1.2,
+    cursor: "pointer",
+  },
+};
+
+function toneBg(kind: string) {
+  if (kind === "green") return { background: "#0f2e21", border: "1px solid #1f6b4a", color: "#86efac" };
+  if (kind === "yellow") return { background: "#33260d", border: "1px solid #8a641a", color: "#fcd34d" };
+  if (kind === "red") return { background: "#351313", border: "1px solid #7f1d1d", color: "#fca5a5" };
+  if (kind === "blue") return { background: "#12263b", border: "1px solid #1d4ed8", color: "#93c5fd" };
+  return { background: "#15151b", border: "1px solid #2a2a33", color: "#f4f4f5" };
 }
 
-function toneClasses(tone: PillTone) {
-  switch (tone) {
-    case "green":
-      return "bg-emerald-500/15 text-emerald-300 border-emerald-500/30";
-    case "yellow":
-      return "bg-amber-500/15 text-amber-300 border-amber-500/30";
-    case "red":
-      return "bg-red-500/15 text-red-300 border-red-500/30";
-    case "blue":
-      return "bg-sky-500/15 text-sky-300 border-sky-500/30";
-    default:
-      return "bg-white/5 text-zinc-300 border-white/10";
-  }
+function avg(nums: number[]) {
+  return nums.length ? nums.reduce((a, b) => a + b, 0) / nums.length : 0;
 }
 
-function getReadyTone(v: number): PillTone {
-  if (v >= 85) return "green";
-  if (v >= 75) return "yellow";
-  return "red";
-}
-
-function getRiskTone(v: number): PillTone {
-  if (v <= 35) return "green";
-  if (v <= 55) return "yellow";
-  return "red";
-}
-
-function getPlan(rows: TickerRow[]): Plan {
-  const avgScore = avg(rows.map((r) => r.score ?? 0));
-  const avgRisk = avg(rows.map((r) => r.risk ?? 100));
-  if (avgScore >= 78 && avgRisk <= 48) return "AGG";
-  return "LEAN";
-}
-
-function avg(values: number[]) {
-  if (!values.length) return 0;
-  return values.reduce((a, b) => a + b, 0) / values.length;
-}
-
-function parseCSV(text: string): Record<string, string>[] {
-  const lines = text.trim().split(/\r?\n/);
-  if (!lines.length) return [];
-  const headers = splitCSVLine(lines[0]).map((h) => h.trim());
-  return lines.slice(1).map((line) => {
-    const cells = splitCSVLine(line);
-    const row: Record<string, string> = {};
-    headers.forEach((h, i) => {
-      row[h] = (cells[i] ?? "").trim();
-    });
-    return row;
-  });
-}
-
-function splitCSVLine(line: string): string[] {
-  const out: string[] = [];
-  let cur = "";
-  let inQuotes = false;
-
-  for (let i = 0; i < line.length; i += 1) {
-    const ch = line[i];
-    const next = line[i + 1];
-
-    if (ch === '"' && inQuotes && next === '"') {
-      cur += '"';
-      i += 1;
-      continue;
-    }
-
-    if (ch === '"') {
-      inQuotes = !inQuotes;
-      continue;
-    }
-
-    if (ch === "," && !inQuotes) {
-      out.push(cur);
-      cur = "";
-      continue;
-    }
-
-    cur += ch;
-  }
-
-  out.push(cur);
-  return out;
-}
-
-function toNumber(value: string | number | undefined, fallback = 0): number {
-  if (typeof value === "number") return Number.isFinite(value) ? value : fallback;
-  if (!value) return fallback;
-  const cleaned = String(value).replace(/[$,%\s]/g, "");
-  const n = Number(cleaned);
-  return Number.isFinite(n) ? n : fallback;
-}
-
-function mapHoldingRow(row: Record<string, string>): TickerRow {
-  const ticker = row.ticker || row.Ticker || row.symbol || row.Symbol || "";
-  return {
-    ticker,
-    name: row.name || row.Name || "",
-    theme: row.theme || row.Theme || "",
-    price: toNumber(row.price || row.Price),
-    changePct: toNumber(row.changePct || row.ChangePct || row["% Change"]),
-    score: toNumber(row.score || row.Score),
-    risk: toNumber(row.risk || row.Risk, 50),
-    turboScore: toNumber(row.turboScore || row.TurboScore || row.TURBO_SCORE),
-    dnaScore: toNumber(row.dnaScore || row.DNAScore || row.DNA_SCORE),
-    ready: toNumber(row.ready || row.Ready),
-    positionValue: toNumber(row.positionValue || row.PositionValue || row.Value),
-    action:
-      (row.action || row.Action || "HOLD").toUpperCase() as TickerRow["action"],
-    rank: toNumber(row.rank || row.Rank, 999),
-    source: "HOLDINGS",
-    notes: row.notes || row.Notes || "",
-  };
-}
-
-function mapRadarRow(row: Record<string, string>): TickerRow {
-  const ticker = row.ticker || row.Ticker || row.symbol || row.Symbol || "";
-  return {
-    ticker,
-    name: row.name || row.Name || "",
-    theme: row.theme || row.Theme || "",
-    price: toNumber(row.price || row.Price),
-    changePct: toNumber(row.changePct || row.ChangePct || row["% Change"]),
-    score: toNumber(row.score || row.Score),
-    risk: toNumber(row.risk || row.Risk, 55),
-    turboScore: toNumber(row.turboScore || row.TurboScore || row.TURBO_SCORE),
-    dnaScore: toNumber(row.dnaScore || row.DNAScore || row.DNA_SCORE),
-    ready: toNumber(row.ready || row.Ready),
-    positionValue: 0,
-    action:
-      (row.action || row.Action || "WATCH").toUpperCase() as TickerRow["action"],
-    rank: toNumber(row.rank || row.Rank, 999),
-    source: "RADAR",
-    notes: row.notes || row.Notes || "",
-  };
-}
-
-async function fetchCsvRows(url: string, mapper: (row: Record<string, string>) => TickerRow) {
-  if (!url) return [];
-  const res = await fetch(url);
-  if (!res.ok) {
-    throw new Error(`CSV fetch failed: ${res.status}`);
-  }
-  const text = await res.text();
-  const parsed = parseCSV(text);
-  return parsed.map(mapper).filter((r) => r.ticker);
-}
-
-function MiniBar({
-  label,
-  value,
-  max = 100,
-}: {
-  label: string;
-  value: number;
-  max?: number;
-}) {
-  const pct = Math.max(0, Math.min(100, (value / max) * 100));
+function Pill({ label, value, sub, tone = "gray" }: { label: string; value: string | number; sub: string; tone?: string }) {
   return (
-    <div className="space-y-1">
-      <div className="flex items-center justify-between text-[11px] uppercase tracking-wide text-zinc-400">
-        <span>{label}</span>
-        <span>{Math.round(value)}</span>
-      </div>
-      <div className="h-2 rounded-full bg-white/8">
-        <div
-          className="h-2 rounded-full bg-white/70 transition-all"
-          style={{ width: `${pct}%` }}
-        />
-      </div>
+    <div style={{ ...s.pill, ...toneBg(tone) }}>
+      <div style={s.pillLabel}>{label}</div>
+      <div style={s.pillValue}>{value}</div>
+      <div style={s.pillSub}>{sub}</div>
     </div>
   );
 }
 
-function Pill({
-  label,
-  value,
-  tone = "gray",
-  sub,
-}: {
-  label: string;
-  value: React.ReactNode;
-  tone?: PillTone;
-  sub?: string;
-}) {
-  return (
-    <div className={classNames("rounded-2xl border p-4", toneClasses(tone))}>
-      <div className="text-[11px] uppercase tracking-[0.2em] opacity-80">{label}</div>
-      <div className="mt-2 text-2xl font-semibold">{value}</div>
-      {sub ? <div className="mt-1 text-xs opacity-80">{sub}</div> : null}
-    </div>
-  );
-}
-
-function SectionCard({
-  title,
-  right,
-  children,
-}: {
-  title: string;
-  right?: React.ReactNode;
-  children: React.ReactNode;
-}) {
-  return (
-    <section className="rounded-3xl border border-white/10 bg-white/5 shadow-2xl shadow-black/20">
-      <div className="flex items-center justify-between border-b border-white/10 px-5 py-4">
-        <h2 className="text-sm font-semibold uppercase tracking-[0.2em] text-zinc-300">
-          {title}
-        </h2>
-        {right}
-      </div>
-      <div className="p-5">{children}</div>
-    </section>
-  );
-}
-
-function DnaModal({
-  row,
-  onClose,
-}: {
-  row: TickerRow | null;
-  onClose: () => void;
-}) {
-  if (!row) return null;
-
-  const axes = [
-    { label: "Trend", value: Math.min(100, (row.score ?? 0) + 4) },
-    { label: "Risk", value: Math.max(0, 100 - (row.risk ?? 50)) },
-    { label: "Turbo", value: row.turboScore ?? 0 },
-    { label: "DNA", value: row.dnaScore ?? 0 },
-    { label: "Ready", value: row.ready ?? 0 },
-    { label: "Behavior", value: Math.round(avg([row.score ?? 0, row.dnaScore ?? 0])) },
-  ];
-
-  return (
-    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/70 p-4">
-      <div className="w-full max-w-2xl rounded-3xl border border-white/10 bg-zinc-950 p-6 shadow-2xl">
-        <div className="mb-5 flex items-start justify-between gap-4">
-          <div>
-            <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">DNA Visual</div>
-            <div className="mt-1 text-3xl font-bold">{row.ticker}</div>
-            <div className="mt-1 text-sm text-zinc-400">
-              {row.name || "Unnamed"} · {row.theme || "No theme"}
-            </div>
-          </div>
-          <button
-            onClick={onClose}
-            className="rounded-xl border border-white/10 bg-white/5 px-3 py-2 text-sm hover:bg-white/10"
-          >
-            Close
-          </button>
-        </div>
-
-        <div className="grid gap-4 md:grid-cols-2">
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="mb-4 text-sm font-semibold text-zinc-300">Fingerprint</div>
-            <div className="space-y-3">
-              {axes.map((a) => (
-                <MiniBar key={a.label} label={a.label} value={a.value} />
-              ))}
-            </div>
-          </div>
-
-          <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-            <div className="mb-4 text-sm font-semibold text-zinc-300">Street Read</div>
-            <div className="space-y-3 text-sm text-zinc-300">
-              <p>
-                <span className="font-semibold text-white">What this means:</span>{" "}
-                this stock has its own "personality print." The higher the matching
-                bars, the more this setup looks like its stronger historical states.
-              </p>
-              <p>
-                <span className="font-semibold text-white">Use case:</span> compare
-                this popup against another stock to see who looks cleaner, safer, and
-                stronger right now.
-              </p>
-              <p>
-                <span className="font-semibold text-white">Best companion tools:</span>{" "}
-                Turbo Quant, Monte Carlo, State Score, and your regular rank engine.
-              </p>
-              <p>
-                <span className="font-semibold text-white">Current action:</span>{" "}
-                {row.action || "HOLD"} / score {Math.round(row.score ?? 0)} / risk{" "}
-                {Math.round(row.risk ?? 0)}.
-              </p>
-            </div>
-          </div>
-        </div>
-      </div>
-    </div>
-  );
-}
-
-export default function LeanAggTerminal() {
+export default function App() {
   const [mode, setMode] = useState<Mode>("LEAN");
   const [sideTab, setSideTab] = useState<SideTab>("VISUALS");
-  const [rows, setRows] = useState<TickerRow[]>(FALLBACK_ROWS);
-  const [loading, setLoading] = useState(true);
-  const [loadError, setLoadError] = useState<string>("");
-  const [selectedTicker, setSelectedTicker] = useState<TickerRow | null>(null);
-  const [buyChecks, setBuyChecks] = useState<Record<string, boolean>>({});
-  const [sellChecks, setSellChecks] = useState<Record<string, boolean>>({});
-  const [dockItems] = useState< DockItem[] >(FALLBACK_DOCK);
   const [search, setSearch] = useState("");
+  const [selected, setSelected] = useState<Row | null>(null);
 
-  useEffect(() => {
-    let cancelled = false;
-
-    async function run() {
-      setLoading(true);
-      setLoadError("");
-
-      try {
-        const [holdings, radar] = await Promise.all([
-          fetchCsvRows(CSV_URLS.holdings, mapHoldingRow).catch(() => []),
-          fetchCsvRows(CSV_URLS.radar, mapRadarRow).catch(() => []),
-        ]);
-
-        const merged = [...holdings, ...radar]
-          .filter((r) => r.ticker)
-          .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999));
-
-        if (!cancelled) {
-          if (merged.length) {
-            setRows(merged);
-          } else {
-            setRows(FALLBACK_ROWS);
-            setLoadError("Using fallback data because one or more CSV tabs are not wired yet.");
-          }
-        }
-      } catch (err) {
-        if (!cancelled) {
-          setRows(FALLBACK_ROWS);
-          setLoadError("CSV load failed. Running fallback terminal data.");
-        }
-      } finally {
-        if (!cancelled) {
-          setLoading(false);
-        }
-      }
-    }
-
-    run();
-    return () => {
-      cancelled = true;
-    };
-  }, []);
-
-  const filteredRows = useMemo(() => {
+  const filtered = useMemo(() => {
     const q = search.trim().toUpperCase();
     if (!q) return rows;
     return rows.filter(
       (r) =>
         r.ticker.toUpperCase().includes(q) ||
-        (r.name || "").toUpperCase().includes(q) ||
-        (r.theme || "").toUpperCase().includes(q)
+        r.name.toUpperCase().includes(q) ||
+        r.source.toUpperCase().includes(q)
     );
-  }, [rows, search]);
+  }, [search]);
 
-  const minScore = 75;
-  const qualified = useMemo(
-    () => filteredRows.filter((r) => (r.score ?? 0) >= minScore),
-    [filteredRows]
-  );
-
-  const buys = useMemo(
-    () => qualified.filter((r) => r.action === "BUY").sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999)),
-    [qualified]
-  );
-
-  const sells = useMemo(
-    () => filteredRows.filter((r) => r.action === "SELL").sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999)),
-    [filteredRows]
-  );
-
-  const readyValue = Math.round(avg(rows.map((r) => r.ready ?? r.score ?? 0)));
-  const riskValue = Math.round(avg(rows.map((r) => r.risk ?? 50)));
-  const plan = getPlan(rows);
-  const topTicker = [...qualified].sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))[0];
-  const aggressiveCap = 50;
-  const leanCap = 30;
-
-  const dockCounts = useMemo(() => {
-    return {
-      approved: dockItems.filter((i) => i.status === "Approved").length,
-      pending: dockItems.filter((i) => i.status === "Pending").length,
-      rejected: dockItems.filter((i) => i.status === "Rejected").length,
-      testing: dockItems.filter((i) => i.status === "Needs Testing").length,
-    };
-  }, [dockItems]);
-
-  function toggleBuyCheck(ticker: string) {
-    setBuyChecks((prev) => ({ ...prev, [ticker]: !prev[ticker] }));
-  }
-
-  function toggleSellCheck(ticker: string) {
-    setSellChecks((prev) => ({ ...prev, [ticker]: !prev[ticker] }));
-  }
+  const ready = Math.round(avg(rows.map((r) => r.ready)));
+  const risk = Math.round(avg(rows.map((r) => r.risk)));
+  const plan = ready >= 78 && risk <= 48 ? "AGG" : "LEAN";
+  const buys = filtered.filter((r) => r.action === "BUY" && r.score >= 75).sort((a, b) => a.rank - b.rank);
+  const sells = filtered.filter((r) => r.action === "SELL").sort((a, b) => a.rank - b.rank);
 
   return (
-    <div className="min-h-screen bg-zinc-950 text-white">
-      <div className="mx-auto max-w-[1600px] p-4 md:p-6">
-        <div className="grid gap-6 xl:grid-cols-[1fr_360px]">
-          {/* MAIN */}
-          <div className="space-y-6">
-            <div className="rounded-[28px] border border-white/10 bg-gradient-to-br from-white/10 to-white/[0.03] p-5 shadow-2xl shadow-black/20">
-              <div className="flex flex-col gap-4 md:flex-row md:items-center md:justify-between">
-                <div>
-                  <div className="text-xs uppercase tracking-[0.25em] text-zinc-400">
-                    Lean Agg / Stock DNA Terminal
-                  </div>
-                  <div className="mt-2 text-3xl font-bold md:text-4xl">
-                    Final Merged Dashboard
-                  </div>
-                  <div className="mt-2 text-sm text-zinc-400">
-                    Trimmed. Turnkey. Right tabs preserved. DNA visuals preserved.
-                  </div>
-                </div>
+    <div style={s.page}>
+      <div style={s.shell}>
+        <div style={s.leftCol}>
+          <div style={s.card}>
+            <div style={{ fontSize: 12, letterSpacing: 2, color: "#a1a1aa", textTransform: "uppercase" }}>Lean Agg / Stock DNA Terminal</div>
+            <div style={s.title}>Safe Render Build</div>
+            <div style={s.sub}>This version uses plain inline styles so it should render instead of giving you a white screen.</div>
+            <div style={{ ...s.buttonRow, marginTop: 16 }}>
+              <button style={{ ...s.tabButton, ...(mode === "LEAN" ? { background: "#ffffff", color: "#000000" } : {}) }} onClick={() => setMode("LEAN")}>LEAN MODE</button>
+              <button style={{ ...s.tabButton, ...(mode === "AGG" ? { background: "#ffffff", color: "#000000" } : {}) }} onClick={() => setMode("AGG")}>AGG MODE</button>
+            </div>
+          </div>
 
-                <div className="flex flex-wrap gap-2">
-                  <button
-                    onClick={() => setMode("LEAN")}
-                    className={classNames(
-                      "rounded-2xl px-4 py-2 text-sm font-semibold transition",
-                      mode === "LEAN"
-                        ? "bg-white text-black"
-                        : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                    )}
-                  >
-                    LEAN MODE
-                  </button>
-                  <button
-                    onClick={() => setMode("AGG")}
-                    className={classNames(
-                      "rounded-2xl px-4 py-2 text-sm font-semibold transition",
-                      mode === "AGG"
-                        ? "bg-white text-black"
-                        : "border border-white/10 bg-white/5 text-white hover:bg-white/10"
-                    )}
-                  >
-                    AGG MODE
-                  </button>
-                </div>
+          <div style={s.pillGrid}>
+            <Pill label="READY" value={ready} sub="Setup health" tone={ready >= 85 ? "green" : ready >= 75 ? "yellow" : "red"} />
+            <Pill label="RISK" value={risk} sub="Lower is safer" tone={risk <= 35 ? "green" : risk <= 55 ? "yellow" : "red"} />
+            <Pill label="PLAN" value={plan} sub="System suggestion" tone={plan === "AGG" ? "blue" : "yellow"} />
+            <Pill label="MODE" value={mode} sub="Manual switch" tone={mode === "AGG" ? "blue" : "gray"} />
+            <Pill label="MIN SCORE" value={75} sub="Buy cutoff" />
+            <Pill label="THEME CAP" value={mode === "AGG" ? "50%" : "30%"} sub="Locked behavior" />
+          </div>
+
+          <div style={s.card}>
+            <div style={s.sectionTitle}>Action Pill</div>
+            <div style={s.twoCol}>
+              <div style={{ ...s.listBox, border: "1px solid #1f6b4a", background: "#0d1f18" }}>
+                <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 10 }}>BUY LIST</div>
+                {buys.map((r) => (
+                  <div key={r.ticker} style={{ padding: 10, border: "1px solid #2a2a33", borderRadius: 14, marginBottom: 10, background: "#101015" }}>
+                    <div style={{ fontWeight: 800 }}>{r.ticker} #{r.rank}</div>
+                    <div style={{ color: "#a1a1aa", fontSize: 13 }}>Score {r.score} · Risk {r.risk} · {r.source}</div>
+                  </div>
+                ))}
+              </div>
+
+              <div style={{ ...s.listBox, border: "1px solid #7f1d1d", background: "#241111" }}>
+                <div style={{ fontWeight: 800, fontSize: 20, marginBottom: 10 }}>SELL LIST</div>
+                {sells.map((r) => (
+                  <div key={r.ticker} style={{ padding: 10, border: "1px solid #2a2a33", borderRadius: 14, marginBottom: 10, background: "#101015" }}>
+                    <div style={{ fontWeight: 800 }}>{r.ticker} #{r.rank}</div>
+                    <div style={{ color: "#a1a1aa", fontSize: 13 }}>Score {r.score} · Risk {r.risk} · {r.source}</div>
+                  </div>
+                ))}
               </div>
             </div>
+          </div>
 
-            <div className="grid gap-4 md:grid-cols-2 xl:grid-cols-6">
-              <Pill
-                label="READY"
-                value={`${readyValue}`}
-                tone={getReadyTone(readyValue)}
-                sub="Score-based average of setup health"
-              />
-              <Pill
-                label="RISK"
-                value={`${riskValue}`}
-                tone={getRiskTone(riskValue)}
-                sub="0–100 danger score. Lower = safer."
-              />
-              <Pill
-                label="PLAN"
-                value={plan}
-                tone={plan === "AGG" ? "blue" : "yellow"}
-                sub="System’s posture suggestion"
-              />
-              <Pill
-                label="MODE"
-                value={mode}
-                tone={mode === "AGG" ? "blue" : "gray"}
-                sub="Manual switch you control"
-              />
-              <Pill
-                label="MIN SCORE"
-                value={minScore}
-                tone="gray"
-                sub="Only 75+ qualifies for buy race"
-              />
-              <Pill
-                label="THEME CAP"
-                value={mode === "AGG" ? `${aggressiveCap}%` : `${leanCap}%`}
-                tone="gray"
-                sub="LEAN 30% / AGG 50%"
-              />
+          <div style={s.card}>
+            <div style={{ display: "flex", justifyContent: "space-between", alignItems: "center", marginBottom: 12 }}>
+              <div style={s.sectionTitle}>Rank Engine</div>
+              <input style={s.input} value={search} onChange={(e) => setSearch(e.target.value)} placeholder="Search ticker or theme" />
             </div>
 
-            <SectionCard
-              title="Action Pill"
-              right={
-                <div className="flex items-center gap-2 text-xs text-zinc-400">
-                  <span>Horse-race model</span>
-                  <span className="rounded-full border border-white/10 px-2 py-1">
-                    Top rank = strongest setup
-                  </span>
-                </div>
-              }
-            >
-              <div className="grid gap-5 lg:grid-cols-2">
-                <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-emerald-300">
-                        BUY LIST
-                      </div>
-                      <div className="mt-1 text-lg font-semibold">
-                        Top qualified names
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-emerald-500/20 px-3 py-1 text-sm text-emerald-300">
-                      {buys.length} ideas
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {buys.length ? (
-                      buys.map((row) => (
-                        <div
-                          key={`buy-${row.ticker}`}
-                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3"
-                        >
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => setSelectedTicker(row)}
-                                className="text-left text-lg font-bold hover:underline"
-                              >
-                                {row.ticker}
-                              </button>
-                              <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs text-zinc-300">
-                                #{row.rank ?? "-"}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-sm text-zinc-300">
-                              Score {Math.round(row.score ?? 0)} · Risk {Math.round(row.risk ?? 0)} ·{" "}
-                              {row.source}
-                            </div>
-                          </div>
-
-                          <label className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={!!buyChecks[row.ticker]}
-                              onChange={() => toggleBuyCheck(row.ticker)}
-                              className="h-4 w-4 rounded"
-                            />
-                            done
-                          </label>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-zinc-400">
-                        No buys above min score right now.
-                      </div>
-                    )}
-                  </div>
-                </div>
-
-                <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-4">
-                  <div className="mb-3 flex items-center justify-between">
-                    <div>
-                      <div className="text-xs uppercase tracking-[0.2em] text-red-300">
-                        SELL LIST
-                      </div>
-                      <div className="mt-1 text-lg font-semibold">
-                        Lower-ranked / weak names
-                      </div>
-                    </div>
-                    <div className="rounded-xl border border-red-500/20 px-3 py-1 text-sm text-red-300">
-                      {sells.length} ideas
-                    </div>
-                  </div>
-
-                  <div className="space-y-3">
-                    {sells.length ? (
-                      sells.map((row) => (
-                        <div
-                          key={`sell-${row.ticker}`}
-                          className="flex items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3"
-                        >
-                          <div>
-                            <div className="flex items-center gap-2">
-                              <button
-                                onClick={() => setSelectedTicker(row)}
-                                className="text-left text-lg font-bold hover:underline"
-                              >
-                                {row.ticker}
-                              </button>
-                              <span className="rounded-full border border-white/10 px-2 py-0.5 text-xs text-zinc-300">
-                                #{row.rank ?? "-"}
-                              </span>
-                            </div>
-                            <div className="mt-1 text-sm text-zinc-300">
-                              Score {Math.round(row.score ?? 0)} · Risk {Math.round(row.risk ?? 0)} ·{" "}
-                              {row.source}
-                            </div>
-                          </div>
-
-                          <label className="flex items-center gap-2 text-sm">
-                            <input
-                              type="checkbox"
-                              checked={!!sellChecks[row.ticker]}
-                              onChange={() => toggleSellCheck(row.ticker)}
-                              className="h-4 w-4 rounded"
-                            />
-                            done
-                          </label>
-                        </div>
-                      ))
-                    ) : (
-                      <div className="rounded-2xl border border-dashed border-white/10 p-4 text-sm text-zinc-400">
-                        No sells flagged right now.
-                      </div>
-                    )}
-                  </div>
-                </div>
+            <div style={{ border: "1px solid #2a2a33", borderRadius: 18, overflow: "hidden" }}>
+              <div style={s.tableHead}>
+                <div>Ticker</div>
+                <div>Name</div>
+                <div>Rank</div>
+                <div>Score</div>
+                <div>Risk</div>
+                <div>Turbo</div>
+                <div>DNA</div>
+                <div>Ready</div>
+                <div>Action</div>
               </div>
-            </SectionCard>
 
-            <SectionCard
-              title="Rank Engine"
-              right={
-                <div className="flex items-center gap-2">
-                  <input
-                    value={search}
-                    onChange={(e) => setSearch(e.target.value)}
-                    placeholder="Search ticker or theme"
-                    className="rounded-2xl border border-white/10 bg-white/5 px-3 py-2 text-sm outline-none placeholder:text-zinc-500"
-                  />
+              {filtered.map((r) => (
+                <div key={r.ticker} style={s.row}>
+                  <button onClick={() => setSelected(r)} style={{ background: "none", border: "none", color: "#f4f4f5", textAlign: "left", fontWeight: 800, cursor: "pointer" }}>
+                    {r.ticker}
+                  </button>
+                  <div>{r.name}</div>
+                  <div>{r.rank}</div>
+                  <div>{r.score}</div>
+                  <div>{r.risk}</div>
+                  <div>{r.turbo}</div>
+                  <div>{r.dna}</div>
+                  <div>{r.ready}</div>
+                  <div>{r.action}</div>
                 </div>
-              }
-            >
-              <div className="overflow-hidden rounded-2xl border border-white/10">
-                <div className="grid grid-cols-[90px_1.2fr_repeat(7,minmax(0,1fr))] gap-3 border-b border-white/10 bg-white/5 px-4 py-3 text-xs uppercase tracking-[0.2em] text-zinc-400">
-                  <div>Ticker</div>
-                  <div>Name</div>
-                  <div>Rank</div>
-                  <div>Score</div>
-                  <div>Risk</div>
-                  <div>Turbo</div>
-                  <div>DNA</div>
-                  <div>Ready</div>
-                  <div>Action</div>
-                </div>
+              ))}
+            </div>
+          </div>
+        </div>
 
-                <div className="max-h-[520px] overflow-auto">
-                  {filteredRows.map((row) => (
-                    <div
-                      key={`${row.source}-${row.ticker}`}
-                      className="grid grid-cols-[90px_1.2fr_repeat(7,minmax(0,1fr))] gap-3 border-b border-white/5 px-4 py-3 text-sm hover:bg-white/[0.03]"
-                    >
-                      <button
-                        onClick={() => setSelectedTicker(row)}
-                        className="text-left font-bold hover:underline"
-                      >
-                        {row.ticker}
-                      </button>
-                      <div className="truncate text-zinc-300">{row.name || "-"}</div>
-                      <div>{row.rank ?? "-"}</div>
-                      <div>{Math.round(row.score ?? 0)}</div>
-                      <div>{Math.round(row.risk ?? 0)}</div>
-                      <div>{Math.round(row.turboScore ?? 0)}</div>
-                      <div>{Math.round(row.dnaScore ?? 0)}</div>
-                      <div>{Math.round(row.ready ?? 0)}</div>
-                      <div>
-                        <span
-                          className={classNames(
-                            "rounded-full px-2 py-1 text-xs font-semibold",
-                            row.action === "BUY" && "bg-emerald-500/20 text-emerald-300",
-                            row.action === "SELL" && "bg-red-500/20 text-red-300",
-                            row.action === "WATCH" && "bg-amber-500/20 text-amber-300",
-                            row.action === "HOLD" && "bg-white/10 text-zinc-200"
-                          )}
-                        >
-                          {row.action}
-                        </span>
+        <div style={s.rightCol}>
+          <div style={s.tabGrid}>
+            {(["NEWS", "ERRORS", "HOLDINGS", "VISUALS", "I", "DOCK"] as SideTab[]).map((tab) => (
+              <button
+                key={tab}
+                onClick={() => setSideTab(tab)}
+                style={{ ...s.tabButton, ...(sideTab === tab ? { background: "#ffffff", color: "#000000" } : {}) }}
+              >
+                {tab}
+              </button>
+            ))}
+          </div>
+
+          <div style={s.card}>
+            {sideTab === "NEWS" && (
+              <>
+                <div style={s.sectionTitle}>News</div>
+                <div style={s.sub}>Park headlines and theme notes here later.</div>
+              </>
+            )}
+
+            {sideTab === "ERRORS" && (
+              <>
+                <div style={s.sectionTitle}>Errors</div>
+                <div style={s.sub}>This safe build has no CSV dependency, so it should render cleanly.</div>
+              </>
+            )}
+
+            {sideTab === "HOLDINGS" && (
+              <>
+                <div style={s.sectionTitle}>Holdings</div>
+                {rows.map((r) => (
+                  <div key={r.ticker} style={{ padding: 10, border: "1px solid #2a2a33", borderRadius: 14, marginBottom: 10, background: "#101015" }}>
+                    <div style={{ fontWeight: 800 }}>{r.ticker}</div>
+                    <div style={{ color: "#a1a1aa", fontSize: 13 }}>Score {r.score} · Risk {r.risk} · {r.source}</div>
+                  </div>
+                ))}
+              </>
+            )}
+
+            {sideTab === "VISUALS" && (
+              <>
+                <div style={s.sectionTitle}>Visuals</div>
+                <div style={{ fontSize: 24, fontWeight: 800 }}>{selected ? selected.ticker : "PLTR"}</div>
+                <div style={{ ...s.sub, marginTop: 8 }}>Click a ticker in the rank table to load its quick DNA read.</div>
+                <div style={{ marginTop: 16, display: "grid", gap: 10 }}>
+                  {[
+                    ["Trend", selected?.score ?? 88],
+                    ["Risk", 100 - (selected?.risk ?? 34)],
+                    ["Turbo", selected?.turbo ?? 84],
+                    ["DNA", selected?.dna ?? 89],
+                    ["Ready", selected?.ready ?? 87],
+                  ].map(([label, value]) => (
+                    <div key={String(label)}>
+                      <div style={{ display: "flex", justifyContent: "space-between", fontSize: 12, color: "#a1a1aa", marginBottom: 4 }}>
+                        <span>{label}</span><span>{value}</span>
+                      </div>
+                      <div style={{ background: "#22222c", height: 10, borderRadius: 999 }}>
+                        <div style={{ background: "#d4d4d8", width: `${value}%`, height: 10, borderRadius: 999 }} />
                       </div>
                     </div>
                   ))}
                 </div>
-              </div>
-            </SectionCard>
+              </>
+            )}
 
-            <div className="grid gap-6 lg:grid-cols-2">
-              <SectionCard title="Top 3 Winners / Bottom 3">
-                <div className="grid gap-4 md:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-3 text-sm font-semibold text-zinc-300">
-                      Winners
-                    </div>
-                    <div className="space-y-3">
-                      {[...qualified]
-                        .sort((a, b) => (a.rank ?? 999) - (b.rank ?? 999))
-                        .slice(0, 3)
-                        .map((row) => (
-                          <button
-                            key={`win-${row.ticker}`}
-                            onClick={() => setSelectedTicker(row)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3 text-left hover:bg-white/5"
-                          >
-                            <span className="font-semibold">{row.ticker}</span>
-                            <span className="text-sm text-zinc-400">#{row.rank}</span>
-                          </button>
-                        ))}
-                    </div>
-                  </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="mb-3 text-sm font-semibold text-zinc-300">
-                      Bottom 3
-                    </div>
-                    <div className="space-y-3">
-                      {[...filteredRows]
-                        .sort((a, b) => (b.rank ?? 0) - (a.rank ?? 0))
-                        .slice(0, 3)
-                        .map((row) => (
-                          <button
-                            key={`lose-${row.ticker}`}
-                            onClick={() => setSelectedTicker(row)}
-                            className="flex w-full items-center justify-between rounded-2xl border border-white/10 bg-black/20 p-3 text-left hover:bg-white/5"
-                          >
-                            <span className="font-semibold">{row.ticker}</span>
-                            <span className="text-sm text-zinc-400">#{row.rank}</span>
-                          </button>
-                        ))}
-                    </div>
-                  </div>
+            {sideTab === "I" && (
+              <>
+                <div style={s.sectionTitle}>Street Speak</div>
+                <div style={{ display: "grid", gap: 10 }}>
+                  <div style={s.sub}><b style={{ color: "#fff" }}>READY:</b> how clean the field looks.</div>
+                  <div style={s.sub}><b style={{ color: "#fff" }}>RISK:</b> danger meter. Lower is better.</div>
+                  <div style={s.sub}><b style={{ color: "#fff" }}>PLAN:</b> what the system recommends.</div>
+                  <div style={s.sub}><b style={{ color: "#fff" }}>MODE:</b> what you pick manually.</div>
+                  <div style={s.sub}><b style={{ color: "#fff" }}>DNA:</b> stock fingerprint.</div>
                 </div>
-              </SectionCard>
+              </>
+            )}
 
-              <SectionCard title="System Health">
-                <div className="grid gap-4 sm:grid-cols-2">
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-                      Dock Status Pill
-                    </div>
-                    <div className="mt-3 grid grid-cols-2 gap-3">
-                      <div className="rounded-2xl border border-emerald-500/20 bg-emerald-500/10 p-3">
-                        <div className="text-xs text-emerald-300">Approved</div>
-                        <div className="mt-1 text-2xl font-bold">{dockCounts.approved}</div>
-                      </div>
-                      <div className="rounded-2xl border border-amber-500/20 bg-amber-500/10 p-3">
-                        <div className="text-xs text-amber-300">Pending</div>
-                        <div className="mt-1 text-2xl font-bold">{dockCounts.pending}</div>
-                      </div>
-                      <div className="rounded-2xl border border-red-500/20 bg-red-500/10 p-3">
-                        <div className="text-xs text-red-300">Testing</div>
-                        <div className="mt-1 text-2xl font-bold">{dockCounts.testing}</div>
-                      </div>
-                      <div className="rounded-2xl border border-white/10 bg-white/5 p-3">
-                        <div className="text-xs text-zinc-300">Rejected</div>
-                        <div className="mt-1 text-2xl font-bold">{dockCounts.rejected}</div>
-                      </div>
-                    </div>
+            {sideTab === "DOCK" && (
+              <>
+                <div style={s.sectionTitle}>Loading Dock</div>
+                {dock.map((d) => (
+                  <div key={d.id} style={{ padding: 10, border: "1px solid #2a2a33", borderRadius: 14, marginBottom: 10, background: "#101015" }}>
+                    <div style={{ fontWeight: 800 }}>{d.id}. {d.item}</div>
+                    <div style={{ color: "#a1a1aa", fontSize: 13 }}>{d.status}</div>
                   </div>
-
-                  <div className="rounded-2xl border border-white/10 bg-white/5 p-4">
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">
-                      Quick Read
-                    </div>
-                    <div className="mt-3 space-y-3 text-sm text-zinc-300">
-                      <p>
-                        <span className="font-semibold text-white">Top horse:</span>{" "}
-                        {topTicker?.ticker || "—"}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-white">Qualified names:</span>{" "}
-                        {qualified.length}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-white">Current posture:</span>{" "}
-                        {plan}
-                      </p>
-                      <p>
-                        <span className="font-semibold text-white">Data state:</span>{" "}
-                        {loading ? "Loading..." : loadError ? "Fallback" : "Live CSV"}
-                      </p>
-                    </div>
-                  </div>
-                </div>
-              </SectionCard>
-            </div>
-          </div>
-
-          {/* RIGHT TABS */}
-          <div className="space-y-4">
-            <div className="grid grid-cols-3 gap-2">
-              {(["NEWS", "ERRORS", "HOLDINGS", "VISUALS", "I", "LOADING_DOCK"] as SideTab[]).map((tab) => (
-                <button
-                  key={tab}
-                  onClick={() => setSideTab(tab)}
-                  className={classNames(
-                    "rounded-2xl border px-3 py-3 text-xs font-semibold tracking-[0.18em] transition",
-                    sideTab === tab
-                      ? "border-white/20 bg-white text-black"
-                      : "border-white/10 bg-white/5 text-zinc-300 hover:bg-white/10"
-                  )}
-                >
-                  {tab === "LOADING_DOCK" ? "DOCK" : tab}
-                </button>
-              ))}
-            </div>
-
-            <div className="rounded-[28px] border border-white/10 bg-white/5 p-4 shadow-2xl shadow-black/20">
-              {sideTab === "NEWS" && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">News</div>
-                    <div className="mt-1 text-xl font-bold">Quick market lane</div>
-                  </div>
-                  <div className="space-y-3 text-sm text-zinc-300">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      Wire this to your news feed or radar results later.
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      Keep this for headlines, theme notes, and macro triggers.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {sideTab === "ERRORS" && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Errors</div>
-                    <div className="mt-1 text-xl font-bold">Diagnostics</div>
-                  </div>
-                  <div className="space-y-3 text-sm text-zinc-300">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      {loading ? "Loading CSV data..." : loadError || "No major load errors."}
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      Best practice: wire one CSV at a time and confirm columns before adding more modules.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {sideTab === "HOLDINGS" && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Full Holdings</div>
-                    <div className="mt-1 text-xl font-bold">Positions + radar</div>
-                  </div>
-                  <div className="max-h-[720px] space-y-3 overflow-auto pr-1">
-                    {rows.map((row) => (
-                      <button
-                        key={`hold-${row.source}-${row.ticker}`}
-                        onClick={() => setSelectedTicker(row)}
-                        className="w-full rounded-2xl border border-white/10 bg-black/20 p-3 text-left hover:bg-white/5"
-                      >
-                        <div className="flex items-center justify-between">
-                          <span className="font-semibold">{row.ticker}</span>
-                          <span className="text-xs text-zinc-400">{row.source}</span>
-                        </div>
-                        <div className="mt-1 text-sm text-zinc-400">
-                          Score {Math.round(row.score ?? 0)} · Risk {Math.round(row.risk ?? 0)}
-                        </div>
-                      </button>
-                    ))}
-                  </div>
-                </div>
-              )}
-
-              {sideTab === "VISUALS" && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Visuals</div>
-                    <div className="mt-1 text-xl font-bold">DNA-heavy lane</div>
-                  </div>
-                  <div className="space-y-3">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <div className="text-sm font-semibold">Top DNA candidate</div>
-                      <div className="mt-2 text-3xl font-bold">{topTicker?.ticker || "—"}</div>
-                      <div className="mt-2 text-sm text-zinc-400">
-                        Click any ticker in the rank table or action list to pop the DNA visual.
-                      </div>
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-4">
-                      <div className="text-sm font-semibold">Future visual adds</div>
-                      <div className="mt-2 space-y-2 text-sm text-zinc-400">
-                        <div>• DNA comparison overlay: Stock A vs Stock B</div>
-                        <div>• Correlation map</div>
-                        <div>• Cluster map</div>
-                        <div>• Monte Carlo panel</div>
-                      </div>
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {sideTab === "I" && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">I Tab</div>
-                    <div className="mt-1 text-xl font-bold">Street speak</div>
-                  </div>
-                  <div className="space-y-3 text-sm text-zinc-300">
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      <span className="font-semibold text-white">READY:</span> how clean the field looks.
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      <span className="font-semibold text-white">RISK:</span> danger meter. Lower is better.
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      <span className="font-semibold text-white">PLAN:</span> what the system recommends.
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      <span className="font-semibold text-white">MODE:</span> what you choose manually.
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      <span className="font-semibold text-white">DNA popup:</span> the stock’s fingerprint.
-                    </div>
-                    <div className="rounded-2xl border border-white/10 bg-black/20 p-3">
-                      <span className="font-semibold text-white">Horse race:</span> rank #1 is your lead horse.
-                    </div>
-                  </div>
-                </div>
-              )}
-
-              {sideTab === "LOADING_DOCK" && (
-                <div className="space-y-4">
-                  <div>
-                    <div className="text-xs uppercase tracking-[0.2em] text-zinc-400">Loading Dock</div>
-                    <div className="mt-1 text-xl font-bold">Review lane</div>
-                  </div>
-                  <div className="space-y-3">
-                    {dockItems.map((item) => (
-                      <div
-                        key={item.id}
-                        className="rounded-2xl border border-white/10 bg-black/20 p-3"
-                      >
-                        <div className="flex items-start justify-between gap-3">
-                          <div>
-                            <div className="font-semibold">
-                              {item.id}. {item.item}
-                            </div>
-                            <div className="mt-1 text-sm text-zinc-400">
-                              {item.notes || ""}
-                            </div>
-                          </div>
-                          <span
-                            className={classNames(
-                              "rounded-full px-2 py-1 text-xs font-semibold",
-                              item.status === "Approved" && "bg-emerald-500/20 text-emerald-300",
-                              item.status === "Pending" && "bg-amber-500/20 text-amber-300",
-                              item.status === "Rejected" && "bg-zinc-500/20 text-zinc-300",
-                              item.status === "Needs Testing" && "bg-red-500/20 text-red-300"
-                            )}
-                          >
-                            {item.status}
-                          </span>
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
-            </div>
+                ))}
+              </>
+            )}
           </div>
         </div>
       </div>
-
-      <DnaModal row={selectedTicker} onClose={() => setSelectedTicker(null)} />
     </div>
   );
 }
