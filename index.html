@@ -5,25 +5,37 @@
   <meta name="viewport" content="width=device-width, initial-scale=1.0" />
   <title>Lean Terminal</title>
   <style>
-    body { margin:0; background:#0b0b0f; color:white; font-family:Arial, sans-serif; }
-    .container { padding:20px; display:grid; grid-template-columns: 1fr 320px; gap:20px; }
-    .card { background:#15151b; border:1px solid #2a2a33; border-radius:16px; padding:16px; }
-    .title { font-size:28px; font-weight:bold; }
-    .sub { color:#b8b8c7; font-size:14px; margin-top:6px; }
-    .pill-row { display:flex; gap:10px; margin-top:15px; flex-wrap:wrap; }
-    .pill { padding:10px 12px; border-radius:10px; border:1px solid #333; background:#1a1a22; font-weight:700; }
-    .section { margin-top:20px; }
-    .side { display:flex; flex-direction:column; gap:10px; }
-    .row { display:grid; grid-template-columns: 120px 110px 90px 90px 110px 110px 120px; gap:10px; padding:10px; border-bottom:1px solid #222; cursor:pointer; align-items:center; }
-    .row:hover { background:#1f1f2a; }
-    .head { color:#9aa0b3; font-size:12px; text-transform:uppercase; letter-spacing:0.08em; font-weight:700; }
-    .buy { color:#4ade80; }
-    .sell { color:#f87171; }
-    .muted { color:#b8b8c7; }
-    .small { font-size:12px; color:#9aa0b3; }
-    .dna-line { margin:8px 0; }
-    .loading { color:#9aa0b3; }
-    .error { color:#f87171; white-space:pre-wrap; }
+    :root{
+      --bg:#0b0b0f; --card:#15151b; --card2:#121218; --border:#2a2a33;
+      --muted:#aeb3c7; --muted2:#8c91a6; --text:#ffffff;
+      --green:#4ade80; --red:#f87171; --yellow:#facc15; --blue:#60a5fa;
+    }
+    *{box-sizing:border-box}
+    body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
+    .container{padding:20px;display:grid;grid-template-columns:1fr 320px;gap:20px}
+    .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:16px;padding:16px}
+    .title{font-size:28px;font-weight:800}
+    .sub{color:var(--muted);font-size:14px;margin-top:6px}
+    .pill-row{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
+    .pill{padding:10px 12px;border-radius:10px;border:1px solid #333;background:#1a1a22;font-weight:700}
+    .section{margin-top:20px}
+    .side{display:flex;flex-direction:column;gap:10px}
+    .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
+    .tab-btn{padding:10px;border-radius:10px;border:1px solid #333;background:#1a1a22;color:var(--text);cursor:pointer;font-weight:700}
+    .tab-btn.active{outline:2px solid #3b3f52;background:#232330}
+    .tab-pane{display:none}
+    .tab-pane.active{display:block}
+    .row{display:grid;grid-template-columns:110px 90px 90px 90px 90px 90px 100px;gap:10px;padding:10px;border-bottom:1px solid #222;cursor:pointer;align-items:center}
+    .row:hover{background:#1f1f2a}
+    .head{color:var(--muted2);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
+    .buy{color:var(--green)} .sell{color:var(--red)} .warn{color:var(--yellow)} .bull{color:var(--green)} .bear{color:var(--red)}
+    .muted{color:var(--muted)} .small{font-size:12px;color:var(--muted2)} .error{color:var(--red);white-space:pre-wrap}
+    .dna-line{margin:8px 0}
+    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .action-box{background:#111117;border:1px solid #242432;border-radius:12px;padding:12px;min-height:120px}
+    .dock-item{padding:8px 0;border-bottom:1px solid #222}
+    .status-ok{color:var(--green)}
+    .scroll{max-height:700px;overflow:auto}
   </style>
 </head>
 <body>
@@ -32,34 +44,42 @@
     <div class="card">
       <div class="title">🚀 Lean Terminal</div>
       <div class="sub">Live Behavior + Markov Engine</div>
-    </div>
-
-    <div class="pill-row">
-      <div class="pill">READY: <span id="ready">...</span></div>
-      <div class="pill">RISK: <span id="risk">...</span></div>
-      <div class="pill">PLAN: <span id="plan">...</span></div>
-      <div class="pill">BULLS: <span id="bulls">...</span></div>
-      <div class="pill">BEARS: <span id="bears">...</span></div>
+      <div class="pill-row">
+        <div class="pill">READY: <span id="ready">...</span></div>
+        <div class="pill">RISK: <span id="risk">...</span></div>
+        <div class="pill">PLAN: <span id="plan">...</span></div>
+        <div class="pill">BULLS: <span id="bulls">...</span></div>
+        <div class="pill">BEARS: <span id="bears">...</span></div>
+        <div class="pill">QUALIFIED: <span id="qualified">...</span></div>
+      </div>
     </div>
 
     <div class="card section">
       <h3>🐎 Action</h3>
-      <div id="buyList" class="muted">Loading...</div>
-      <div id="sellList" class="muted" style="margin-top:10px;">Loading...</div>
+      <div class="action-grid">
+        <div class="action-box">
+          <div class="buy"><b>BUY</b></div>
+          <div id="buyList" class="muted" style="margin-top:8px">Loading...</div>
+        </div>
+        <div class="action-box">
+          <div class="sell"><b>SELL</b></div>
+          <div id="sellList" class="muted" style="margin-top:8px">Loading...</div>
+        </div>
+      </div>
     </div>
 
     <div class="card section">
       <h3>📊 Rank Engine</h3>
       <div class="row head">
         <div>Ticker</div>
-        <div>Rank Score</div>
+        <div>Rank</div>
         <div>Action</div>
         <div>Bias</div>
         <div>Markov</div>
         <div>React</div>
         <div>Next Move</div>
       </div>
-      <div id="rankTable" class="loading">Loading...</div>
+      <div id="rankTable" class="scroll small">Loading...</div>
     </div>
 
     <div class="card section">
@@ -69,16 +89,35 @@
   </div>
 
   <div class="side">
-    <div class="card">
-      <h3>📈 DNA</h3>
+    <div class="tabs">
+      <button class="tab-btn active" data-tab="dna">DNA</button>
+      <button class="tab-btn" data-tab="i">I</button>
+      <button class="tab-btn" data-tab="dock">Dock</button>
+    </div>
+
+    <div class="card tab-pane active" id="tab-dna">
+      <h3>📈 DNA / Visuals</h3>
       <div id="dna">Click a stock</div>
     </div>
 
-    <div class="card">
+    <div class="card tab-pane" id="tab-i">
       <h3>🧠 I</h3>
-      <div>READY = average behavior health</div>
-      <div>RISK = danger / instability</div>
-      <div>PLAN = overall posture</div>
+      <div class="dna-line"><b>READY</b> = average behavior health</div>
+      <div class="dna-line"><b>RISK</b> = danger / instability</div>
+      <div class="dna-line"><b>PLAN</b> = overall posture</div>
+      <div class="dna-line"><b>MARKOV</b> = state tilt right now</div>
+      <div class="dna-line"><b>REACT</b> = move quality score</div>
+      <div class="dna-line"><b>NEXT MOVE</b> = avg expected next-step drift</div>
+    </div>
+
+    <div class="card tab-pane" id="tab-dock">
+      <h3>📦 Loading Dock</h3>
+      <div class="dock-item"><span class="status-ok">Approved</span> — Reaction Strength</div>
+      <div class="dock-item"><span class="status-ok">Approved</span> — Follow Through Score</div>
+      <div class="dock-item"><span class="status-ok">Approved</span> — Continuation Flag</div>
+      <div class="dock-item"><span class="status-ok">Approved</span> — Markov bias layer</div>
+      <div class="dock-item"><span class="warn">Pending</span> — Avg time to reversal fill</div>
+      <div class="dock-item"><span class="warn">Pending</span> — Volume spike wiring</div>
     </div>
   </div>
 </div>
@@ -91,228 +130,165 @@ const URLS = {
   dna: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj1Scw8W5DGikJ5_sPzrjQ-cf2Non1IR7VO9phD7tKPXduZT35yLh5PwYOrawynS/pub?gid=425314096&single=true&output=csv"
 };
 
-function parseCSV(text) {
-  const rows = [];
-  let row = [], cell = "", inQuotes = false;
-  for (let i = 0; i < text.length; i++) {
-    const ch = text[i];
-    const next = text[i + 1];
-    if (ch === '"') {
-      if (inQuotes && next === '"') { cell += '"'; i++; }
-      else inQuotes = !inQuotes;
-    } else if (ch === ',' && !inQuotes) {
-      row.push(cell); cell = "";
-    } else if ((ch === '\n' || ch === '\r') && !inQuotes) {
-      if (ch === '\r' && next === '\n') i++;
-      row.push(cell);
-      if (row.some(v => v !== "")) rows.push(row);
-      row = []; cell = "";
-    } else {
-      cell += ch;
-    }
+function parseCSV(text){
+  const rows=[]; let row=[], cell="", q=false;
+  for(let i=0;i<text.length;i++){
+    const ch=text[i], nx=text[i+1];
+    if(ch === '"'){ if(q && nx === '"'){ cell += '"'; i++; } else { q=!q; } }
+    else if(ch === ',' && !q){ row.push(cell); cell=""; }
+    else if((ch === '\n' || ch === '\r') && !q){
+      if(ch === '\r' && nx === '\n') i++;
+      row.push(cell); if(row.some(v=>v!=="")) rows.push(row);
+      row=[]; cell="";
+    } else cell += ch;
   }
-  if (cell.length || row.length) {
-    row.push(cell);
-    if (row.some(v => v !== "")) rows.push(row);
-  }
-  if (!rows.length) return [];
-  const headers = rows[0].map(h => String(h || "").trim());
-  return rows.slice(1).map(r => {
-    const obj = {};
-    headers.forEach((h, i) => obj[h] = (r[i] ?? "").trim());
-    return obj;
-  }).filter(obj => Object.values(obj).some(v => v !== ""));
+  if(cell.length || row.length){ row.push(cell); if(row.some(v=>v!=="")) rows.push(row); }
+  if(!rows.length) return [];
+  const headers=rows[0].map(x=>String(x||"").trim());
+  return rows.slice(1).map(r=>{
+    const obj={}; headers.forEach((h,i)=>obj[h]=(r[i]??"").trim()); return obj;
+  }).filter(o=>Object.values(o).some(v=>v!==""));
+}
+function get(row, keys){ for(const k of keys){ if(row && row[k]!==undefined && row[k]!== "") return row[k]; } return ""; }
+function num(v){ if(v===null||v===undefined||v==="") return 0; const x=Number(String(v).replace(/[%,$]/g,"")); return Number.isFinite(x)?x:0; }
+function fmtNum(v){ const n=Number(v); return Number.isFinite(n)?n.toFixed(2):"-"; }
+function fmtPct(v){ const n=Number(v); return Number.isFinite(n)?(n*100).toFixed(2)+"%":"-"; }
+async function fetchCsv(url){ const r=await fetch(url); if(!r.ok) throw new Error("Failed fetch "+url); return parseCSV(await r.text()); }
+function setStatus(msg, err=false){ const el=document.getElementById("status"); el.textContent=msg; el.className=err?"error":"small"; }
+
+function activateTabs(){
+  document.querySelectorAll(".tab-btn").forEach(btn=>{
+    btn.addEventListener("click",()=>{
+      document.querySelectorAll(".tab-btn").forEach(b=>b.classList.remove("active"));
+      document.querySelectorAll(".tab-pane").forEach(p=>p.classList.remove("active"));
+      btn.classList.add("active");
+      document.getElementById("tab-"+btn.dataset.tab).classList.add("active");
+    });
+  });
 }
 
-function get(row, keys) {
-  for (const key of keys) {
-    if (row && row[key] !== undefined && row[key] !== "") return row[key];
-  }
-  return "";
-}
+function buildMerged(actionRows, rankRows, markovRows, dnaRows){
+  const byTicker={};
+  const ensure=t=>{ if(!t) return null; if(!byTicker[t]) byTicker[t]={ticker:t}; return byTicker[t]; };
 
-function num(v) {
-  if (v === null || v === undefined || v === "") return 0;
-  const x = Number(String(v).replace(/[%,$]/g, ""));
-  return Number.isFinite(x) ? x : 0;
-}
-
-function fmtPct(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "-";
-  return (n * 100).toFixed(2) + "%";
-}
-
-function fmtNum(v) {
-  const n = Number(v);
-  if (!Number.isFinite(n)) return "-";
-  return n.toFixed(2);
-}
-
-async function fetchCsv(url) {
-  const res = await fetch(url);
-  if (!res.ok) throw new Error("Failed fetch: " + url);
-  const text = await res.text();
-  return parseCSV(text);
-}
-
-function setStatus(msg, isError=false) {
-  const el = document.getElementById("status");
-  el.textContent = msg;
-  el.className = isError ? "error" : "small";
-}
-
-function buildMerged(actionRows, rankRows, markovRows, dnaRows) {
-  const byTicker = {};
-
-  function ensure(ticker) {
-    if (!ticker) return null;
-    if (!byTicker[ticker]) byTicker[ticker] = { ticker };
-    return byTicker[ticker];
-  }
-
-  actionRows.forEach(r => {
-    const ticker = get(r, ["TICKER","Ticker","ticker","SYMBOL","Symbol"]);
-    const o = ensure(ticker); if (!o) return;
-    o.action = get(r, ["FINAL_ACTION","ACTION","Action","action"]);
-    o.risk = num(get(r, ["RISK","RISK_SCORE","RISK_PILL","risk"]));
-    o.reaction = num(get(r, ["REACTION_STRENGTH","reaction_strength"]));
-    o.follow = num(get(r, ["FOLLOW_THROUGH_SCORE","follow_through_score"]));
-    o.contFlag = num(get(r, ["CONTINUATION_FLAG","continuation_flag"]));
-    o.actionScore = num(get(r, ["FINAL_SCORE","TOTAL_SCORE","BASE_SCORE","SCORE","score"]));
+  actionRows.forEach(r=>{
+    const t=get(r,["TICKER","Ticker","ticker","SYMBOL","Symbol"]);
+    const o=ensure(t); if(!o) return;
+    o.action=get(r,["FINAL_ACTION","ACTION","Action","action"]);
+    o.risk=num(get(r,["RISK","RISK_SCORE","RISK_PILL","risk"]));
+    o.reaction=num(get(r,["REACTION_STRENGTH","reaction_strength"]));
+    o.follow=num(get(r,["FOLLOW_THROUGH_SCORE","follow_through_score"]));
+    o.contFlag=num(get(r,["CONTINUATION_FLAG","continuation_flag"]));
+    o.actionScore=num(get(r,["FINAL_SCORE","TOTAL_SCORE","BASE_SCORE","SCORE","score"]));
   });
 
-  rankRows.forEach(r => {
-    const ticker = get(r, ["TICKER","Ticker","ticker","SYMBOL","Symbol"]);
-    const o = ensure(ticker); if (!o) return;
-    o.rankScore = num(get(r, [
-      "FINAL_RANK_SCORE","RANK_SCORE","FINAL_SCORE","TOTAL_SCORE","SCORE","score","BASE_SCORE"
-    ]));
-    o.rank = get(r, ["RANK","Rank","rank"]);
+  rankRows.forEach(r=>{
+    const t=get(r,["TICKER","Ticker","ticker","SYMBOL","Symbol"]);
+    const o=ensure(t); if(!o) return;
+    o.rankScore=num(get(r,["FINAL_RANK_SCORE","RANK_SCORE","FINAL_SCORE","TOTAL_SCORE","SCORE","score","BASE_SCORE"]));
+    o.rank=get(r,["RANK","Rank","rank"]);
   });
 
-  markovRows.forEach(r => {
-    const ticker = get(r, ["TICKER","Ticker","ticker"]);
-    const o = ensure(ticker); if (!o) return;
-    o.currentState = get(r, ["CURRENT_STATE","CURRENT_STA","STATE"]);
-    o.bias = get(r, ["BIAS","bias"]);
-    o.markov = num(get(r, ["MARKOV_SCORE","MARKOV_SCOR","score"]));
-    o.avgNext = num(get(r, ["AVG_NEXT_MOVE_%","AVG_NEXT_MOVE","NEXT_MOVE_AVG"]));
-    o.contRate = num(get(r, ["CONTINUATION_RATE","CONT_RATE"]));
-    o.exhRate = num(get(r, ["EXHAUSTION_RATE","EXH_RATE"]));
-    o.upProb = num(get(r, ["UP_PROB"]));
-    o.flatProb = num(get(r, ["FLAT_PROB"]));
-    o.downProb = num(get(r, ["DOWN_PROB"]));
+  markovRows.forEach(r=>{
+    const t=get(r,["TICKER","Ticker","ticker"]);
+    const o=ensure(t); if(!o) return;
+    o.currentState=get(r,["CURRENT_STATE","CURRENT_STA","STATE"]);
+    o.bias=get(r,["BIAS","bias"]);
+    o.markov=num(get(r,["MARKOV_SCORE","MARKOV_SCOR","score"]));
+    o.avgNext=num(get(r,["AVG_NEXT_MOVE_%","AVG_NEXT_MOVE","NEXT_MOVE_AVG"]));
+    o.contRate=num(get(r,["CONTINUATION_RATE","CONT_RATE"]));
+    o.exhRate=num(get(r,["EXHAUSTION_RATE","EXH_RATE"]));
   });
 
-  dnaRows.forEach(r => {
-    const ticker = get(r, ["TICKER","Ticker","ticker","SYMBOL","Symbol"]);
-    const o = ensure(ticker); if (!o) return;
-    o.dnaScore = num(get(r, ["DNA_SCORE","DNAScore","DNA","SCORE"]));
+  dnaRows.forEach(r=>{
+    const t=get(r,["TICKER","Ticker","ticker","SYMBOL","Symbol"]);
+    const o=ensure(t); if(!o) return;
+    o.dnaScore=num(get(r,["DNA_SCORE","DNAScore","DNA","SCORE"]));
   });
 
-  return Object.values(byTicker)
-    .filter(x => x.ticker)
-    .sort((a,b) => (b.rankScore || 0) - (a.rankScore || 0));
+  return Object.values(byTicker).filter(x=>x.ticker).sort((a,b)=>(b.rankScore||0)-(a.rankScore||0));
 }
 
-function renderPills(rows) {
-  const readyBase = rows.map(r => (r.reaction || 0) + (r.follow || 0)).filter(v => Number.isFinite(v));
-  const ready = readyBase.length ? (readyBase.reduce((a,b)=>a+b,0) / readyBase.length) : 0;
-
-  const riskBase = rows.map(r => r.risk).filter(v => Number.isFinite(v));
-  const risk = riskBase.length ? (riskBase.reduce((a,b)=>a+b,0) / riskBase.length) : 0;
-
-  const bulls = rows.filter(r => r.bias === "BULL").length;
-  const bears = rows.filter(r => r.bias === "BEAR").length;
-  const plan = bulls > bears ? "AGG" : "LEAN";
-
-  document.getElementById("ready").textContent = fmtNum(ready);
-  document.getElementById("risk").textContent = fmtNum(risk);
-  document.getElementById("plan").textContent = plan;
-  document.getElementById("bulls").textContent = bulls;
-  document.getElementById("bears").textContent = bears;
+function renderPills(rows){
+  const readyVals=rows.map(r=>(r.reaction||0)+(r.follow||0)).filter(Number.isFinite);
+  const ready=readyVals.length?readyVals.reduce((a,b)=>a+b,0)/readyVals.length:0;
+  const riskVals=rows.map(r=>r.risk).filter(Number.isFinite);
+  const risk=riskVals.length?riskVals.reduce((a,b)=>a+b,0)/riskVals.length:0;
+  const bulls=rows.filter(r=>r.bias==="BULL").length;
+  const bears=rows.filter(r=>r.bias==="BEAR").length;
+  const qualified=rows.filter(r=>(r.rankScore||0)>0 || (r.action||"").toUpperCase()==="BUY").length;
+  const plan=bulls>bears?"AGG":"LEAN";
+  document.getElementById("ready").textContent=fmtNum(ready);
+  document.getElementById("risk").textContent=fmtNum(risk);
+  document.getElementById("plan").textContent=plan;
+  document.getElementById("bulls").textContent=bulls;
+  document.getElementById("bears").textContent=bears;
+  document.getElementById("qualified").textContent=qualified;
 }
 
-function renderAction(rows) {
-  const buys = rows.filter(r => (r.action || "").toUpperCase() === "BUY").slice(0, 10);
-  const sells = rows.filter(r => (r.action || "").toUpperCase() === "SELL").slice(0, 10);
-
-  document.getElementById("buyList").innerHTML =
-    "<b class='buy'>BUY:</b><br>" +
-    (buys.length ? buys.map(r => `${r.ticker} · score ${fmtNum(r.rankScore || r.actionScore || 0)}`).join("<br>") : "None");
-
-  document.getElementById("sellList").innerHTML =
-    "<b class='sell'>SELL:</b><br>" +
-    (sells.length ? sells.map(r => `${r.ticker} · score ${fmtNum(r.rankScore || r.actionScore || 0)}`).join("<br>") : "None");
+function renderAction(rows){
+  const buys=rows.filter(r=>(r.action||"").toUpperCase()==="BUY").slice(0,10);
+  const sells=rows.filter(r=>(r.action||"").toUpperCase()==="SELL").slice(0,10);
+  document.getElementById("buyList").innerHTML = buys.length ? buys.map(r=>`${r.ticker} · score ${fmtNum(r.rankScore||r.actionScore||0)} · ${r.bias||"-"}`).join("<br>") : "None";
+  document.getElementById("sellList").innerHTML = sells.length ? sells.map(r=>`${r.ticker} · score ${fmtNum(r.rankScore||r.actionScore||0)} · ${r.bias||"-"}`).join("<br>") : "None";
 }
 
-function renderRank(rows) {
-  const table = document.getElementById("rankTable");
-  if (!rows.length) {
-    table.innerHTML = "<div class='error'>No rows found. Check CSV headers / publish links.</div>";
-    return;
-  }
-
-  table.innerHTML = rows.slice(0, 30).map(r => `
-    <div class="row" onclick="showDNA('${r.ticker}')">
+function renderRank(rows){
+  const el=document.getElementById("rankTable");
+  if(!rows.length){ el.innerHTML='<div class="error">No rows found. Check CSV publish links.</div>'; return; }
+  el.innerHTML=rows.slice(0,40).map(r=>{
+    const action=(r.action||"-").toUpperCase();
+    const actionCls=action==="BUY"?"buy":(action==="SELL"?"sell":"");
+    const biasCls=r.bias==="BULL"?"bull":(r.bias==="BEAR"?"bear":"");
+    return `<div class="row" onclick="showDNA('${r.ticker}')">
       <div><b>${r.ticker}</b></div>
-      <div>${fmtNum(r.rankScore || r.actionScore || 0)}</div>
-      <div class="${(r.action || '').toUpperCase() === 'BUY' ? 'buy' : ((r.action || '').toUpperCase() === 'SELL' ? 'sell' : '')}">${r.action || '-'}</div>
-      <div>${r.bias || '-'}</div>
-      <div>${fmtNum(r.markov || 0)}</div>
-      <div>${fmtNum(r.reaction || 0)}</div>
-      <div>${fmtPct(r.avgNext || 0)}</div>
-    </div>
-  `).join("");
+      <div>${fmtNum(r.rankScore||r.actionScore||0)}</div>
+      <div class="${actionCls}">${action}</div>
+      <div class="${biasCls}">${r.bias||"-"}</div>
+      <div>${fmtNum(r.markov||0)}</div>
+      <div>${fmtNum(r.reaction||0)}</div>
+      <div>${fmtPct(r.avgNext||0)}</div>
+    </div>`;
+  }).join("");
 }
 
-let MERGED = [];
-
-function showDNA(ticker) {
-  const r = MERGED.find(x => x.ticker === ticker);
-  if (!r) return;
+let MERGED=[];
+function showDNA(ticker){
+  const r=MERGED.find(x=>x.ticker===ticker); if(!r) return;
   document.getElementById("dna").innerHTML = `
     <div class="dna-line"><b>${r.ticker}</b></div>
-    <div class="dna-line">Action: ${r.action || "-"}</div>
-    <div class="dna-line">Bias: ${r.bias || "-"}</div>
-    <div class="dna-line">Markov Score: ${fmtNum(r.markov || 0)}</div>
-    <div class="dna-line">Reaction Strength: ${fmtNum(r.reaction || 0)}</div>
-    <div class="dna-line">Follow Through: ${fmtNum(r.follow || 0)}</div>
-    <div class="dna-line">Continuation Flag: ${fmtNum(r.contFlag || 0)}</div>
-    <div class="dna-line">Avg Next Move: ${fmtPct(r.avgNext || 0)}</div>
-    <div class="dna-line">DNA Score: ${fmtNum(r.dnaScore || 0)}</div>
+    <div class="dna-line">Action: ${r.action||"-"}</div>
+    <div class="dna-line">Bias: ${r.bias||"-"}</div>
+    <div class="dna-line">Markov Score: ${fmtNum(r.markov||0)}</div>
+    <div class="dna-line">Reaction Strength: ${fmtNum(r.reaction||0)}</div>
+    <div class="dna-line">Follow Through: ${fmtNum(r.follow||0)}</div>
+    <div class="dna-line">Continuation Flag: ${fmtNum(r.contFlag||0)}</div>
+    <div class="dna-line">Avg Next Move: ${fmtPct(r.avgNext||0)}</div>
+    <div class="dna-line">Continuation Rate: ${fmtPct(r.contRate||0)}</div>
+    <div class="dna-line">Exhaustion Rate: ${fmtPct(r.exhRate||0)}</div>
+    <div class="dna-line">DNA Score: ${fmtNum(r.dnaScore||0)}</div>
   `;
 }
-window.showDNA = showDNA;
+window.showDNA=showDNA;
 
-async function init() {
-  try {
+async function init(){
+  activateTabs();
+  try{
     setStatus("Loading ACTION_ENGINE, RANKING_EXPORT, MARKOV_CURRENT, DNA_EXPORT...");
     const [actionRows, rankRows, markovRows, dnaRows] = await Promise.all([
-      fetchCsv(URLS.action),
-      fetchCsv(URLS.ranking),
-      fetchCsv(URLS.markov),
-      fetchCsv(URLS.dna)
+      fetchCsv(URLS.action), fetchCsv(URLS.ranking), fetchCsv(URLS.markov), fetchCsv(URLS.dna)
     ]);
-
-    MERGED = buildMerged(actionRows, rankRows, markovRows, dnaRows);
-    renderPills(MERGED);
-    renderAction(MERGED);
-    renderRank(MERGED);
-
-    setStatus(
-      `Loaded rows — action: ${actionRows.length}, ranking: ${rankRows.length}, markov: ${markovRows.length}, dna: ${dnaRows.length}, merged tickers: ${MERGED.length}`
-    );
-  } catch (err) {
+    MERGED=buildMerged(actionRows, rankRows, markovRows, dnaRows);
+    renderPills(MERGED); renderAction(MERGED); renderRank(MERGED);
+    setStatus(`Loaded rows — action: ${actionRows.length}, ranking: ${rankRows.length}, markov: ${markovRows.length}, dna: ${dnaRows.length}, merged tickers: ${MERGED.length}`);
+  }catch(err){
     console.error(err);
-    setStatus("Error loading terminal. " + err.message, true);
-    document.getElementById("rankTable").innerHTML = "<div class='error'>Failed to load data. Check CSV publish links.</div>";
-    document.getElementById("buyList").textContent = "Load error";
-    document.getElementById("sellList").textContent = "Load error";
+    setStatus("Error loading terminal. "+err.message, true);
+    document.getElementById("rankTable").innerHTML='<div class="error">Failed to load data. Check CSV publish links.</div>';
+    document.getElementById("buyList").textContent="Load error";
+    document.getElementById("sellList").textContent="Load error";
   }
 }
-
 init();
 </script>
 </body>
