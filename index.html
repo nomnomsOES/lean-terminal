@@ -9,45 +9,69 @@
       --bg:#0b0b0f; --card:#15151b; --card2:#121218; --border:#2a2a33;
       --muted:#aeb3c7; --muted2:#8c91a6; --text:#ffffff;
       --green:#4ade80; --red:#f87171; --yellow:#facc15; --blue:#60a5fa;
+      --tab:#1a1a22; --tabActive:#262633;
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-    .container{padding:20px;display:grid;grid-template-columns:1fr 320px;gap:20px}
+    .container{padding:20px;display:grid;grid-template-columns:1fr 340px;gap:20px}
     .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:16px;padding:16px}
     .title{font-size:28px;font-weight:800}
     .sub{color:var(--muted);font-size:14px;margin-top:6px}
     .pill-row{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
     .pill{padding:10px 12px;border-radius:10px;border:1px solid #333;background:#1a1a22;font-weight:700}
+    .pill.good{color:var(--green)}
+    .pill.bad{color:var(--red)}
+    .pill.neutral{color:var(--yellow)}
     .section{margin-top:20px}
     .side{display:flex;flex-direction:column;gap:10px}
-    .tabs{display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px}
-    .tab-btn{padding:10px;border-radius:10px;border:1px solid #333;background:#1a1a22;color:var(--text);cursor:pointer;font-weight:700}
-    .tab-btn.active{outline:2px solid #3b3f52;background:#232330}
+    .tabs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+    .tab-btn{padding:10px;border-radius:10px;border:1px solid #333;background:var(--tab);color:var(--text);cursor:pointer;font-weight:700}
+    .tab-btn.active{outline:2px solid #3b3f52;background:var(--tabActive)}
     .tab-pane{display:none}
     .tab-pane.active{display:block}
-    .row{display:grid;grid-template-columns:110px 90px 90px 90px 90px 90px 100px;gap:10px;padding:10px;border-bottom:1px solid #222;cursor:pointer;align-items:center}
+    .toggle-wrap{display:flex;gap:8px}
+    .toggle-btn{padding:10px 14px;border-radius:10px;border:1px solid #333;background:var(--tab);color:var(--text);cursor:pointer;font-weight:700}
+    .toggle-btn.active{background:#f3f4f6;color:#111827}
+    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
+    .action-box{background:#111117;border:1px solid #242432;border-radius:12px;padding:12px;min-height:160px}
+    .action-item{display:grid;grid-template-columns:70px 80px 1fr 88px;gap:10px;align-items:center;padding:8px 0;border-bottom:1px solid #222}
+    .action-item:last-child{border-bottom:none}
+    .execute-btn{padding:8px 10px;border-radius:8px;border:1px solid #3a3a45;background:#232330;color:white;cursor:pointer;font-weight:700}
+    .execute-btn:hover{background:#2b2b39}
+    .row{display:grid;grid-template-columns:90px 80px 80px 80px 80px 80px 90px 90px;gap:10px;padding:10px;border-bottom:1px solid #222;cursor:pointer;align-items:center}
     .row:hover{background:#1f1f2a}
     .head{color:var(--muted2);font-size:12px;text-transform:uppercase;letter-spacing:.08em;font-weight:700}
     .buy{color:var(--green)} .sell{color:var(--red)} .warn{color:var(--yellow)} .bull{color:var(--green)} .bear{color:var(--red)}
     .muted{color:var(--muted)} .small{font-size:12px;color:var(--muted2)} .error{color:var(--red);white-space:pre-wrap}
     .dna-line{margin:8px 0}
-    .action-grid{display:grid;grid-template-columns:1fr 1fr;gap:16px}
-    .action-box{background:#111117;border:1px solid #242432;border-radius:12px;padding:12px;min-height:120px}
     .dock-item{padding:8px 0;border-bottom:1px solid #222}
     .status-ok{color:var(--green)}
-    .scroll{max-height:700px;overflow:auto}
+    .scroll{max-height:760px;overflow:auto}
+    .mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+    .mini-card{background:#111117;border:1px solid #242432;border-radius:12px;padding:10px}
+    .mt8{margin-top:8px}
   </style>
 </head>
 <body>
 <div class="container">
   <div>
     <div class="card">
-      <div class="title">🚀 Lean Terminal</div>
-      <div class="sub">Live Behavior + Markov Engine</div>
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;gap:16px;flex-wrap:wrap;">
+        <div>
+          <div class="title">🚀 Lean Terminal</div>
+          <div class="sub">Restore_A shell · live behavior + markov engine</div>
+        </div>
+        <div class="toggle-wrap">
+          <button class="toggle-btn active" id="modeLeanBtn" onclick="setMode('LEAN')">LEAN</button>
+          <button class="toggle-btn" id="modeAggBtn" onclick="setMode('AGG')">AGG</button>
+        </div>
+      </div>
+
       <div class="pill-row">
-        <div class="pill">READY: <span id="ready">...</span></div>
-        <div class="pill">RISK: <span id="risk">...</span></div>
-        <div class="pill">PLAN: <span id="plan">...</span></div>
+        <div class="pill" id="readyPill">READY: <span id="ready">...</span></div>
+        <div class="pill" id="riskPill">RISK: <span id="risk">...</span></div>
+        <div class="pill" id="planPill">PLAN: <span id="plan">...</span></div>
+        <div class="pill">MODE: <span id="modeLabel">LEAN</span></div>
         <div class="pill">BULLS: <span id="bulls">...</span></div>
         <div class="pill">BEARS: <span id="bears">...</span></div>
         <div class="pill">QUALIFIED: <span id="qualified">...</span></div>
@@ -56,14 +80,15 @@
 
     <div class="card section">
       <h3>🐎 Action</h3>
-      <div class="action-grid">
+      <div class="small">Manual mode controls qualification and sizing. PLAN stays as system suggestion.</div>
+      <div class="action-grid mt8">
         <div class="action-box">
           <div class="buy"><b>BUY</b></div>
-          <div id="buyList" class="muted" style="margin-top:8px">Loading...</div>
+          <div id="buyList" class="muted mt8">Loading...</div>
         </div>
         <div class="action-box">
           <div class="sell"><b>SELL</b></div>
-          <div id="sellList" class="muted" style="margin-top:8px">Loading...</div>
+          <div id="sellList" class="muted mt8">Loading...</div>
         </div>
       </div>
     </div>
@@ -77,7 +102,8 @@
         <div>Bias</div>
         <div>Markov</div>
         <div>React</div>
-        <div>Next Move</div>
+        <div>Next</div>
+        <div>Size</div>
       </div>
       <div id="rankTable" class="scroll small">Loading...</div>
     </div>
@@ -85,29 +111,50 @@
     <div class="card section">
       <h3>🛠 Status</h3>
       <div id="status" class="small">Loading CSVs...</div>
+      <div class="mini-grid mt8">
+        <div class="mini-card">
+          <div class="small">Lean Rules</div>
+          <div id="leanRules">Threshold 0.70 react · 3 max buys · $100 base</div>
+        </div>
+        <div class="mini-card">
+          <div class="small">Agg Rules</div>
+          <div id="aggRules">Threshold 0.40 react · 6 max buys · $150 base</div>
+        </div>
+      </div>
     </div>
   </div>
 
   <div class="side">
     <div class="tabs">
       <button class="tab-btn active" data-tab="dna">DNA</button>
+      <button class="tab-btn" data-tab="visuals">Visuals</button>
       <button class="tab-btn" data-tab="i">I</button>
       <button class="tab-btn" data-tab="dock">Dock</button>
     </div>
 
     <div class="card tab-pane active" id="tab-dna">
-      <h3>📈 DNA / Visuals</h3>
+      <h3>📈 DNA</h3>
       <div id="dna">Click a stock</div>
+    </div>
+
+    <div class="card tab-pane" id="tab-visuals">
+      <h3>🧬 Visuals</h3>
+      <div class="dna-line"><b>Top Bull:</b> <span id="topBull">-</span></div>
+      <div class="dna-line"><b>Top Bear:</b> <span id="topBear">-</span></div>
+      <div class="dna-line"><b>Highest Reaction:</b> <span id="topReact">-</span></div>
+      <div class="dna-line"><b>Best Next Move:</b> <span id="topNext">-</span></div>
     </div>
 
     <div class="card tab-pane" id="tab-i">
       <h3>🧠 I</h3>
       <div class="dna-line"><b>READY</b> = average behavior health</div>
       <div class="dna-line"><b>RISK</b> = danger / instability</div>
-      <div class="dna-line"><b>PLAN</b> = overall posture</div>
+      <div class="dna-line"><b>PLAN</b> = system posture suggestion</div>
+      <div class="dna-line"><b>MODE</b> = your manual switch</div>
       <div class="dna-line"><b>MARKOV</b> = state tilt right now</div>
       <div class="dna-line"><b>REACT</b> = move quality score</div>
-      <div class="dna-line"><b>NEXT MOVE</b> = avg expected next-step drift</div>
+      <div class="dna-line"><b>NEXT</b> = average expected next-step drift</div>
+      <div class="dna-line"><b>SIZE</b> = rough action amount, not broker-linked execution</div>
     </div>
 
     <div class="card tab-pane" id="tab-dock">
@@ -118,6 +165,7 @@
       <div class="dock-item"><span class="status-ok">Approved</span> — Markov bias layer</div>
       <div class="dock-item"><span class="warn">Pending</span> — Avg time to reversal fill</div>
       <div class="dock-item"><span class="warn">Pending</span> — Volume spike wiring</div>
+      <div class="dock-item"><span class="warn">Pending</span> — Broker-side execute integration</div>
     </div>
   </div>
 </div>
@@ -128,6 +176,14 @@ const URLS = {
   ranking: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj1Scw8W5DGikJ5_sPzrjQ-cf2Non1IR7VO9phD7tKPXduZT35yLh5PwYOrawynS/pub?gid=2095403822&single=true&output=csv",
   markov: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj1Scw8W5DGikJ5_sPzrjQ-cf2Non1IR7VO9phD7tKPXduZT35yLh5PwYOrawynS/pub?gid=643415500&single=true&output=csv",
   dna: "https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj1Scw8W5DGikJ5_sPzrjQ-cf2Non1IR7VO9phD7tKPXduZT35yLh5PwYOrawynS/pub?gid=425314096&single=true&output=csv"
+};
+
+let MODE = "LEAN";
+let MERGED = [];
+
+const MODE_RULES = {
+  LEAN: { reactionMin: 0.70, maxBuys: 3, baseSize: 100, markovMin: 1, nextMoveMin: -0.001 },
+  AGG:  { reactionMin: 0.40, maxBuys: 6, baseSize: 150, markovMin: 0, nextMoveMin: -0.005 }
 };
 
 function parseCSV(text){
@@ -198,6 +254,9 @@ function buildMerged(actionRows, rankRows, markovRows, dnaRows){
     o.avgNext=num(get(r,["AVG_NEXT_MOVE_%","AVG_NEXT_MOVE","NEXT_MOVE_AVG"]));
     o.contRate=num(get(r,["CONTINUATION_RATE","CONT_RATE"]));
     o.exhRate=num(get(r,["EXHAUSTION_RATE","EXH_RATE"]));
+    o.upProb=num(get(r,["UP_PROB"]));
+    o.flatProb=num(get(r,["FLAT_PROB"]));
+    o.downProb=num(get(r,["DOWN_PROB"]));
   });
 
   dnaRows.forEach(r=>{
@@ -209,6 +268,33 @@ function buildMerged(actionRows, rankRows, markovRows, dnaRows){
   return Object.values(byTicker).filter(x=>x.ticker).sort((a,b)=>(b.rankScore||0)-(a.rankScore||0));
 }
 
+function calcPlan(rows){
+  const bulls=rows.filter(r=>r.bias==="BULL").length;
+  const bears=rows.filter(r=>r.bias==="BEAR").length;
+  return bulls>bears?"AGG":"LEAN";
+}
+
+function calcSize(row){
+  const rules=MODE_RULES[MODE];
+  const strength=Math.max(0.5, Math.min(2.0, (row.reaction||0) + ((row.follow||0)/2)));
+  return Math.round(rules.baseSize * strength);
+}
+
+function qualifiesBuy(row){
+  const rules=MODE_RULES[MODE];
+  if((row.bias||"") !== "BULL") return false;
+  if((row.markov||0) < rules.markovMin) return false;
+  if((row.reaction||0) < rules.reactionMin) return false;
+  if((row.avgNext||0) < rules.nextMoveMin) return false;
+  return true;
+}
+
+function qualifiesSell(row){
+  if((row.action||"").toUpperCase()==="SELL") return true;
+  if((row.bias||"") === "BEAR" && (row.markov||0) < 0) return true;
+  return false;
+}
+
 function renderPills(rows){
   const readyVals=rows.map(r=>(r.reaction||0)+(r.follow||0)).filter(Number.isFinite);
   const ready=readyVals.length?readyVals.reduce((a,b)=>a+b,0)/readyVals.length:0;
@@ -216,21 +302,47 @@ function renderPills(rows){
   const risk=riskVals.length?riskVals.reduce((a,b)=>a+b,0)/riskVals.length:0;
   const bulls=rows.filter(r=>r.bias==="BULL").length;
   const bears=rows.filter(r=>r.bias==="BEAR").length;
-  const qualified=rows.filter(r=>(r.rankScore||0)>0 || (r.action||"").toUpperCase()==="BUY").length;
-  const plan=bulls>bears?"AGG":"LEAN";
+  const qualified=rows.filter(r=>qualifiesBuy(r)).length;
+  const plan=calcPlan(rows);
+
   document.getElementById("ready").textContent=fmtNum(ready);
   document.getElementById("risk").textContent=fmtNum(risk);
   document.getElementById("plan").textContent=plan;
   document.getElementById("bulls").textContent=bulls;
   document.getElementById("bears").textContent=bears;
   document.getElementById("qualified").textContent=qualified;
+  document.getElementById("modeLabel").textContent=MODE;
+
+  document.getElementById("readyPill").className="pill " + (ready>=1.5 ? "good" : ready>=1.0 ? "neutral" : "bad");
+  document.getElementById("riskPill").className="pill " + (risk<=0 ? "good" : risk<1 ? "neutral" : "bad");
+  document.getElementById("planPill").className="pill " + (plan==="AGG" ? "good" : "neutral");
 }
 
 function renderAction(rows){
-  const buys=rows.filter(r=>(r.action||"").toUpperCase()==="BUY").slice(0,10);
-  const sells=rows.filter(r=>(r.action||"").toUpperCase()==="SELL").slice(0,10);
-  document.getElementById("buyList").innerHTML = buys.length ? buys.map(r=>`${r.ticker} · score ${fmtNum(r.rankScore||r.actionScore||0)} · ${r.bias||"-"}`).join("<br>") : "None";
-  document.getElementById("sellList").innerHTML = sells.length ? sells.map(r=>`${r.ticker} · score ${fmtNum(r.rankScore||r.actionScore||0)} · ${r.bias||"-"}`).join("<br>") : "None";
+  const rules=MODE_RULES[MODE];
+  const buys=rows.filter(qualifiesBuy).slice(0, rules.maxBuys);
+  const sells=rows.filter(qualifiesSell).slice(0, rules.maxBuys);
+
+  const buyHTML = buys.length ? buys.map(r => `
+    <div class="action-item">
+      <div><b>${r.ticker}</b></div>
+      <div>$${calcSize(r)}</div>
+      <div>${r.bias||"-"} · react ${fmtNum(r.reaction||0)}</div>
+      <button class="execute-btn" onclick="toggleExec(this,'${r.ticker}','BUY',$${0})">EXECUTE</button>
+    </div>
+  `.replace('$'+0, calcSize(r))).join("") : "None";
+
+  const sellHTML = sells.length ? sells.map(r => `
+    <div class="action-item">
+      <div><b>${r.ticker}</b></div>
+      <div>$${calcSize(r)}</div>
+      <div>${r.bias||"-"} · markov ${fmtNum(r.markov||0)}</div>
+      <button class="execute-btn" onclick="toggleExec(this,'${r.ticker}','SELL',$${0})">EXECUTE</button>
+    </div>
+  `.replace('$'+0, calcSize(r))).join("") : "None";
+
+  document.getElementById("buyList").innerHTML = buyHTML;
+  document.getElementById("sellList").innerHTML = sellHTML;
 }
 
 function renderRank(rows){
@@ -248,11 +360,21 @@ function renderRank(rows){
       <div>${fmtNum(r.markov||0)}</div>
       <div>${fmtNum(r.reaction||0)}</div>
       <div>${fmtPct(r.avgNext||0)}</div>
+      <div>$${calcSize(r)}</div>
     </div>`;
   }).join("");
+
+  const bulls = rows.filter(r=>r.bias==="BULL").sort((a,b)=>(b.rankScore||0)-(a.rankScore||0));
+  const bears = rows.filter(r=>r.bias==="BEAR").sort((a,b)=>(b.rankScore||0)-(a.rankScore||0));
+  const reacts = [...rows].sort((a,b)=>(b.reaction||0)-(a.reaction||0));
+  const nexts = [...rows].sort((a,b)=>(b.avgNext||0)-(a.avgNext||0));
+
+  document.getElementById("topBull").textContent = bulls[0] ? `${bulls[0].ticker} (${fmtNum(bulls[0].rankScore||0)})` : "-";
+  document.getElementById("topBear").textContent = bears[0] ? `${bears[0].ticker} (${fmtNum(bears[0].rankScore||0)})` : "-";
+  document.getElementById("topReact").textContent = reacts[0] ? `${reacts[0].ticker} (${fmtNum(reacts[0].reaction||0)})` : "-";
+  document.getElementById("topNext").textContent = nexts[0] ? `${nexts[0].ticker} (${fmtPct(nexts[0].avgNext||0)})` : "-";
 }
 
-let MERGED=[];
 function showDNA(ticker){
   const r=MERGED.find(x=>x.ticker===ticker); if(!r) return;
   document.getElementById("dna").innerHTML = `
@@ -267,9 +389,36 @@ function showDNA(ticker){
     <div class="dna-line">Continuation Rate: ${fmtPct(r.contRate||0)}</div>
     <div class="dna-line">Exhaustion Rate: ${fmtPct(r.exhRate||0)}</div>
     <div class="dna-line">DNA Score: ${fmtNum(r.dnaScore||0)}</div>
+    <div class="dna-line">Mode Size: $${calcSize(r)}</div>
   `;
 }
 window.showDNA=showDNA;
+
+function toggleExec(btn, ticker, side, amount){
+  if(btn.dataset.done === "1"){
+    btn.dataset.done = "0";
+    btn.textContent = "EXECUTE";
+    btn.style.background = "#232330";
+  } else {
+    btn.dataset.done = "1";
+    btn.textContent = "DONE";
+    btn.style.background = "#1f5133";
+  }
+  setStatus(`${side} ${ticker} queued at $${amount} in ${MODE} mode`);
+}
+
+function setMode(mode){
+  MODE = mode;
+  document.getElementById("modeLeanBtn").classList.toggle("active", mode==="LEAN");
+  document.getElementById("modeAggBtn").classList.toggle("active", mode==="AGG");
+  document.getElementById("modeLabel").textContent = mode;
+  if(MERGED.length){
+    renderPills(MERGED);
+    renderAction(MERGED);
+    renderRank(MERGED);
+  }
+}
+window.setMode=setMode;
 
 async function init(){
   activateTabs();
