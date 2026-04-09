@@ -1,54 +1,202 @@
 <!DOCTYPE html>
 <html>
 <head>
-  <title>Lean Terminal</title>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>Lean Terminal Option B</title>
   <style>
-    body {
-      margin: 0;
-      background: #0b0b0f;
-      color: white;
-      font-family: Arial;
-    }
-    .container {
-      padding: 20px;
-    }
-    .card {
-      background: #15151b;
-      border: 1px solid #2a2a33;
-      border-radius: 16px;
-      padding: 16px;
-      margin-bottom: 16px;
-    }
-    .title {
-      font-size: 28px;
-      font-weight: bold;
-    }
-    .pill-row {
-      display: flex;
-      gap: 10px;
-      margin-top: 15px;
-    }
-    .pill {
-      padding: 10px;
-      border-radius: 10px;
-      border: 1px solid #333;
-      background: #1a1a22;
-    }
+    body{margin:0;background:#0b0b0f;color:#fff;font-family:Arial,sans-serif}
+    .wrap{padding:18px;display:grid;grid-template-columns:1fr 340px;gap:18px}
+    .card{background:#15151b;border:1px solid #2a2a33;border-radius:16px;padding:16px}
+    .title{font-size:34px;font-weight:800}
+    .sub{color:#b4b4bd;margin-top:6px}
+    .pills{display:flex;gap:10px;flex-wrap:wrap;margin-top:14px}
+    .pill{background:#1a1a22;border:1px solid #333;border-radius:12px;padding:12px 14px}
+    .section{margin-top:18px}
+    .row{display:grid;grid-template-columns:100px 1fr 100px 100px 140px;gap:10px;padding:10px;border-bottom:1px solid #222;cursor:pointer}
+    .row:hover{background:#1f1f2a}
+    .hdr{font-weight:700;color:#b4b4bd}
+    .buy{color:#4ade80}.sell{color:#f87171}.watch{color:#fbbf24}
+    .tabs button{width:100%;margin-bottom:10px;padding:12px;border-radius:12px;border:1px solid #333;background:#1a1a22;color:white;cursor:pointer}
+    .small{font-size:13px;color:#b4b4bd}
+    @media (max-width: 980px){.wrap{grid-template-columns:1fr}}
   </style>
 </head>
-
 <body>
-  <div class="container">
+<div class="wrap">
+  <div>
     <div class="card">
-      <div class="title">🚀 Lean Terminal LIVE</div>
-      <div>This confirms everything is working.</div>
+      <div class="title">🚀 Lean Terminal Option B</div>
+      <div class="sub">Behavior-driven version wired for ACTION_ENGINE, RANKING_EXPORT, MARKOV_CURRENT, DNA_EXPORT CSV feeds.</div>
+      <div class="pills">
+        <div class="pill">READY: <span id="ready">-</span></div>
+        <div class="pill">RISK: <span id="risk">-</span></div>
+        <div class="pill">PLAN: <span id="plan">-</span></div>
+        <div class="pill">TOP HORSE: <span id="topHorse">-</span></div>
+      </div>
     </div>
 
-    <div class="pill-row">
-      <div class="pill">READY: 82</div>
-      <div class="pill">RISK: 41</div>
-      <div class="pill">PLAN: LEAN</div>
+    <div class="card section">
+      <h3>🐎 Action</h3>
+      <div id="buyList" class="small">Waiting for CSV...</div>
+      <div id="sellList" class="small" style="margin-top:10px;">Waiting for CSV...</div>
+    </div>
+
+    <div class="card section">
+      <h3>📊 Rank Engine</h3>
+      <div class="row hdr"><div>Ticker</div><div>Theme</div><div>Score</div><div>Risk</div><div>Action</div></div>
+      <div id="rankTable"></div>
     </div>
   </div>
+
+  <div>
+    <div class="tabs">
+      <button onclick="showPanel('dna')">DNA</button>
+      <button onclick="showPanel('street')">I</button>
+      <button onclick="showPanel('dock')">Dock</button>
+    </div>
+    <div class="card" id="panel">
+      <div id="panelContent">Click a stock once the CSV is loaded.</div>
+    </div>
+  </div>
+</div>
+
+<script>
+const CSV_URLS = {
+  action: "",
+  ranking: "",
+  markov: "",
+  dna: ""
+};
+
+let ACTION_ROWS = [];
+let RANK_ROWS = [];
+let MARKOV_ROWS = [];
+let DNA_ROWS = [];
+let CURRENT = null;
+
+function parseCSV(text){
+  const lines = text.trim().split(/\r?\n/);
+  if(!lines.length) return [];
+  const headers = splitCSV(lines[0]);
+  return lines.slice(1).map(line=>{
+    const cells = splitCSV(line);
+    const obj = {};
+    headers.forEach((h,i)=>obj[h]=cells[i] ?? "");
+    return obj;
+  });
+}
+
+function splitCSV(line){
+  const out=[]; let cur=""; let q=false;
+  for(let i=0;i<line.length;i++){
+    const ch=line[i], next=line[i+1];
+    if(ch === '"' && q && next === '"'){ cur += '"'; i++; continue; }
+    if(ch === '"'){ q=!q; continue; }
+    if(ch === ',' && !q){ out.push(cur); cur=""; continue; }
+    cur += ch;
+  }
+  out.push(cur);
+  return out;
+}
+
+function num(v){
+  const n = Number(String(v||"").replace(/[$,% ]/g,""));
+  return Number.isFinite(n) ? n : 0;
+}
+
+async function loadCsv(url){
+  if(!url) return [];
+  const res = await fetch(url);
+  if(!res.ok) throw new Error("CSV load failed");
+  const txt = await res.text();
+  return parseCSV(txt);
+}
+
+async function init(){
+  try{
+    [ACTION_ROWS, RANK_ROWS, MARKOV_ROWS, DNA_ROWS] = await Promise.all([
+      loadCsv(CSV_URLS.action),
+      loadCsv(CSV_URLS.ranking),
+      loadCsv(CSV_URLS.markov),
+      loadCsv(CSV_URLS.dna)
+    ]);
+  }catch(err){
+    document.getElementById("buyList").innerHTML = "CSV load issue. Paste your published CSV links into the CSV_URLS block.";
+    return;
+  }
+
+  const source = ACTION_ROWS.length ? ACTION_ROWS : RANK_ROWS;
+  if(!source.length){
+    document.getElementById("buyList").innerHTML = "No rows found in the CSV feeds yet.";
+    return;
+  }
+
+  const ready = Math.round(source.reduce((a,r)=>a+num(r.Score || r.score),0)/source.length);
+  const risk = Math.round(source.reduce((a,r)=>a+Math.max(0,100-num(r.Markov_Score || r.MARKOV_SCORE || 0)),0)/source.length);
+  document.getElementById("ready").innerText = ready;
+  document.getElementById("risk").innerText = risk;
+  document.getElementById("plan").innerText = (ready >= 78 && risk <= 48) ? "AGG" : "LEAN";
+
+  const sorted = [...source].sort((a,b)=>num(a.Rank || a.rank || 999)-num(b.Rank || b.rank || 999));
+  document.getElementById("topHorse").innerText = (sorted[0].Ticker || sorted[0].ticker || "-");
+
+  const buys = source.filter(r => String(r.FINAL_ACTION || r.Action || r.action || "").toUpperCase().includes("BUY")).slice(0,5);
+  const sells = source.filter(r => String(r.FINAL_ACTION || r.Action || r.action || "").toUpperCase().includes("SELL")).slice(0,5);
+
+  document.getElementById("buyList").innerHTML = "<b class='buy'>BUY</b><br>" + (buys.map(r => `${r.Ticker || r.ticker} · ${r.Reason || r.Theme || ""}`).join("<br>") || "No buy rows");
+  document.getElementById("sellList").innerHTML = "<b class='sell'>SELL</b><br>" + (sells.map(r => `${r.Ticker || r.ticker} · ${r.Reason || r.Theme || ""}`).join("<br>") || "No sell rows");
+
+  document.getElementById("rankTable").innerHTML = sorted.slice(0,20).map(r => {
+    const ticker = r.Ticker || r.ticker || "";
+    return `<div class="row" onclick="pickTicker('${ticker}')">
+      <div>${ticker}</div>
+      <div>${r.Theme || r.theme || "-"}</div>
+      <div>${r.Score || r.score || "-"}</div>
+      <div>${r.Markov_Score || r.MARKOV_SCORE || r.risk || "-"}</div>
+      <div class="${String(r.FINAL_ACTION || r.Action || r.action || '').toLowerCase()}">${r.FINAL_ACTION || r.Action || r.action || "-"}</div>
+    </div>`;
+  }).join("");
+}
+
+function pickTicker(ticker){
+  CURRENT = ticker;
+  const mark = MARKOV_ROWS.find(r => (r.TICKER || r.Ticker || "") === ticker) || {};
+  const dna = DNA_ROWS.find(r => (r.Ticker || r.TICKER || "") === ticker) || {};
+  document.getElementById("panelContent").innerHTML = `
+    <h3>${ticker}</h3>
+    <div class="small">Markov bias: ${mark.BIAS || "-"}</div>
+    <div class="small">Markov score: ${mark.MARKOV_SCORE || mark.Markov_Score || "-"}</div>
+    <div class="small">Avg next move: ${mark["AVG_NEXT_MOVE_%"] || "-"}</div>
+    <div class="small">Continuation rate: ${mark["CONTINUATION_RATE"] || "-"}</div>
+    <div class="small" style="margin-top:10px;">DNA note: ${dna.Note || dna.Notes || dna.Theme || "-"}</div>
+  `;
+}
+
+function showPanel(panel){
+  if(panel === "street"){
+    document.getElementById("panelContent").innerHTML = `
+      <h3>Street Speak</h3>
+      <div class="small">READY = how clean the field looks.</div>
+      <div class="small">RISK = danger meter.</div>
+      <div class="small">PLAN = system posture suggestion.</div>
+      <div class="small">CONTINUATION FLAG = move likely to keep pushing.</div>
+    `;
+  } else if(panel === "dock"){
+    document.getElementById("panelContent").innerHTML = `
+      <h3>Loading Dock</h3>
+      <div class="small">Post-Move Behavior Tracker ✅</div>
+      <div class="small">Continuation vs Exhaustion ✅</div>
+      <div class="small">Reaction Strength ✅</div>
+      <div class="small">Pattern Memory Layer ⏳ pending</div>
+    `;
+  } else {
+    if(CURRENT) pickTicker(CURRENT);
+    else document.getElementById("panelContent").innerHTML = "Click a stock from the rank table.";
+  }
+}
+
+init();
+</script>
 </body>
 </html>
