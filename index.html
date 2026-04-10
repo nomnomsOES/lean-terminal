@@ -13,15 +13,13 @@
     }
     *{box-sizing:border-box}
     body{margin:0;background:var(--bg);color:var(--text);font-family:Arial,sans-serif}
-    .container{padding:20px;display:grid;grid-template-columns:1fr 340px;gap:20px}
+    .container{padding:20px;display:grid;grid-template-columns:1fr 360px;gap:20px}
     .card{background:linear-gradient(180deg,var(--card),var(--card2));border:1px solid var(--border);border-radius:16px;padding:16px}
     .title{font-size:28px;font-weight:800}
     .sub{color:var(--muted);font-size:14px;margin-top:6px}
     .pill-row{display:flex;gap:10px;margin-top:15px;flex-wrap:wrap}
     .pill{padding:10px 12px;border-radius:10px;border:1px solid #333;background:#1a1a22;font-weight:700}
-    .pill.good{color:var(--green)}
-    .pill.bad{color:var(--red)}
-    .pill.neutral{color:var(--yellow)}
+    .pill.good{color:var(--green)} .pill.bad{color:var(--red)} .pill.neutral{color:var(--yellow)}
     .section{margin-top:20px}
     .side{display:flex;flex-direction:column;gap:10px}
     .tabs{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
@@ -50,6 +48,28 @@
     .mini-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px}
     .mini-card{background:#111117;border:1px solid #242432;border-radius:12px;padding:10px}
     .mt8{margin-top:8px}
+    .dna-top{display:grid;grid-template-columns:1.4fr 1fr;gap:16px}
+    .dna-hero{background:#0d1530;border:1px solid #22304f;border-radius:14px;padding:14px}
+    .dna-pills{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:10px}
+    .dna-pill{padding:8px 10px;border-radius:10px;background:#1e2c46;border:1px solid #2f456f;font-size:13px;font-weight:700}
+    .dna-grid{display:grid;grid-template-columns:1fr 1fr;gap:10px;margin-top:12px}
+    .dna-card{background:#10182f;border:1px solid #22304f;border-radius:12px;padding:12px}
+    .bar-label{display:flex;justify-content:space-between;font-size:12px;color:#d6d9e8;margin-top:8px}
+    .bar{height:8px;background:#1c2942;border-radius:999px;overflow:hidden;margin-top:4px}
+    .bar > span{display:block;height:100%;background:#9cd6b2}
+    .match-item{padding:10px 0;border-bottom:1px solid #22304f}
+    .warning-card{background:#341223;border:1px solid #6c2845;border-radius:12px;padding:12px}
+    .compare-box{margin-top:12px;background:#111117;border:1px solid #242432;border-radius:12px;padding:12px}
+    .compare-controls{display:grid;grid-template-columns:1fr 1fr auto;gap:10px}
+    .compare-select{background:#1a1a22;border:1px solid #333;color:white;border-radius:8px;padding:8px}
+    .compare-result{margin-top:12px}
+    .holdings-item{display:grid;grid-template-columns:70px 1fr 70px;gap:8px;align-items:center;padding:8px 0;border-bottom:1px solid #222;cursor:pointer}
+    .holdings-item:hover{background:#1f1f2a}
+    @media (max-width: 1200px){
+      .container{grid-template-columns:1fr}
+      .dna-top{grid-template-columns:1fr}
+      .action-grid{grid-template-columns:1fr}
+    }
   </style>
 </head>
 <body>
@@ -133,8 +153,36 @@
     </div>
 
     <div class="card tab-pane active" id="tab-dna">
-      <h3>📈 DNA</h3>
-      <div id="dna">Click a stock</div>
+      <h3>📈 Stock DNA / Key Signature</h3>
+      <div class="small">Click a stock from rankings or holdings. Compare mode supports 2 tickers.</div>
+      <div class="dna-top mt8">
+        <div class="dna-hero">
+          <div id="dna">Click a stock</div>
+        </div>
+        <div>
+          <div class="dna-card">
+            <h4 style="margin:0 0 8px 0">Closest DNA Matches</h4>
+            <div id="dnaMatches" class="small">Select a stock</div>
+          </div>
+          <div class="warning-card mt8">
+            <h4 style="margin:0 0 8px 0">Portfolio Warning</h4>
+            <div id="dnaWarning" class="small">Select a stock</div>
+          </div>
+        </div>
+      </div>
+
+      <div class="compare-box">
+        <div style="display:flex;justify-content:space-between;align-items:center;gap:8px;flex-wrap:wrap;">
+          <b>Compare Mode</b>
+          <div class="small">Compare 2 tickers</div>
+        </div>
+        <div class="compare-controls mt8">
+          <select id="compareA" class="compare-select"></select>
+          <select id="compareB" class="compare-select"></select>
+          <button class="execute-btn" onclick="runCompare()">Compare</button>
+        </div>
+        <div id="compareResult" class="compare-result small">Choose 2 tickers</div>
+      </div>
     </div>
 
     <div class="card tab-pane" id="tab-visuals">
@@ -143,6 +191,7 @@
       <div class="dna-line"><b>Top Bear:</b> <span id="topBear">-</span></div>
       <div class="dna-line"><b>Highest Reaction:</b> <span id="topReact">-</span></div>
       <div class="dna-line"><b>Best Next Move:</b> <span id="topNext">-</span></div>
+      <div class="dna-line"><b>Selected:</b> <span id="selectedVisual">-</span></div>
     </div>
 
     <div class="card tab-pane" id="tab-i">
@@ -163,9 +212,15 @@
       <div class="dock-item"><span class="status-ok">Approved</span> — Follow Through Score</div>
       <div class="dock-item"><span class="status-ok">Approved</span> — Continuation Flag</div>
       <div class="dock-item"><span class="status-ok">Approved</span> — Markov bias layer</div>
+      <div class="dock-item"><span class="status-ok">Approved</span> — Scrollable clickable lists</div>
       <div class="dock-item"><span class="warn">Pending</span> — Avg time to reversal fill</div>
       <div class="dock-item"><span class="warn">Pending</span> — Volume spike wiring</div>
       <div class="dock-item"><span class="warn">Pending</span> — Broker-side execute integration</div>
+    </div>
+
+    <div class="card">
+      <h3>📋 Holdings / Scroll Lane</h3>
+      <div id="holdingsList" class="scroll small">Loading...</div>
     </div>
   </div>
 </div>
@@ -180,6 +235,7 @@ const URLS = {
 
 let MODE = "LEAN";
 let MERGED = [];
+let SELECTED = null;
 
 const MODE_RULES = {
   LEAN: { reactionMin: 0.70, maxBuys: 3, baseSize: 100, markovMin: 1, nextMoveMin: -0.001 },
@@ -273,13 +329,11 @@ function calcPlan(rows){
   const bears=rows.filter(r=>r.bias==="BEAR").length;
   return bulls>bears?"AGG":"LEAN";
 }
-
 function calcSize(row){
   const rules=MODE_RULES[MODE];
   const strength=Math.max(0.5, Math.min(2.0, (row.reaction||0) + ((row.follow||0)/2)));
   return Math.round(rules.baseSize * strength);
 }
-
 function qualifiesBuy(row){
   const rules=MODE_RULES[MODE];
   if((row.bias||"") !== "BULL") return false;
@@ -288,7 +342,6 @@ function qualifiesBuy(row){
   if((row.avgNext||0) < rules.nextMoveMin) return false;
   return true;
 }
-
 function qualifiesSell(row){
   if((row.action||"").toUpperCase()==="SELL") return true;
   if((row.bias||"") === "BEAR" && (row.markov||0) < 0) return true;
@@ -328,18 +381,18 @@ function renderAction(rows){
       <div><b>${r.ticker}</b></div>
       <div>$${calcSize(r)}</div>
       <div>${r.bias||"-"} · react ${fmtNum(r.reaction||0)}</div>
-      <button class="execute-btn" onclick="toggleExec(this,'${r.ticker}','BUY',$${0})">EXECUTE</button>
+      <button class="execute-btn" onclick="toggleExec(this,'${r.ticker}','BUY',${calcSize(r)})">EXECUTE</button>
     </div>
-  `.replace('$'+0, calcSize(r))).join("") : "None";
+  `).join("") : "None";
 
   const sellHTML = sells.length ? sells.map(r => `
     <div class="action-item">
       <div><b>${r.ticker}</b></div>
       <div>$${calcSize(r)}</div>
       <div>${r.bias||"-"} · markov ${fmtNum(r.markov||0)}</div>
-      <button class="execute-btn" onclick="toggleExec(this,'${r.ticker}','SELL',$${0})">EXECUTE</button>
+      <button class="execute-btn" onclick="toggleExec(this,'${r.ticker}','SELL',${calcSize(r)})">EXECUTE</button>
     </div>
-  `.replace('$'+0, calcSize(r))).join("") : "None";
+  `).join("") : "None";
 
   document.getElementById("buyList").innerHTML = buyHTML;
   document.getElementById("sellList").innerHTML = sellHTML;
@@ -375,24 +428,151 @@ function renderRank(rows){
   document.getElementById("topNext").textContent = nexts[0] ? `${nexts[0].ticker} (${fmtPct(nexts[0].avgNext||0)})` : "-";
 }
 
+function scorePack(r){
+  return {
+    trend: Math.max(0, Math.min(100, 50 + (r.avgNext||0)*5000)),
+    risk: Math.max(0, Math.min(100, 50 + (r.risk||0)*10)),
+    flow: Math.max(0, Math.min(100, 40 + (r.follow||0)*20)),
+    behavior: Math.max(0, Math.min(100, 40 + (r.reaction||0)*30)),
+    environment: Math.max(0, Math.min(100, 50 + (r.markov||0)*20)),
+    rel: Math.max(0, Math.min(100, 50 + (r.rankScore||0)*5)),
+    continuation: Math.max(0, Math.min(100, (r.contRate||0)*100)),
+    fakeout: Math.max(0, Math.min(100, (r.exhRate||0)*100)),
+    drawdown: Math.max(0, Math.min(100, 100 - ((r.risk||0)*10))),
+    downside: Math.max(0, Math.min(100, 100 - ((r.risk||0)*8)))
+  };
+}
+
+function bar(label, value){
+  return `<div class="bar-label"><span>${label}</span><span>${Math.round(value)}</span></div><div class="bar"><span style="width:${Math.round(value)}%"></span></div>`;
+}
+
+function buildMatches(selected){
+  const others = MERGED.filter(x=>x.ticker !== selected.ticker).map(x=>{
+    const a=scorePack(selected), b=scorePack(x);
+    const overlap = 100 - (Math.abs(a.behavior-b.behavior)+Math.abs(a.trend-b.trend)+Math.abs(a.environment-b.environment))/3;
+    return { ticker:x.ticker, overlap:Math.max(0, Math.min(100, overlap)), bias:x.bias||"-" };
+  }).sort((a,b)=>b.overlap-a.overlap).slice(0,3);
+  return others;
+}
+
 function showDNA(ticker){
   const r=MERGED.find(x=>x.ticker===ticker); if(!r) return;
+  SELECTED = r;
+  document.getElementById("selectedVisual").textContent = r.ticker;
+  const s = scorePack(r);
+
   document.getElementById("dna").innerHTML = `
-    <div class="dna-line"><b>${r.ticker}</b></div>
-    <div class="dna-line">Action: ${r.action||"-"}</div>
-    <div class="dna-line">Bias: ${r.bias||"-"}</div>
-    <div class="dna-line">Markov Score: ${fmtNum(r.markov||0)}</div>
-    <div class="dna-line">Reaction Strength: ${fmtNum(r.reaction||0)}</div>
-    <div class="dna-line">Follow Through: ${fmtNum(r.follow||0)}</div>
-    <div class="dna-line">Continuation Flag: ${fmtNum(r.contFlag||0)}</div>
-    <div class="dna-line">Avg Next Move: ${fmtPct(r.avgNext||0)}</div>
-    <div class="dna-line">Continuation Rate: ${fmtPct(r.contRate||0)}</div>
-    <div class="dna-line">Exhaustion Rate: ${fmtPct(r.exhRate||0)}</div>
-    <div class="dna-line">DNA Score: ${fmtNum(r.dnaScore||0)}</div>
-    <div class="dna-line">Mode Size: $${calcSize(r)}</div>
+    <div class="dna-pills">
+      <div class="dna-pill">Ticker ${r.ticker}</div>
+      <div class="dna-pill">DNA Rank ${fmtNum(r.rankScore||0)}</div>
+      <div class="dna-pill">Dup Risk ${(r.contRate||0) > 0.5 ? "High" : "Medium"}</div>
+      <div class="dna-pill">Horse Tag ${(r.bias||"-")==="BULL" ? "Cleaner Runner" : "Watch Lane"}</div>
+      <div class="dna-pill">Monte Carlo ${(r.markov||0) >= 1 ? "Stable Path" : "Mixed Path"}</div>
+    </div>
+    <div class="dna-line"><b>Street Read:</b> ${(r.bias||"-")==="BULL" ? "Strong runner, decent continuation, healthier flow." : "More caution required; setup carries heavier reversal / exhaustion pressure."}</div>
+    <div class="dna-grid">
+      <div class="dna-card">
+        <h4 style="margin:0 0 8px 0">Trend</h4>
+        ${bar("5D Mom", s.trend)}
+        ${bar("20D Mom", s.trend-8)}
+        ${bar("Rel Strength", s.rel)}
+      </div>
+      <div class="dna-card">
+        <h4 style="margin:0 0 8px 0">Risk</h4>
+        ${bar("Volatility", s.risk)}
+        ${bar("Downside", s.downside)}
+        ${bar("Drawdown", s.drawdown)}
+      </div>
+      <div class="dna-card">
+        <h4 style="margin:0 0 8px 0">Flow</h4>
+        ${bar("Volume Exp", s.flow)}
+        ${bar("Accumulation", s.flow+8)}
+      </div>
+      <div class="dna-card">
+        <h4 style="margin:0 0 8px 0">Behavior</h4>
+        ${bar("Recovery", s.behavior+8)}
+        ${bar("Continuation", s.continuation)}
+        ${bar("Fakeout", s.fakeout)}
+      </div>
+      <div class="dna-card">
+        <h4 style="margin:0 0 8px 0">Environment</h4>
+        ${bar("Sector Fit", s.environment)}
+      </div>
+      <div class="dna-card">
+        <h4 style="margin:0 0 8px 0">DNA Evolution</h4>
+        <div class="small">Now: ${(r.bias||"-")==="BULL" ? "Momentum-heavy, cleaner continuation" : "Higher caution, weaker trend quality"}</div>
+        <div class="small mt8">3M Ago: Less flow, more volatility</div>
+        <div class="small mt8">6M Ago: Earlier-cycle profile</div>
+      </div>
+    </div>
   `;
+
+  const matches = buildMatches(r);
+  document.getElementById("dnaMatches").innerHTML = matches.map(m=>`
+    <div class="match-item">
+      <div><b>${m.ticker}</b> <span class="${m.bias==='BULL'?'bull':'bear'}">${m.bias}</span></div>
+      <div class="small">${Math.round(m.overlap)}% match</div>
+    </div>
+  `).join("");
+
+  document.getElementById("dnaWarning").innerHTML =
+    matches[0] ? `This horse overlaps most with ${matches[0].ticker}. If you already hold similar names, this may add family risk instead of new edge.` : "No major overlap warning.";
+
+  fillCompareSelectors();
 }
 window.showDNA=showDNA;
+
+function fillCompareSelectors(){
+  const opts = MERGED.map(r=>`<option value="${r.ticker}">${r.ticker}</option>`).join("");
+  const a = document.getElementById("compareA");
+  const b = document.getElementById("compareB");
+  if (!a.innerHTML) {
+    a.innerHTML = `<option value="">Select A</option>${opts}`;
+    b.innerHTML = `<option value="">Select B</option>${opts}`;
+  }
+  if (SELECTED) a.value = SELECTED.ticker;
+}
+
+function runCompare(){
+  const aT = document.getElementById("compareA").value;
+  const bT = document.getElementById("compareB").value;
+  const a = MERGED.find(x=>x.ticker===aT);
+  const b = MERGED.find(x=>x.ticker===bT);
+  if(!a || !b || a.ticker === b.ticker){
+    document.getElementById("compareResult").textContent = "Choose 2 different tickers";
+    return;
+  }
+  const sa=scorePack(a), sb=scorePack(b);
+  const overlap = Math.max(0, Math.min(100, 100 - (Math.abs(sa.behavior-sb.behavior)+Math.abs(sa.trend-sb.trend)+Math.abs(sa.environment-sb.environment))/3));
+  const diffs = [
+    { label:"Trend", val: sa.trend - sb.trend },
+    { label:"Behavior", val: sa.behavior - sb.behavior },
+    { label:"Flow", val: sa.flow - sb.flow },
+    { label:"Environment", val: sa.environment - sb.environment }
+  ].sort((x,y)=>Math.abs(y.val)-Math.abs(x.val));
+  const cleaner = (a.reaction||0)+(a.follow||0) > (b.reaction||0)+(b.follow||0) ? a.ticker : b.ticker;
+  const strongerRecovery = (sa.behavior > sb.behavior ? a.ticker : b.ticker);
+  document.getElementById("compareResult").innerHTML = `
+    <div class="dna-line"><b>Overlap:</b> ${Math.round(overlap)}%</div>
+    <div class="dna-line"><b>Cleaner runner:</b> ${cleaner}</div>
+    <div class="dna-line"><b>Stronger recovery / continuation:</b> ${strongerRecovery}</div>
+    <div class="dna-line"><b>Biggest difference:</b> ${diffs[0].label} (${diffs[0].val>0?a.ticker:b.ticker} advantage)</div>
+    <div class="dna-line"><b>Family risk:</b> ${overlap>75 ? "High" : overlap>55 ? "Medium" : "Lower"}</div>
+  `;
+}
+window.runCompare=runCompare;
+
+function renderHoldings(rows){
+  const el = document.getElementById("holdingsList");
+  el.innerHTML = rows.slice(0,60).map(r=>`
+    <div class="holdings-item" onclick="showDNA('${r.ticker}')">
+      <div><b>${r.ticker}</b></div>
+      <div>${r.bias||"-"} · react ${fmtNum(r.reaction||0)}</div>
+      <div>$${calcSize(r)}</div>
+    </div>
+  `).join("");
+}
 
 function toggleExec(btn, ticker, side, amount){
   if(btn.dataset.done === "1"){
@@ -406,6 +586,7 @@ function toggleExec(btn, ticker, side, amount){
   }
   setStatus(`${side} ${ticker} queued at $${amount} in ${MODE} mode`);
 }
+window.toggleExec=toggleExec;
 
 function setMode(mode){
   MODE = mode;
@@ -416,6 +597,8 @@ function setMode(mode){
     renderPills(MERGED);
     renderAction(MERGED);
     renderRank(MERGED);
+    renderHoldings(MERGED);
+    if(SELECTED) showDNA(SELECTED.ticker);
   }
 }
 window.setMode=setMode;
@@ -428,7 +611,11 @@ async function init(){
       fetchCsv(URLS.action), fetchCsv(URLS.ranking), fetchCsv(URLS.markov), fetchCsv(URLS.dna)
     ]);
     MERGED=buildMerged(actionRows, rankRows, markovRows, dnaRows);
-    renderPills(MERGED); renderAction(MERGED); renderRank(MERGED);
+    renderPills(MERGED);
+    renderAction(MERGED);
+    renderRank(MERGED);
+    renderHoldings(MERGED);
+    fillCompareSelectors();
     setStatus(`Loaded rows — action: ${actionRows.length}, ranking: ${rankRows.length}, markov: ${markovRows.length}, dna: ${dnaRows.length}, merged tickers: ${MERGED.length}`);
   }catch(err){
     console.error(err);
