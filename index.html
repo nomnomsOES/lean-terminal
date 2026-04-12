@@ -386,6 +386,10 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .dna-warn-text{font-size:11px;line-height:1.65;color:rgba(255,180,180,.8)}
 .dna-empty{display:flex;flex-direction:column;align-items:center;justify-content:center;padding:60px 20px;color:var(--dim);font-family:var(--mono);font-size:11px;text-align:center;gap:12px;background:var(--card);border:1px solid var(--line);border-radius:14px}
 .dna-empty-icon{font-size:32px;opacity:.4}
+/* DNA search dropdown */
+.dna-drop-item{display:flex;align-items:center;padding:9px 14px;cursor:pointer;transition:background .1s;border-bottom:1px solid rgba(99,160,255,.06)}
+.dna-drop-item:last-child{border-bottom:none}
+.dna-drop-item:hover,.dna-drop-item.dna-drop-active{background:rgba(79,163,255,.1)}
 
 /* ─── CHEAT SHEET TAB ─── */
 .cheat-controls{display:flex;gap:8px;flex-wrap:wrap;margin-bottom:12px;align-items:center}
@@ -727,19 +731,28 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 
       <!-- LEFT: main DNA content -->
       <div class="dna-main">
-        <!-- ticker selector bar -->
+        <!-- ticker search bar -->
         <div class="dna-ticker-bar">
-          <div>
-            <div id="dna-name" class="dna-selected-name">—</div>
-            <div id="dna-sub" class="dna-selected-sub">Select a ticker from rankings, holdings, or radar</div>
+          <div style="flex:1;min-width:0">
+            <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Search Any Ticker</div>
+            <div style="position:relative">
+              <input id="dna-search-input" placeholder="Type ticker or name… e.g. NVDA, SMH, CRWV"
+                style="width:100%;background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:9px;color:var(--text);padding:9px 14px;font-family:var(--mono);font-size:13px;font-weight:700;letter-spacing:.04em"
+                oninput="dnaSearchInput(this.value)" onkeydown="dnaSearchKey(event)" autocomplete="off" spellcheck="false">
+              <div id="dna-search-dropdown" style="display:none;position:absolute;top:calc(100% + 4px);left:0;right:0;background:#0a1628;border:1px solid var(--line2);border-radius:10px;z-index:999;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.6)"></div>
+            </div>
           </div>
-          <div id="dna-tags" style="display:flex;gap:8px;flex-wrap:wrap;margin-left:auto"></div>
-          <button class="btn" onclick="clearDNA()">✕ Clear</button>
+          <div style="display:flex;flex-direction:column;align-items:flex-end;gap:6px;flex-shrink:0">
+            <div id="dna-name" class="dna-selected-name" style="font-size:20px">—</div>
+            <div id="dna-sub" class="dna-selected-sub">Select a ticker to load DNA profile</div>
+          </div>
+          <div id="dna-tags" style="display:flex;gap:8px;flex-wrap:wrap"></div>
+          <button class="btn" onclick="clearDNA()" style="flex-shrink:0">✕ Clear</button>
         </div>
 
         <!-- radar + metric panels -->
         <div id="dna-detail">
-          <div class="dna-empty"><div class="dna-empty-icon">🧬</div><div>Click any ticker anywhere to load its DNA profile</div></div>
+          <div class="dna-empty"><div class="dna-empty-icon">🧬</div><div>Type a ticker above or click any name in the terminal</div></div>
         </div>
 
         <!-- DNA evolution timeline -->
@@ -749,10 +762,30 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
               <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">DNA Evolution</div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px">Same stock, different time slices</div>
             </div>
-            <div style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:4px 10px;border:1px solid var(--line2);border-radius:6px">Detect variance over time</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:4px 10px;border:1px solid var(--line2);border-radius:6px;cursor:pointer">Detect variance over time</div>
           </div>
           <div class="dna-evo-grid" id="dna-evo-grid"></div>
         </div>
+
+        <!-- HOLDINGS HEATMAP -->
+        <div class="card" id="dna-heatmap-card">
+          <div class="card-head">
+            <div class="card-title">Holdings Overlap Heatmap</div>
+            <div class="card-meta">DNA family clustering · color = score · size = value</div>
+          </div>
+          <div style="padding:14px">
+            <div style="display:flex;gap:16px;margin-bottom:12px;flex-wrap:wrap;align-items:center">
+              <div style="font-size:10px;color:var(--muted)">
+                <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--green);margin-right:4px;vertical-align:middle"></span>Score ≥ 75
+                <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--yellow);margin:0 4px 0 10px;vertical-align:middle"></span>Score 50–74
+                <span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:var(--red);margin:0 4px 0 10px;vertical-align:middle"></span>Score &lt; 50
+              </div>
+              <div style="margin-left:auto;font-size:10px;color:var(--dim);font-family:var(--mono)">Click tile to load DNA · size = holding value</div>
+            </div>
+            <div id="dna-heatmap" style="display:flex;flex-wrap:wrap;gap:6px;min-height:80px;align-items:flex-end"></div>
+          </div>
+        </div>
+
       </div>
 
       <!-- RIGHT: sidebar -->
@@ -2293,6 +2326,7 @@ async function loadAll(){
   renderCampaign();
   renderDock();
   fillCompareSelectors();
+  if($('tab-dna').classList.contains('active'))renderDNAHeatmap();
   renderTradeLog();
   updateActionSummary();
   if($('tab-cheatsheet').classList.contains('active'))renderCheatSheet();
@@ -2509,23 +2543,59 @@ function drawMonteChart(){
 }
 
 function renderMonteStats(S0){
+  // Reusable inline info tooltip — same style as metric pill i buttons
+  const tip=(txt)=>`<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle">
+    <span style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.3);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono);line-height:1" class="msi-btn">i</span>
+    <span style="display:none;position:absolute;bottom:calc(100% + 6px);left:50%;transform:translateX(-50%);width:190px;background:#0d1f38;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:999;font-family:'DM Sans',sans-serif;font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.7);pointer-events:none" class="msi-tip">${txt}</span>
+  </span>`;
+
   $('monte-stats-grid').innerHTML=Object.entries(simResults).map(([ticker,{stats,color,mu,sigma}])=>{
     const retPct=((stats.finalMedian-S0)/S0*100).toFixed(1);
     const retC=stats.finalMedian>=S0?'var(--green)':'var(--red)';
     return`<div class="monte-stat-card">
       <div class="monte-stat-ticker"><div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>${ticker}</div>
       <div class="monte-stat-rows">
-        <div class="monte-stat-row"><span class="monte-stat-key">Median End</span><span class="monte-stat-val" style="color:${retC}">${money(stats.finalMedian)} <span style="font-size:9px">(${retPct>0?'+':''}${retPct}%)</span></span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">P10 End</span><span class="monte-stat-val v-r">${money(stats.p10)}</span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">P90 End</span><span class="monte-stat-val v-g">${money(stats.p90)}</span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">Positive Prob</span><span class="monte-stat-val" style="color:${stats.posProb>=.6?'var(--green)':stats.posProb>=.45?'var(--yellow)':'var(--red)'}">${(stats.posProb*100).toFixed(0)}%</span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">Survival Prob</span><span class="monte-stat-val" style="color:${stats.survProb>=.8?'var(--green)':'var(--yellow)'}">${(stats.survProb*100).toFixed(0)}%</span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">Med Drawdown</span><span class="monte-stat-val v-y">${(stats.medDrawdown*100).toFixed(1)}%</span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">Ann Return</span><span class="monte-stat-val">${(mu*100).toFixed(1)}%</span></div>
-        <div class="monte-stat-row"><span class="monte-stat-key">Ann Vol</span><span class="monte-stat-val">${(sigma*100).toFixed(1)}%</span></div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">Median End${tip('The middle outcome across all simulations. Half the paths ended above this, half below. Your most likely landing zone.')}</span>
+          <span class="monte-stat-val" style="color:${retC}">${money(stats.finalMedian)} <span style="font-size:9px">(${retPct>0?'+':''}${retPct}%)</span></span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">P10 End${tip('Bear case — only 10% of simulations ended below this. Think of it as your realistic downside floor if things go wrong.')}</span>
+          <span class="monte-stat-val v-r">${money(stats.p10)}</span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">P90 End${tip('Bull case — 90% of paths ended below this. Only 10% beat it. A realistic upside ceiling, not a price target.')}</span>
+          <span class="monte-stat-val v-g">${money(stats.p90)}</span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">Positive Prob${tip('% of simulations that ended above your starting value. Above 60% = favorable setup. Below 50% = more paths lose than win at current assumptions.')}</span>
+          <span class="monte-stat-val" style="color:${stats.posProb>=.6?'var(--green)':stats.posProb>=.45?'var(--yellow)':'var(--red)'}">${(stats.posProb*100).toFixed(0)}%</span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">Survival Prob${tip('% of simulations that never dropped below 50% of starting value. High = position stays manageable even in bad scenarios.')}</span>
+          <span class="monte-stat-val" style="color:${stats.survProb>=.8?'var(--green)':'var(--yellow)'}">${(stats.survProb*100).toFixed(0)}%</span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">Med Drawdown${tip('Typical worst peak-to-trough dip across simulations. Mentally prepare for a pullback of at least this size during the hold period.')}</span>
+          <span class="monte-stat-val v-y">${(stats.medDrawdown*100).toFixed(1)}%</span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">Ann Return${tip('Annualized return assumption used for this simulation. Adjusted slightly by momentum signals from your DNA data if available.')}</span>
+          <span class="monte-stat-val">${(mu*100).toFixed(1)}%</span>
+        </div>
+        <div class="monte-stat-row">
+          <span class="monte-stat-key">Ann Vol${tip('Annualized volatility used in the simulation. Higher vol = wider fan chart = more uncertainty in both directions.')}</span>
+          <span class="monte-stat-val">${(sigma*100).toFixed(1)}%</span>
+        </div>
       </div>
     </div>`;
   }).join('');
+
+  // Wire hover show/hide for tooltips (CSS hover doesn't work on nested spans reliably)
+  $('monte-stats-grid').querySelectorAll('.msi-btn').forEach(btn=>{
+    btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
+    btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
+  });
 }
 
 function renderMarkovFlow(){
@@ -2582,14 +2652,147 @@ function switchTab(name, btn){
   $('tab-'+name).classList.add('active');
   btn.classList.add('active');
   if(name==='dna'&&S._dnaSelected)loadDNA(S._dnaSelected);
-  if(name==='dna')fillCompareSelectors();
+  if(name==='dna'){fillCompareSelectors();renderDNAHeatmap();}
   if(name==='cheatsheet')renderCheatSheet();
   if(name==='monte'){renderSimTickerList();if(Object.keys(simResults).length){drawMonteChart();renderMarkovFlow();}}
 }
 window.switchTab=switchTab;
 
-// ─── DNA LAB ──────────────────────────────────────────────────────────────────
-S._dnaSelected=null;
+// ─── DNA SEARCH ──────────────────────────────────────────────────────────────
+let _dnaSearchIdx=0;
+
+function dnaAllTickers(){
+  const seen=new Set();
+  const results=[];
+  [...S.ranking,...S.radar,...S.holdings].forEach(r=>{
+    const t=r.Ticker||r.ticker||'';
+    const theme=r.Theme||r.theme||r.Role||r.role||'';
+    if(t&&!seen.has(t)){seen.add(t);results.push({ticker:t,theme});}
+  });
+  return results;
+}
+
+function dnaSearchInput(val){
+  const drop=$('dna-search-dropdown');
+  if(!val.trim()){drop.style.display='none';return;}
+  const q=val.toUpperCase();
+  const matches=dnaAllTickers().filter(x=>x.ticker.includes(q)||(x.theme||'').toUpperCase().includes(q)).slice(0,8);
+  // Also allow free-text ticker not in data
+  const exact=matches.find(x=>x.ticker===q);
+  if(!exact&&q.length>=1&&q.length<=6&&/^[A-Z]+$/.test(q)){
+    matches.unshift({ticker:q,theme:'Custom entry',custom:true});
+  }
+  if(!matches.length){drop.style.display='none';return;}
+  _dnaSearchIdx=0;
+  drop.innerHTML=matches.map((m,i)=>`
+    <div class="dna-drop-item ${i===0?'dna-drop-active':''}" data-idx="${i}" data-ticker="${m.ticker}"
+      onmouseenter="dnaDropHover(${i})" onclick="dnaDropSelect('${m.ticker}')">
+      <span style="font-family:var(--mono);font-weight:700;font-size:12px">${m.ticker}</span>
+      <span style="font-size:10px;color:var(--muted);margin-left:8px">${m.theme||''}</span>
+      ${m.custom?'<span style="font-size:9px;color:var(--dim);margin-left:auto;font-family:var(--mono)">custom</span>':''}
+    </div>`).join('');
+  drop.style.display='block';
+}
+
+function dnaDropHover(idx){
+  _dnaSearchIdx=idx;
+  document.querySelectorAll('.dna-drop-item').forEach((el,i)=>{
+    el.classList.toggle('dna-drop-active',i===idx);
+  });
+}
+
+function dnaDropSelect(ticker){
+  $('dna-search-input').value=ticker;
+  $('dna-search-dropdown').style.display='none';
+  loadDNA(ticker);
+}
+window.dnaDropSelect=dnaDropSelect;
+
+function dnaSearchKey(e){
+  const items=document.querySelectorAll('.dna-drop-item');
+  if(!items.length)return;
+  if(e.key==='ArrowDown'){e.preventDefault();_dnaSearchIdx=Math.min(_dnaSearchIdx+1,items.length-1);dnaDropHover(_dnaSearchIdx);}
+  else if(e.key==='ArrowUp'){e.preventDefault();_dnaSearchIdx=Math.max(_dnaSearchIdx-1,0);dnaDropHover(_dnaSearchIdx);}
+  else if(e.key==='Enter'){e.preventDefault();const active=document.querySelector('.dna-drop-active');if(active)dnaDropSelect(active.dataset.ticker);}
+  else if(e.key==='Escape'){$('dna-search-dropdown').style.display='none';}
+}
+// Close dropdown on outside click
+document.addEventListener('click',e=>{
+  if(!e.target.closest('#dna-search-input')&&!e.target.closest('#dna-search-dropdown'))
+    {const d=$('dna-search-dropdown');if(d)d.style.display='none';}
+});
+
+// ─── HOLDINGS HEATMAP ────────────────────────────────────────────────────────
+function renderDNAHeatmap(){
+  const el=$('dna-heatmap');
+  if(!el)return;
+
+  const allRows=[...S.ranking,...S.radar];
+  const holdings=S.holdings.filter(r=>{
+    const t=r.Ticker||r.ticker||'';
+    return t&&t!=='Ticker'&&t.trim()!=='';
+  });
+
+  if(!holdings.length){
+    el.innerHTML=`<div style="font-size:10px;color:var(--dim);font-family:var(--mono);padding:20px;width:100%;text-align:center">No holdings data — add Holdings CSV URL in Data Settings</div>`;
+    return;
+  }
+
+  const total=holdings.reduce((a,r)=>a+num(r.Value||r.value||r.Holding_Value,0),0);
+
+  // Group by family/theme for clustering
+  const families={};
+  holdings.forEach(h=>{
+    const t=h.Ticker||h.ticker||'';
+    const rankRow=allRows.find(r=>(r.Ticker||r.ticker)===t)||{};
+    const sc=num(rankRow.Score||rankRow.score||h.Score,0);
+    const theme=h.Theme||h.theme||h.Role||h.role||rankRow.Theme||'Other';
+    const fam=getFamilyData(theme,t).family||theme;
+    const val=num(h.Value||h.value||h.Holding_Value,0);
+    if(!families[fam])families[fam]=[];
+    families[fam].push({ticker:t,score:sc,value:val,theme});
+  });
+
+  // Sort families by total value desc
+  const sortedFams=Object.entries(families).sort((a,b)=>{
+    const va=a[1].reduce((s,x)=>s+x.value,0);
+    const vb=b[1].reduce((s,x)=>s+x.value,0);
+    return vb-va;
+  });
+
+  const scoreColor=s=>s>=75?'var(--green)':s>=50?'var(--yellow)':'var(--red)';
+  const scoreBg=s=>s>=75?'rgba(32,224,122,.15)':s>=50?'rgba(245,197,66,.12)':'rgba(255,79,79,.12)';
+  const scoreBorder=s=>s>=75?'rgba(32,224,122,.3)':s>=50?'rgba(245,197,66,.25)':'rgba(255,79,79,.25)';
+
+  el.innerHTML=sortedFams.map(([fam,stocks])=>{
+    const famTotal=stocks.reduce((a,x)=>a+x.value,0);
+    const famPct=total>0?((famTotal/total)*100).toFixed(1):0;
+    return `<div style="display:flex;flex-direction:column;gap:4px;padding:8px;background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:10px;min-width:100px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:2px">${fam.slice(0,16)}</div>
+      <div style="font-size:9px;color:var(--dim);margin-bottom:6px">${famPct}% of portfolio</div>
+      <div style="display:flex;flex-wrap:wrap;gap:4px">
+        ${stocks.sort((a,b)=>b.value-a.value).map(s=>{
+          const sizePct=total>0?(s.value/total*100):5;
+          const tileSize=Math.max(48, Math.min(110, 40+sizePct*8));
+          return `<div onclick="loadDNA('${s.ticker}')" title="${s.ticker} · Score: ${s.score||'?'} · ${s.value?money(s.value):'no value'}"
+            style="width:${tileSize}px;height:${tileSize}px;border-radius:8px;
+                   background:${scoreBg(s.score)};border:1px solid ${scoreBorder(s.score)};
+                   display:flex;flex-direction:column;align-items:center;justify-content:center;
+                   cursor:pointer;transition:all .15s;gap:2px"
+            onmouseenter="this.style.transform='scale(1.06)'" onmouseleave="this.style.transform='scale(1)'">
+            <div style="font-family:var(--mono);font-size:${tileSize>70?11:9}px;font-weight:700;color:${scoreColor(s.score)}">${s.ticker}</div>
+            ${s.score?`<div style="font-family:var(--mono);font-size:9px;color:${scoreColor(s.score)};opacity:.8">${s.score}</div>`:''}
+            ${s.value>0?`<div style="font-size:8px;color:var(--dim)">${money(s.value).replace('$','')}</div>`:''}
+          </div>`;
+        }).join('')}
+      </div>
+    </div>`;
+  }).join('');
+}
+
+window.dnaSearchInput=dnaSearchInput;
+window.dnaSearchKey=dnaSearchKey;
+window.dnaDropHover=dnaDropHover;
 
 const PANEL_GROUPS={
   Trend:   [['5D Mom','5d_mom'],['20D Mom','20d_mom'],['Rel Strength','rel_strength']],
@@ -2605,6 +2808,8 @@ function panelFillColor(v){return v>=70?'var(--green)':v>=45?'var(--blue)':'var(
 
 function loadDNA(ticker){
   S._dnaSelected=ticker;
+  const inp=$('dna-search-input');
+  if(inp&&inp.value!==ticker){inp.value=ticker;const d=$('dna-search-dropdown');if(d)d.style.display='none';}
   const d=S.dna.find(x=>x.ticker===ticker)||{};
   const r=S.ranking.find(x=>x.Ticker===ticker)||S.radar.find(x=>x.Ticker===ticker)||{};
   const h=S.holdings.find(x=>x.Ticker===ticker)||{};
