@@ -2089,7 +2089,39 @@ function calcConfidence(ticker){
   ],penalty,penaltyLabel,verdict};
 }
 
-function lcsColor(v){return v>=70?'lcs-high':v>=45?'lcs-mid':'lcs-low'}
+function generateHorseRead(ticker){
+  // Build a horse read from available ranking + DNA + behavior data
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||
+          S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const d=S.dna.find(x=>(x.ticker||x.Ticker)===ticker)||{};
+
+  // Use sheet horse_read if it exists and is meaningful
+  if(d.horse_read&&d.horse_read.length>5&&!d.horse_read.startsWith('='))
+    return d.horse_read;
+
+  const sc=num(r.Score||r.score,0);
+  const status=(r.Status||r.status||'').toUpperCase();
+  const move=(r.Move||r.move||'').toLowerCase();
+  const theme=r.Theme||r.theme||'';
+  const strength=(r.Strength||r.strength||'').toLowerCase();
+  const markov=(r.Markov_State||r.Markov||'').toUpperCase();
+  const cont=num(d.continuation,0);
+  const fakeout=num(d.fakeout,0);
+  const vol=num(d.realized_vol,0);
+
+  // Build read from what we know
+  if(!sc) return '—';
+
+  const tier=sc>=90?'Elite signal':sc>=80?'Strong signal':sc>=75?'Qualified':sc>=65?'Near-miss':sc>=50?'Below threshold':'Weak signal';
+  const dir=status==='BUY'?'trending up':status==='SELL'?'breaking down':status==='TRIM'?'fading':move==='strong'?'running hard':'holding range';
+  const themeNote=theme?` in ${theme}`:'';
+  const contNote=cont>60?', high continuation odds':fakeout>60?', watch for fakeout':'';
+  const volNote=vol>70?', elevated volatility':vol<30?' low vol environment':'';
+
+  if(sc>=75) return`${tier}${themeNote} — ${dir}${contNote}${volNote}.`;
+  if(sc>=50) return`Score ${sc}${themeNote} — ${dir}. Below min score threshold${contNote}.`;
+  return`Score ${sc} — ${dir}. System says ${status||'no action'}${themeNote}.`;
+}
 function lcsBarColor(v,max){const pct=v/max*100;return pct>=70?'var(--green)':pct>=45?'var(--yellow)':'var(--red)'}
 
 function lcsHtml(ticker){
@@ -2837,10 +2869,7 @@ function showTicker(ticker, evt){
 
   // Street read
   const isBullish=isBull==='BULL'||isBull==='BUY'||sc>=75;
-  const streetRead=d.horse_read||
-    (isBullish
-      ? `<strong>${ticker}</strong> is showing strong signal with score ${sc}. ${markov} Markov state. ${val?`Currently holding ${money(val)}.`:''} Reaction and follow-through suggest continuation is likely.`
-      : `<strong>${ticker}</strong> is below the qualification line at score ${sc}. ${markov} Markov state. Exercise caution — wait for setup to improve before sizing up.`);
+  const streetRead=generateHorseRead(ticker)||d.horse_read||'No read available for this ticker.';
   $('dp-street').innerHTML=streetRead+entropyHTML+cycleHTML;
 
   // Radar chart
@@ -4003,7 +4032,7 @@ function loadDNA(ticker){
   $('dna-tags').innerHTML=`
     <div class="dna-tag"><div class="dna-tag-label">DNA Rank</div><div class="dna-tag-val" style="font-family:var(--mono);color:var(--cyan)">#${S.ranking.findIndex(x=>x.Ticker===ticker)+1||'?'}</div></div>
     <div class="dna-tag"><div class="dna-tag-label">Dup Risk</div><div class="dna-tag-val" style="color:${sc>=75?'var(--green)':'var(--yellow)'}">${sc>=75?'Low':'High'}</div></div>
-    <div class="dna-tag"><div class="dna-tag-label">Horse Tag</div><div class="dna-tag-val" style="color:var(--text)">${d.horse_read?(d.horse_read.split('.')[0].slice(0,20)+'…'):'—'}</div></div>
+    <div class="dna-tag"><div class="dna-tag-label">Horse Tag</div><div class="dna-tag-val" style="color:var(--text)">${(()=>{const hr=generateHorseRead(ticker);return hr&&hr!=='—'?hr.split('.')[0].slice(0,28)+(hr.length>28?'…':''):'—'})()}</div></div>
     <div class="dna-tag"><div class="dna-tag-label">Monte Carlo</div><div class="dna-tag-val" style="color:${mcSc>=70?'var(--green)':mcSc>=50?'var(--yellow)':'var(--red)'}">${mcSc||'—'}</div></div>`;
 
   // Radar + metric panels
@@ -4318,7 +4347,7 @@ function renderCheatSheet(){
     const d=r._dna;
     const withChips=(fam.with||[]).slice(0,3).map(t=>`<span class="compat-chip cc-with" onclick="showTicker('${t}',event)">${t}</span>`).join('');
     const againstChips=(fam.against||[]).slice(0,2).map(t=>`<span class="compat-chip cc-against">${t}</span>`).join('');
-    const horse=(d.horse_read||'').slice(0,40)+(d.horse_read?.length>40?'…':'');
+    const horse=generateHorseRead(r.Ticker).slice(0,55)+(generateHorseRead(r.Ticker).length>55?'…':'');
     const inHoldings=holdSet.has(r.Ticker);
     const inRadar=radarSet.has(r.Ticker);
     const statusColor=status==='BUY'?'var(--green)':status==='TRIM'||status==='SELL'?'var(--red)':'var(--yellow)';
