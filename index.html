@@ -1631,174 +1631,153 @@ function findCracks(nodes){
 }
 
 function renderStressMap(){
-  const canvas=$('stress-map-canvas');
-  if(!canvas)return;
+  const canvasEl=$('stress-map-canvas');
+  if(!canvasEl)return;
 
   const holdings=S.holdings.filter(r=>(r.Ticker||r.ticker)&&(r.Ticker||r.ticker)!=='Ticker');
   if(!holdings.length){
-    canvas.style.display='none';
+    canvasEl.style.display='none';
     const wrap=$('stress-map-wrap');
     if(wrap)wrap.innerHTML=`<div style="font-size:10px;color:var(--dim);text-align:center;padding:20px;font-family:var(--mono)">No holdings loaded</div>`;
     return;
   }
 
-  const nodes=holdings.map(h=>calcNodeStress(h.Ticker||h.ticker||'')).filter(n=>n.ticker);
-  const cracks=findCracks(nodes);
-
-  // Canvas sizing — must set pixel dimensions explicitly for DPI correctness
   const dpr=window.devicePixelRatio||1;
-  const W=canvas.parentElement?.offsetWidth||700;
-  const rows=Math.ceil(nodes.length/7);
-  const H=Math.max(180, rows*110+40);
-  canvas.style.width=W+'px';
-  canvas.style.height=H+'px';
-  canvas.width=W*dpr;
-  canvas.height=H*dpr;
-  const ctx=canvas.getContext('2d');
-  ctx.scale(dpr,dpr);
-  ctx.clearRect(0,0,W,H);
-
-  // Position nodes in a clean grid
-  const cols=Math.min(7,nodes.length);
-  const cellW=W/cols;
-  const cellH=H/rows;
+  const W=canvasEl.parentElement?.offsetWidth||700;
+  const cols=Math.min(7,holdings.length);
+  const numRows=Math.ceil(holdings.length/cols);
+  const H=Math.max(160,numRows*100+40);
+  const cellW=W/cols, cellH=H/numRows;
   const positions={};
-  nodes.forEach((n,i)=>{
+  holdings.forEach((h,i)=>{
+    const t=h.Ticker||h.ticker||'';
     const col=i%cols, row=Math.floor(i/cols);
-    positions[n.ticker]={x:cellW*col+cellW/2, y:cellH*row+cellH/2};
+    positions[t]={x:cellW*col+cellW/2, y:cellH*row+cellH/2, _r:32};
   });
 
-  // ── Draw crack lines first (behind nodes) ──────────────────────────────
-  cracks.forEach(c=>{
-    const pa=positions[c.a], pb=positions[c.b];
-    if(!pa||!pb)return;
-    const alpha=Math.min(0.9,0.3+(c.severity-50)/80);
-    // Jagged crack — two segments with offset midpoint
-    const mx=(pa.x+pb.x)/2+(Math.random()-.5)*40;
-    const my=(pa.y+pb.y)/2+(Math.random()-.5)*40;
-    ctx.beginPath();
-    ctx.moveTo(pa.x,pa.y);
-    ctx.lineTo(mx,my);
-    ctx.lineTo(pb.x,pb.y);
-    ctx.strokeStyle=`rgba(255,79,79,${alpha})`;
-    ctx.lineWidth=c.severity>80?2.5:1.5;
-    ctx.setLineDash([4,3]);
-    ctx.stroke();
-    ctx.setLineDash([]);
-    // Small lightning bolt dot at crack midpoint
-    ctx.beginPath();
-    ctx.arc(mx,my,3,0,Math.PI*2);
-    ctx.fillStyle=`rgba(255,79,79,${alpha})`;
-    ctx.fill();
-  });
-
-  // ── Draw nodes ─────────────────────────────────────────────────────────
-  nodes.forEach(n=>{
-    const pos=positions[n.ticker];
-    if(!pos)return;
-    const stress=n.stress;
-    const r=24; // fixed radius for clean layout
-
-    // Color by stress level — genuine spread
-    const fillColor=stress<=30?'rgba(32,224,122,0.85)':
-                    stress<=55?'rgba(79,163,255,0.85)':
-                    stress<=75?'rgba(245,197,66,0.85)':
-                               'rgba(255,79,79,0.85)';
-    const glowColor=stress<=30?'rgba(32,224,122,0.25)':
-                    stress<=55?'rgba(79,163,255,0.15)':
-                    stress<=75?'rgba(245,197,66,0.2)':
-                               'rgba(255,79,79,0.25)';
-
-    // Glow ring (stress indicator)
-    ctx.beginPath();
-    ctx.arc(pos.x,pos.y,r+8,0,Math.PI*2);
-    ctx.fillStyle=glowColor;
-    ctx.fill();
-
-    // Outer stress ring (partial arc showing stress level)
-    ctx.beginPath();
-    ctx.arc(pos.x,pos.y,r+5,-Math.PI/2,-Math.PI/2+(stress/100)*Math.PI*2);
-    ctx.strokeStyle=fillColor;
-    ctx.lineWidth=3;
-    ctx.stroke();
-
-    // Node background
-    ctx.beginPath();
-    ctx.arc(pos.x,pos.y,r,0,Math.PI*2);
-    ctx.fillStyle='rgba(7,13,24,0.9)';
-    ctx.fill();
-    ctx.strokeStyle=fillColor;
-    ctx.lineWidth=1.5;
-    ctx.stroke();
-
-    // Ticker label
-    ctx.fillStyle='rgba(214,233,255,0.95)';
-    ctx.font=`bold 9px "Space Mono",monospace`;
-    ctx.textAlign='center';
-    ctx.textBaseline='middle';
-    ctx.fillText(n.ticker.length>4?n.ticker.slice(0,4):n.ticker, pos.x, pos.y-5);
-
-    // Stress score
-    ctx.fillStyle=fillColor;
-    ctx.font=`bold 9px "Space Mono",monospace`;
-    ctx.fillText(stress, pos.x, pos.y+7);
-
-    // Store position for click detection (in CSS pixels)
-    positions[n.ticker]._r=r+8;
-  });
-
-  // ── Click handler — uses CSS pixels not canvas pixels ──────────────────
-  canvas.style.cursor='pointer';
-  canvas.onclick=null; // remove old handler
-  canvas.addEventListener('click', function smClick(e){
-    const rect=canvas.getBoundingClientRect();
-    // Scale from CSS pixels to logical pixels
-    const scaleX=W/rect.width;
-    const scaleY=H/rect.height;
-    const mx=(e.clientX-rect.left)*scaleX;
-    const my=(e.clientY-rect.top)*scaleY;
-    for(const n of nodes){
-      const p=positions[n.ticker];
-      if(!p)continue;
-      const dist=Math.sqrt((mx-p.x)**2+(my-p.y)**2);
-      if(dist<(p._r||32)){
-        showTicker(n.ticker,e);
-        return;
+  function drawMap(canvas, nodes, cracks, phase){
+    canvas.style.width=W+'px'; canvas.style.height=H+'px';
+    canvas.width=W*dpr; canvas.height=H*dpr;
+    const ctx=canvas.getContext('2d');
+    ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+    cracks.forEach(c=>{
+      const pa=positions[c.a], pb=positions[c.b]; if(!pa||!pb)return;
+      const alpha=Math.min(0.85,0.3+(c.severity-50)/80);
+      const mx=(pa.x+pb.x)/2+(Math.random()-.5)*40, my=(pa.y+pb.y)/2+(Math.random()-.5)*40;
+      ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(mx,my); ctx.lineTo(pb.x,pb.y);
+      ctx.strokeStyle=`rgba(255,79,79,${alpha})`; ctx.lineWidth=c.severity>80?2.5:1.5;
+      ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
+      ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,79,79,${alpha})`; ctx.fill();
+    });
+    nodes.forEach(n=>{
+      const pos=positions[n.ticker]; if(!pos)return;
+      const stress=n.stress;
+      const isPlaceholder=phase==='fast';
+      const fillColor=isPlaceholder?'rgba(99,160,255,0.4)':
+                      stress<=30?'rgba(32,224,122,0.85)':
+                      stress<=55?'rgba(79,163,255,0.85)':
+                      stress<=75?'rgba(245,197,66,0.85)':'rgba(255,79,79,0.85)';
+      const glowColor=isPlaceholder?'rgba(99,160,255,0.08)':
+                      stress<=30?'rgba(32,224,122,0.2)':
+                      stress<=55?'rgba(79,163,255,0.12)':
+                      stress<=75?'rgba(245,197,66,0.15)':'rgba(255,79,79,0.2)';
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,32,0,Math.PI*2);
+      ctx.fillStyle=glowColor; ctx.fill();
+      if(!isPlaceholder){
+        ctx.beginPath(); ctx.arc(pos.x,pos.y,28,-Math.PI/2,-Math.PI/2+(stress/100)*Math.PI*2);
+        ctx.strokeStyle=fillColor; ctx.lineWidth=3; ctx.stroke();
       }
+      ctx.beginPath(); ctx.arc(pos.x,pos.y,24,0,Math.PI*2);
+      ctx.fillStyle='rgba(7,13,24,0.92)'; ctx.fill();
+      ctx.strokeStyle=fillColor; ctx.lineWidth=1.5; ctx.stroke();
+      ctx.fillStyle='rgba(214,233,255,0.95)'; ctx.font=`bold 9px "Space Mono",monospace`;
+      ctx.textAlign='center'; ctx.textBaseline='middle';
+      ctx.fillText(n.ticker.slice(0,4),pos.x,pos.y-5);
+      ctx.fillStyle=isPlaceholder?'rgba(140,145,166,0.5)':fillColor;
+      ctx.font=`bold 9px "Space Mono",monospace`;
+      ctx.fillText(isPlaceholder?'…':stress,pos.x,pos.y+7);
+    });
+    if(phase==='fast'){
+      ctx.fillStyle='rgba(99,160,255,0.35)'; ctx.font=`9px "Space Mono",monospace`;
+      ctx.textAlign='right'; ctx.textBaseline='top';
+      ctx.fillText('computing…',W-8,8);
     }
-  },{once:false});
-  // Remove duplicate listeners by replacing
-  const clone=canvas.cloneNode(true);
-  canvas.parentNode.replaceChild(clone,canvas);
-  clone.addEventListener('click', function(e){
-    const rect=clone.getBoundingClientRect();
-    const scaleX=W/rect.width;
-    const scaleY=H/rect.height;
-    const mx=(e.clientX-rect.left)*scaleX;
-    const my=(e.clientY-rect.top)*scaleY;
-    for(const n of nodes){
-      const p=positions[n.ticker];
-      if(!p)continue;
-      const dist=Math.sqrt((mx-p.x)**2+(my-p.y)**2);
-      if(dist<(p._r||32)){showTicker(n.ticker,e);return;}
-    }
-  });
-
-  // ── Crack summary text ─────────────────────────────────────────────────
-  const legend=$('stress-map-legend');
-  if(legend){
-    const base=`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low stress</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(79,163,255,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>High</span>
-      <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>Critical</span>
-      <span style="margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:9px">Click node → DNA panel</span>`;
-    const crackText=cracks.length?`<div style="width:100%;margin-top:8px;font-size:10px;color:var(--muted)">
-      <span style="color:var(--red);font-family:var(--mono);font-size:9px;margin-right:6px">⚡ CRACK PATHS (${cracks.length}):</span>
-      ${cracks.slice(0,4).map(c=>`<span style="font-family:var(--mono);font-size:9px;color:var(--red);margin-right:10px">${c.a}↔${c.b} severity=${c.severity} · ${c.reason}</span>`).join('')}
-    </div>`:'';
-    legend.innerHTML=`<div style="display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--muted);align-items:center">${base}</div>${crackText}`;
   }
+
+  // PHASE 1: fast render with score-only stress
+  const fastNodes=holdings.map(h=>{
+    const t=h.Ticker||h.ticker||'';
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||S.radar.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const sc=num(r.Score||r.score,50);
+    const status=(r.Status||r.status||'').toUpperCase();
+    const move=(r.Move||r.move||'').toLowerCase();
+    const theme=r.Theme||r.theme||'Uncategorized';
+    const ss=Math.round(Math.max(5,Math.min(95,100-sc)));
+    const ms=status==='SELL'?80:status==='TRIM'?50:status==='WATCH'?35:status==='BUY'?15:45;
+    const mv=move==='weak'?70:move==='near buy'?40:move==='strong'||move==='emerging'?15:50;
+    return{ticker:t,stress:Math.round(ss*0.5+ms*0.3+mv*0.2),theme,value:0};
+  }).filter(n=>n.ticker);
+
+  drawMap(canvasEl,fastNodes,findCracks(fastNodes),'fast');
+
+  const legend=$('stress-map-legend');
+  const legendBase=`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(79,163,255,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>High</span>
+    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>Critical</span>
+    <span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--cyan)">⟳ Deep analysis running…</span>
+    <span style="color:var(--dim);font-family:var(--mono);font-size:9px">Click node → DNA panel</span>`;
+  if(legend) legend.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);align-items:center">${legendBase}</div>`;
+
+  // PHASE 2: full Von Mises + LCS + cycle — batched async
+  setTimeout(()=>{
+    const fullNodes=[];
+    let idx=0;
+    function batch(){
+      const end=Math.min(idx+4,holdings.length);
+      for(let i=idx;i<end;i++){
+        const t=holdings[i].Ticker||holdings[i].ticker||'';
+        if(t) fullNodes.push(calcNodeStress(t));
+      }
+      idx=end;
+      if(idx<holdings.length){ setTimeout(batch,0); return; }
+      // All computed — final redraw
+      const valid=fullNodes.filter(n=>n.ticker);
+      const cracks=findCracks(valid);
+      const cur=$('stress-map-canvas');
+      if(!cur)return;
+      drawMap(cur,valid,cracks,'full');
+      // Wire clicks
+      const clone=cur.cloneNode(true);
+      cur.parentNode.replaceChild(clone,cur);
+      clone.style.cursor='pointer';
+      clone.addEventListener('click',function(e){
+        const rect=clone.getBoundingClientRect();
+        const sx=W/rect.width, sy=H/rect.height;
+        const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
+        for(const n of valid){
+          const p=positions[n.ticker]; if(!p)continue;
+          if(Math.sqrt((mx-p.x)**2+(my-p.y)**2)<32){showTicker(n.ticker,e);return;}
+        }
+      });
+      // Final legend
+      const crackText=cracks.length?`<div style="width:100%;margin-top:8px;font-size:10px;color:var(--muted)">
+        <span style="color:var(--red);font-family:var(--mono);font-size:9px;margin-right:6px">⚡ CRACK PATHS (${cracks.length}):</span>
+        ${cracks.slice(0,4).map(c=>`<span style="font-family:var(--mono);font-size:9px;color:var(--red);margin-right:10px">${c.a}↔${c.b} · ${c.reason}</span>`).join('')}
+      </div>`:'';
+      if(legend) legend.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);align-items:center">
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(79,163,255,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>High</span>
+        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>Critical</span>
+        <span style="margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:9px">Click node → DNA panel</span>
+      </div>${crackText}`;
+    }
+    batch();
+  },250);
 }
+
 
 
 
