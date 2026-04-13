@@ -3385,25 +3385,63 @@ async function loadAll(){
   S.last=new Date();S.cd=30;
   $('last-time').textContent=S.last.toLocaleTimeString();
 
-  // On-page diagnostic
-  if(S.holdings.length){
-    console.log('[Lean] Holdings OK:',S.holdings.length,'rows, cols:',Object.keys(S.holdings[0]).slice(0,6).join(', '));
+  // ── FEED DIAGNOSTIC ──────────────────────────────────────────────────────
+  const failedFeeds=Object.entries(FEED_STATUS).filter(([,st])=>!st.ok).map(([k])=>k);
+  const emptyFeeds=['holdings','ranking','dna','macro'].filter(k=>{
+    const arr=k==='macro'?[S.macro]:S[k];
+    return !arr||arr.length===0||(Array.isArray(arr)&&arr.length===0);
+  });
+
+  // Show/hide global warning banner
+  let banner=$('feed-warn-banner');
+  if(!banner){
+    banner=document.createElement('div');
+    banner.id='feed-warn-banner';
+    banner.style.cssText='display:none;position:sticky;top:0;z-index:999;background:rgba(255,79,79,.12);border-bottom:1px solid rgba(255,79,79,.3);padding:8px 16px;font-family:var(--mono);font-size:10px;color:var(--red);display:flex;align-items:center;gap:10px';
+    const tabBar=document.querySelector('.tabs');
+    if(tabBar)tabBar.parentNode.insertBefore(banner,tabBar.nextSibling);
+  }
+
+  if(emptyFeeds.length>=2){
+    banner.style.display='flex';
+    banner.innerHTML=`<span style="font-size:12px">⚠</span>
+      <span style="color:var(--yellow)">Data feeds not loading — ${emptyFeeds.join(', ')} empty.</span>
+      <span style="color:var(--muted);margin-left:4px">Most likely cause: Google Sheets not published as CSV.</span>
+      <button onclick="openSettings()" style="margin-left:auto;font-family:var(--mono);font-size:9px;padding:3px 10px;border:1px solid rgba(255,79,79,.4);border-radius:4px;background:transparent;color:var(--red);cursor:pointer">⚙ Fix in Data Settings</button>
+      <button onclick="loadAll()" style="font-family:var(--mono);font-size:9px;padding:3px 10px;border:1px solid rgba(245,197,66,.4);border-radius:4px;background:transparent;color:var(--yellow);cursor:pointer">↺ Retry</button>`;
   } else {
+    banner.style.display='none';
+  }
+
+  // Holdings specific diagnostic
+  if(!S.holdings.length){
     const holdUrl=rd(K.holdings)||DEFAULTS.holdings||'';
     const st=FEED_STATUS['holdings'];
     const el=$('holdings-list');
     if(el){
       if(st&&!st.ok){
         el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;padding:12px;background:rgba(255,79,79,.07);border:1px solid rgba(255,79,79,.2);border-radius:10px;line-height:1.9">
-          <div style="color:var(--red);font-weight:700;margin-bottom:8px">⚠ Holdings: ${st.msg}</div>
-          ${st.msg.includes('HTML')?`<div style="color:var(--yellow)">Fix: In Google Sheets → File → Share → Publish to web → select HOLDINGS tab → CSV format → Publish</div>`:''}
-          ${st.msg.includes('error')||st.msg.includes('Error')?`<div style="color:var(--yellow)">Fix: In Google Sheets → Share → change to "Anyone with the link" (viewer)</div>`:''}
-          <div style="color:var(--dim);margin-top:6px;word-break:break-all">URL: ${holdUrl.slice(0,90)}…</div>
+          <div style="color:var(--red);font-weight:700;margin-bottom:8px">⚠ Holdings feed: ${st.msg}</div>
+          <div style="color:var(--yellow)">Fix: Google Sheets → File → Share → Publish to web → HOLDINGS tab → CSV → Publish</div>
+          <div style="color:var(--dim);margin-top:4px;font-size:9px;word-break:break-all">${holdUrl.slice(0,80)}…</div>
         </div>`;
       } else if(!holdUrl){
-        el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;padding:12px;color:var(--muted)">No holdings URL — open ⚙ Data Settings and paste your HOLDINGS CSV URL</div>`;
+        el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;padding:12px;color:var(--muted)">No holdings URL — open ⚙ Data Settings</div>`;
+      } else {
+        el.innerHTML=`<div style="font-family:var(--mono);font-size:10px;padding:12px;color:var(--muted)">Holdings loading… if this persists, click ↺ Refresh</div>`;
       }
     }
+  } else {
+    console.log('[Lean] Holdings OK:',S.holdings.length,'rows');
+  }
+
+  // Ranking specific diagnostic
+  if(!S.ranking.length){
+    const el=$('ranking-body');
+    if(el) el.innerHTML=`<tr><td colspan="7" style="padding:16px;font-family:var(--mono);font-size:10px;color:var(--muted);text-align:center">
+      Ranking feed empty — check RANKING_EXPORT tab is published as CSV<br>
+      <button onclick="openSettings()" style="margin-top:8px;font-family:var(--mono);font-size:9px;padding:4px 12px;border:1px solid var(--line);border-radius:4px;background:transparent;color:var(--cyan);cursor:pointer">⚙ Open Data Settings</button>
+    </td></tr>`;
   }
   renderFeedStatus();
 
