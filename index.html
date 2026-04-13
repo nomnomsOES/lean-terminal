@@ -743,6 +743,26 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 
     </div>
 
+    <!-- PORTFOLIO STRESS MAP -->
+    <div class="card" style="margin-top:10px">
+      <div class="card-head">
+        <div class="card-title">Portfolio Stress Map</div>
+        <div class="card-meta">FEM-style · stress per node · crack propagation lines</div>
+      </div>
+      <div class="card-body" style="padding:14px">
+        <div id="stress-map-wrap" style="position:relative;min-height:200px">
+          <canvas id="stress-map-canvas" style="width:100%;display:block"></canvas>
+          <div id="stress-map-legend" style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;font-size:10px;color:var(--muted)">
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low stress</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
+            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>High stress</span>
+            <span><span style="display:inline-block;width:20px;height:2px;background:rgba(255,79,79,.5);margin-right:4px;vertical-align:middle;display:inline-block"></span>Crack path</span>
+            <span style="margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:9px">Click node to open DNA panel</span>
+          </div>
+        </div>
+      </div>
+    </div>
+
   </div><!-- /grid -->
   </div><!-- /tab-terminal -->
 
@@ -1191,27 +1211,28 @@ const _BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj
 const _csv = gid => `${_BASE}?gid=${gid}&single=true&output=csv`;
 
 const DEFAULTS = {
-  holdings:  _csv('1334836685'),  // HOLDINGS tab
-  ranking:   _csv('2095403822'),  // RANKING_EXPORT tab
-  engine:    _csv('1225083168'),  // ACTION_ENGINE tab
-  dna:       _csv('425314096'),   // DNA_EXPORT tab
-  macro:     _csv('643415500'),   // MARKOV_CURRENT tab
-  radar:     _csv('1225083168'),  // ACTION_ENGINE doubles as radar (has all tickers)
-  aifilter:  _csv('1225083168'),  // ACTION_ENGINE
-  shock:     _csv('2033993643'),  // SHOCK_RADAR tab
-  sysexport: _csv('769357676'),   // SYSTEM_EXPORT tab
+  holdings:     _csv('1334836685'),  // HOLDINGS ✓
+  ranking:      _csv('2095403822'),  // RANKING_EXPORT ✓
+  engine:       _csv('1225083168'),  // ACTION_ENGINE ✓
+  dna:          _csv('425314096'),   // DNA_EXPORT ✓
+  macro:        _csv('643415500'),   // MARKOV_CURRENT ✓
+  radar:        _csv('1885295455'),  // RADAR ✓ (own tab now)
+  aifilter:     _csv('1225083168'),  // ACTION_ENGINE
+  shock:        _csv('2033993643'),  // SHOCK_RADAR ✓
+  sysexport:    _csv('769357676'),   // SYSTEM_EXPORT ✓
+  pricehistory: _csv('1862098112'),  // PRICE_HISTORY ✓ (was wrong before)
 };
 const K = {
   engine:'lt_engine', holdings:'lt_holdings', ranking:'lt_ranking',
   radar:'lt_radar', macro:'lt_macro', shock:'lt_shock', dna:'lt_dna',
   sysexport:'lt_sysexport', aifilter:'lt_aifilter', mode:'lt_mode',
-  checks:'lt_checks'
+  checks:'lt_checks', pricehistory:'lt_pricehistory'
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const S = {
   engine:{}, holdings:[], ranking:[], radar:[], macro:{},
-  shock:[], sysexport:[], aifilter:{}, dna:[], cd:30, last:null
+  shock:[], sysexport:[], aifilter:{}, dna:[], pricehistory:[], cd:30, last:null
 };
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -1303,7 +1324,438 @@ function markovClass(s){
 }
 function moveClass(v){return v>0?'g':v<0?'r':''}
 
-// ─── LEAN CONFIDENCE SCORE ENGINE ────────────────────────────────────────────
+// ─── SIGNAL ENTROPY ENGINE ────────────────────────────────────────────────────
+// Entropy = how unpredictable is this stock right now
+// Low entropy = clear direction (good signal). High entropy = noisy (stay away)
+function calcEntropy(ticker){
+  const mc=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+
+  // Get state probabilities — Markov UP/FLAT/DOWN
+  const stateRank={'WEAK':1,'WATCH':2,'IMPROVING':3,'QUALIFIED':4,'STRONG':5};
+  const stRank=stateRank[(r.Markov_State||r.Markov||'').toUpperCase()]||3;
+  const up=parseFloat(mc.UP_PROB||0)||Math.max(0.05,0.1+stRank*0.1);
+  const flat=parseFloat(mc.FLAT_PROB||0)||0.3;
+  const down=parseFloat(mc.DOWN_PROB||0)||Math.max(0.05,0.6-stRank*0.1);
+
+  // Normalize to sum to 1
+  const total=up+flat+down;
+  const p=[up/total, flat/total, down/total].filter(v=>v>0);
+
+  // Shannon entropy: H = -Σ p(i) * log2(p(i))
+  // Uses Euler's number via natural log: H = -Σ p * ln(p) / ln(2)
+  const H=-p.reduce((s,v)=>s+v*Math.log(v),0)/Math.log(2);
+  const Hmax=Math.log2(3); // max entropy for 3 states = 1.585 bits
+
+  // Normalize 0-100: 0 = perfectly ordered (one state dominates), 100 = complete chaos
+  const entropyScore=Math.round((H/Hmax)*100);
+
+  // Street speak interpretation
+  const label=entropyScore<=25?'Clear signal — one direction dominates':
+    entropyScore<=50?'Moderate clarity — some noise':
+    entropyScore<=75?'Noisy — uncertain direction':
+    'Maximum chaos — stay out until signal clears';
+
+  return{score:entropyScore, H:H.toFixed(3), label, up, flat, down};
+}
+
+// ─── KL DIVERGENCE ENGINE ─────────────────────────────────────────────────────
+// KL divergence = how surprised you would be if you assumed stock A's behavior
+// but were actually watching stock B
+// Asymmetric: KL(A→B) ≠ KL(B→A) — direction matters
+function calcKL(tickerA, tickerB){
+  const getProbs=(ticker)=>{
+    const mc=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+    const stR={'WEAK':1,'WATCH':2,'IMPROVING':3,'QUALIFIED':4,'STRONG':5};
+    const sr=stR[(r.Markov_State||r.Markov||'').toUpperCase()]||3;
+    const up=parseFloat(mc.UP_PROB||0)||Math.max(0.05,0.1+sr*0.1);
+    const flat=parseFloat(mc.FLAT_PROB||0)||0.3;
+    const down=parseFloat(mc.DOWN_PROB||0)||Math.max(0.05,0.6-sr*0.1);
+    const t=up+flat+down;
+    return[up/t, flat/t, down/t];
+  };
+
+  const pA=getProbs(tickerA); // true distribution (what A actually does)
+  const pB=getProbs(tickerB); // model (you assume B's behavior)
+
+  // KL(A||B) = Σ p_A(i) * ln(p_A(i) / p_B(i))
+  // Uses Euler's natural log — this IS e in action
+  const klAtoB=pA.reduce((s,p,i)=>s+(p>0&&pB[i]>0?p*Math.log(p/pB[i]):0),0);
+  const klBtoA=pB.reduce((s,p,i)=>s+(p>0&&pA[i]>0?p*Math.log(p/pA[i]):0),0);
+
+  // Symmetric version (Jensen-Shannon): average of both directions
+  const js=(klAtoB+klBtoA)/2;
+
+  // Convert to 0-100 scale (KL is in nats, practical max ~2)
+  const surprise=Math.round(Math.min(100,js*50));
+
+  const label=surprise<=10?'Nearly identical distributions — same bet':
+    surprise<=30?'Some divergence — partially different':
+    surprise<=60?'Meaningfully different — real diversification':
+    'Very different behavior profiles — strong hedge potential';
+
+  return{
+    klAtoB:klAtoB.toFixed(3),
+    klBtoA:klBtoA.toFixed(3),
+    js:js.toFixed(3),
+    surprise,
+    label,
+    // Which direction has more surprise — tells you which is the riskier assumption
+    riskierAssumption:klAtoB>klBtoA?
+      `Assuming ${tickerB} behaves like ${tickerA} is riskier`:
+      `Assuming ${tickerA} behaves like ${tickerB} is riskier`
+  };
+}
+
+// ─── CYCLE / RESONANCE ENGINE ─────────────────────────────────────────────────
+// Uses price history to detect dominant cycles via Discrete Fourier Transform
+// Euler's formula e^(iθ) = cos(θ) + i·sin(θ) is the core of DFT
+function calcCycle(ticker){
+  const rows=S.pricehistory.filter(r=>{
+    const t=r.TICKER||r.Ticker||r.ticker||'';
+    return t===ticker && (r.CLOSE||r.Close||r.close);
+  }).sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+
+  if(rows.length<10){
+    return{hasCycle:false,msg:'Not enough price history loaded yet'};
+  }
+
+  // Extract close prices
+  const prices=rows.map(r=>parseFloat(r.CLOSE||r.Close||r.close)).filter(v=>!isNaN(v));
+  const n=prices.length;
+
+  // Normalize: convert prices to returns (removes trend, reveals cycles)
+  const returns=[];
+  for(let i=1;i<n;i++) returns.push((prices[i]-prices[i-1])/prices[i-1]);
+
+  const N=returns.length;
+  if(N<8) return{hasCycle:false,msg:'Need more history for cycle detection'};
+
+  // Discrete Fourier Transform — Euler in action
+  // X(k) = Σ x(n) * e^(-i*2π*k*n/N) = Σ x(n) * [cos(2πkn/N) - i*sin(2πkn/N)]
+  const amplitudes=[];
+  const maxK=Math.floor(N/2);
+
+  for(let k=1;k<=maxK;k++){
+    let re=0,im=0;
+    for(let i=0;i<N;i++){
+      const angle=2*Math.PI*k*i/N;
+      re+=returns[i]*Math.cos(angle);   // cos(θ) — Euler's real part
+      im-=returns[i]*Math.sin(angle);   // sin(θ) — Euler's imaginary part
+    }
+    const amplitude=Math.sqrt(re*re+im*im)/N; // magnitude of this frequency
+    const cycleDays=Math.round(N/k);
+    if(cycleDays>=3 && cycleDays<=60){
+      amplitudes.push({k, cycleDays, amplitude, re, im});
+    }
+  }
+
+  if(!amplitudes.length) return{hasCycle:false,msg:'No clear cycle found'};
+
+  // Find dominant frequency (strongest amplitude)
+  amplitudes.sort((a,b)=>b.amplitude-a.amplitude);
+  const dominant=amplitudes[0];
+
+  // Phase: where in the cycle are we right now?
+  // phase = atan2(im, re) — angle of the complex number
+  const phase=Math.atan2(dominant.im, dominant.re); // radians, -π to π
+  const phaseDeg=Math.round(phase*180/Math.PI);
+  const phaseNorm=((phaseDeg+180)/360); // 0 to 1
+
+  // Position in cycle: 0=cycle start/bottom, 0.5=cycle top
+  const cyclePosition=phaseNorm;
+  const positionLabel=cyclePosition<0.25?'Early cycle — just started moving up':
+    cyclePosition<0.5?'Mid cycle — gaining momentum':
+    cyclePosition<0.75?'Late cycle — approaching peak':
+    'Cycle peak or reversal zone — caution';
+
+  // Signal strength: how dominant is this cycle vs noise?
+  const totalPower=amplitudes.reduce((s,a)=>s+a.amplitude,0);
+  const dominance=Math.round((dominant.amplitude/totalPower)*100);
+
+  // Resonance check: are other holdings on the same cycle?
+  const holdingTickers=S.holdings.map(h=>h.Ticker||h.ticker||'').filter(Boolean);
+  const resonantNames=[];
+  holdingTickers.filter(t=>t!==ticker).forEach(t=>{
+    const other=calcCycleSimple(t);
+    if(other && Math.abs(other.cycleDays-dominant.cycleDays)<=3){
+      resonantNames.push(t);
+    }
+  });
+
+  return{
+    hasCycle:true,
+    cycleDays:dominant.cycleDays,
+    amplitude:dominant.amplitude.toFixed(4),
+    phase:phaseDeg,
+    cyclePosition:Math.round(cyclePosition*100),
+    positionLabel,
+    dominance,
+    resonantNames,
+    recentPrices:prices.slice(-20),
+    msg:`${dominant.cycleDays}-day cycle detected`
+  };
+}
+
+// Lightweight cycle calc for resonance checking (no full DFT)
+function calcCycleSimple(ticker){
+  const rows=S.pricehistory.filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker&&(r.CLOSE||r.Close||r.close));
+  if(rows.length<10) return null;
+  const prices=rows.slice(-30).map(r=>parseFloat(r.CLOSE||r.Close||r.close)).filter(v=>!isNaN(v));
+  if(prices.length<8) return null;
+  const returns=[];
+  for(let i=1;i<prices.length;i++) returns.push((prices[i]-prices[i-1])/prices[i-1]);
+  const N=returns.length;
+  let best={amplitude:0,cycleDays:0};
+  for(let k=1;k<=Math.floor(N/2);k++){
+    let re=0,im=0;
+    for(let i=0;i<N;i++){const a=2*Math.PI*k*i/N;re+=returns[i]*Math.cos(a);im-=returns[i]*Math.sin(a);}
+    const amp=Math.sqrt(re*re+im*im)/N;
+    const cd=Math.round(N/k);
+    if(amp>best.amplitude&&cd>=3&&cd<=60){best={amplitude:amp,cycleDays:cd};}
+  }
+  return best.cycleDays>0?best:null;
+}
+
+// ─── PORTFOLIO STRESS MAP (FEM-inspired) ─────────────────────────────────────
+// Each holding = a node with a stress value (Von Mises-style combined stress)
+// Crack propagation = connected nodes that share high stress → failure spreads
+function calcNodeStress(ticker){
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||
+          S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const d=S.dna.find(x=>x.ticker===ticker)||{};
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const conf=calcConfidence(ticker);
+  const ent=calcEntropy(ticker);
+
+  // Stress components (higher = more stress = worse)
+  const scoreStress=Math.max(0,100-num(r.Score||r.score,50));       // low score = high stress
+  const lcsStress=Math.max(0,100-conf.total);                        // low confidence = high stress
+  const entropyStress=ent.score;                                     // high entropy = high stress
+  const drawdownStress=num(d.drawdown,0);                            // drawdown contribution
+  const volStress=num(d.realized_vol,0);                             // volatility contribution
+
+  // Von Mises equivalent: combined stress (not just max single stress)
+  // σ_vm = √(σ1² + σ2² + σ3² - σ1σ2 - σ2σ3 - σ1σ3) simplified for 2 principal stresses
+  const s1=(scoreStress+lcsStress)/2;
+  const s2=(entropyStress+volStress)/2;
+  const vonMises=Math.sqrt(s1*s1+s2*s2-s1*s2);
+  const stress=Math.min(100,Math.round(vonMises));
+
+  const value=num(h.Value||h.value||h.Holding_Value,0);
+  const theme=r.Theme||h.Theme||h.Role||'Uncategorized';
+
+  return{ticker,stress,value,theme,scoreStress,lcsStress,entropyStress,vonMises,conf};
+}
+
+// Crack propagation — which nodes are structurally connected?
+// Connection = same theme OR high angular similarity (angle < 35°)
+function findCracks(nodes){
+  const cracks=[];
+  for(let i=0;i<nodes.length;i++){
+    for(let j=i+1;j<nodes.length;j++){
+      const a=nodes[i], b=nodes[j];
+      const sameTheme=a.theme===b.theme;
+      // Check angular distance for structural connection
+      const rA=S.ranking.find(x=>(x.Ticker||x.ticker)===a.ticker)||{};
+      const rB=S.ranking.find(x=>(x.Ticker||x.ticker)===b.ticker)||{};
+      const saP=scorePack(rA), sbP=scorePack(rB);
+      const keys=['trend','react','follow','risk','markov','score'];
+      const va=keys.map(k=>saP[k]||0);
+      const vb=keys.map(k=>sbP[k]||0);
+      const dot=va.reduce((s,v,i)=>s+v*vb[i],0);
+      const magA=Math.sqrt(va.reduce((s,v)=>s+v*v,0));
+      const magB=Math.sqrt(vb.reduce((s,v)=>s+v*v,0));
+      const angle=magA&&magB?Math.acos(Math.min(1,Math.max(-1,dot/(magA*magB))))*180/Math.PI:90;
+      const connected=sameTheme||(angle<35);
+      // Crack forms when both nodes are under stress AND connected
+      const bothStressed=a.stress>60&&b.stress>60;
+      const oneBroken=a.stress>80||b.stress>80;
+      if(connected&&(bothStressed||oneBroken)){
+        cracks.push({
+          a:a.ticker, b:b.ticker,
+          severity:Math.round((a.stress+b.stress)/2),
+          angle:Math.round(angle),
+          reason:sameTheme?`Same theme: ${a.theme}`:`Angular distance: ${Math.round(angle)}°`
+        });
+      }
+    }
+  }
+  return cracks.sort((x,y)=>y.severity-x.severity);
+}
+
+function renderStressMap(){
+  const canvas=$('stress-map-canvas');
+  if(!canvas)return;
+
+  const holdings=S.holdings.filter(r=>(r.Ticker||r.ticker)&&(r.Ticker||r.ticker)!=='Ticker');
+  if(!holdings.length){
+    canvas.style.display='none';
+    const wrap=$('stress-map-wrap');
+    if(wrap)wrap.innerHTML=`<div style="font-size:10px;color:var(--dim);text-align:center;padding:20px;font-family:var(--mono)">No holdings loaded — add Holdings CSV URL in Data Settings</div>`;
+    return;
+  }
+
+  const nodes=holdings.map(h=>{
+    const t=h.Ticker||h.ticker||'';
+    return calcNodeStress(t);
+  }).filter(n=>n.ticker);
+
+  const cracks=findCracks(nodes);
+
+  // Layout: arrange nodes in a force-like grid
+  const W=canvas.offsetWidth||700;
+  const H=Math.max(220, Math.ceil(nodes.length/6)*100+60);
+  canvas.width=W;
+  canvas.height=H;
+  const ctx=canvas.getContext('2d');
+  ctx.clearRect(0,0,W,H);
+
+  // Position nodes in rows
+  const cols=Math.min(8,nodes.length);
+  const cellW=W/cols;
+  const cellH=H/Math.ceil(nodes.length/cols);
+  const positions={};
+  nodes.forEach((n,i)=>{
+    const col=i%cols, row=Math.floor(i/cols);
+    positions[n.ticker]={x:cellW*col+cellW/2, y:cellH*row+cellH/2};
+  });
+
+  // Draw crack lines first (behind nodes)
+  cracks.forEach(c=>{
+    const pa=positions[c.a], pb=positions[c.b];
+    if(!pa||!pb)return;
+    const alpha=Math.min(0.8,(c.severity-50)/50);
+    ctx.beginPath();
+    ctx.moveTo(pa.x,pa.y);
+    // Jagged crack line
+    const mx=(pa.x+pb.x)/2+((Math.random()-.5)*30);
+    const my=(pa.y+pb.y)/2+((Math.random()-.5)*30);
+    ctx.quadraticCurveTo(mx,my,pb.x,pb.y);
+    ctx.strokeStyle=`rgba(255,79,79,${alpha})`;
+    ctx.lineWidth=c.severity>80?2:1;
+    ctx.setLineDash([3,3]);
+    ctx.stroke();
+    ctx.setLineDash([]);
+  });
+
+  // Draw nodes
+  nodes.forEach(n=>{
+    const pos=positions[n.ticker];
+    if(!pos)return;
+    const r=Math.max(18,Math.min(32,14+(n.value/500)));
+    // Stress color: green→yellow→red
+    const stress=n.stress;
+    let fillColor;
+    if(stress<=35)fillColor=`rgba(32,224,122,0.8)`;
+    else if(stress<=65)fillColor=`rgba(245,197,66,0.8)`;
+    else fillColor=`rgba(255,79,79,0.8)`;
+
+    // Outer ring = stress level
+    ctx.beginPath();
+    ctx.arc(pos.x,pos.y,r+4,0,Math.PI*2);
+    ctx.strokeStyle=fillColor;
+    ctx.lineWidth=2;
+    ctx.stroke();
+
+    // Fill
+    ctx.beginPath();
+    ctx.arc(pos.x,pos.y,r,0,Math.PI*2);
+    ctx.fillStyle=fillColor.replace('0.8','0.15');
+    ctx.fill();
+
+    // Stress arc (shows how much of the circle is "stressed")
+    const stressAngle=(stress/100)*Math.PI*2;
+    ctx.beginPath();
+    ctx.arc(pos.x,pos.y,r,-Math.PI/2,-Math.PI/2+stressAngle);
+    ctx.strokeStyle=fillColor;
+    ctx.lineWidth=3;
+    ctx.stroke();
+
+    // Ticker label
+    ctx.fillStyle='rgba(214,233,255,0.9)';
+    ctx.font=`bold ${Math.min(11,10)}px Space Mono,monospace`;
+    ctx.textAlign='center';
+    ctx.textBaseline='middle';
+    ctx.fillText(n.ticker.slice(0,5),pos.x,pos.y-1);
+
+    // Stress number
+    ctx.fillStyle='rgba(140,145,166,0.8)';
+    ctx.font=`9px Space Mono,monospace`;
+    ctx.fillText(stress,pos.x,pos.y+10);
+  });
+
+  // Make canvas clickable
+  canvas._nodes=nodes;
+  canvas._positions=positions;
+  canvas.onclick=function(e){
+    const rect=canvas.getBoundingClientRect();
+    const mx=e.clientX-rect.left, my=e.clientY-rect.top;
+    for(const n of nodes){
+      const p=positions[n.ticker];
+      if(!p)continue;
+      const dist=Math.sqrt((mx-p.x)**2+(my-p.y)**2);
+      if(dist<30){showTicker(n.ticker,e);break;}
+    }
+  };
+
+  // Show crack summary below
+  if(cracks.length){
+    let summary=$('stress-map-legend');
+    if(summary){
+      const crackText=cracks.slice(0,3).map(c=>`<span style="font-family:var(--mono);font-size:9px;color:var(--red);margin-right:8px">⚡ ${c.a}↔${c.b} (${c.severity})</span>`).join('');
+      summary.innerHTML+=`<div style="width:100%;margin-top:6px;font-size:10px;color:var(--muted)">Crack paths: ${crackText}</div>`;
+    }
+  }
+}
+
+// ─── VARIABLE RADAR GRADUATION TRIGGER ───────────────────────────────────────
+// How many sessions at score≥threshold before graduating to full holdings candidate
+// Threshold is variable based on:
+// - Market volatility (high VIX = require more confirmation)
+// - Mode (AGG = faster graduation, LEAN = slower)
+// - Score level (elite score = fewer sessions needed)
+// - Cycle position (graduating at cycle top = dangerous)
+function calcGraduationThreshold(ticker){
+  const r=S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||
+          S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const sc=num(r.Score||r.score,0);
+  const vix=num(S.macro.VIX||S.macro.vix,20);
+  const cyc=calcCycle(ticker);
+
+  // Base sessions required
+  let sessions=3;
+
+  // Score modifier: elite scores graduate faster
+  if(sc>=90) sessions=1;
+  else if(sc>=80) sessions=2;
+  else if(sc>=75) sessions=3;
+  else sessions=5; // below 75 needs more conviction
+
+  // Mode modifier
+  if(mode()==='AGG') sessions=Math.max(1,sessions-1);
+  else sessions=sessions+1; // LEAN requires one extra session
+
+  // Volatility modifier: high VIX = need more confirmation
+  if(vix>25) sessions=sessions+2;
+  else if(vix>20) sessions=sessions+1;
+
+  // Cycle position modifier: don't graduate at cycle peak
+  if(cyc.hasCycle&&cyc.cyclePosition>70){
+    sessions=sessions+2; // near cycle top = wait
+  }
+
+  const readiness=sc>=75?'Qualified':sc>=65?'Near miss — watch':'Below threshold';
+  const reason=`Score ${sc} · VIX ${vix.toFixed(0)} · ${mode()} mode · ${cyc.hasCycle?'cycle '+cyc.cyclePosition+'%':'no cycle data'}`;
+
+  return{
+    sessions:Math.max(1,Math.min(7,sessions)),
+    readiness, reason,
+    fastTrack:sc>=90,
+    blocked:cyc.hasCycle&&cyc.cyclePosition>75
+  };
+}
 // Five components, each 0-20, total 0-100
 function calcConfidence(ticker){
   const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||
@@ -1705,27 +2157,59 @@ function renderVisuals(){
 
 // ─── RENDER: LOADING DOCK ────────────────────────────────────────────────────
 const DOCK_ITEMS=[
+  // ── SHIPPED ──
   {status:'ok',  label:'Reaction Strength'},
   {status:'ok',  label:'Follow Through Score'},
   {status:'ok',  label:'Continuation Flag'},
   {status:'ok',  label:'Markov bias layer'},
-  {status:'ok',  label:'Scrollable clickable lists'},
-  {status:'ok',  label:'DNA Lab + radar chart'},
+  {status:'ok',  label:'DNA Lab + radar chart + search'},
   {status:'ok',  label:'Monte Carlo + Markov tab'},
-  {status:'ok',  label:'Cheat Sheet with confidence bars'},
+  {status:'ok',  label:'Cheat Sheet + LCS column'},
   {status:'ok',  label:'Top Signals strip'},
-  {status:'ok',  label:'Compare Mode'},
-  {status:'pend',label:'Volume spike wiring'},
-  {status:'pend',label:'Avg time to reversal fill'},
-  {status:'pend',label:'Broker-side execute integration'},
-  {status:'pend',label:'Live price feed'},
+  {status:'ok',  label:'Compare Mode + angular distance'},
+  {status:'ok',  label:'LCS — 5-component confidence score'},
+  {status:'ok',  label:'Trade log + action checkmarks'},
+  {status:'ok',  label:'DNA panel modal (click any ticker)'},
+  {status:'ok',  label:'Holdings heatmap'},
+  {status:'ok',  label:'AI Background Check (synthetic DNA)'},
+  {status:'ok',  label:'Signal Entropy (Shannon H)'},
+  {status:'ok',  label:'KL Divergence in Compare Mode'},
+  {status:'ok',  label:'Cycle detection — Fourier / Euler'},
+  {status:'ok',  label:'Resonance warning across holdings'},
+  {status:'ok',  label:'Price history wired (10 feeds)'},
+  {status:'ok',  label:'Street speak labels + 40 i-tooltips'},
+  // ── IN PROGRESS ──
+  {status:'build',label:'Today\'s Moves card — obvious BUY/EXIT/WATCH at top'},
+  {status:'build',label:'Portfolio stress map — FEM visual grid'},
+  {status:'build',label:'Crack propagation — failure spread between holdings'},
+  {status:'build',label:'Conviction-based sizing — LCS × score × base'},
+  {status:'build',label:'Variable radar graduation trigger'},
+  {status:'build',label:'Stop-loss layer — -15% trailing on non-top-5'},
+  {status:'build',label:'Theme concentration cap — max 30% per theme'},
+  // ── PENDING ──
+  {status:'pend', label:'Volume spike wiring'},
+  {status:'pend', label:'Avg time to reversal fill'},
+  {status:'pend', label:'Broker-side execute integration'},
+  {status:'pend', label:'Live price feed'},
+  {status:'pend', label:'Laplace transform — frequency domain signal'},
+  {status:'pend', label:'Hypothesis testing — signal significance gates'},
+  {status:'pend', label:'Fatigue failure scoring — sustained stress detection'},
+  {status:'pend', label:'LCI — portfolio-level confidence index'},
+  {status:'pend', label:'NVDA + SMH in PRICE_HISTORY'},
+  {status:'pend', label:'Score velocity — trending up/down signal'},
 ];
 function renderDock(){
   const el=$('dock-list');
   if(!el)return;
+  const color={
+    ok:'background:rgba(32,224,122,.12);color:var(--green)',
+    build:'background:rgba(79,163,255,.12);color:var(--blue)',
+    pend:'background:rgba(245,197,66,.1);color:var(--yellow)'
+  };
+  const label={ok:'OK',build:'BUILD',pend:'PEND'};
   el.innerHTML=DOCK_ITEMS.map(d=>`
     <div style="display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(99,160,255,.05);font-size:11px">
-      <span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;${d.status==='ok'?'background:rgba(32,224,122,.12);color:var(--green)':'background:rgba(245,197,66,.1);color:var(--yellow)'}">${d.status==='ok'?'OK':'PEND'}</span>
+      <span style="font-family:var(--mono);font-size:9px;font-weight:700;padding:2px 6px;border-radius:4px;flex-shrink:0;${color[d.status]||color.pend}">${label[d.status]||'PEND'}</span>
       <span style="color:var(--muted)">${d.label}</span>
     </div>`).join('');
 }
@@ -1822,12 +2306,26 @@ function runCompare(){
   const portfolioAngle=Math.round(Math.acos(Math.min(1,Math.max(-1,dotCN/(magC*magN))))*180/Math.PI);
   const cleanerRunner=sa.react+sa.follow>=sb.react+sb.follow?aT:bT;
 
+  // KL Divergence — how surprised would you be watching B if you expected A?
+  const kl=calcKL(aT,bT);
+
   el.innerHTML=`<div style="display:grid;gap:8px">
     <div style="padding:10px;border-radius:10px;background:rgba(255,255,255,.02);border:1px solid ${angleColor};text-align:center">
       <div style="font-family:var(--mono);font-size:26px;font-weight:700;color:${angleColor}">${angleDeg}°</div>
       <div style="font-size:9px;color:var(--dim);font-family:var(--mono);letter-spacing:.08em;margin-top:1px">SIGNAL ANGLE</div>
       <div style="font-size:11px;color:var(--text);margin-top:5px;font-weight:600">${angleRead}</div>
     </div>
+
+    <div style="padding:8px 10px;border-radius:9px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;margin-bottom:6px">KL DIVERGENCE — distributional surprise</div>
+      <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:4px">
+        <span style="color:var(--dim)">Surprise score</span>
+        <span style="font-family:var(--mono);font-weight:700;color:${kl.surprise<=20?'var(--green)':kl.surprise<=50?'var(--yellow)':'var(--red)'}">${kl.surprise}/100</span>
+      </div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:6px">${kl.label}</div>
+      <div style="font-size:10px;color:var(--dim);font-style:italic">${kl.riskierAssumption}</div>
+    </div>
+
     ${section('⚠ TOO MUCH — both elevated here','#ff4f4f',tooMuch,'Holding both adds concentration, not edge. These are nearly identical and both high — you already have this bet.')}
     ${section('SIMILAR — move together','#f5c542',similar,'These signals are close between the two. A move in one likely mirrors the other here.')}
     ${section('OPPOSITE — natural hedge','#20e07a',opposite,'One goes high where the other goes low. Holding both gives a natural buffer in these dimensions.')}
@@ -2125,7 +2623,7 @@ function showTicker(ticker, evt){
     (isBullish
       ? `<strong>${ticker}</strong> is showing strong signal with score ${sc}. ${markov} Markov state. ${val?`Currently holding ${money(val)}.`:''} Reaction and follow-through suggest continuation is likely.`
       : `<strong>${ticker}</strong> is below the qualification line at score ${sc}. ${markov} Markov state. Exercise caution — wait for setup to improve before sizing up.`);
-  $('dp-street').innerHTML=streetRead;
+  $('dp-street').innerHTML=streetRead+entropyHTML+cycleHTML;
 
   // Radar chart
   const radarLabels=['5D Mom','20D Mom','Rel Str','Volatility','Downside','Drawdown','Recovery','Continuation','Accumulation','Volume Exp','Sector Fit','Fakeout'];
@@ -2265,8 +2763,39 @@ function showTicker(ticker, evt){
     });
   });
 
-  // Portfolio Warning
-  const holdTickers=S.holdings.map(x=>x.Ticker||x.ticker||'');
+  // Entropy + Cycle
+  const ent=calcEntropy(ticker);
+  const cyc=calcCycle(ticker);
+
+  // Add entropy and cycle as extra info rows below the street read
+  const entropyColor=ent.score<=25?'var(--green)':ent.score<=50?'var(--cyan)':ent.score<=75?'var(--yellow)':'var(--red)';
+  const cycleHTML=cyc.hasCycle?`
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
+      <div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Dominant Cycle</div>
+        <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text)">${cyc.cycleDays}d</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${cyc.dominance}% signal clarity</div>
+      </div>
+      <div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Cycle Position</div>
+        <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${cyc.cyclePosition<50?'var(--green)':'var(--yellow)'}">${cyc.cyclePosition}%</div>
+        <div style="font-size:10px;color:var(--muted);margin-top:2px">${cyc.positionLabel.split('—')[0].trim()}</div>
+      </div>
+    </div>
+    ${cyc.resonantNames.length?`<div style="margin-top:8px;padding:7px 10px;border-radius:7px;background:rgba(255,79,79,.07);border:1px solid rgba(255,79,79,.2);font-size:10px;color:var(--muted)"><span style="color:var(--red);font-family:var(--mono);font-size:9px">⚠ RESONANCE</span> — ${cyc.resonantNames.join(', ')} running same ${cyc.cycleDays}d cycle. Holding all = amplified risk.</div>`:''}`:
+    `<div style="margin-top:8px;font-size:10px;color:var(--dim)">${cyc.msg}</div>`;
+
+  const entropyHTML=`
+    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+      <div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Signal Entropy</div>
+        <div style="font-size:10px;color:var(--muted)">${ent.label}</div>
+      </div>
+      <div style="margin-left:auto;text-align:right">
+        <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:${entropyColor}">${ent.score}</div>
+        <div style="font-size:9px;color:var(--dim)">${ent.H} bits</div>
+      </div>
+    </div>`;
   const overlap=fam.with.filter(t=>holdTickers.includes(t));
   if(overlap.length>=2){
     $('dp-warn-text').textContent=`This horse overlaps heavily with ${overlap.join(' and ')}. If you already hold both, this entry may increase the same family risk instead of adding a new edge.`;
@@ -2579,31 +3108,32 @@ $('settings-btn').onclick=openSettings;
 
 // ─── LOAD ALL ─────────────────────────────────────────────────────────────────
 async function loadAll(){
-  // Use localStorage if set, otherwise fall back to hardcoded DEFAULTS
   const u=k=>rd(K[k])||DEFAULTS[k]||'';
   const urls={
     engine:u('engine'), holdings:u('holdings'), ranking:u('ranking'),
     radar:u('radar'),   macro:u('macro'),        shock:u('shock'),
-    dna:u('dna'),       sysexport:u('sysexport'),aifilter:u('aifilter')
+    dna:u('dna'),       sysexport:u('sysexport'),aifilter:u('aifilter'),
+    pricehistory:u('pricehistory')
   };
 
-  const [eng,hld,rnk,rad,mac,shk,dna,sys,aif]=await Promise.allSettled([
+  const [eng,hld,rnk,rad,mac,shk,dna,sys,aif,ph]=await Promise.allSettled([
     fetchCSV(urls.engine,'engine'),fetchCSV(urls.holdings,'holdings'),fetchCSV(urls.ranking,'ranking'),
     fetchCSV(urls.radar,'radar'),fetchCSV(urls.macro||urls.ranking,'macro'),fetchCSV(urls.shock,'shock'),
-    fetchCSV(urls.dna,'dna'),fetchCSV(urls.sysexport,'sysexport'),fetchCSV(urls.aifilter,'aifilter')
+    fetchCSV(urls.dna,'dna'),fetchCSV(urls.sysexport,'sysexport'),fetchCSV(urls.aifilter,'aifilter'),
+    fetchCSV(urls.pricehistory,'pricehistory')
   ]);
 
   S.engine=(eng.status==='fulfilled'&&eng.value.length)?eng.value[0]:{};
   S.holdings=hld.status==='fulfilled'?hld.value:[];
   S.ranking=rnk.status==='fulfilled'?rnk.value:[];
   S.radar=rad.status==='fulfilled'?rad.value:[];
-  // macro: try dedicated tab first, fall back to FLOW sheet
   const macRaw=mac.status==='fulfilled'?mac.value:[];
   S.macro=macRaw.length?macRaw[0]:{};
   S.shock=shk.status==='fulfilled'?shk.value:[];
   S.dna=dna.status==='fulfilled'?dna.value:[];
   S.sysexport=sys.status==='fulfilled'?sys.value:[];
   S.aifilter=(aif.status==='fulfilled'&&aif.value.length)?aif.value[0]:{};
+  S.pricehistory=ph.status==='fulfilled'?ph.value:[];;
 
   S.last=new Date();S.cd=30;
   $('last-time').textContent=S.last.toLocaleTimeString();
@@ -2646,10 +3176,11 @@ async function loadAll(){
   if($('tab-dna').classList.contains('active'))renderDNAHeatmap();
   renderTradeLog();
   updateActionSummary();
+  setTimeout(()=>renderStressMap(), 100); // after DOM settles
   if($('tab-cheatsheet').classList.contains('active'))renderCheatSheet();
   if($('tab-dna').classList.contains('active')&&S._dnaSelected)loadDNA(S._dnaSelected);
   if($('tab-monte').classList.contains('active')){renderSimTickerList();if(Object.keys(simResults).length)renderMarkovFlow();}
-  else renderSimTickerList(); // always keep datalist fresh
+  else renderSimTickerList();
 }
 
 // ─── MONTE / MARKOV ENGINE ────────────────────────────────────────────────────
