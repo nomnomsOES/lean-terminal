@@ -1748,19 +1748,17 @@ function renderStressMap(){
       const cur=$('stress-map-canvas');
       if(!cur)return;
       drawMap(cur,valid,cracks,'full');
-      // Wire clicks
-      const clone=cur.cloneNode(true);
-      cur.parentNode.replaceChild(clone,cur);
-      clone.style.cursor='pointer';
-      clone.addEventListener('click',function(e){
-        const rect=clone.getBoundingClientRect();
+      // Wire clicks — assign directly, no clone (cloneNode wipes canvas content)
+      cur.style.cursor='pointer';
+      cur.onclick=function(e){
+        const rect=cur.getBoundingClientRect();
         const sx=W/rect.width, sy=H/rect.height;
         const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
         for(const n of valid){
           const p=positions[n.ticker]; if(!p)continue;
           if(Math.sqrt((mx-p.x)**2+(my-p.y)**2)<32){showTicker(n.ticker,e);return;}
         }
-      });
+      };
       // Final legend
       const crackText=cracks.length?`<div style="width:100%;margin-top:8px;font-size:10px;color:var(--muted)">
         <span style="color:var(--red);font-family:var(--mono);font-size:9px;margin-right:6px">⚡ CRACK PATHS (${cracks.length}):</span>
