@@ -2122,6 +2122,7 @@ function generateHorseRead(ticker){
   if(sc>=50) return`Score ${sc}${themeNote} — ${dir}. Below min score threshold${contNote}.`;
   return`Score ${sc} — ${dir}. System says ${status||'no action'}${themeNote}.`;
 }
+function lcsColor(v){return v>=70?'lcs-high':v>=45?'lcs-mid':'lcs-low'}
 function lcsBarColor(v,max){const pct=v/max*100;return pct>=70?'var(--green)':pct>=45?'var(--yellow)':'var(--red)'}
 
 function lcsHtml(ticker){
