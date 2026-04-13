@@ -159,10 +159,12 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 /* ─── INFO TOOLTIP ─── */
 .mp-header{display:flex;justify-content:space-between;align-items:center;margin-bottom:6px}
 .mp-info{position:relative;display:inline-flex}
-.mp-i{width:16px;height:16px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--dim);font-size:9px;font-weight:700;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);transition:all .15s;flex-shrink:0;line-height:1}
-.mp-i:hover{border-color:var(--blue);color:var(--blue)}
-.mp-tooltip{display:none;position:absolute;top:calc(100% + 8px);right:0;width:220px;background:#0d1f38;border:1px solid var(--line2);border-radius:10px;padding:10px 12px;font-size:11px;line-height:1.6;color:var(--text);z-index:999;font-family:var(--sans);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.5)}
+.mp-i{width:18px;height:18px;border-radius:50%;border:1px solid var(--line2);background:transparent;color:var(--cyan);font-size:10px;font-weight:700;cursor:pointer;display:grid;place-items:center;font-family:var(--mono);transition:all .15s;flex-shrink:0;line-height:1}
+.mp-i:hover{border-color:var(--blue);color:var(--blue);background:rgba(79,163,255,.08)}
+.mp-tooltip{display:none;position:absolute;top:calc(100% + 8px);right:0;width:260px;background:#0d1f38;border:1px solid var(--line2);border-radius:10px;padding:12px 14px;font-size:11px;line-height:1.7;color:var(--text);z-index:999;font-family:var(--sans);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.6)}
 .mp-tooltip::before{content:'';position:absolute;top:-5px;right:6px;width:8px;height:8px;background:#0d1f38;border-left:1px solid var(--line2);border-top:1px solid var(--line2);transform:rotate(45deg)}
+.mp-tooltip .tt-math{margin-top:8px;padding:6px 8px;background:rgba(99,160,255,.06);border-radius:6px;font-family:var(--mono);font-size:9px;color:var(--cyan);line-height:1.8}
+.mp-tooltip .tt-label{font-size:9px;font-weight:700;color:var(--cyan);letter-spacing:.08em;text-transform:uppercase;margin-bottom:4px}
 .mp-info:hover .mp-tooltip{display:block}
 
 /* ─── RANKING TABLE ─── */
@@ -554,7 +556,17 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="metric-pill">
         <div class="mp-header">
           <div class="mp-label">#1 Ready</div>
-          <div class="mp-info"><button class="mp-i">i</button><div class="mp-tooltip">Blends setup quality, market risk, momentum, and available capital. <strong>70+</strong> = clean conditions to act. <strong>45–69</strong> = proceed with caution. <strong>Below 45</strong> = wait for better setup.</div></div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+Your daily go/no-go meter. Combines four inputs into one number — are conditions good enough to act today?
+<div class="tt-math">
+70+ = clean, act on signals<br>
+45–69 = caution, reduce size<br>
+below 45 = wait, protect capital
+</div>
+<div class="tt-label" style="margin-top:8px">What makes up the math</div>
+Setup quality (qualified names available) + market risk (inverted) + top signal strength + available capital headroom. Pulled from your ACTION_ENGINE tab.
+</div></div>
         </div>
         <div class="mp-value v-b" id="p-ready">—</div>
         <div class="mp-sub">system go meter</div>
@@ -562,7 +574,17 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="metric-pill">
         <div class="mp-header">
           <div class="mp-label">#2 Risk</div>
-          <div class="mp-info"><button class="mp-i">i</button><div class="mp-tooltip">Measures how dangerous the market is right now. <strong>Below 35</strong> = clean. <strong>35–60</strong> = elevated, watch your size. <strong>60+</strong> = high danger, protect capital first. Lower is always safer.</div></div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+How dangerous the current market environment is. Lower = safer to deploy capital.
+<div class="tt-math">
+below 35 = green light<br>
+35–60 = yellow, watch size<br>
+60+ = red, protect first
+</div>
+<div class="tt-label" style="margin-top:8px">What makes up the math</div>
+VIX level + % of holdings in SELL territory + macro stress signals + concentration risk score. High VIX alone can push this above 60.
+</div></div>
         </div>
         <div class="mp-value" id="p-risk">—</div>
         <div class="mp-sub">lower is safer</div>
@@ -570,7 +592,16 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="metric-pill">
         <div class="mp-header">
           <div class="mp-label">#3 Plan</div>
-          <div class="mp-info"><button class="mp-i">i</button><div class="mp-tooltip">System-suggested posture for today based on READY, RISK, and qualified ticker count. <strong>LEAN</strong> = tighter game, fewer positions, smaller size. <strong>AGG</strong> = press harder, more exposure allowed. This is a suggestion — MODE is your override.</div></div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+The system's suggested playbook for today. Not a command — your MODE pill overrides this.
+<div class="tt-math">
+LEAN = fewer positions, tighter sizes<br>
+AGG = more exposure allowed
+</div>
+<div class="tt-label" style="margin-top:8px">How it decides</div>
+If READY ≥ 70 AND RISK ≤ 40 AND ≥ 3 qualified names → suggests AGG. Otherwise suggests LEAN. Your ENGINE tab can hardcode this.
+</div></div>
         </div>
         <div class="mp-value flash" id="p-plan">—</div>
         <div class="mp-sub">system suggestion</div>
@@ -578,7 +609,16 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="metric-pill">
         <div class="mp-header">
           <div class="mp-label">#4 Mode</div>
-          <div class="mp-info"><button class="mp-i">i</button><div class="mp-tooltip">Your manual playbook switch. Overrides the system PLAN. <strong>LEAN</strong> = max 30% per theme, smaller base sizes ($50–$100). <strong>AGG</strong> = max 50% per theme, larger base sizes ($75–$150). Change this when your conviction differs from the system.</div></div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+Your manual override of the system's plan. Flip this when your gut differs from the model.
+<div class="tt-math">
+LEAN → base size $50–100, max 30% per theme<br>
+AGG → base size $75–150, max 50% per theme
+</div>
+<div class="tt-label" style="margin-top:8px">Effect on the system</div>
+Changes conviction sizing formula, radar graduation speed (AGG = 1 fewer session required), and LCS thresholds used in Compare Mode.
+</div></div>
         </div>
         <div class="mp-modes">
           <button class="mp-mode-btn" id="m-lean" onclick="setMode('LEAN')">LEAN</button>
@@ -589,7 +629,18 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="metric-pill">
         <div class="mp-header">
           <div class="mp-label">#5 Min Score</div>
-          <div class="mp-info"><button class="mp-i">i</button><div class="mp-tooltip">Minimum score a ticker needs to qualify for the BUY list. Default is <strong>75</strong>. Names below this line show as WATCH or TRIM. Raise it in choppy markets, lower it slightly in strong trends. Set in your ENGINE tab.</div></div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+The gate score. No ticker gets a BUY signal unless it clears this number.
+<div class="tt-math">
+≥ 75 = qualified, can buy<br>
+70–74 = watch zone<br>
+50–69 = trim or hold<br>
+below 50 = sell signal
+</div>
+<div class="tt-label" style="margin-top:8px">What the score measures</div>
+Composite of Markov state, momentum quality, sector fit, relative strength, and continuation odds — all weighted and normalized to 0–100 in your RANKING_EXPORT tab.
+</div></div>
         </div>
         <div class="mp-value v-c" id="p-minscore">75</div>
         <div class="mp-sub">qualify threshold</div>
@@ -597,7 +648,16 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="metric-pill">
         <div class="mp-header">
           <div class="mp-label">#6 Portfolio</div>
-          <div class="mp-info"><button class="mp-i">i</button><div class="mp-tooltip">Total current holdings value pulled from your HOLDINGS sheet. Updates on each refresh. Used to calculate position weights and theme exposure caps. Wire your PORTFOLIO_VALUE cell in the ENGINE tab to keep this live.</div></div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+Total market value of all positions in your HOLDINGS tab. Excludes SGOV safety pocket (tracked separately).
+<div class="tt-math">
+Sum of (Shares × Current Price)<br>
+across all active holdings
+</div>
+<div class="tt-label" style="margin-top:8px">How it's used</div>
+Drives the portfolio donut weights, theme concentration %, stress map node sizing, and the conviction-based position sizing formula.
+</div></div>
         </div>
         <div class="mp-value v-g" id="p-portval">—</div>
         <div class="mp-sub">total value</div>
@@ -634,7 +694,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- ACTIONS -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Action Engine<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:240px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Suggested trades based on your current mode and min score. BUY = qualified signals above threshold. TRIM/SELL = names below threshold or flagged for exit. These are suggestions — you execute manually.</span></span></div>
+          <div class="card-title">Action Engine<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">?</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:280px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Suggested trades based on your current mode and min score. BUY = qualified signals above threshold. TRIM/SELL = names below threshold or flagged for exit. These are suggestions — you execute manually.</span></span></div>
           <div class="card-meta" id="action-summary">BUY · TRIM · SELL</div>
         </div>
         <div class="card-body card-body-scroll">
@@ -827,7 +887,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
         <!-- HOLDINGS HEATMAP -->
         <div class="card" id="dna-heatmap-card">
           <div class="card-head">
-            <div class="card-title">Holdings Overlap Heatmap<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:240px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">All your holdings visualized by DNA family. Tiles grouped by how similar they are. Size = dollar value of position. Color = score (green/yellow/red). Click any tile to load that DNA profile.</span></span></div>
+            <div class="card-title">Holdings Overlap Heatmap<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:240px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip"><strong>What it shows:</strong> Every holding grouped by DNA family — names that behave similarly cluster together.<br><br><strong>Color:</strong> 🟢 Green = score ≥75 (qualified) · 🟡 Yellow = 50–74 (watch) · 🔴 Red = below 50 (sell zone).<br><br><strong>Size:</strong> Bigger tile = larger dollar position.<br><br><strong>What to look for:</strong> If one color dominates a cluster = concentration risk. Red tiles in a cluster = whole group under pressure. Click any tile → full DNA panel.</span></span></div>
             <div class="card-meta">DNA family clustering · color = score · size = value</div>
           </div>
           <div style="padding:14px">
@@ -840,6 +900,26 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
               <div style="margin-left:auto;font-size:10px;color:var(--dim);font-family:var(--mono)">Click tile to load DNA · size = holding value</div>
             </div>
             <div id="dna-heatmap" style="display:flex;flex-wrap:wrap;gap:6px;min-height:80px;align-items:flex-end"></div>
+          </div>
+        </div>
+
+        <!-- HOW DOES THIS FIT? -->
+        <div class="card">
+          <div class="card-head">
+            <div class="card-title">How Does This Fit?
+              <span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle">
+                <span class="msi-btn" style="width:16px;height:16px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:9px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span>
+                <span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:280px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">Type any ticker — like XBI, GLD, MSFT — and see how it compares to everything you hold. Shows which holdings it acts like, which it hedges, whether it adds diversification or just piles onto an existing theme. Uses angular distance (cosine similarity) between signal profiles.</span>
+              </span>
+            </div>
+            <div class="card-meta">Type any ticker to see how it slots into your portfolio</div>
+          </div>
+          <div style="padding:14px">
+            <div style="display:flex;gap:8px;margin-bottom:12px">
+              <input id="fit-input" placeholder="e.g. XBI, GLD, MSFT…" style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:7px;padding:7px 10px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none" />
+              <button onclick="runFitCheck()" style="padding:7px 14px;border-radius:7px;border:1px solid var(--cyan);background:transparent;color:var(--cyan);font-family:var(--mono);font-size:10px;cursor:pointer;font-weight:700">Check Fit</button>
+            </div>
+            <div id="fit-result"><div style="font-size:10px;color:var(--dim);font-family:var(--mono)">Enter a ticker above to see how it compares to your holdings</div></div>
           </div>
         </div>
 
@@ -1787,7 +1867,105 @@ function renderStressMap(){
 // - Score level (elite score = fewer sessions needed)
 // - Cycle position (graduating at cycle top = dangerous)
 // ─── LEAN CONFIDENCE SCORE ENGINE ────────────────────────────────────────────
-// ─── CORRELATION HEATMAP ─────────────────────────────────────────────────────
+// ─── HOW DOES THIS FIT? ───────────────────────────────────────────────────────
+function runFitCheck(){
+  const ticker=($('fit-input')?.value||'').toUpperCase().trim();
+  const el=$('fit-result');
+  if(!el)return;
+  if(!ticker){el.innerHTML=`<div style="font-size:10px;color:var(--dim)">Enter a ticker first</div>`;return;}
+
+  el.innerHTML=`<div style="font-size:10px;color:var(--muted);font-family:var(--mono)">⟳ Analysing ${ticker}…</div>`;
+
+  // Get signal pack for the query ticker
+  const qRank=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||
+              S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const qPack=scorePack(qRank);
+  const qVec=[qPack.trend,qPack.react,qPack.follow,qPack.risk,qPack.markov,qPack.score];
+  const qMag=Math.sqrt(qVec.reduce((s,v)=>s+v*v,0));
+
+  // Compare against all holdings
+  const holdTickers=S.holdings.map(h=>h.Ticker||h.ticker||'').filter(Boolean);
+  const comparisons=holdTickers.map(t=>{
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const p=scorePack(r);
+    const vec=[p.trend,p.react,p.follow,p.risk,p.markov,p.score];
+    const mag=Math.sqrt(vec.reduce((s,v)=>s+v*v,0));
+    const dot=qVec.reduce((s,v,i)=>s+v*vec[i],0);
+    const angle=qMag&&mag?Math.acos(Math.min(1,Math.max(-1,dot/(qMag*mag))))*180/Math.PI:90;
+    const theme=r.Theme||r.theme||'';
+    return{ticker:t,angle:Math.round(angle),theme};
+  }).sort((a,b)=>a.angle-b.angle);
+
+  const mostSimilar=comparisons.filter(x=>x.angle<35);
+  const moderate=comparisons.filter(x=>x.angle>=35&&x.angle<65);
+  const different=comparisons.filter(x=>x.angle>=65);
+
+  // Theme overlap
+  const qTheme=qRank.Theme||qRank.theme||'';
+  const themeOverlap=holdTickers.filter(t=>{
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||{};
+    return (r.Theme||r.theme||'')===qTheme && qTheme;
+  });
+
+  // Verdict
+  let verdict, verdictColor;
+  if(mostSimilar.length>=3){
+    verdict=`Adds little new edge — ${mostSimilar.length} holdings already act like ${ticker}. You're doubling up.`;
+    verdictColor='var(--red)';
+  } else if(mostSimilar.length===0&&different.length>=2){
+    verdict=`Strong diversification — ${ticker} behaves differently from most of your portfolio. Genuine new exposure.`;
+    verdictColor='var(--green)';
+  } else if(themeOverlap.length>=2){
+    verdict=`Same theme as ${themeOverlap.slice(0,2).join(' and ')} — adds theme concentration even if signal profile differs slightly.`;
+    verdictColor='var(--yellow)';
+  } else {
+    verdict=`Moderate fit — partially overlaps with ${mostSimilar.length} holdings, different from ${different.length}. Check the angle breakdown below.`;
+    verdictColor='var(--muted)';
+  }
+
+  const qScore=num(qRank.Score||qRank.score,0);
+  const qStatus=qScore>=75?'✓ Qualifies (score '+qScore+')':qScore>=65?'⚠ Near miss (score '+qScore+')':'✗ Below threshold (score '+qScore+')';
+  const statusColor=qScore>=75?'var(--green)':qScore>=65?'var(--yellow)':'var(--red)';
+
+  el.innerHTML=`
+    <div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-bottom:10px">
+      <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:4px">
+        <span style="font-family:var(--mono);font-weight:700;font-size:13px;color:var(--text)">${ticker}</span>
+        <span style="font-size:10px;color:${statusColor};font-family:var(--mono)">${qStatus}</span>
+      </div>
+      <div style="font-size:11px;color:${verdictColor};line-height:1.6;font-weight:500">${verdict}</div>
+      ${qTheme?`<div style="font-size:10px;color:var(--dim);margin-top:4px">Theme: ${qTheme}${themeOverlap.length?` · overlaps with: ${themeOverlap.slice(0,3).join(', ')}`:'  · no theme overlap in holdings'}</div>`:''}
+    </div>
+
+    ${mostSimilar.length?`<div style="margin-bottom:8px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:.1em;margin-bottom:5px">⚠ ACTS LIKE (angle &lt;35°) — you already have this bet</div>
+      ${mostSimilar.map(x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:11px">
+        <span style="font-family:var(--mono);color:var(--text);cursor:pointer" onclick="showTicker('${x.ticker}',event)">${x.ticker}</span>
+        <span style="color:var(--red);font-family:var(--mono)">${x.angle}° apart · ${x.theme||'—'}</span>
+      </div>`).join('')}
+    </div>`:''}
+
+    ${moderate.length?`<div style="margin-bottom:8px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--yellow);letter-spacing:.1em;margin-bottom:5px">~ PARTIALLY SIMILAR (35–65°) — some overlap</div>
+      ${moderate.slice(0,4).map(x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:11px">
+        <span style="font-family:var(--mono);color:var(--text);cursor:pointer" onclick="showTicker('${x.ticker}',event)">${x.ticker}</span>
+        <span style="color:var(--yellow);font-family:var(--mono)">${x.angle}° apart</span>
+      </div>`).join('')}
+    </div>`:''}
+
+    ${different.length?`<div style="margin-bottom:8px">
+      <div style="font-family:var(--mono);font-size:8px;color:var(--green);letter-spacing:.1em;margin-bottom:5px">✓ DIFFERENT (65°+) — genuine diversification vs these</div>
+      ${different.slice(0,4).map(x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:11px">
+        <span style="font-family:var(--mono);color:var(--text);cursor:pointer" onclick="showTicker('${x.ticker}',event)">${x.ticker}</span>
+        <span style="color:var(--green);font-family:var(--mono)">${x.angle}° apart</span>
+      </div>`).join('')}
+    </div>`:''}
+
+    <div style="margin-top:8px;font-size:9px;color:var(--dim);font-family:var(--mono);line-height:1.6">
+      Angle = signal space distance · 0° = identical · 90° = completely independent · calculated using cosine similarity across 6 signal dimensions
+    </div>`;
+}
+window.runFitCheck=runFitCheck;
 function renderCorrHeatmap(){
   const el=$('corr-heatmap-wrap');
   if(!el)return;
