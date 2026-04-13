@@ -505,11 +505,11 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
   <div class="topbar">
     <div class="logo">LEAN <span class="dna-era">DNA ERA 🧬</span></div>
     <div class="status-pills">
-      <div class="pill-sm"><div class="dot" id="flow-dot"></div><span id="flow-label">—</span></div>
-      <div class="pill-sm"><span style="color:var(--muted)">MODE</span>&nbsp;<span id="top-mode" style="font-weight:700">—</span></div>
-      <div class="pill-sm"><span style="color:var(--muted)">TOP</span>&nbsp;<span id="top-ticker" style="font-weight:700">—</span></div>
-      <div class="pill-sm"><span style="color:var(--muted)">AI GATE</span>&nbsp;<span id="ai-gate" style="font-weight:700">—</span></div>
-      <div class="pill-sm"><span style="color:var(--muted)">RISK</span>&nbsp;<span id="top-risk" style="font-weight:700">—</span></div>
+      <div class="pill-sm"><div class="dot" id="flow-dot"></div><span id="flow-label">—</span><span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Overall market flow state from your macro data. RISK_ON = conditions favor buying. RISK_OFF = defensive. NEUTRAL = wait and see.</span></span></div>
+      <div class="pill-sm"><span style="color:var(--muted)">MODE</span><span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Your manual mode switch. LEAN = smaller positions, tighter rules. AGG = larger positions, more names allowed.</span></span>&nbsp;<span id="top-mode" style="font-weight:700">—</span></div>
+      <div class="pill-sm"><span style="color:var(--muted)">TOP</span><span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Highest scoring ticker on the ranking board right now.</span></span>&nbsp;<span id="top-ticker" style="font-weight:700">—</span></div>
+      <div class="pill-sm"><span style="color:var(--muted)">AI GATE</span><span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">AI filter confidence. HIGH = AI signals align with bullish setup. LOW = AI sees risk. Used as an additional gate before acting.</span></span>&nbsp;<span id="ai-gate" style="font-weight:700">—</span></div>
+      <div class="pill-sm"><span style="color:var(--muted)">RISK</span><span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Portfolio danger level right now. Low number = safer conditions. High = instability in the system. Feeds into the PLAN suggestion.</span></span>&nbsp;<span id="top-risk" style="font-weight:700">—</span></div>
       <div class="pill-sm"><span style="color:var(--muted)">REFRESHED</span>&nbsp;<span id="last-time">—</span></div>
     </div>
     <div class="ctrl-btns">
@@ -589,22 +589,22 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
     <!-- TOP SIGNALS STRIP -->
     <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px" id="top-signals-strip">
       <div class="card" style="padding:10px 14px">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Top Bull</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Top Bull<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Highest scoring BULL-biased ticker on the board right now. Best current setup for a long trade.</span></span></div>
         <div id="sig-topbull" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--green)">—</div>
         <div id="sig-topbull-sub" style="font-size:10px;color:var(--muted);margin-top:2px"></div>
       </div>
       <div class="card" style="padding:10px 14px">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Top Bear</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Top Bear<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Highest scoring BEAR-biased ticker. A name showing the strongest downside signal.</span></span></div>
         <div id="sig-topbear" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--red)">—</div>
         <div id="sig-topbear-sub" style="font-size:10px;color:var(--muted);margin-top:2px"></div>
       </div>
       <div class="card" style="padding:10px 14px">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Highest Reaction</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Highest Reaction<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Ticker with the strongest recent price reaction score. Big clean move — not necessarily the highest ranked overall.</span></span></div>
         <div id="sig-topreact" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--cyan)">—</div>
         <div id="sig-topreact-sub" style="font-size:10px;color:var(--muted);margin-top:2px"></div>
       </div>
       <div class="card" style="padding:10px 14px">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Best Next Move</div>
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:4px">Best Next Move<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Ticker with the highest expected next-step drift from Markov. The name the model thinks has the most upside from here.</span></span></div>
         <div id="sig-topnext" style="font-family:var(--mono);font-size:15px;font-weight:700;color:var(--yellow)">—</div>
         <div id="sig-topnext-sub" style="font-size:10px;color:var(--muted);margin-top:2px"></div>
       </div>
@@ -616,7 +616,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- ACTIONS -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Action Engine</div>
+          <div class="card-title">Action Engine<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Suggested trades based on your current mode and min score. BUY = qualified signals above threshold. TRIM/SELL = names below threshold or flagged for exit. These are suggestions — you execute manually.</span></span></div>
           <div class="card-meta" id="action-summary">BUY · TRIM · SELL</div>
         </div>
         <div class="card-body card-body-scroll">
@@ -652,7 +652,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- HOLDINGS -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Holdings</div>
+          <div class="card-title">Holdings<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Your current positions loaded from the HOLDINGS tab in your Google Sheet. Click any name to open its full DNA panel.</span></span></div>
           <div class="card-meta">active positions</div>
         </div>
         <div class="card-body card-body-tall" id="holdings-list"></div>
@@ -661,7 +661,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- RANKING BOARD -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Signal Ranking Board</div>
+          <div class="card-title">Signal Ranking Board<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">All tickers sorted by score, highest first. Score = composite signal strength from your ranking engine. LCS = Lean Confidence Score. Click any ticker to open its DNA panel.</span></span></div>
           <div class="card-meta">highest score first</div>
         </div>
         <div class="card-body" style="padding:0">
@@ -682,7 +682,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- AI CAMPAIGN NOTES -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Campaign Notes</div>
+          <div class="card-title">Campaign Notes<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">AI-generated read of your current signal board. Three agents: Bull (upside case), Bear (risk case), Risk (what to protect). Regenerates on every data refresh.</span></span></div>
           <div class="card-meta">AI · what the board is saying</div>
         </div>
         <div class="macro-strip" id="macro-strip"></div>
@@ -694,7 +694,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- RADAR -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Radar</div>
+          <div class="card-title">Radar<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Watch list of names not yet in holdings but on deck. HOT = strong candidate for entry. GRAD? = showing enough signal to graduate into the main board. Click any name to open DNA panel.</span></span></div>
           <div class="card-meta">watch list · graduation candidates</div>
         </div>
         <div class="card-body" style="padding:0">
@@ -710,7 +710,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <!-- DISTRIBUTION DONUT -->
       <div class="card">
         <div class="card-head">
-          <div class="card-title">Portfolio Distribution</div>
+          <div class="card-title">Portfolio Distribution<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Donut chart of your holdings broken down by theme or family. Shows where your capital is concentrated. Heavy slice = concentration risk in that theme.</span></span></div>
           <div class="card-meta">by theme · holdings</div>
         </div>
         <div class="card-body">
@@ -778,7 +778,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
         <div class="dna-evolution" id="dna-evolution" style="display:none">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">DNA Evolution</div>
+              <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">DNA Evolution<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">How this stock profile has changed over time. Now = current snapshot. 3M Ago = what the DNA looked like 3 months ago. Drift between slices = the stock is changing character.</span></span></div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px">Same stock, different time slices</div>
             </div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:4px 10px;border:1px solid var(--line2);border-radius:6px;cursor:pointer">Detect variance over time</div>
@@ -789,7 +789,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
         <!-- HOLDINGS HEATMAP -->
         <div class="card" id="dna-heatmap-card">
           <div class="card-head">
-            <div class="card-title">Holdings Overlap Heatmap</div>
+            <div class="card-title">Holdings Overlap Heatmap<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">All your holdings visualized by DNA family. Tiles grouped by how similar they are. Size = dollar value of position. Color = score (green/yellow/red). Click any tile to load that DNA profile.</span></span></div>
             <div class="card-meta">DNA family clustering · color = score · size = value</div>
           </div>
           <div style="padding:14px">
@@ -812,7 +812,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 
         <!-- closest DNA matches -->
         <div class="dna-matches-card">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">Closest DNA Matches</div>
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">Closest DNA Matches<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Stocks whose signal profiles most closely match the selected ticker. High match % = similar risk, similar behavior. Holding both adds family risk, not new edge.</span></span></div>
           <div style="font-size:10px;color:var(--muted);margin-bottom:12px">Hidden duplication and family grouping</div>
           <div id="dna-matches"><div class="empty" style="padding:20px 0">select a ticker</div></div>
         </div>
@@ -832,7 +832,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 
         <!-- compare mode -->
         <div class="dna-matches-card">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">Compare Mode</div>
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">Compare Mode<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Pick two tickers and see how similar their DNA is. High overlap = you may already hold the same bet twice. Low overlap = true diversification.</span></span></div>
           <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Side-by-side DNA overlap · pick 2 tickers</div>
           <div style="display:flex;gap:6px;margin-bottom:8px">
             <select id="cmp-a" style="flex:1;background:var(--card2);border:1px solid var(--line);border-radius:7px;color:var(--text);padding:6px 8px;font-family:var(--mono);font-size:10px">
@@ -869,7 +869,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
     </div>
     <div class="cheat-section">
       <div class="cheat-section-head">
-        <div class="card-title">Full Ticker Cheat Sheet</div>
+        <div class="card-title">Full Ticker Cheat Sheet<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Every ticker across your ranking and radar data in one sortable table. ● = in holdings. ◎ = on radar. Click column headers to sort. LCS badge shows confidence breakdown on hover.</span></span></div>
         <div class="card-meta">Monte confidence · DNA · family · compatibility</div>
       </div>
       <div class="cheat-body">
@@ -906,7 +906,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 
         <!-- ticker selector -->
         <div class="monte-card">
-          <div class="monte-card-title">Simulations</div>
+          <div class="monte-card-title">Simulations<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">How many random futures to generate. More = smoother fan chart, slower to run. 200 is a good balance.</span></span></div>
           <div class="sim-ticker-list" id="sim-ticker-list"></div>
           <div class="sim-add-row">
             <input class="sim-input" id="sim-add-input" placeholder="Add ticker…" list="sim-datalist" onkeydown="if(event.key==='Enter')addSimTicker()">
@@ -921,11 +921,11 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
           <div class="monte-card-title">Parameters</div>
           <div class="sim-params">
             <div class="sim-param"><div class="sim-param-label">Simulations</div><input class="sim-param-input" id="sim-count" type="number" value="200" min="50" max="1000"></div>
-            <div class="sim-param"><div class="sim-param-label">Horizon (months)</div><input class="sim-param-input" id="sim-horizon" type="number" value="12" min="1" max="60"></div>
-            <div class="sim-param"><div class="sim-param-label">Annual Return %</div><input class="sim-param-input" id="sim-return" type="number" value="10" min="-50" max="200"></div>
-            <div class="sim-param"><div class="sim-param-label">Annual Vol %</div><input class="sim-param-input" id="sim-vol" type="number" value="30" min="5" max="150"></div>
-            <div class="sim-param"><div class="sim-param-label">Start Value $</div><input class="sim-param-input" id="sim-start" type="number" value="10000" min="100"></div>
-            <div class="sim-param"><div class="sim-param-label">Confidence Band</div>
+            <div class="sim-param"><div class="sim-param-label">Horizon (months)<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">How far into the future to project. 12 = one year out. Longer horizons = wider uncertainty bands.</span></span></div><input class="sim-param-input" id="sim-horizon" type="number" value="12" min="1" max="60"></div>
+            <div class="sim-param"><div class="sim-param-label">Annual Return %<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Expected yearly return assumption. Fed into the simulation as the upward drift. Adjust based on your thesis for this ticker.</span></span></div><input class="sim-param-input" id="sim-return" type="number" value="10" min="-50" max="200"></div>
+            <div class="sim-param"><div class="sim-param-label">Annual Vol %<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Expected yearly volatility. Higher = wider fan chart = more uncertainty. Match to the stock character — calm names ~20%, volatile names ~40-60%.</span></span></div><input class="sim-param-input" id="sim-vol" type="number" value="30" min="5" max="150"></div>
+            <div class="sim-param"><div class="sim-param-label">Start Value $<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Starting dollar amount for the simulation. All output values (Worst Case Floor, Best Case Ceiling etc) are in these dollars.</span></span></div><input class="sim-param-input" id="sim-start" type="number" value="10000" min="100"></div>
+            <div class="sim-param"><div class="sim-param-label">Confidence Band<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Which percentile band to show as the shaded region on the fan chart. P5/P95 = widest band (90% of paths). P25/P75 = tighter inner band.</span></span></div>
               <select class="sim-param-input" id="sim-conf">
                 <option value="0.1">P10 / P90</option>
                 <option value="0.2">P20 / P80</option>
@@ -935,7 +935,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
           </div>
           <!-- Scenario presets -->
           <div style="margin-top:10px">
-            <div style="font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Scenario Presets</div>
+            <div style="font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:.07em;text-transform:uppercase;margin-bottom:6px">Scenario Presets<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Quick-load common parameter sets. Base = neutral assumptions. Lean = conservative. Aggressive = higher return assumption. High Vol = extreme swings. Crash = stress test.</span></span></div>
             <div class="monte-scenario-btns">
               <button class="monte-scenario-btn active" id="scen-base"    onclick="applyScenario('base',this)">Base</button>
               <button class="monte-scenario-btn"         id="scen-lean"    onclick="applyScenario('lean',this)">Lean</button>
@@ -973,7 +973,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
         <div class="markov-flow-card">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">Markov State Probabilities</div>
+              <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">Markov State Probabilities<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Where this ticker is likely to go next based on its historical state transitions. Going Higher / Staying Put / Going Lower are probabilities, not guarantees. Momentum Holds = current trend likely continues. Momentum Fades = getting tired.</span></span></div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px">Next-state distribution from current Markov state</div>
             </div>
           </div>
@@ -1031,7 +1031,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
         <div class="dp-evo">
           <div style="display:flex;justify-content:space-between;align-items:center">
             <div>
-              <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">DNA Evolution</div>
+              <div style="font-family:var(--mono);font-size:11px;font-weight:700;color:var(--text)">DNA Evolution<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">How this stock profile has changed over time. Now = current snapshot. 3M Ago = what the DNA looked like 3 months ago. Drift between slices = the stock is changing character.</span></span></div>
               <div style="font-size:10px;color:var(--muted);margin-top:2px">Same stock, different time slices</div>
             </div>
             <div style="font-family:var(--mono);font-size:9px;color:var(--blue);padding:4px 10px;border:1px solid var(--line2);border-radius:6px;cursor:pointer">Detect variance over time</div>
@@ -1044,15 +1044,15 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
       <div class="dp-sidebar">
         <!-- DNA Matches -->
         <div class="dp-side-card">
-          <div class="dp-side-title">Closest DNA Matches</div>
-          <div class="dp-side-sub">Hidden duplication and family grouping</div>
+          <div class="dp-side-title">Similar Horses</div>
+          <div class="dp-side-sub">Stocks with overlapping DNA — hidden family risk</div>
           <div id="dp-matches"><div class="empty" style="padding:16px 0">load a ticker</div></div>
         </div>
 
         <!-- Industry Drivers -->
         <div class="dp-side-card">
-          <div class="dp-side-title">Industry Driver Variance</div>
-          <div class="dp-side-sub">What is shaping this stock right now</div>
+          <div class="dp-side-title">What's Driving It</div>
+          <div class="dp-side-sub">Macro forces shaping this stock right now</div>
           <div id="dp-drivers"><div class="empty" style="padding:16px 0">load a ticker</div></div>
         </div>
 
@@ -2052,12 +2052,23 @@ function showTicker(ticker, evt){
   const dupRisk=sc>=75?'Low':'High';
   const horseTag=d.horse_read?(d.horse_read.split('.')[0].slice(0,22)+(d.horse_read.length>22?'…':'')):'—';
   const mcLabel=mcScore>=70?'Stable Path':mcScore>=45?'Mixed Path':'Caution';
+  // Small inline tooltip for tags
+  const dtip=(txt)=>`<span style="position:relative;display:inline-flex;margin-left:3px;vertical-align:middle"><span style="width:12px;height:12px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:7px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:190px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">${txt}</span></span>`;
+
   $('dp-tags').innerHTML=`
-    <div class="dp-tag"><div class="dp-tag-label">DNA Rank</div><div class="dp-tag-val" style="color:var(--cyan)">#${rank||'?'}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Dup Risk</div><div class="dp-tag-val" style="color:${dupRisk==='Low'?'var(--green)':'var(--yellow)'}">${dupRisk}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Confidence</div><div class="dp-tag-val">${lcsHtml(ticker)}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Horse Tag</div><div class="dp-tag-val">${horseTag||'—'}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Monte Carlo</div><div class="dp-tag-val" style="color:${mcScore>=70?'var(--green)':mcScore>=45?'var(--yellow)':'var(--red)'}">${mcLabel}</div></div>`;
+    <div class="dp-tag"><div class="dp-tag-label">Board Rank${dtip('Where this ticker sits on the signal ranking board right now. #1 = top signal. Lower = weaker.')}</div><div class="dp-tag-val" style="color:var(--cyan)">#${rank||'?'}</div></div>
+    <div class="dp-tag"><div class="dp-tag-label">Overlap Risk${dtip('How much this stock looks like others you already hold. High = you may already have this bet in disguise under another name.')}</div><div class="dp-tag-val" style="color:${dupRisk==='Low'?'var(--green)':'var(--yellow)'}">${dupRisk}</div></div>
+    <div class="dp-tag"><div class="dp-tag-label">Confidence${dtip('Lean Confidence Score — how much to trust this signal right now. Built from direction, momentum, survivability, and DNA fit. Hover the badge for the full breakdown.')}</div><div class="dp-tag-val">${lcsHtml(ticker)}</div></div>
+    <div class="dp-tag"><div class="dp-tag-label">Street Tag${dtip('One-line read on this ticker from the DNA engine. Summarizes its current profile in plain language.')}</div><div class="dp-tag-val">${horseTag||'—'}</div></div>
+    <div class="dp-tag"><div class="dp-tag-label">Sim Path${dtip('Monte Carlo simulation result. Stable Path = majority of simulated futures end positive. Mixed = uncertain. Caution = more paths end negative than positive.')}</div><div class="dp-tag-val" style="color:${mcScore>=70?'var(--green)':mcScore>=45?'var(--yellow)':'var(--red)'}">${mcLabel}</div></div>`;
+
+  // Wire tag tooltip hovers after render
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#dp-tags .msi-btn').forEach(btn=>{
+      btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
+      btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
+    });
+  });
 
   // Street read
   const isBullish=isBull==='BULL'||isBull==='BUY'||sc>=75;
@@ -2085,25 +2096,66 @@ function showTicker(ticker, evt){
   requestAnimationFrame(()=>drawDPRadar(radarLabels, radarVals.map(v=>v/100)));
 
   // Metric panels
+  // Panel groups: title, subtitle tooltip, rows with [label, tooltip, value]
   const panels=[
-    {title:'Trend',    rows:[['5D Mom',num(d['5d_mom'],0)],['20D Mom',num(d['20d_mom'],0)],['Rel Strength',num(d.rel_strength,0)]]},
-    {title:'Risk',     rows:[['Volatility',num(d.realized_vol,0)],['Downside',num(d.downside_vol,0)],['Drawdown',num(d.drawdown,0)]]},
-    {title:'Flow',     rows:[['Volume Exp',num(d.volume_exp,0)],['Accumulation',num(d.accum_dist,0)]]},
-    {title:'Behavior', rows:[['Recovery',num(d.recovery,0)],['Continuation',num(d.continuation,0)],['Fakeout',num(d.fakeout,0)]]},
-    {title:'Environment',rows:[['Sector Fit',num(d.mkt_sector_fit,0)]]},
-    {title:'Signal',   rows:[['Score',sc],['React',num(r.REACTION_STRENGTH||r.reaction_strength,0)*50],['Follow-Thru',num(r.FOLLOW_THROUGH_SCORE||r.follow_through_score,0)*50]]},
+    {title:'Price Direction', tip:'Is the stock moving up recently and how strong vs peers?',
+     rows:[
+       ['5-Day Move',    'How much it moved in the last 5 days. High = strong short-term momentum.',        num(d['5d_mom'],0)],
+       ['20-Day Move',   'Trend over the last month. Confirms if the 5-day move is part of a bigger run.', num(d['20d_mom'],0)],
+       ['Vs Peers',      'How this stock is performing compared to others in its sector right now.',        num(d.rel_strength,0)],
+     ]},
+    {title:'Danger Signals', tip:'How risky and volatile is this stock right now?',
+     rows:[
+       ['Daily Swings',  'How much it moves day to day. High = unpredictable. Low = steadier ride.',       num(d.realized_vol,0)],
+       ['Downside Risk', 'How bad the drops tend to be when it falls. High = painful dips.',               num(d.downside_vol,0)],
+       ['Worst Dip',     'The deepest pullback from its recent high. How far it has fallen at its worst.', num(d.drawdown,0)],
+     ]},
+    {title:'Money Movement', tip:'Is real money flowing into or out of this stock?',
+     rows:[
+       ['Volume Spike',  'Unusual trading volume vs normal. High = big players are moving.',               num(d.volume_exp,0)],
+       ['Buying Pressure','Accumulation vs distribution. High = more buying than selling over time.',      num(d.accum_dist,0)],
+     ]},
+    {title:'How It Moves', tip:'What does this stock do after a big move — does it follow through or fade?',
+     rows:[
+       ['Bounce Speed',  'How fast it recovers after a dip. High = bounces back quickly.',                 num(d.recovery,0)],
+       ['Follow Through','After a move, does it keep going? High = signals tend to be real.',              num(d.continuation,0)],
+       ['False Move Risk','How often moves turn out to be fakes. High = lots of head fakes.',              num(d.fakeout,0)],
+     ]},
+    {title:'Market Fit',   tip:'How well does this stock fit current market conditions?',
+     rows:[
+       ['Sector Fit',    'Is this sector in favor right now? High = the wind is at its back.',             num(d.mkt_sector_fit,0)],
+     ]},
+    {title:'Signal Strength', tip:'Raw signal quality from the ranking engine.',
+     rows:[
+       ['Rank Score',    'Overall score from the ranking engine. Above 75 = qualified.',                   sc],
+       ['Reaction',      'How strongly it reacted on its last big move. High = sharp, clean signal.',      num(r.REACTION_STRENGTH||r.reaction_strength,0)*50],
+       ['Follows Thru',  'Does the reaction turn into a sustained move? High = not a one-day wonder.',     num(r.FOLLOW_THROUGH_SCORE||r.follow_through_score,0)*50],
+     ]},
   ];
-  const barColor=v=>v>=70?'var(--green)':v>=45?'var(--blue)':'var(--muted)';
+
+  const panelTip=(text)=>`<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle">
+    <span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span>
+    <span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">${text}</span>
+  </span>`;
+
   $('dp-panels').innerHTML=panels.map(p=>`
     <div class="dp-panel">
-      <div class="dp-panel-title">${p.title}</div>
-      ${p.rows.map(([k,v])=>`
+      <div class="dp-panel-title">${p.title}${panelTip(p.tip)}</div>
+      ${p.rows.map(([label,tooltip,v])=>`
         <div class="dp-bar-row">
-          <span class="dp-bar-key">${k}</span>
+          <span class="dp-bar-key" style="display:flex;align-items:center;gap:4px">${label}${panelTip(tooltip)}</span>
           <div class="dp-bar-track"><div class="dp-bar-fill" style="width:${Math.min(v,100)}%;background:${barColor(v)}"></div></div>
           <span class="dp-bar-num" style="color:${barColor(v)}">${Math.round(v)||'—'}</span>
         </div>`).join('')}
     </div>`).join('');
+
+  // Wire tooltip hovers
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#dp-panels .msi-btn').forEach(btn=>{
+      btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
+      btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
+    });
+  });
 
   // Evolution
   const evoSlices=[
@@ -2140,19 +2192,29 @@ function showTicker(ticker, evt){
     </div>`).join(''):`<div class="empty" style="padding:14px 0">no match data — add ranking CSV</div>`;
 
   // Industry Drivers
+  const driverTip=(txt)=>`<span style="position:relative;display:inline-flex;margin-left:3px;vertical-align:middle"><span style="width:12px;height:12px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:7px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:180px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">${txt}</span></span>`;
+
   const drivers=[
-    ['AI Capex',     Math.round((num(d.rel_strength,0)+num(d['5d_mom'],0))/2)],
-    ['Rates',        Math.round(100-num(d.realized_vol,50))],
-    ['Index Beta',   Math.round((num(d['20d_mom'],0)+num(d.rel_strength,0))/2)],
-    ['Crowd Spec',   Math.round((num(d.volume_exp,0)+num(d.accum_dist,0))/2)],
-    ['Cycle Timing', Math.round(num(d.mkt_sector_fit,0))]
+    ['AI Spending',    'How much AI infrastructure buildout is fueling demand in this sector right now.',    Math.round((num(d.rel_strength,0)+num(d['5d_mom'],0))/2)],
+    ['Rate Pressure',  'Impact of interest rates on this stock. High = benefits from current rate environment.', Math.round(100-num(d.realized_vol,50))],
+    ['Index Pull',     'How much it moves with the broader market. High = rides market waves up and down.',  Math.round((num(d['20d_mom'],0)+num(d.rel_strength,0))/2)],
+    ['Crowd Heat',     'Retail and speculative interest. High = lots of crowd attention, can amplify moves.', Math.round((num(d.volume_exp,0)+num(d.accum_dist,0))/2)],
+    ['Cycle Timing',   'How well timed this stock is within the current market cycle. High = right place, right time.', Math.round(num(d.mkt_sector_fit,0))],
   ];
-  $('dp-drivers').innerHTML=drivers.map(([k,v])=>`
+  $('dp-drivers').innerHTML=drivers.map(([k,tip,v])=>`
     <div class="dp-driver-row">
-      <span class="dp-driver-key">${k}</span>
+      <span class="dp-driver-key" style="display:flex;align-items:center">${k}${driverTip(tip)}</span>
       <div class="dp-driver-bar"><div class="dp-driver-fill" style="width:${v||0}%;background:${barColor(v||0)}"></div></div>
       <span class="dp-driver-num" style="color:${barColor(v||0)}">${v||'—'}</span>
     </div>`).join('');
+
+  // Wire driver tooltip hovers
+  requestAnimationFrame(()=>{
+    document.querySelectorAll('#dp-drivers .msi-btn').forEach(btn=>{
+      btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
+      btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
+    });
+  });
 
   // Portfolio Warning
   const holdTickers=S.holdings.map(x=>x.Ticker||x.ticker||'');
@@ -3365,6 +3427,17 @@ $('rf-btn').onclick=loadAll;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 if(!rd(K.mode))wr(K.mode,'LEAN');
+
+// Global tooltip delegation — covers all static msi-btn elements
+document.addEventListener('mouseover',e=>{
+  const btn=e.target.closest('.msi-btn');
+  if(btn){const t=btn.nextElementSibling;if(t&&t.classList.contains('msi-tip'))t.style.display='block';}
+});
+document.addEventListener('mouseout',e=>{
+  const btn=e.target.closest('.msi-btn');
+  if(btn){const t=btn.nextElementSibling;if(t&&t.classList.contains('msi-tip'))t.style.display='none';}
+});
+
 loadAll();
 renderTradeLog();
 updateActionSummary();
