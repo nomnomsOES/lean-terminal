@@ -217,6 +217,25 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .tl-time{font-size:10px;color:var(--dim);margin-left:auto;white-space:nowrap}
 .tl-skipped{opacity:.5;font-style:italic}
 
+/* ─── LEAN CONFIDENCE SCORE ─── */
+.lcs-badge{display:inline-flex;align-items:center;gap:5px;padding:3px 9px;border-radius:7px;font-family:var(--mono);font-size:11px;font-weight:700;cursor:pointer;border:1px solid;transition:all .15s;position:relative}
+.lcs-high{background:rgba(32,224,122,.12);border-color:rgba(32,224,122,.25);color:var(--green)}
+.lcs-mid{background:rgba(245,197,66,.1);border-color:rgba(245,197,66,.2);color:var(--yellow)}
+.lcs-low{background:rgba(255,79,79,.1);border-color:rgba(255,79,79,.2);color:var(--red)}
+.lcs-badge:hover .lcs-teardown{display:block}
+.lcs-teardown{display:none;position:absolute;bottom:calc(100% + 8px);left:50%;transform:translateX(-50%);width:260px;background:#0a1628;border:1px solid var(--line2);border-radius:12px;z-index:9999;overflow:hidden;box-shadow:0 12px 40px rgba(0,0,0,.8)}
+.lcs-td-head{padding:10px 12px;border-bottom:1px solid var(--line);display:flex;justify-content:space-between;align-items:center}
+.lcs-td-title{font-family:var(--mono);font-size:9px;font-weight:700;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase}
+.lcs-td-score{font-family:var(--mono);font-size:18px;font-weight:700}
+.lcs-td-body{padding:8px 12px}
+.lcs-component{display:flex;align-items:center;gap:8px;padding:5px 0;border-bottom:1px solid rgba(99,160,255,.05)}
+.lcs-component:last-child{border-bottom:none}
+.lcs-comp-name{font-size:10px;color:var(--muted);flex:1;line-height:1.3}
+.lcs-comp-bar{width:60px;height:4px;background:rgba(255,255,255,.06);border-radius:2px;overflow:hidden;flex-shrink:0}
+.lcs-comp-fill{height:100%;border-radius:2px}
+.lcs-comp-val{font-family:var(--mono);font-size:10px;font-weight:700;width:26px;text-align:right;flex-shrink:0}
+.lcs-verdict{margin-top:8px;padding:7px 10px;border-radius:7px;font-size:10px;line-height:1.6;background:rgba(255,255,255,.03);border:1px solid var(--line)}
+
 /* ─── HOLDINGS ─── */
 .holding-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;background:rgba(255,255,255,.012);cursor:pointer;transition:all .15s}
 .holding-row:hover{border-color:var(--line2);background:rgba(79,163,255,.04)}
@@ -648,7 +667,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
         <div class="card-body" style="padding:0">
           <div class="card-scroll" style="padding:0">
             <table class="rank-table">
-              <thead><tr><th>#</th><th>Ticker</th><th>Theme</th><th>Score</th><th>Status</th><th>Markov</th><th>Move</th></tr></thead>
+              <thead><tr><th>#</th><th>Ticker</th><th>Theme</th><th>Score</th><th>LCS</th><th>Status</th><th>Markov</th><th>Move</th></tr></thead>
               <tbody id="rank-body"></tbody>
             </table>
           </div>
@@ -860,6 +879,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
               <th onclick="sortCheat('rank')"># <span class="sort-arrow" id="sa-rank">↕</span></th>
               <th>Ticker</th>
               <th onclick="sortCheat('score')">Score <span class="sort-arrow" id="sa-score">↕</span></th>
+              <th onclick="sortCheat('lcs')">LCS <span class="sort-arrow" id="sa-lcs">↕</span></th>
               <th onclick="sortCheat('mc')">Monte Conf <span class="sort-arrow" id="sa-mc">↕</span></th>
               <th onclick="sortCheat('dna')">DNA Score <span class="sort-arrow" id="sa-dna">↕</span></th>
               <th>Markov</th>
@@ -1171,11 +1191,11 @@ const _csv = gid => `${_BASE}?gid=${gid}&single=true&output=csv`;
 const DEFAULTS = {
   holdings:  _csv('1334836685'),  // HOLDINGS tab
   ranking:   _csv('2095403822'),  // RANKING_EXPORT tab
-  engine:    _csv('1225083168'),  // ACTION_ENGINE tab (used as engine)
+  engine:    _csv('1225083168'),  // ACTION_ENGINE tab
   dna:       _csv('425314096'),   // DNA_EXPORT tab
   macro:     _csv('643415500'),   // MARKOV_CURRENT tab
-  radar:     _csv('425314096'),   // DNA_EXPORT doubles as radar fallback
-  aifilter:  _csv('1225083168'),  // ACTION_ENGINE doubles as AI filter
+  radar:     _csv('1225083168'),  // ACTION_ENGINE doubles as radar (has all tickers)
+  aifilter:  _csv('1225083168'),  // ACTION_ENGINE
   shock:     '',
   sysexport: ''
 };
@@ -1281,6 +1301,150 @@ function markovClass(s){
 }
 function moveClass(v){return v>0?'g':v<0?'r':''}
 
+// ─── LEAN CONFIDENCE SCORE ENGINE ────────────────────────────────────────────
+// Five components, each 0-20, total 0-100
+function calcConfidence(ticker){
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||
+          S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const d=S.dna.find(x=>x.ticker===ticker)||{};
+  const mc=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
+
+  // ── COMPONENT 1: Directional Probability (0-20) ───────────────────────────
+  // How strongly does Markov say it's going up vs down?
+  const upProb=parseFloat(mc.UP_PROB||0)||0;
+  const downProb=parseFloat(mc.DOWN_PROB||0)||0;
+  const flatProb=parseFloat(mc.FLAT_PROB||0)||0;
+  // If no Markov data, derive from state rank
+  const stateRank={'WEAK':1,'WATCH':2,'IMPROVING':3,'QUALIFIED':4,'STRONG':5};
+  const stateR=stateRank[(r.Markov_State||r.Markov||'').toUpperCase()]||3;
+  const effUp=upProb>0?upProb:(0.2+stateR*0.1);
+  const effDown=downProb>0?downProb:Math.max(0.05,0.6-stateR*0.1);
+  const dirScore=Math.round(Math.max(0,Math.min(20,(effUp-effDown+1)*10)));
+  const dirLabel=dirScore>=16?'Strong upward tilt':dirScore>=12?'Slight upward edge':dirScore>=8?'Roughly neutral':dirScore>=4?'Slight downward lean':'Heavy downward pressure';
+
+  // ── COMPONENT 2: Duration / Staying Power (0-20) ─────────────────────────
+  // How long does this state tend to persist?
+  const contRate=parseFloat(mc.CONTINUATION_RATE||0)||0;
+  const exhRate=parseFloat(mc.EXHAUSTION_RATE||0)||0;
+  const effCont=contRate>0?contRate:(0.3+stateR*0.08);
+  const effExh=exhRate>0?exhRate:Math.max(0.05,0.7-stateR*0.08);
+  const gap=effCont-effExh; // positive = more likely to continue than fade
+  const durScore=Math.round(Math.max(0,Math.min(20,(gap+0.5)*20)));
+  const durLabel=durScore>=16?'Momentum likely to persist':durScore>=12?'State should hold short-term':durScore>=8?'Could go either way':durScore>=4?'Showing fatigue signs':'Near exhaustion — handle carefully';
+
+  // ── COMPONENT 3: Momentum Quality (0-20) ─────────────────────────────────
+  // Reaction × follow-through. Big move with no follow = fake signal
+  const react=num(r.REACTION_STRENGTH||r.reaction_strength||r.React||r.react,0);
+  const follow=num(r.FOLLOW_THROUGH_SCORE||r.follow_through_score||r.Follow,0);
+  // Normalize to 0-1 range (these are typically 0-2+ in old terminal)
+  const reactN=react>1?react/2:react;
+  const followN=follow>1?follow/2:follow;
+  const momRaw=(reactN+followN)/2;
+  const momScore=Math.round(Math.max(0,Math.min(20,momRaw*20)));
+  const momLabel=momScore>=16?'Strong reaction with confirmed follow-through':momScore>=12?'Decent momentum, some follow-through':momScore>=8?'Mild signal, weak confirmation':momScore>=4?'Faint signal, little follow-through':'No meaningful momentum signal';
+
+  // ── COMPONENT 4: Monte Survivability (0-20) ───────────────────────────────
+  // Combines odds of winning + stays alive from sim results if run
+  const simR=Object.values(simResults).find((v,i)=>Object.keys(simResults)[i]===ticker);
+  let survScore=10; // neutral default if sim not run
+  let survLabel='Run simulation for a precise score';
+  if(simR){
+    const pos=simR.stats.posProb||0;
+    const surv=simR.stats.survProb||0;
+    const combined=(pos+surv)/2;
+    survScore=Math.round(Math.max(0,Math.min(20,combined*20)));
+    survLabel=survScore>=16?`${(pos*100).toFixed(0)}% win odds, ${(surv*100).toFixed(0)}% survival — strong`:survScore>=12?`${(pos*100).toFixed(0)}% win odds, manageable risk`:survScore>=8?'Coin-flip odds, moderate survival':`Only ${(pos*100).toFixed(0)}% win odds — risky setup`;
+  } else {
+    // Derive from DNA mc_score if sim not run
+    const mcSc=num(d.mc_score,0);
+    if(mcSc>0){survScore=Math.round(mcSc/5);survLabel=`Monte score ${mcSc} from DNA data (run sim for live calc)`;}
+  }
+
+  // ── COMPONENT 5: DNA Alignment (0-20) ────────────────────────────────────
+  // How well does this stock fit current conditions?
+  const relStr=num(d.rel_strength,0);
+  const sectFit=num(d.mkt_sector_fit,0);
+  const recovery=num(d.recovery,0);
+  const dnaAvg=(relStr+sectFit+recovery)/3;
+  // Also factor in score vs min threshold
+  const sc=num(r.Score||r.score,0);
+  const scoreBonus=sc>=minScore()?4:sc>=60?2:0;
+  const dnaScore=Math.round(Math.max(0,Math.min(20,dnaAvg/5+scoreBonus)));
+  const dnaLabel=dnaScore>=16?'Strong sector fit, high relative strength':dnaScore>=12?'Good alignment with current conditions':dnaScore>=8?'Neutral fit — market conditions mixed':dnaScore>=4?'Weak alignment, fighting the trend':'Poor sector fit right now';
+
+  // ── FAMILY CONCENTRATION PENALTY ─────────────────────────────────────────
+  const theme=r.Theme||h.Theme||r.theme||'';
+  const fam=getFamilyData(theme,ticker);
+  const holdTickers=S.holdings.map(x=>x.Ticker||x.ticker||'');
+  const famOverlap=fam.with.filter(t=>holdTickers.includes(t)).length;
+  const penalty=famOverlap>=3?6:famOverlap>=2?3:0;
+  const penaltyLabel=penalty>0?`-${penalty} family overlap (${famOverlap} similar names held)`:'No concentration penalty';
+
+  // ── TOTAL ─────────────────────────────────────────────────────────────────
+  const raw=dirScore+durScore+momScore+survScore+dnaScore;
+  const total=Math.max(1,Math.min(100,raw-penalty));
+
+  // ── VERDICT ───────────────────────────────────────────────────────────────
+  const weakest=[
+    {name:'Direction',score:dirScore},
+    {name:'Duration',score:durScore},
+    {name:'Momentum',score:momScore},
+    {name:'Survivability',score:survScore},
+    {name:'DNA Fit',score:dnaScore},
+  ].sort((a,b)=>a.score-b.score)[0];
+
+  const verdict=total>=80?`High confidence. All systems pointing same direction. ${weakest.score<10?'Watch '+weakest.name+' as the soft spot.':''}`:
+    total>=60?`Moderate confidence. Setup has merit but ${weakest.name} is the weak link — watch it.`:
+    total>=40?`Low confidence. ${weakest.name} is dragging this down. Don't force the trade.`:
+    `Very low confidence. Multiple signals misaligned. Wait for a cleaner setup.`;
+
+  return{
+    total,
+    components:[
+      {name:'Directional Probability', score:dirScore, max:20, label:dirLabel,
+       desc:'How strongly Markov says it\'s going up vs down'},
+      {name:'Duration / Staying Power',score:durScore, max:20, label:durLabel,
+       desc:'How long the current state tends to persist before reversing'},
+      {name:'Momentum Quality',        score:momScore, max:20, label:momLabel,
+       desc:'Reaction strength × follow-through — is the move real?'},
+      {name:'Monte Survivability',     score:survScore,max:20, label:survLabel,
+       desc:'Odds of winning + odds of staying alive from simulation'},
+      {name:'DNA Alignment',           score:dnaScore, max:20, label:dnaLabel,
+       desc:'Sector fit + relative strength + score vs threshold'},
+    ],
+    penalty,penaltyLabel,verdict
+  };
+}
+
+function lcsColor(v){return v>=70?'lcs-high':v>=45?'lcs-mid':'lcs-low'}
+function lcsBarColor(v,max){const pct=v/max*100;return pct>=70?'var(--green)':pct>=45?'var(--yellow)':'var(--red)'}
+
+function lcsHtml(ticker){
+  const conf=calcConfidence(ticker);
+  const cls=lcsColor(conf.total);
+  const comps=conf.components.map(c=>`
+    <div class="lcs-component">
+      <div class="lcs-comp-name"><b>${c.name}</b><br><span style="color:var(--dim);font-size:9px">${c.label}</span></div>
+      <div class="lcs-comp-bar"><div class="lcs-comp-fill" style="width:${(c.score/c.max*100).toFixed(0)}%;background:${lcsBarColor(c.score,c.max)}"></div></div>
+      <div class="lcs-comp-val" style="color:${lcsBarColor(c.score,c.max)}">${c.score}/${c.max}</div>
+    </div>`).join('');
+  return`<span class="lcs-badge ${cls}">
+    <span style="font-size:10px;opacity:.7">LCS</span>${conf.total}
+    <div class="lcs-teardown">
+      <div class="lcs-td-head">
+        <div class="lcs-td-title">Lean Confidence Score</div>
+        <div class="lcs-td-score" style="color:${conf.total>=70?'var(--green)':conf.total>=45?'var(--yellow)':'var(--red)'}">${conf.total}</div>
+      </div>
+      <div class="lcs-td-body">
+        ${comps}
+        ${conf.penalty>0?`<div class="lcs-component"><div class="lcs-comp-name" style="color:var(--red)"><b>Family Penalty</b><br><span style="font-size:9px;color:var(--dim)">${conf.penaltyLabel}</span></div><div class="lcs-comp-val" style="color:var(--red)">-${conf.penalty}</div></div>`:''}
+        <div class="lcs-verdict" style="color:${conf.total>=70?'var(--green)':conf.total>=45?'var(--muted)':'var(--red)'}">${conf.verdict}</div>
+      </div>
+    </div>
+  </span>`;
+}
+
 // ─── RENDER: PILLS ────────────────────────────────────────────────────────────
 function renderPills(){
   const e=S.engine;
@@ -1325,11 +1489,13 @@ function renderRanking(){
     const sc=num(r.Score,0),mv=num(r.Move||r.move,0);
     const status=r.Status||r.status||'—';
     const markov=r.Markov_State||r.Markov||'—';
+    const ticker=r.Ticker||r.ticker||'—';
     return `<tr>
       <td style="color:var(--dim);font-family:var(--mono);font-size:11px">${i+1}</td>
-      <td><button class="ticker-btn" onclick="showTicker('${r.Ticker}',event)">${r.Ticker||'—'}</button></td>
+      <td><button class="ticker-btn" onclick="showTicker('${ticker}',event)">${ticker}</button></td>
       <td style="color:var(--muted);font-size:11px">${(r.Theme||'—').slice(0,18)}</td>
       <td><span class="score-badge ${scoreClass(sc)}">${sc}</span></td>
+      <td>${lcsHtml(ticker)}</td>
       <td style="font-family:var(--mono);font-size:10px;font-weight:700;color:${status==='BUY'?'var(--green)':status==='TRIM'||status==='SELL'?'var(--red)':'var(--yellow)'}">${status}</td>
       <td><span class="markov-pill ${markovClass(markov)}">${markov}</span></td>
       <td class="${moveClass(mv)}" style="font-family:var(--mono);font-size:11px">${mv?pct(mv):'—'}</td>
@@ -1426,8 +1592,48 @@ function renderHoldings(){
 
 // ─── RENDER: RADAR ────────────────────────────────────────────────────────────
 function renderRadar(){
-  const rows=S.radar.filter(r=>r.Ticker&&r.Ticker!='Ticker');
-  if(!rows.length){$('radar-list').innerHTML=`<div class="empty" style="padding:14px">no radar data</div>`;return}
+  // Normalize radar rows — handle any column name variant
+  const rawRows=S.radar.length?S.radar:[];
+  const rows=rawRows.map(r=>({
+    Ticker:   r.Ticker||r.ticker||r.TICKER||r.Symbol||r.symbol||'',
+    Theme:    r.Theme||r.theme||r.THEME||r.Sector||r.sector||'—',
+    Radar:    r.Radar||r.radar||r.HOT||r.Status||r.status||'YES',
+    Strength: r.Strength||r.strength||r.STRENGTH||'—',
+    Priority: r.Priority||r.priority||r.Rank||r.rank||'3',
+    Note:     r.Note||r.note||r.horse_read||r.desc||'',
+  })).filter(r=>r.Ticker&&r.Ticker!=='Ticker'&&r.Ticker.trim()!=='');
+
+  if(!rows.length){
+    // Fall back: if ranking has data, show those tickers on radar too
+    const fallback=[...S.ranking].slice(0,15).map(r=>({
+      Ticker:   r.Ticker||r.ticker||'',
+      Theme:    r.Theme||r.theme||'—',
+      Radar:    num(r.Score||r.score,0)>=75?'HOT':num(r.Score||r.score,0)>=60?'YES':'WATCH',
+      Strength: num(r.Score||r.score,0)>=75?'HIGH':num(r.Score||r.score,0)>=60?'MED':'LOW',
+      Priority: r.Rank||r.rank||'3',
+      Note:     '',
+    })).filter(r=>r.Ticker);
+    if(!fallback.length){
+      $('radar-list').innerHTML=`<div class="empty" style="padding:14px">no radar data — add RADAR tab CSV URL in Data Settings</div>`;
+      return;
+    }
+    // Show ranking data as fallback radar
+    $('radar-list').innerHTML=fallback.map(r=>{
+      const hot=r.Radar;
+      const hotCls=hot==='HOT'?'hot-hot':hot==='YES'?'hot-yes':'hot-watch';
+      return `<div class="radar-row" onclick="showTicker('${r.Ticker}',event)">
+        <div>
+          <div class="rr-ticker">${r.Ticker}</div>
+          <div class="rr-theme">${r.Theme} · from ranking</div>
+        </div>
+        <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
+          <span class="rr-hot ${hotCls}">${hot}</span>
+          <span style="font-size:9px;color:var(--muted)">${r.Strength}</span>
+        </div>
+      </div>`;
+    }).join('');
+    return;
+  }
 
   // Highlight graduation candidates: Radar=HOT + Strength=HIGH → could graduate
   const sorted=[...rows].sort((a,b)=>{
@@ -1438,16 +1644,15 @@ function renderRadar(){
   $('radar-list').innerHTML=sorted.map(r=>{
     const hot=r.Radar||'—';
     const hotCls=hot==='HOT'?'hot-hot':hot==='YES'?'hot-yes':'hot-watch';
-    // graduation candidate flag
-    const grad=hot==='HOT'&&(r.Strength==='HIGH')?' <span style="font-size:9px;color:var(--green);font-family:var(--mono)">↑ GRAD?</span>':'';
+    const grad=hot==='HOT'&&r.Strength==='HIGH'?' <span style="font-size:9px;color:var(--green);font-family:var(--mono)">↑ GRAD?</span>':'';
     return `<div class="radar-row" onclick="showTicker('${r.Ticker}',event)">
       <div>
         <div class="rr-ticker">${r.Ticker}${grad}</div>
-        <div class="rr-theme">${r.Theme||'—'} · P${r.Priority||'?'}</div>
+        <div class="rr-theme">${r.Theme} · P${r.Priority||'?'}</div>
       </div>
       <div style="display:flex;flex-direction:column;align-items:flex-end;gap:4px">
         <span class="rr-hot ${hotCls}">${hot}</span>
-        <span style="font-size:9px;color:var(--muted)">${r.Strength||'—'}</span>
+        <span style="font-size:9px;color:var(--muted)">${r.Strength}</span>
       </div>
     </div>`;
   }).join('');
@@ -1850,6 +2055,7 @@ function showTicker(ticker, evt){
   $('dp-tags').innerHTML=`
     <div class="dp-tag"><div class="dp-tag-label">DNA Rank</div><div class="dp-tag-val" style="color:var(--cyan)">#${rank||'?'}</div></div>
     <div class="dp-tag"><div class="dp-tag-label">Dup Risk</div><div class="dp-tag-val" style="color:${dupRisk==='Low'?'var(--green)':'var(--yellow)'}">${dupRisk}</div></div>
+    <div class="dp-tag"><div class="dp-tag-label">Confidence</div><div class="dp-tag-val">${lcsHtml(ticker)}</div></div>
     <div class="dp-tag"><div class="dp-tag-label">Horse Tag</div><div class="dp-tag-val">${horseTag||'—'}</div></div>
     <div class="dp-tag"><div class="dp-tag-label">Monte Carlo</div><div class="dp-tag-val" style="color:${mcScore>=70?'var(--green)':mcScore>=45?'var(--yellow)':'var(--red)'}">${mcLabel}</div></div>`;
 
@@ -2556,35 +2762,35 @@ function renderMonteStats(S0){
       <div class="monte-stat-ticker"><div style="width:8px;height:8px;border-radius:50%;background:${color};flex-shrink:0"></div>${ticker}</div>
       <div class="monte-stat-rows">
         <div class="monte-stat-row">
-          <span class="monte-stat-key">Median End${tip('The middle outcome across all simulations. Half the paths ended above this, half below. Your most likely landing zone.')}</span>
+          <span class="monte-stat-key">Most Likely Finish${tip('The middle of all 200 simulated futures. Half ended higher, half lower. This is where you most likely land.')}</span>
           <span class="monte-stat-val" style="color:${retC}">${money(stats.finalMedian)} <span style="font-size:9px">(${retPct>0?'+':''}${retPct}%)</span></span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">P10 End${tip('Bear case — only 10% of simulations ended below this. Think of it as your realistic downside floor if things go wrong.')}</span>
+          <span class="monte-stat-key">Worst Case Floor${tip('Only 1 in 10 paths ended below this. Your realistic downside floor — plan around this number, not the pretty median.')}</span>
           <span class="monte-stat-val v-r">${money(stats.p10)}</span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">P90 End${tip('Bull case — 90% of paths ended below this. Only 10% beat it. A realistic upside ceiling, not a price target.')}</span>
+          <span class="monte-stat-key">Best Case Ceiling${tip('Only 1 in 10 paths beat this. Your realistic upside ceiling — achievable but not guaranteed.')}</span>
           <span class="monte-stat-val v-g">${money(stats.p90)}</span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">Positive Prob${tip('% of simulations that ended above your starting value. Above 60% = favorable setup. Below 50% = more paths lose than win at current assumptions.')}</span>
+          <span class="monte-stat-key">Odds of Winning${tip('How many simulated paths made money. Above 60%: math is on your side. Below 50%: more paths lose than win — reconsider the setup.')}</span>
           <span class="monte-stat-val" style="color:${stats.posProb>=.6?'var(--green)':stats.posProb>=.45?'var(--yellow)':'var(--red)'}">${(stats.posProb*100).toFixed(0)}%</span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">Survival Prob${tip('% of simulations that never dropped below 50% of starting value. High = position stays manageable even in bad scenarios.')}</span>
+          <span class="monte-stat-key">Stays Alive${tip('How many paths never got cut in half. High number = the position stays survivable even in rough scenarios. Low = real blowup risk.')}</span>
           <span class="monte-stat-val" style="color:${stats.survProb>=.8?'var(--green)':'var(--yellow)'}">${(stats.survProb*100).toFixed(0)}%</span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">Med Drawdown${tip('Typical worst peak-to-trough dip across simulations. Mentally prepare for a pullback of at least this size during the hold period.')}</span>
+          <span class="monte-stat-key">Worst Dip to Expect${tip('The typical worst drop from the high point during the hold period. Mentally prepare for at least this size pullback — normal behavior, not a panic signal.')}</span>
           <span class="monte-stat-val v-y">${(stats.medDrawdown*100).toFixed(1)}%</span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">Ann Return${tip('Annualized return assumption used for this simulation. Adjusted slightly by momentum signals from your DNA data if available.')}</span>
+          <span class="monte-stat-key">Return Assumption${tip('Annualized return assumption used for this simulation. Adjusted slightly by momentum signals from your DNA data if available.')}</span>
           <span class="monte-stat-val">${(mu*100).toFixed(1)}%</span>
         </div>
         <div class="monte-stat-row">
-          <span class="monte-stat-key">Ann Vol${tip('Annualized volatility used in the simulation. Higher vol = wider fan chart = more uncertainty in both directions.')}</span>
+          <span class="monte-stat-key">Vol Assumption${tip('Annualized volatility used in the simulation. Higher vol = wider fan chart = more uncertainty in both directions.')}</span>
           <span class="monte-stat-val">${(sigma*100).toFixed(1)}%</span>
         </div>
       </div>
@@ -2612,9 +2818,9 @@ function renderMarkovFlow(){
     const contRate=parseFloat(mc.CONTINUATION_RATE||0)*100||Math.round(40+rank*5);
     const exhRate=parseFloat(mc.EXHAUSTION_RATE||0)*100||Math.round(60-rank*5);
     const stBars=[
-      {label:'Up / Improve', pct:upP,   color:'var(--green)'},
-      {label:'Flat / Hold',  pct:flatP, color:'var(--blue)'},
-      {label:'Down / Weaken',pct:downP, color:'var(--red)'},
+      {label:'Going Higher', pct:upP,   color:'var(--green)'},
+      {label:'Staying Put',  pct:flatP, color:'var(--blue)'},
+      {label:'Going Lower',pct:downP, color:'var(--red)'},
     ];
     return`<div class="markov-ticker-block">
       <div class="markov-ticker-name">
@@ -2628,8 +2834,8 @@ function renderMarkovFlow(){
         <span class="markov-state-pct" style="color:${st.color}">${st.pct.toFixed(0)}%</span>
       </div>`).join('')}
       <div style="display:flex;gap:12px;margin-top:8px;padding-top:8px;border-top:1px solid var(--line)">
-        <div><div style="font-family:var(--mono);font-size:8px;color:var(--cyan);text-transform:uppercase;margin-bottom:3px">Continuation</div><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan)">${contRate.toFixed(0)}%</div></div>
-        <div><div style="font-family:var(--mono);font-size:8px;color:var(--cyan);text-transform:uppercase;margin-bottom:3px">Exhaustion</div><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--yellow)">${exhRate.toFixed(0)}%</div></div>
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--cyan);text-transform:uppercase;margin-bottom:3px">Momentum Holds</div><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--cyan)">${contRate.toFixed(0)}%</div></div>
+        <div><div style="font-family:var(--mono);font-size:8px;color:var(--cyan);text-transform:uppercase;margin-bottom:3px">Momentum Fades</div><div style="font-family:var(--mono);font-size:12px;font-weight:700;color:var(--yellow)">${exhRate.toFixed(0)}%</div></div>
         <div style="margin-left:auto"><div style="font-family:var(--mono);font-size:8px;color:var(--cyan);text-transform:uppercase;margin-bottom:3px">Score</div><div style="font-family:var(--mono);font-size:12px;font-weight:700" class="${num(r.Score,0)>=75?'v-g':num(r.Score,0)>=60?'v-y':'v-r'}">${num(r.Score,0)||'—'}</div></div>
       </div>
     </div>`;
@@ -3030,7 +3236,7 @@ window.setCheatFilter=setCheatFilter;
 function sortCheat(col){
   if(cheatSort.col===col)cheatSort.dir*=-1;
   else{cheatSort.col=col;cheatSort.dir=1;}
-  ['rank','score','mc','dna','move'].forEach(c=>{
+  ['rank','score','lcs','mc','dna','move'].forEach(c=>{
     const el=$('sa-'+c);if(el)el.textContent=c===cheatSort.col?(cheatSort.dir===1?'↑':'↓'):'↕';
   });
   renderCheatSheet();
@@ -3087,16 +3293,18 @@ function renderCheatSheet(){
   rows=rows.map((r,i)=>{
     const d=S.dna.find(x=>(x.ticker||x.Ticker)===r.Ticker)||{};
     const fam=getFamilyData(r.Theme||'',r.Ticker);
+    const conf=calcConfidence(r.Ticker);
     return{...r,_dna:d,_fam:fam,_rank:i+1,
       _mc:num(d.mc_score||r.Markov_Score||r.Monte_Skew,0),
-      _dnaSc:num(d.dna_score,0)};
+      _dnaSc:num(d.dna_score,0),
+      _lcs:conf.total};
   });
 
   // Sort
   const col=cheatSort.col,dir=cheatSort.dir;
   rows.sort((a,b)=>{
-    const va=col==='rank'?a._rank:col==='score'?a.Score:col==='mc'?a._mc:col==='dna'?a._dnaSc:col==='move'?a.Move:a._rank;
-    const vb=col==='rank'?b._rank:col==='score'?b.Score:col==='mc'?b._mc:col==='dna'?b._dnaSc:col==='move'?b.Move:b._rank;
+    const va=col==='rank'?a._rank:col==='score'?a.Score:col==='lcs'?a._lcs:col==='mc'?a._mc:col==='dna'?a._dnaSc:col==='move'?a.Move:a._rank;
+    const vb=col==='rank'?b._rank:col==='score'?b.Score:col==='lcs'?b._lcs:col==='mc'?b._mc:col==='dna'?b._dnaSc:col==='move'?b.Move:b._rank;
     return(vb-va)*dir;
   });
 
@@ -3124,6 +3332,7 @@ function renderCheatSheet(){
       <td style="font-family:var(--mono);font-size:10px;color:var(--dim)">${i+1}${inHoldings?' <span style="color:var(--green);font-size:8px">●</span>':''}${inRadar?' <span style="color:var(--blue);font-size:8px">◎</span>':''}</td>
       <td><button class="ticker-btn" style="font-size:13px" onclick="showTicker('${r.Ticker}',event)">${r.Ticker}</button></td>
       <td><span class="score-badge ${scoreClass(sc)}">${sc||'—'}</span></td>
+      <td>${lcsHtml(r.Ticker)}</td>
       <td>
         <div class="mc-bar-wrap">
           <div class="mc-bar"><div class="mc-fill ${mcClass(mc)}" style="width:${mc}%"></div></div>
