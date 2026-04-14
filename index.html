@@ -270,7 +270,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .lcs-comp-val{font-family:var(--mono);font-size:10px;font-weight:700;width:26px;text-align:right;flex-shrink:0}
 .lcs-verdict{margin-top:8px;padding:7px 10px;border-radius:7px;font-size:10px;line-height:1.6;background:rgba(255,255,255,.03);border:1px solid var(--line)}
 /* Card title tooltips always open left so they don't go off-screen */
-.card-head .msi-tip, .cheat-section-head .msi-tip{right:auto!important;left:0!important}
+.card-head .msi-tip, .cheat-section-head .msi-tip{}
 
 /* ─── HOLDINGS ─── */
 .holding-row{display:flex;justify-content:space-between;align-items:center;padding:8px 10px;border:1px solid var(--line);border-radius:9px;margin-bottom:6px;background:rgba(255,255,255,.012);cursor:pointer;transition:all .15s}
@@ -5430,14 +5430,79 @@ $('rf-btn').onclick=loadAll;
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 if(!rd(K.mode))wr(K.mode,'LEAN');
 
-// Global tooltip delegation — covers all static msi-btn elements
+// Global tooltip delegation — smart positioning, never goes off-screen
+function positionTooltip(btn, tip){
+  // Reset position first so getBoundingClientRect is accurate
+  tip.style.top='';tip.style.bottom='';tip.style.left='';tip.style.right='';
+  tip.style.display='block';
+
+  const btnR=btn.getBoundingClientRect();
+  const tipR=tip.getBoundingClientRect();
+  const vw=window.innerWidth;
+  const vh=window.innerHeight;
+  const gap=8;
+
+  // Vertical: prefer below, flip to above if not enough room below
+  const spaceBelow=vh-btnR.bottom;
+  const spaceAbove=btnR.top;
+  if(spaceBelow>=tipR.height+gap||spaceBelow>=spaceAbove){
+    tip.style.top=(btnR.height+gap)+'px';
+    tip.style.bottom='auto';
+  } else {
+    tip.style.bottom=(btnR.height+gap)+'px';
+    tip.style.top='auto';
+  }
+
+  // Horizontal: align right edge to button, but clamp to viewport
+  const naturalRight=0; // right:0 aligns right edge of tip to right edge of btn
+  const tipWidth=Math.min(280,tipR.width||260);
+  tip.style.width=tipWidth+'px';
+
+  // Check if right-aligned would go off left edge
+  const rightAlignLeft=btnR.right-tipWidth;
+  if(rightAlignLeft<8){
+    // Align left edge instead
+    tip.style.right='auto';
+    tip.style.left='0';
+  } else {
+    tip.style.right='0';
+    tip.style.left='auto';
+  }
+}
+
 document.addEventListener('mouseover',e=>{
   const btn=e.target.closest('.msi-btn');
-  if(btn){const t=btn.nextElementSibling;if(t&&t.classList.contains('msi-tip'))t.style.display='block';}
+  if(!btn)return;
+  const tip=btn.nextElementSibling;
+  if(tip&&tip.classList.contains('msi-tip')){
+    positionTooltip(btn,tip);
+  }
+  // Also handle mp-i buttons (metric pill ?)
+  const mpBtn=e.target.closest('.mp-i');
+  if(mpBtn){
+    const tt=mpBtn.nextElementSibling;
+    if(tt&&tt.classList.contains('mp-tooltip')){
+      tt.style.display='block';
+      const btnR=mpBtn.getBoundingClientRect();
+      const ttR=tt.getBoundingClientRect();
+      const vh=window.innerHeight;
+      const spaceBelow=vh-btnR.bottom;
+      if(spaceBelow<ttR.height+10&&btnR.top>ttR.height+10){
+        tt.style.top='auto';
+        tt.style.bottom='calc(100% + 8px)';
+      } else {
+        tt.style.top='calc(100% + 8px)';
+        tt.style.bottom='auto';
+      }
+    }
+  }
 });
+
 document.addEventListener('mouseout',e=>{
   const btn=e.target.closest('.msi-btn');
   if(btn){const t=btn.nextElementSibling;if(t&&t.classList.contains('msi-tip'))t.style.display='none';}
+  const mpBtn=e.target.closest('.mp-i');
+  if(mpBtn){const tt=mpBtn.nextElementSibling;if(tt&&tt.classList.contains('mp-tooltip'))tt.style.display='none';}
 });
 
 loadAll();
