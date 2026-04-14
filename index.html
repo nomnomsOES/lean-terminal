@@ -2366,6 +2366,20 @@ function loadRaceCard(rawTicker){
             <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green)">$${calcConvictionSize(ticker,sc,conf.total)}</div>
             <div style="font-size:9px;color:var(--dim)">suggested size</div>
           </div>
+          ${(()=>{
+            const pnl=calcPnLArea(ticker);
+            return pnl?`<div style="text-align:center;padding:8px 14px;border-radius:8px;background:${pnl.positive?'rgba(32,224,122,.08)':'rgba(255,79,79,.08)'};border:1px solid ${pnl.positive?'rgba(32,224,122,.2)':'rgba(255,79,79,.2)'}">
+              <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${pnl.color}">${pnl.pctGain>0?'+':''}${pnl.pctGain}%</div>
+              <div style="font-size:9px;color:var(--dim)">${pnl.dollarGain>0?'+':''}$${Math.abs(pnl.dollarGain)} vs entry</div>
+            </div>`:'';
+          })()}
+          ${(()=>{
+            const sig=calcSignalIntegral(ticker);
+            return sig.sessions>=2?`<div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+              <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${sig.trendColor}">${sig.conviction}</div>
+              <div style="font-size:9px;color:var(--dim)">conviction · ${sig.sessions}s</div>
+            </div>`:'';
+          })()}
           ${(()=>{const sl=calcStopLoss(ticker);return sl?`<div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2)"><div style="font-family:var(--mono);font-size:11px;font-weight:700;color:${sl.color}">${sl.label}</div><div style="font-size:9px;color:var(--dim)">trailing stop</div></div>`:'';})()}
         </div>
       </div>
@@ -3249,6 +3263,143 @@ function renderActions(){
 }
 
 // ─── RENDER: HOLDINGS ────────────────────────────────────────────────────────
+// ═══════════════════════════════════════════════════════════════════════════
+// ITEM 56 — ENTRY ANCHOR (+C RESOLVER)
+// Stores entry price + date per holding in localStorage
+// Also reads Entry_Price / Entry_Date columns from sheet if present
+// ═══════════════════════════════════════════════════════════════════════════
+const EA_KEY='lt_entry_anchors';
+
+function getEntryAnchors(){
+  try{return JSON.parse(localStorage.getItem(EA_KEY)||'{}');}
+  catch{return{};}
+}
+
+function setEntryAnchor(ticker, price, date){
+  const anchors=getEntryAnchors();
+  anchors[ticker]={
+    price:parseFloat(price)||0,
+    date:date||new Date().toISOString().split('T')[0]
+  };
+  localStorage.setItem(EA_KEY,JSON.stringify(anchors));
+}
+
+function getEntryAnchor(ticker){
+  // First check sheet data (Entry_Price / Entry_Date columns)
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const sheetPrice=parseFloat(h.Entry_Price||h.entry_price||h.EntryPrice||h.ENTRY_PRICE||0);
+  const sheetDate=h.Entry_Date||h.entry_date||h.EntryDate||h.ENTRY_DATE||'';
+  if(sheetPrice>0) return{price:sheetPrice, date:sheetDate, source:'sheet'};
+  // Fall back to localStorage manual entry
+  const anchors=getEntryAnchors();
+  if(anchors[ticker]) return{...anchors[ticker], source:'manual'};
+  return null;
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ITEM 55 — P&L AREA EXPOSURE
+// Definite integral of (price - entry) over sessions held
+// = time-weighted gain/loss in dollars
+// ═══════════════════════════════════════════════════════════════════════════
+function calcPnLArea(ticker){
+  const anchor=getEntryAnchor(ticker);
+  if(!anchor||!anchor.price)return null;
+
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const currentPrice=parseFloat(h.Price||h.price||h.Last||h.last||0);
+  const shares=parseFloat(h.Shares||h.shares||h.Qty||h.qty||0);
+  const value=num(h.Value||h.value||h.Holding_Value,0);
+
+  // If no current price, derive from value/shares
+  const price=currentPrice||(shares>0?value/shares:0);
+  if(!price)return null;
+
+  // Point-in-time P&L
+  const entryPrice=anchor.price;
+  const pctGain=((price-entryPrice)/entryPrice)*100;
+  const dollarGain=shares>0?(price-entryPrice)*shares:(value-entryPrice*(value/price));
+
+  // Time-weighted area from price history
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+
+  let areaSum=0, sessionsAbove=0, sessionsBelow=0;
+  if(rows.length>=2){
+    rows.forEach(r=>{
+      const p=parseFloat(r.CLOSE||r.Close||r.close||0);
+      if(!p)return;
+      const diff=p-entryPrice;
+      areaSum+=diff;
+      if(diff>0)sessionsAbove++;
+      else sessionsBelow++;
+    });
+  }
+
+  // Days since entry
+  const entryDate=new Date(anchor.date);
+  const today=new Date();
+  const daysSince=Math.max(1,Math.round((today-entryDate)/(1000*60*60*24)));
+
+  return{
+    entryPrice,
+    currentPrice:price,
+    pctGain:Math.round(pctGain*10)/10,
+    dollarGain:Math.round(dollarGain),
+    areaSum:Math.round(areaSum),
+    sessionsAbove,
+    sessionsBelow,
+    daysSince,
+    positive:dollarGain>0,
+    label:dollarGain>0?`+$${Math.round(dollarGain)} · up ${pctGain.toFixed(1)}% since entry`
+                      :`-$${Math.abs(Math.round(dollarGain))} · down ${Math.abs(pctGain).toFixed(1)}% since entry`,
+    color:dollarGain>0?'var(--green)':'var(--red)',
+    entryLabel:`Entry $${entryPrice} · ${daysSince}d ago · ${anchor.source}`
+  };
+}
+
+// ═══════════════════════════════════════════════════════════════════════════
+// ITEM 54 — ACCUMULATED SIGNAL INTEGRAL
+// Σ score over sessions — conviction built over time
+// A score of 75 held 10 sessions > a score of 75 appearing today
+// ═══════════════════════════════════════════════════════════════════════════
+function calcSignalIntegral(ticker){
+  const h=getScoreHistory();
+  const entries=h[ticker];
+  if(!entries||entries.length<2)return{integral:0,sessions:0,trend:'new',label:'New signal — no history yet'};
+
+  const scores=entries.map(e=>e.sc);
+  const n=scores.length;
+
+  // Definite integral using trapezoidal rule: Σ (s[i]+s[i+1])/2
+  let integral=0;
+  for(let i=0;i<n-1;i++){
+    integral+=(scores[i]+scores[i+1])/2;
+  }
+  integral=Math.round(integral);
+
+  // Trend — is the signal building or fading?
+  const first=scores[0], last=scores[n-1];
+  const trend=last-first>=5?'building':last-first<=-5?'fading':'stable';
+  const trendColor=trend==='building'?'var(--green)':trend==='fading'?'var(--red)':'var(--muted)';
+
+  // Normalize to a 0-100 conviction score
+  // Max possible = 100 * (n-1) sessions at perfect score
+  const maxPossible=100*(n-1);
+  const conviction=Math.round((integral/maxPossible)*100);
+
+  return{
+    integral,
+    sessions:n,
+    trend,
+    trendColor,
+    conviction,
+    label:`${conviction} conviction · ${n} sessions · ${trend}`,
+    currentScore:last,
+    avgScore:Math.round(scores.reduce((a,b)=>a+b,0)/n)
+  };
+}
+
 function renderHoldings(){
   // Accept any row that has a real ticker — don't gate on Value or active_flag
   // Column names vary depending on how Sheets publishes CSV
@@ -3286,20 +3437,44 @@ function renderHoldings(){
     .map(r=>{
       const wt=total>0?((r.Value/total)*100).toFixed(1):(r.Weight*100).toFixed(1)||'0.0';
       const valStr=r.Value>0?money(r.Value):(r.Shares>0?r.Shares.toFixed(3)+' sh':'—');
+      const pnl=calcPnLArea(r.Ticker);
+      const sig=calcSignalIntegral(r.Ticker);
+      const anchor=getEntryAnchor(r.Ticker);
       return`<div class="holding-row" onclick="showTicker('${r.Ticker}',event)">
         <div class="hr-left">
           <div class="hr-ticker">${r.Ticker}</div>
           <div class="hr-role">${r.Role}</div>
+          ${pnl?`<div style="font-size:9px;font-family:var(--mono);color:${pnl.color};margin-top:2px">${pnl.label}</div>`:''}
+          ${sig.sessions>=2?`<div style="font-size:9px;color:${sig.trendColor};margin-top:1px">${sig.label}</div>`:''}
         </div>
         <div class="hr-right">
           <div class="hr-value">${valStr}</div>
           <div class="hr-weight">${wt}%</div>
+          ${anchor?`<div style="font-size:9px;color:var(--dim);text-align:right;margin-top:2px">entry $${anchor.price}</div>`:
+            `<div style="display:flex;align-items:center;gap:3px;margin-top:4px" onclick="event.stopPropagation()">
+              <input type="number" placeholder="entry $" id="ep-${r.Ticker}"
+                style="width:64px;font-family:var(--mono);font-size:9px;padding:2px 5px;border-radius:4px;border:1px solid var(--line);background:rgba(255,255,255,.04);color:var(--muted);outline:none"
+                onkeydown="if(event.key==='Enter')saveEntryPrice('${r.Ticker}')"/>
+              <button onclick="saveEntryPrice('${r.Ticker}')"
+                style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(79,163,255,.3);background:transparent;color:var(--cyan);cursor:pointer">set</button>
+            </div>`}
         </div>
       </div>`;
     }).join('');
 }
 
-// ─── RENDER: RADAR ────────────────────────────────────────────────────────────
+function saveEntryPrice(ticker){
+  const inp=$(`ep-${ticker}`);
+  const price=parseFloat(inp?.value||0);
+  if(!price||price<=0){
+    if(inp){inp.style.borderColor='rgba(255,79,79,.5)';setTimeout(()=>inp.style.borderColor='',1500);}
+    return;
+  }
+  setEntryAnchor(ticker,price,new Date().toISOString().split('T')[0]);
+  renderHoldings();
+}
+window.saveEntryPrice=saveEntryPrice;
+
 function renderRadar(){
   // Normalize radar rows — handle any column name variant
   const rawRows=S.radar.length?S.radar:[];
@@ -3468,9 +3643,9 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Fokker-Planck PDF — exact probability density replaces Monte Carlo 100 paths'},
   {status:'ok',  label:'Laplacian stress score — each holding vs all cluster neighbors simultaneously'},
   {status:'ok',  label:'Alpaca live execution — BUY/SELL from Today\'s Moves with confirm dialog'},
-  {status:'pend', label:'Accumulated signal integral — Σ score over N sessions, conviction built over time'},
-  {status:'pend', label:'P&L area exposure — definite integral of price vs entry, time-weighted gain/loss'},
-  {status:'pend', label:'Entry anchor (+C resolver) — store entry price/date per holding, resolves position math'},
+  {status:'ok',  label:'Accumulated signal integral — Σ score over N sessions, conviction built over time'},
+  {status:'ok',  label:'P&L area exposure — definite integral of price vs entry, time-weighted gain/loss'},
+  {status:'ok',  label:'Entry anchor (+C resolver) — entry price/date per holding, sheet or manual input'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
 function renderTodaysMoves(){
@@ -3886,8 +4061,8 @@ const AS_KEY='lt_alpaca_secret';
 const AP='lt_alpaca_paper';
 // Pre-wire default Alpaca keys if not already set
 (function(){
-  if(!localStorage.getItem('lt_alpaca_key'))localStorage.setItem('lt_alpaca_key','PK6QHWFNUI2AQ5PLFNZUBBVXGZ');
-  if(!localStorage.getItem('lt_alpaca_secret'))localStorage.setItem('lt_alpaca_secret','A2QSmeAyaARsrnoeba7CEW6CwV7BckcDm7Wc4HH2Apat');
+  if(!localStorage.getItem('lt_alpaca_key'))localStorage.setItem('lt_alpaca_key','PK7VU6FPMSJX5URXDYOVCCWHMC');
+  if(!localStorage.getItem('lt_alpaca_secret'))localStorage.setItem('lt_alpaca_secret','5rrPskX5vYQi6ByrWf5Gs46x3ASe6qhFMGApKXoTD3UT');
   if(!localStorage.getItem('lt_alpaca_paper'))localStorage.setItem('lt_alpaca_paper','true');
 })();
 // AS defined above as AS_KEY
