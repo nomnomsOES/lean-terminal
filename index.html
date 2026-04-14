@@ -219,7 +219,23 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .tl-time{font-size:10px;color:var(--dim);margin-left:auto;white-space:nowrap}
 .tl-skipped{opacity:.5;font-style:italic}
 
-/* ─── CORRELATION HEATMAP ─── */
+/* ─── RACE CARD ─── */
+@keyframes rcpulse{0%,100%{opacity:1;transform:scale(1)}50%{opacity:.6;transform:scale(.97)}}
+.rc-section{background:var(--card);border:1px solid var(--line);border-radius:12px;padding:14px 16px;margin-bottom:12px}
+.rc-section-title{font-family:var(--mono);font-size:8px;font-weight:700;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:12px}
+.rc-prob-bar{height:32px;border-radius:8px;display:flex;align-items:center;justify-content:center;font-family:var(--mono);font-size:12px;font-weight:700;flex:1}
+.rc-row{display:flex;justify-content:space-between;align-items:center;padding:5px 0;border-bottom:1px solid rgba(99,160,255,.06);font-size:11px}
+.rc-row:last-child{border-bottom:none}
+.rc-chip{font-size:10px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);cursor:pointer;font-family:var(--mono);color:var(--text);background:rgba(255,255,255,.03)}
+.rc-chip:hover{border-color:var(--cyan);color:var(--cyan)}
+.rc-anti{font-size:10px;padding:3px 8px;border-radius:5px;background:rgba(255,79,79,.08);border:1px solid rgba(255,79,79,.2);font-family:var(--mono);color:var(--red)}
+.rc-proxy-row{display:flex;align-items:center;gap:10px;padding:6px 0;border-bottom:1px solid rgba(99,160,255,.06);font-size:11px}
+.rc-proxy-row:last-child{border-bottom:none}
+.rc-comp-bar{height:6px;border-radius:3px;margin-top:3px}
+.rc-time-grid{display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px}
+.rc-time-card{background:rgba(255,255,255,.02);border:1px solid var(--line);border-radius:8px;padding:10px;text-align:center}
+.rc-time-val{font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text)}
+.rc-time-label{font-size:9px;color:var(--muted);margin-top:3px;line-height:1.4}
 .corr-wrap{overflow-x:auto;margin-top:8px}
 .corr-cell{width:26px;height:26px;display:inline-flex;align-items:center;justify-content:center;font-size:7px;font-family:var(--mono);cursor:default;border-radius:2px;transition:opacity .1s}
 .corr-cell:hover{opacity:.75;outline:1px solid var(--cyan)}
@@ -545,6 +561,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
     <button class="tab-btn" onclick="switchTab('dna',this)">🧬 DNA Lab</button>
     <button class="tab-btn" onclick="switchTab('cheatsheet',this)">📋 Cheat Sheet</button>
     <button class="tab-btn" onclick="switchTab('monte',this)">📈 Monte / Markov</button>
+    <button class="tab-btn" onclick="switchTab('racecard',this)">🏇 Race Card</button>
   </div>
 
   <!-- ══════════ TAB: TERMINAL ══════════ -->
@@ -1136,6 +1153,37 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
     </div>
   </div><!-- /tab-monte -->
 
+  <!-- ══════════ TAB: RACE CARD ══════════ -->
+  <div class="tab-pane" id="tab-racecard">
+    <div style="padding:16px 0">
+
+      <!-- Search bar -->
+      <div style="display:flex;gap:10px;align-items:center;margin-bottom:16px;flex-wrap:wrap">
+        <div style="flex:1;min-width:200px">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase;margin-bottom:5px">Enter Any Ticker</div>
+          <div style="display:flex;gap:8px">
+            <input id="rc-input" placeholder="e.g. NVDA, XBI, GLD…"
+              style="flex:1;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:8px;padding:9px 12px;font-family:var(--mono);font-size:13px;color:var(--text);outline:none"
+              onkeydown="if(event.key==='Enter')loadRaceCard(this.value)"/>
+            <button onclick="loadRaceCard(document.getElementById('rc-input').value)"
+              style="padding:9px 18px;border-radius:8px;border:1px solid var(--cyan);background:transparent;color:var(--cyan);font-family:var(--mono);font-size:11px;cursor:pointer;font-weight:700">
+              Run Race Card
+            </button>
+          </div>
+        </div>
+        <div id="rc-holding-badge" style="display:none;padding:6px 12px;border-radius:8px;font-family:var(--mono);font-size:11px;animation:rcpulse 1.5s infinite"></div>
+      </div>
+
+      <!-- Race card output -->
+      <div id="rc-output">
+        <div style="text-align:center;padding:40px;font-family:var(--mono);font-size:11px;color:var(--dim)">
+          Enter a ticker above to load the full race card
+        </div>
+      </div>
+
+    </div>
+  </div><!-- /tab-racecard -->
+
 </div><!-- /wrap -->
 
 <!-- DNA PANEL MODAL -->
@@ -1339,16 +1387,16 @@ const _BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj
 const _csv = gid => `${_BASE}?gid=${gid}&single=true&output=csv`;
 
 const DEFAULTS = {
-  holdings:     _csv('1334836685'),  // HOLDINGS ✓
-  ranking:      _csv('2095403822'),  // RANKING_EXPORT ✓
-  engine:       _csv('1225083168'),  // ACTION_ENGINE ✓
-  dna:          _csv('425314096'),   // DNA_EXPORT ✓
-  macro:        _csv('643415500'),   // MARKOV_CURRENT ✓
-  radar:        _csv('1885295455'),  // RADAR ✓ (own tab now)
-  aifilter:     _csv('1225083168'),  // ACTION_ENGINE
-  shock:        _csv('2033993643'),  // SHOCK_RADAR ✓
-  sysexport:    _csv('769357676'),   // SYSTEM_EXPORT ✓
-  pricehistory: _csv('1862098112'),  // PRICE_HISTORY ✓ (was wrong before)
+  holdings:     _csv('173487017'),   // HOLDINGS ✓
+  ranking:      _csv('1491454451'),  // RANKING_EXPORT ✓
+  engine:       _csv('618550882'),   // ACTION_ENGINE ✓
+  dna:          _csv('1896968484'),  // DNA_EXPORT ✓
+  macro:        _csv('609162264'),   // MARKOV_CURRENT ✓
+  radar:        _csv('1162539347'),  // RADAR ✓
+  aifilter:     _csv('618550882'),   // ACTION_ENGINE (same as engine)
+  shock:        _csv('882353282'),   // SHOCK_RADAR ✓
+  sysexport:    _csv('1361758105'),  // SYSTEM_EXPORT ✓
+  pricehistory: _csv('1814199069'),  // PRICE_HISTORY ✓ (NVDA + SMH included)
 };
 const K = {
   engine:'lt_engine', holdings:'lt_holdings', ranking:'lt_ranking',
@@ -1867,7 +1915,479 @@ function renderStressMap(){
 // - Score level (elite score = fewer sessions needed)
 // - Cycle position (graduating at cycle top = dangerous)
 // ─── LEAN CONFIDENCE SCORE ENGINE ────────────────────────────────────────────
-// ─── HOW DOES THIS FIT? ───────────────────────────────────────────────────────
+// ─── RACE CARD ENGINE ─────────────────────────────────────────────────────────
+function loadRaceCard(rawTicker){
+  const ticker=(rawTicker||'').toUpperCase().trim();
+  if(!ticker)return;
+  const inp=$('rc-input');
+  if(inp)inp.value=ticker;
+
+  // ── DATA PULL ─────────────────────────────────────────────────────────────
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||
+          S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const d=S.dna.find(x=>x.ticker===ticker)||{};
+  const sc=num(r.Score||r.score,0);
+  const val=num(h.Value||h.value,0);
+  const theme=r.Theme||h.Theme||r.theme||'Unknown';
+  const status=(r.Status||r.status||'').toUpperCase();
+  const move=(r.Move||r.move||'').toLowerCase();
+  const fam=getFamilyData(theme,ticker);
+  const conf=calcConfidence(ticker);
+  const beh=calcBehaviorProb(ticker);
+  const cyc=calcCycle(ticker);
+  const ent=calcEntropy(ticker);
+  const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===ticker)+1;
+  const holdTickers=S.holdings.map(x=>x.Ticker||x.ticker||'').filter(Boolean);
+  const isHeld=holdTickers.includes(ticker);
+  const isRadar=S.radar.some(x=>(x.Ticker||x.ticker)===ticker);
+
+  // Holding badge
+  const badge=$('rc-holding-badge');
+  if(badge){
+    if(isHeld){
+      badge.style.display='block';
+      badge.style.background='rgba(32,224,122,.12)';
+      badge.style.border='1px solid rgba(32,224,122,.3)';
+      badge.style.color='var(--green)';
+      badge.textContent=`✓ YOU HOLD THIS · $${val?val.toLocaleString(undefined,{maximumFractionDigits:0}):'?'}`;
+    } else if(isRadar){
+      badge.style.display='block';
+      badge.style.background='rgba(79,163,255,.1)';
+      badge.style.border='1px solid rgba(79,163,255,.25)';
+      badge.style.color='var(--blue)';
+      badge.textContent='◎ ON YOUR RADAR';
+    } else {
+      badge.style.display='none';
+    }
+  }
+
+  // ── MARKOV PROBABILITIES ─────────────────────────────────────────────────
+  const mc=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
+  const stR={'WEAK':1,'WATCH':2,'IMPROVING':3,'QUALIFIED':4,'STRONG':5};
+  const sr=stR[(r.Markov_State||r.Markov||'').toUpperCase()]||3;
+  const upRaw=parseFloat(mc.UP_PROB||0)||Math.min(85,15+sr*12+(sc>75?8:0));
+  const downRaw=parseFloat(mc.DOWN_PROB||0)||Math.max(5,55-sr*10);
+  const flatRaw=parseFloat(mc.FLAT_PROB||0)||Math.max(5,100-upRaw-downRaw);
+  const tot=upRaw+downRaw+flatRaw;
+  const upPct=Math.round(upRaw/tot*100);
+  const flatPct=Math.round(flatRaw/tot*100);
+  const downPct=100-upPct-flatPct;
+
+  // ── TIME ANALYSIS from price history ────────────────────────────────────
+  const phRows=S.pricehistory.filter(r2=>(r2.TICKER||r2.Ticker||r2.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+
+  let topToTop=0,bottomToBottom=0,topToBottom=0,bottomToTop=0;
+  let skyDays=0,underwaterDays=0;
+
+  if(phRows.length>=10){
+    const prices=phRows.map(r2=>parseFloat(r2.CLOSE||r2.Close||r2.close||0)).filter(v=>v>0);
+    const N=prices.length;
+    // Rolling 5-day avg to smooth noise
+    const smooth=prices.map((_,i)=>{
+      const slice=prices.slice(Math.max(0,i-2),i+3);
+      return slice.reduce((s,v)=>s+v,0)/slice.length;
+    });
+    // Find local peaks and troughs
+    const peaks=[],troughs=[];
+    for(let i=2;i<N-2;i++){
+      if(smooth[i]>smooth[i-1]&&smooth[i]>smooth[i-2]&&smooth[i]>smooth[i+1]&&smooth[i]>smooth[i+2])peaks.push(i);
+      if(smooth[i]<smooth[i-1]&&smooth[i]<smooth[i-2]&&smooth[i]<smooth[i+1]&&smooth[i]<smooth[i+2])troughs.push(i);
+    }
+    // Average gaps
+    if(peaks.length>=2){
+      const gaps=peaks.slice(1).map((p,i)=>p-peaks[i]);
+      topToTop=Math.round(gaps.reduce((s,v)=>s+v,0)/gaps.length);
+    }
+    if(troughs.length>=2){
+      const gaps=troughs.slice(1).map((t,i)=>t-troughs[i]);
+      bottomToBottom=Math.round(gaps.reduce((s,v)=>s+v,0)/gaps.length);
+    }
+    // Top to bottom: avg days from a peak to the next trough
+    const ttb=[];
+    peaks.forEach(p=>{const next=troughs.find(t=>t>p);if(next)ttb.push(next-p);});
+    topToBottom=ttb.length?Math.round(ttb.reduce((s,v)=>s+v,0)/ttb.length):0;
+    // Bottom to top: avg days from trough to next peak
+    const btt=[];
+    troughs.forEach(t=>{const next=peaks.find(p=>p>t);if(next)btt.push(next-t);});
+    bottomToTop=btt.length?Math.round(btt.reduce((s,v)=>s+v,0)/btt.length):0;
+    // Sky vs underwater days (above vs below 20-day avg)
+    const ma20=smooth.map((_,i)=>{
+      const sl=smooth.slice(Math.max(0,i-19),i+1);
+      return sl.reduce((s,v)=>s+v,0)/sl.length;
+    });
+    prices.forEach((p,i)=>{if(i>=20){if(p>=ma20[i])skyDays++;else underwaterDays++;}});
+  }
+
+  // Use cycle data if price history insufficient
+  if(!topToTop&&cyc.hasCycle){topToTop=cyc.cycleDays;bottomToBottom=cyc.cycleDays;topToBottom=Math.round(cyc.cycleDays/2);bottomToTop=Math.round(cyc.cycleDays/2);}
+
+  // ── MONTE CARLO 100 PATHS ────────────────────────────────────────────────
+  const mcMu=(sc>=75?0.12:sc>=65?0.06:sc>=50?0.01:-0.05)/252;
+  const mcSig=Math.max(0.008,(num(d.realized_vol,40)/100*0.35)/Math.sqrt(252));
+  const mcDays=20;
+  const ends=[];
+  for(let p=0;p<100;p++){
+    let price=100;
+    for(let t=0;t<mcDays;t++)price*=Math.exp(mcMu-0.5*mcSig*mcSig+mcSig*(Math.random()+Math.random()+Math.random()-1.5)*0.816);
+    ends.push(price);
+  }
+  ends.sort((a,b)=>a-b);
+  const mcMedian=((ends[50]-100)).toFixed(1);
+  const mcP10=((ends[10]-100)).toFixed(1);
+  const mcP90=((ends[90]-100)).toFixed(1);
+  const mcWin=ends.filter(v=>v>=100).length;
+  const mcSurvive=ends.filter(v=>v>=90).length;
+
+  // ── OVERLAP & SIMILAR ────────────────────────────────────────────────────
+  const overlap=fam.with.filter(t=>holdTickers.includes(t)&&t!==ticker);
+  const allRows=[...S.ranking,...S.radar];
+
+  // Find similar stocks (not held, similar angle)
+  const similar=allRows.filter(x=>{
+    const xt=x.Ticker||x.ticker||'';
+    if(xt===ticker)return false;
+    const xr=S.ranking.find(r2=>(r2.Ticker||r2.ticker)===xt)||{};
+    const xsc=num(xr.Score||xr.score,0);
+    const xtheme=xr.Theme||xr.theme||'';
+    const sameTheme=xtheme===theme;
+    const scoreClose=Math.abs(xsc-sc)<25;
+    return sameTheme&&scoreClose&&xsc>=50;
+  }).slice(0,4).map(x=>({ticker:x.Ticker||x.ticker,score:num(x.Score||x.score,0),theme:x.Theme||x.theme||''}));
+
+  // Proxy entry (similar behavior, potentially lower price)
+  const proxies=allRows.filter(x=>{
+    const xt=x.Ticker||x.ticker||'';
+    if(xt===ticker||holdTickers.includes(xt))return false;
+    const xr=S.ranking.find(r2=>(r2.Ticker||r2.ticker)===xt)||{};
+    const xsc=num(xr.Score||xr.score,0);
+    const xtheme=xr.Theme||xr.theme||'';
+    return (xtheme===theme)&&xsc>=60&&Math.abs(xsc-sc)<20;
+  }).slice(0,3).map(x=>({ticker:x.Ticker||x.ticker||'',score:num(x.Score||x.score,0),theme:x.Theme||x.theme||''}));
+
+  // Anti-stocks (opposite behavior)
+  const antiStocks=(fam.against||[]).filter(t=>t!==ticker).slice(0,3);
+
+  // ── SCORE BREAKDOWN ───────────────────────────────────────────────────────
+  const comps=conf.components||[];
+  const compColors=['var(--cyan)','var(--blue)','var(--green)','var(--yellow)','var(--purple,#a78bfa)'];
+
+  // ── HORSE READ ────────────────────────────────────────────────────────────
+  const horseRead=generateHorseRead(ticker);
+
+  // ── CYCLE POSITION STREET SPEAK ──────────────────────────────────────────
+  const cycPos=cyc.hasCycle?cyc.cyclePosition:50;
+  const cycLabel=cycPos<20?'Just left the bottom — climbing':cycPos<40?'Rising strong — good entry window':cycPos<60?'Midway — momentum holding':cycPos<80?'Near the top — late entry risk':'At the peak — wait for pullback';
+  const cycColor=cycPos<40?'var(--green)':cycPos<70?'var(--yellow)':'var(--red)';
+
+  // ── RENDER ────────────────────────────────────────────────────────────────
+  const statusColor=status==='BUY'?'var(--green)':status==='SELL'?'var(--red)':status==='TRIM'?'var(--yellow)':'var(--muted)';
+  const lcsColor=conf.total>=70?'var(--green)':conf.total>=45?'var(--yellow)':'var(--red)';
+
+  $('rc-output').innerHTML=`
+  <div style="display:grid;gap:12px">
+
+    <!-- HEADER -->
+    <div class="rc-section">
+      <div style="display:flex;align-items:flex-start;justify-content:space-between;gap:12px;flex-wrap:wrap">
+        <div>
+          <div style="font-family:var(--mono);font-size:28px;font-weight:700;color:var(--text);line-height:1">${ticker}
+            ${isHeld?`<span style="font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;background:rgba(32,224,122,.15);color:var(--green);margin-left:8px;vertical-align:middle">HOLDING · $${val?val.toLocaleString(undefined,{maximumFractionDigits:0}):'?'}</span>`:''}
+            ${isRadar&&!isHeld?`<span style="font-size:10px;font-family:var(--mono);padding:3px 8px;border-radius:5px;background:rgba(79,163,255,.1);color:var(--blue);margin-left:8px;vertical-align:middle">ON RADAR</span>`:''}
+          </div>
+          <div style="font-size:12px;color:var(--muted);margin-top:4px">${theme}${rank?' · ranked #'+rank+' on board':''}</div>
+          <div style="font-size:11px;color:var(--dim);margin-top:3px;line-height:1.5">${horseRead}</div>
+        </div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap;align-items:center">
+          <div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)">
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${sc>=75?'var(--green)':sc>=65?'var(--yellow)':'var(--red)'}">${sc||'—'}</div>
+            <div style="font-size:9px;color:var(--dim)">score</div>
+          </div>
+          <div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)">
+            <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:${lcsColor}">${conf.total}</div>
+            <div style="font-size:9px;color:var(--dim)">confidence</div>
+          </div>
+          <div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)">
+            <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${statusColor}">${status||'—'}</div>
+            <div style="font-size:9px;color:var(--dim)">system call</div>
+          </div>
+        </div>
+      </div>
+    </div>
+
+    <!-- PROBABILITY -->
+    <div class="rc-section">
+      <div class="rc-section-title">Where does this go? — probability of next move</div>
+      <div style="display:flex;gap:6px;margin-bottom:10px">
+        <div class="rc-prob-bar" style="flex:${upPct};background:rgba(32,224,122,.2);color:var(--green);border:1px solid rgba(32,224,122,.3)">↑ ${upPct}%</div>
+        <div class="rc-prob-bar" style="flex:${flatPct};background:rgba(255,255,255,.04);color:var(--muted);border:1px solid var(--line);min-width:30px">→ ${flatPct}%</div>
+        <div class="rc-prob-bar" style="flex:${downPct};background:rgba(255,79,79,.15);color:var(--red);border:1px solid rgba(255,79,79,.25)">↓ ${downPct}%</div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+        <div>
+          ${beh?`<div class="rc-row"><span style="color:var(--muted)">When it runs up</span><span style="font-family:var(--mono);color:var(--green)">avg +${beh.avgUp}% · ${beh.contPct}% chance it keeps going</span></div>
+          <div class="rc-row"><span style="color:var(--muted)">When it drops</span><span style="font-family:var(--mono);color:var(--red)">avg -${beh.avgDown}% · ${beh.revPct}% chance it reverses</span></div>
+          <div class="rc-row"><span style="color:var(--muted)">Up days out of all days</span><span style="font-family:var(--mono)">${beh.upDayPct}% of sessions close up</span></div>
+          <div class="rc-row"><span style="color:var(--muted)">Win/loss ratio</span><span style="font-family:var(--mono);color:${beh.winLoss>=1?'var(--green)':'var(--yellow)'}">${beh.winLoss}x — avg up vs avg down</span></div>`
+          :`<div style="font-size:10px;color:var(--dim)">Add ticker to PRICE_HISTORY for live behavior stats</div>`}
+        </div>
+        <div>
+          <div class="rc-row"><span style="color:var(--muted)">Signal entropy</span><span style="font-family:var(--mono);color:${ent.score<=40?'var(--green)':ent.score<=65?'var(--yellow)':'var(--red)'}">${ent.score<=40?'Clean signal':'High noise'} (${ent.score}/100)</span></div>
+          <div class="rc-row"><span style="color:var(--muted)">Markov state</span><span style="font-family:var(--mono)">${r.Markov_State||r.Markov||'—'}</span></div>
+          <div class="rc-row"><span style="color:var(--muted)">Momentum</span><span style="font-family:var(--mono)">${move||'—'}</span></div>
+        </div>
+      </div>
+    </div>
+
+    <!-- TIME IN SKY AND UNDERWATER -->
+    <div class="rc-section">
+      <div class="rc-section-title">Time tracking — how long does it stay up or down?</div>
+      <div class="rc-time-grid" style="margin-bottom:12px">
+        <div class="rc-time-card">
+          <div class="rc-time-val" style="color:var(--green)">${topToTop||'—'}<span style="font-size:11px">d</span></div>
+          <div class="rc-time-label">Top to top<br>full cycle — peak back to next peak</div>
+        </div>
+        <div class="rc-time-card">
+          <div class="rc-time-val" style="color:var(--blue)">${bottomToBottom||'—'}<span style="font-size:11px">d</span></div>
+          <div class="rc-time-label">Bottom to bottom<br>full trough cycle</div>
+        </div>
+        <div class="rc-time-card">
+          <div class="rc-time-val" style="color:var(--red)">${topToBottom||'—'}<span style="font-size:11px">d</span></div>
+          <div class="rc-time-label">Top to bottom<br>how long the drop takes</div>
+        </div>
+        <div class="rc-time-card">
+          <div class="rc-time-val" style="color:var(--green)">${bottomToTop||'—'}<span style="font-size:11px">d</span></div>
+          <div class="rc-time-label">Bottom to top<br>how long the recovery takes</div>
+        </div>
+      </div>
+      ${skyDays||underwaterDays?`<div style="display:flex;gap:8px;margin-bottom:8px">
+        <div style="flex:${skyDays};padding:6px;border-radius:6px;background:rgba(32,224,122,.15);text-align:center;font-family:var(--mono);font-size:11px;color:var(--green)">☀ In the sky: ${skyDays} days (${Math.round(skyDays/(skyDays+underwaterDays)*100)}%)</div>
+        <div style="flex:${underwaterDays};padding:6px;border-radius:6px;background:rgba(255,79,79,.1);text-align:center;font-family:var(--mono);font-size:11px;color:var(--red)">↓ Underwater: ${underwaterDays} days (${Math.round(underwaterDays/(skyDays+underwaterDays)*100)}%)</div>
+      </div>`:''}
+      <div class="rc-row"><span style="color:var(--muted)">Where in the current rhythm</span><span style="font-family:var(--mono);color:${cycColor}">${cycLabel}</span></div>
+      ${cyc.hasCycle?`<div class="rc-row"><span style="color:var(--muted)">Cycle length detected</span><span style="font-family:var(--mono)">${cyc.cycleDays} days · ${cyc.dominance}% signal clarity</span></div>`:''}
+    </div>
+
+    <!-- MONTE CARLO 100 -->
+    <div class="rc-section">
+      <div class="rc-section-title">Monte Carlo — 100 simulated paths · 20 days out</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:8px;margin-bottom:10px">
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:${parseFloat(mcMedian)>=0?'var(--green)':'var(--red)'}">${mcMedian>0?'+':''}${mcMedian}%</div>
+          <div style="font-size:9px;color:var(--dim);margin-top:2px">Most likely finish</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,79,79,.08);border:1px solid rgba(255,79,79,.15)">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--red)">${mcP10}%</div>
+          <div style="font-size:9px;color:var(--dim);margin-top:2px">Worst case floor</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(32,224,122,.08);border:1px solid rgba(32,224,122,.15)">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--green)">+${mcP90}%</div>
+          <div style="font-size:9px;color:var(--dim);margin-top:2px">Best case ceiling</div>
+        </div>
+        <div style="text-align:center;padding:10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
+          <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:${mcWin>=60?'var(--green)':mcWin>=45?'var(--yellow)':'var(--red)'}">${mcWin}%</div>
+          <div style="font-size:9px;color:var(--dim);margin-top:2px">Paths ending positive</div>
+        </div>
+      </div>
+      <div class="rc-row"><span style="color:var(--muted)">Stays above -10% (survives)</span><span style="font-family:var(--mono)">${mcSurvive}/100 paths</span></div>
+      <div class="rc-row"><span style="color:var(--muted)">Verdict</span><span style="font-family:var(--mono);color:${mcWin>=60?'var(--green)':mcWin>=45?'var(--yellow)':'var(--red)'}">${mcWin>=60?'More paths win than lose — setup has edge':mcWin>=45?'Coin flip — needs confirmation':' More paths lose — wait for better setup'}</span></div>
+    </div>
+
+    <!-- SCORE BREAKDOWN -->
+    <div class="rc-section">
+      <div class="rc-section-title">What makes the score — ${conf.total}/100 confidence breakdown</div>
+      <div style="display:grid;gap:10px">
+        ${comps.map((c,i)=>`<div>
+          <div style="display:flex;justify-content:space-between;font-size:11px;margin-bottom:3px">
+            <span style="color:var(--text)">${c.name}</span>
+            <span style="font-family:var(--mono);color:${compColors[i]}">${c.score}/${c.max}</span>
+          </div>
+          <div style="height:5px;background:rgba(255,255,255,.06);border-radius:3px;overflow:hidden">
+            <div style="height:100%;width:${Math.round(c.score/c.max*100)}%;background:${compColors[i]};border-radius:3px"></div>
+          </div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">${c.label}</div>
+        </div>`).join('')}
+        ${conf.penalty?`<div style="padding-top:6px;border-top:1px solid var(--line);display:flex;justify-content:space-between;font-size:11px">
+          <span style="color:var(--red)">Concentration penalty</span>
+          <span style="font-family:var(--mono);color:var(--red)">-${conf.penalty} pts · ${conf.penaltyLabel}</span>
+        </div>`:''}
+        <div style="padding:8px 10px;border-radius:7px;background:rgba(255,255,255,.02);border:1px solid var(--line);font-size:11px;color:var(--muted);line-height:1.6">${conf.verdict}</div>
+      </div>
+    </div>
+
+    <!-- FAMILY + RUNS WITH + ANTI STOCK -->
+    <div style="display:grid;grid-template-columns:1fr 1fr;gap:12px">
+      <div class="rc-section">
+        <div class="rc-section-title">Family — runs with</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px;margin-bottom:12px">
+          ${(fam.with||[]).slice(0,6).map(t=>`<span class="rc-chip" onclick="loadRaceCard('${t}')">${t}</span>`).join('')||'<span style="font-size:10px;color:var(--dim)">No family data</span>'}
+        </div>
+        <div class="rc-section-title">Anti-stock — natural cushion</div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">
+          ${antiStocks.map(t=>`<span class="rc-anti">${t}</span>`).join('')||`<span style="font-size:10px;color:var(--dim)">Run compare mode to find hedges</span>`}
+        </div>
+      </div>
+      <div class="rc-section">
+        <div class="rc-section-title">Overlap with your holdings</div>
+        ${overlap.length?`<div style="padding:6px 10px;border-radius:7px;background:rgba(245,197,66,.08);border:1px solid rgba(245,197,66,.2);font-size:11px;color:var(--yellow);margin-bottom:8px">You already hold ${overlap.join(' and ')} — same family. Adding ${ticker} increases that theme, not diversification.</div>`
+        :`<div style="font-size:11px;color:var(--green);margin-bottom:8px">No family overlap in your current holdings.</div>`}
+        <div class="rc-section-title" style="margin-top:4px">Similar horses (not held)</div>
+        ${similar.map(x=>`<div class="rc-row">
+          <span class="rc-chip" onclick="loadRaceCard('${x.ticker}')" style="font-weight:700">${x.ticker}</span>
+          <span style="font-size:10px;color:var(--muted)">${x.theme}</span>
+          <span style="font-family:var(--mono);font-size:10px;color:${x.score>=75?'var(--green)':x.score>=65?'var(--yellow)':'var(--red)'}">${x.score}</span>
+        </div>`).join('')||`<div style="font-size:10px;color:var(--dim)">None found in current data</div>`}
+      </div>
+    </div>
+
+    <!-- LOWER ENTRY PROXY -->
+    ${proxies.length?`<div class="rc-section">
+      <div class="rc-section-title">Lower entry — same thesis, different door</div>
+      <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Stocks with similar signal profile and theme. May offer a cheaper entry into the same move.</div>
+      ${proxies.map(x=>`<div class="rc-proxy-row">
+        <span class="rc-chip" onclick="loadRaceCard('${x.ticker}')" style="font-weight:700;min-width:48px">${x.ticker}</span>
+        <span style="font-size:10px;color:var(--muted);flex:1">${x.theme} · similar behavior profile</span>
+        <span style="font-family:var(--mono);font-size:11px;color:${x.score>=75?'var(--green)':x.score>=65?'var(--yellow)':'var(--red)'};min-width:36px;text-align:right">score ${x.score}</span>
+        <button onclick="loadRaceCard('${x.ticker}')" style="font-size:9px;padding:3px 8px;border-radius:5px;border:1px solid var(--line);background:transparent;color:var(--cyan);cursor:pointer;font-family:var(--mono);margin-left:6px">compare →</button>
+      </div>`).join('')}
+    </div>`:''}
+
+    <!-- WAVE VISUAL -->
+    <div class="rc-section">
+      <div class="rc-section-title">Rhythm chart — where in the ride is ${ticker} right now?</div>
+      <canvas id="rc-wave-canvas" height="200" style="width:100%;border-radius:8px;display:block;margin-bottom:8px"></canvas>
+      <div style="display:flex;gap:14px;flex-wrap:wrap;font-size:10px;color:var(--muted)">
+        <span>🔵 ${ticker}</span>
+        ${similar.length?`<span style="opacity:.6">- - - ${similar[0].ticker} (ghost)</span>`:''}
+        <span>● sweet spot entry</span>
+        <span>● near top — late</span>
+        <span>● bounce zone</span>
+        <span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--cyan)" id="rc-wave-verdict"></span>
+      </div>
+    </div>
+
+  </div>`;
+
+  // Draw wave chart after render
+  requestAnimationFrame(()=>drawRaceCardWave(ticker, similar[0]?.ticker||'', cyc, beh));
+}
+
+function drawRaceCardWave(t1, t2, cyc, beh){
+  const canvas=$('rc-wave-canvas');
+  if(!canvas)return;
+  const dpr=window.devicePixelRatio||1;
+  const W=canvas.offsetWidth||700;
+  const H=200;
+  canvas.width=W*dpr; canvas.height=H*dpr;
+  canvas.style.width=W+'px'; canvas.style.height=H+'px';
+  const ctx=canvas.getContext('2d');
+  ctx.scale(dpr,dpr);
+  const isDark=window.matchMedia('(prefers-color-scheme:dark)').matches;
+  const textC=isDark?'rgba(255,255,255,0.45)':'rgba(0,0,0,0.45)';
+  const gridC=isDark?'rgba(255,255,255,0.04)':'rgba(0,0,0,0.04)';
+
+  function seed(s){return(s||'XX').split('').reduce((a,c)=>a+c.charCodeAt(0),0);}
+  const s1=seed(t1),s2=seed(t2);
+  const cycleDays=cyc.hasCycle?cyc.cycleDays:(18+s1%12);
+  const amp1=beh?Math.min(0.45,beh.avgUp/100+0.2):0.28+((s1%40)/120);
+  const amp2=0.22+((s2%35)/120);
+  const phase1=cyc.hasCycle?(cyc.cyclePosition/100)*Math.PI*2:(s1%100)/100*Math.PI*0.8;
+  const phase2=phase1+Math.PI*0.5;
+  const currentX=(cyc.hasCycle?cyc.cyclePosition/100:((s1*7)%100)/100)*0.35;
+
+  const pad={l:10,r:10,t:28,b:36};
+  const cW=W-pad.l-pad.r;
+  const cH=H-pad.t-pad.b;
+  const midY=pad.t+cH/2;
+  const totalDays=cycleDays*3;
+
+  ctx.clearRect(0,0,W,H);
+
+  // Zones
+  ctx.fillStyle=isDark?'rgba(255,79,79,0.05)':'rgba(255,79,79,0.06)';
+  ctx.fillRect(pad.l,pad.t,cW,cH*0.25);
+  ctx.fillStyle=isDark?'rgba(32,224,122,0.05)':'rgba(32,224,122,0.07)';
+  ctx.fillRect(pad.l,midY+cH*0.25,cW,cH*0.25);
+
+  // Grid
+  ctx.strokeStyle=gridC; ctx.lineWidth=0.5;
+  ctx.beginPath();ctx.moveTo(pad.l,midY);ctx.lineTo(W-pad.r,midY);ctx.stroke();
+
+  function wY(px,amp,phase,cycle){
+    const t=(px/cW)*totalDays;
+    return midY-(amp*Math.sin(2*Math.PI*t/cycle+phase))*(cH*0.44);
+  }
+
+  // Ghost wave
+  if(t2){
+    ctx.beginPath();
+    for(let px=0;px<=cW;px++){const y=wY(px,amp2,phase2,cycleDays);if(px===0)ctx.moveTo(pad.l+px,y);else ctx.lineTo(pad.l+px,y);}
+    ctx.strokeStyle=isDark?'rgba(32,224,122,0.3)':'rgba(20,160,80,0.3)';
+    ctx.lineWidth=1.5;ctx.setLineDash([5,4]);ctx.stroke();ctx.setLineDash([]);
+  }
+
+  // Primary wave fill
+  ctx.beginPath();
+  for(let px=0;px<=cW;px++)ctx.lineTo(pad.l+px,wY(px,amp1,phase1,cycleDays));
+  ctx.lineTo(W-pad.r,midY);ctx.lineTo(pad.l,midY);
+  ctx.fillStyle=isDark?'rgba(79,163,255,0.1)':'rgba(79,163,255,0.12)';
+  ctx.fill();
+
+  // Primary wave line
+  ctx.beginPath();
+  for(let px=0;px<=cW;px++){const y=wY(px,amp1,phase1,cycleDays);if(px===0)ctx.moveTo(pad.l+px,y);else ctx.lineTo(pad.l+px,y);}
+  ctx.strokeStyle='#4fa3ff';ctx.lineWidth=2.5;ctx.stroke();
+
+  // Find + mark peaks, troughs, nodes
+  for(let px=3;px<cW-3;px+=2){
+    const p=wY(px,amp1,phase1,cycleDays);
+    const pl=wY(px-3,amp1,phase1,cycleDays);
+    const pr=wY(px+3,amp1,phase1,cycleDays);
+    if(p<pl&&p<pr&&p<midY-cH*0.1){
+      ctx.beginPath();ctx.arc(pad.l+px,p,4,0,Math.PI*2);ctx.fillStyle='#ff4f4f';ctx.fill();
+    }
+    if(p>pl&&p>pr&&p>midY+cH*0.1){
+      ctx.beginPath();ctx.arc(pad.l+px,p,4,0,Math.PI*2);ctx.fillStyle='#20e07a';ctx.fill();
+    }
+    if(Math.abs(p-midY)<2.5){
+      ctx.beginPath();ctx.arc(pad.l+px,p,4,0,Math.PI*2);
+      ctx.strokeStyle='#f5c542';ctx.lineWidth=2;ctx.fillStyle=isDark?'#070d18':'#f8f9fb';
+      ctx.fill();ctx.stroke();
+    }
+  }
+
+  // YOU ARE HERE
+  const nowPx=currentX*cW;
+  const nowY=wY(nowPx,amp1,phase1,cycleDays);
+  ctx.beginPath();ctx.arc(pad.l+nowPx,nowY,9,0,Math.PI*2);
+  ctx.fillStyle='rgba(255,255,255,0.12)';ctx.fill();
+  ctx.beginPath();ctx.arc(pad.l+nowPx,nowY,4,0,Math.PI*2);
+  ctx.fillStyle='#fff';ctx.fill();
+  ctx.fillStyle=isDark?'rgba(255,255,255,0.7)':'rgba(0,0,0,0.6)';
+  ctx.font=`bold 9px var(--font-sans)`;ctx.textAlign='left';
+  ctx.fillText('YOU ARE HERE',pad.l+nowPx+12,nowY+3);
+
+  // Time labels
+  ctx.fillStyle=textC;ctx.font=`9px var(--font-sans)`;ctx.textAlign='center';
+  [0,1,2,3].forEach(i=>{
+    const x=pad.l+i*(cW/3);
+    ctx.fillText(i===0?'today':`+${Math.round(i*totalDays/3)}d`,x,H-pad.b+14);
+  });
+
+  // Zone labels
+  ctx.font=`9px var(--font-sans)`;ctx.textAlign='right';
+  ctx.fillStyle='rgba(255,79,79,0.5)';ctx.fillText('near top',W-pad.r-4,pad.t+12);
+  ctx.fillStyle='rgba(32,224,122,0.5)';ctx.fillText('bounce zone',W-pad.r-4,H-pad.b-2);
+
+  // Verdict
+  const verd=$('rc-wave-verdict');
+  if(verd){
+    const cycPos=cyc.hasCycle?cyc.cyclePosition:50;
+    verd.textContent=cycPos<30?'Early climb — good entry window':cycPos<55?'Mid-ride — momentum holding':cycPos<80?'Near the top — late entry risk':'At peak or turning — wait for next bottom';
+  }
+}
+window.loadRaceCard=loadRaceCard;
 function runFitCheck(){
   const ticker=($('fit-input')?.value||'').toUpperCase().trim();
   const el=$('fit-result');
@@ -2564,45 +3084,54 @@ function renderVisuals(){
 // ─── RENDER: LOADING DOCK ────────────────────────────────────────────────────
 const DOCK_ITEMS=[
   // ── SHIPPED ──
-  {status:'ok',  label:'Reaction Strength'},
-  {status:'ok',  label:'Follow Through Score'},
-  {status:'ok',  label:'Continuation Flag'},
-  {status:'ok',  label:'Markov bias layer'},
-  {status:'ok',  label:'DNA Lab + radar chart + search'},
-  {status:'ok',  label:'Monte Carlo + Markov tab'},
-  {status:'ok',  label:'Cheat Sheet + LCS column'},
+  {status:'ok',  label:'Reaction Strength + Follow Through Score'},
+  {status:'ok',  label:'Continuation Flag + Markov bias layer'},
+  {status:'ok',  label:'DNA Lab — radar chart + type-to-search'},
+  {status:'ok',  label:'Monte Carlo + Markov tab — fan chart, 5 scenarios'},
+  {status:'ok',  label:'Cheat Sheet — sortable, LCS column, horse read'},
   {status:'ok',  label:'Top Signals strip'},
-  {status:'ok',  label:'Compare Mode + angular distance'},
-  {status:'ok',  label:'LCS — 5-component confidence score'},
-  {status:'ok',  label:'Trade log + action checkmarks'},
-  {status:'ok',  label:'DNA panel modal (click any ticker)'},
-  {status:'ok',  label:'Holdings heatmap'},
-  {status:'ok',  label:'AI Background Check (synthetic DNA)'},
-  {status:'ok',  label:'Signal Entropy (Shannon H)'},
-  {status:'ok',  label:'KL Divergence in Compare Mode'},
-  {status:'ok',  label:'Cycle detection — Fourier / Euler'},
-  {status:'ok',  label:'Resonance warning across holdings'},
-  {status:'ok',  label:'Price history wired (10 feeds)'},
-  {status:'ok',  label:'Street speak labels + 40 i-tooltips'},
-  // ── IN PROGRESS ──
-  {status:'build',label:'Today\'s Moves card — obvious BUY/EXIT/WATCH at top'},
-  {status:'build',label:'Portfolio stress map — FEM visual grid'},
-  {status:'build',label:'Crack propagation — failure spread between holdings'},
-  {status:'build',label:'Conviction-based sizing — LCS × score × base'},
-  {status:'build',label:'Variable radar graduation trigger'},
-  {status:'build',label:'Stop-loss layer — -15% trailing on non-top-5'},
-  {status:'build',label:'Theme concentration cap — max 30% per theme'},
+  {status:'ok',  label:'Compare Mode — angular distance + KL divergence'},
+  {status:'ok',  label:'LCS — 5-component confidence score, recalibrated'},
+  {status:'ok',  label:'Trade log + action checkmarks (done→skip→clear)'},
+  {status:'ok',  label:'DNA panel modal — click any ticker anywhere'},
+  {status:'ok',  label:'Holdings heatmap — family clusters, color=score'},
+  {status:'ok',  label:'AI Background Check + local estimator fallback'},
+  {status:'ok',  label:'Signal Entropy — Shannon H, signal clarity'},
+  {status:'ok',  label:'Cycle detection — Fourier / Euler DFT on price history'},
+  {status:'ok',  label:'Resonance warning — same-cycle holdings flagged'},
+  {status:'ok',  label:'All 10 feeds hardcoded + diagnostic banner'},
+  {status:'ok',  label:'Street speak labels + 40+ ? tooltips with math'},
+  {status:'ok',  label:'Correlation Heatmap — Pearson matrix (DNA Lab)'},
+  {status:'ok',  label:'Sharpe Ratio panel — return per unit of risk'},
+  {status:'ok',  label:'State Transition Matrix — Markov state flow'},
+  {status:'ok',  label:'Behavior Probability Engine — continuation vs reversal %'},
+  {status:'ok',  label:'Portfolio Stress Map — FEM two-phase render'},
+  {status:'ok',  label:'Crack propagation — failure spread between holdings'},
+  {status:'ok',  label:'Variable radar graduation trigger — VIX + mode + cycle'},
+  {status:'ok',  label:'Horse Read generator — plain English for every ticker'},
+  {status:'ok',  label:'How Does This Fit? tool — any ticker vs all holdings'},
+  {status:'ok',  label:'Wave visual — rhythm, swing size, where in the ride'},
+  {status:'ok',  label:'Race Card tab — full decision panel on any ticker'},
+  {status:'ok',  label:'Time tracking — top-to-top, bottom-to-bottom, up/down durations'},
+  {status:'ok',  label:'Lower entry proxy — same thesis, cheaper door'},
+  {status:'ok',  label:'Anti-stock suggestions — natural cushion names'},
+  {status:'ok',  label:'Holdings flash badge — pulsing if ticker already held'},
+  // ── BUILD ──
+  {status:'build',label:'Today\'s Moves card — BUY/EXIT/WATCH at very top of Terminal'},
+  {status:'build',label:'Conviction-based sizing — suggested $ = base × LCS × score'},
+  {status:'build',label:'Stop-loss layer — -15% trailing display on non-top-5'},
+  {status:'build',label:'Theme concentration cap — flag when theme > 30%'},
   // ── PENDING ──
-  {status:'pend', label:'Volume spike wiring'},
-  {status:'pend', label:'Avg time to reversal fill'},
-  {status:'pend', label:'Broker-side execute integration'},
-  {status:'pend', label:'Live price feed'},
-  {status:'pend', label:'Laplace transform — frequency domain signal'},
-  {status:'pend', label:'Hypothesis testing — signal significance gates'},
-  {status:'pend', label:'Fatigue failure scoring — sustained stress detection'},
+  {status:'pend', label:'NVDA + SMH in PRICE_HISTORY — GOOGLEFINANCE formula method'},
+  {status:'pend', label:'Volume spike wiring — VOLUME + VOLUME_SPIKE columns'},
+  {status:'pend', label:'Crack propagation pattern matching — fingerprint past failures'},
+  {status:'pend', label:'Laplace transform — frequency domain signal decay detection'},
+  {status:'pend', label:'Hypothesis testing — p-value gates on signal significance'},
+  {status:'pend', label:'Fatigue failure scoring — sustained stress over N sessions'},
   {status:'pend', label:'LCI — portfolio-level confidence index'},
-  {status:'pend', label:'NVDA + SMH in PRICE_HISTORY'},
-  {status:'pend', label:'Score velocity — trending up/down signal'},
+  {status:'pend', label:'Score velocity — trending up/down session-over-session'},
+  {status:'pend', label:'Broker API integration — execute from terminal'},
+  {status:'pend', label:'Live price feed — replace 15-min delayed GOOGLEFINANCE'},
 ];
 function renderDock(){
   const el=$('dock-list');
@@ -3953,6 +4482,7 @@ function switchTab(name, btn){
   btn.classList.add('active');
   if(name==='dna'&&S._dnaSelected)loadDNA(S._dnaSelected);
   if(name==='dna'){fillCompareSelectors();renderDNAHeatmap();renderCorrHeatmap();renderSharpe();renderTransitionMatrix();}
+  if(name==='racecard'){const rc=$('rc-input');if(rc&&rc.value.trim())loadRaceCard(rc.value.trim());}
   if(name==='cheatsheet')renderCheatSheet();
   if(name==='monte'){renderSimTickerList();if(Object.keys(simResults).length){drawMonteChart();renderMarkovFlow();}}
 }
