@@ -1430,7 +1430,7 @@ const K = {
 // ─── STATE ────────────────────────────────────────────────────────────────────
 const S = {
   engine:{}, holdings:[], ranking:[], radar:[], macro:{},
-  shock:[], sysexport:[], aifilter:{}, dna:[], pricehistory:[], cd:30, last:null, _stressRunning:false, _dnaManualTime:0
+  shock:[], sysexport:[], aifilter:{}, dna:[], pricehistory:[], cd:30, last:null, _stressRunning:false, _stressLastFull:0, _dnaManualTime:0
 };
 
 // ─── UTILS ────────────────────────────────────────────────────────────────────
@@ -1763,16 +1763,15 @@ function findCracks(nodes){
       const magA=Math.sqrt(va.reduce((s,v)=>s+v*v,0));
       const magB=Math.sqrt(vb.reduce((s,v)=>s+v*v,0));
       const angle=magA&&magB?Math.acos(Math.min(1,Math.max(-1,dot/(magA*magB))))*180/Math.PI:90;
-      const connected=sameTheme||(angle<35);
-      // Crack forms when both nodes are under stress AND connected
-      const bothStressed=a.stress>60&&b.stress>60;
-      const oneBroken=a.stress>80||b.stress>80;
-      if(connected&&(bothStressed||oneBroken)){
+      const connected=sameTheme||(angle<45);
+      // Show crack lines for all connected holdings — severity shows how stressed the connection is
+      if(connected){
+        const severity=Math.round((a.stress+b.stress)/2);
         cracks.push({
           a:a.ticker, b:b.ticker,
-          severity:Math.round((a.stress+b.stress)/2),
+          severity,
           angle:Math.round(angle),
-          reason:sameTheme?`Same theme: ${a.theme}`:`Angular distance: ${Math.round(angle)}°`
+          reason:sameTheme?`Same theme: ${a.theme}`:`Similar signal: ${Math.round(angle)}°`
         });
       }
     }
@@ -1781,8 +1780,10 @@ function findCracks(nodes){
 }
 
 function renderStressMap(){
-  // Re-entry guard — don't restart if Phase 2 is mid-batch
-  if(S._stressRunning){return;}
+  // Cooldown guard — don't restart Phase 2 if it ran recently (25s cooldown)
+  const smNow=Date.now();
+  const smCooldown=S._stressLastFull&&(smNow-S._stressLastFull<25000);
+  if(smCooldown&&S._stressRunning)return;
   const canvasEl=$('stress-map-canvas');
   if(!canvasEl)return;
 
@@ -1818,7 +1819,7 @@ function drawMap(canvas, nodes, cracks, phase){
     ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
     cracks.forEach(c=>{
       const pa=positions[c.a], pb=positions[c.b]; if(!pa||!pb)return;
-      const alpha=Math.min(0.85,0.3+(c.severity-50)/80);
+      const alpha=Math.min(0.85,Math.max(0.25,0.3+(c.severity-30)/80));
       const _ck=c.a.charCodeAt(0)+c.b.charCodeAt(0);
       const mx=(pa.x+pb.x)/2+(seededRand(_ck)-.5)*40, my=(pa.y+pb.y)/2+(seededRand(_ck+1)-.5)*40;
       ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(mx,my); ctx.lineTo(pb.x,pb.y);
@@ -1876,7 +1877,19 @@ function drawMap(canvas, nodes, cracks, phase){
     return{ticker:t,stress:Math.round(ss*0.5+ms*0.3+mv*0.2),theme,value:0};
   }).filter(n=>n.ticker);
 
-  drawMap(canvasEl,fastNodes,findCracks(fastNodes),'fast');
+  const fastCracks=findCracks(fastNodes);
+  drawMap(canvasEl,fastNodes,fastCracks,'fast');
+  // Wire clicks immediately in Phase 1 so nodes are clickable right away
+  canvasEl.style.cursor='pointer';
+  canvasEl.onclick=function(e){
+    const rect=canvasEl.getBoundingClientRect();
+    const sx=W/rect.width,sy=H/rect.height;
+    const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;
+    for(const n of fastNodes){
+      const p=positions[n.ticker];if(!p)continue;
+      if(Math.sqrt((mx-p.x)**2+(my-p.y)**2)<32){showTicker(n.ticker,e);return;}
+    }
+  };
 
   const legend=$('stress-map-legend');
   const legendBase=`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low</span>
@@ -1930,6 +1943,7 @@ function drawMap(canvas, nodes, cracks, phase){
         <span style="margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:9px">Click node → DNA panel</span>
       </div>${crackText}`;
       S._stressRunning=false;
+      S._stressLastFull=Date.now();
     }
     batch();
   },250);
