@@ -965,7 +965,7 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
         <!-- CORRELATION HEATMAP -->
         <div class="card">
           <div class="card-head">
-            <div class="card-title">Correlation Heatmap</div>
+            <div class="card-title">Correlation Heatmap<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">Shows how much your holdings move together. Red = move in sync (amplifies risk). Green = move opposite (cushion). White = uncorrelated (true diversification). The more red you see, the less diversified you actually are.</span></span></div>
             <div class="card-meta">How much do your holdings move together?</div>
           </div>
           <div style="padding:14px">
@@ -981,7 +981,7 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
         <!-- SHARPE RATIO -->
         <div class="card">
           <div class="card-head">
-            <div class="card-title">Sharpe Ratio by Ticker</div>
+            <div class="card-title">Sharpe Ratio by Ticker<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">Return per unit of risk for each holding. Higher = better risk-adjusted return. Below 1.0 = not earning enough for the risk you are taking. Negative = losing money on a risk-adjusted basis. Needs price history data to calculate.</span></span></div>
             <div class="card-meta">Return ÷ risk · higher = better quality</div>
           </div>
           <div class="card-body" id="sharpe-body"><div class="empty">Needs price history</div></div>
@@ -1001,7 +1001,7 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
 
         <!-- industry driver variance -->
         <div class="dna-drivers-card">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">Industry Driver Variance</div>
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">Industry Driver Variance<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">What macro forces are shaping this stock right now. AI Spending = how much AI capex tailwinds matter. Rate Pressure = sensitivity to interest rates. Market Pull = how much it just follows the index. Crowd Heat = speculative trading volume. Cycle Position = timing within the current market rhythm.</span></span></div>
           <div style="font-size:10px;color:var(--muted);margin-bottom:12px">What is shaping this stock right now</div>
           <div id="dna-drivers"><div class="empty" style="padding:20px 0">select a ticker</div></div>
         </div>
@@ -1030,7 +1030,7 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
 
         <!-- transition matrix -->
         <div class="dna-matches-card">
-          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">State Transition Matrix</div>
+          <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--text);margin-bottom:3px">State Transition Matrix<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">Probability of moving from one state to another next session. Read row by row: if a stock is Running today, what are the odds it stays Running vs drops to Watch tomorrow? High diagonal numbers = sticky states. High off-diagonal = volatile, regime-shifting stock.</span></span></div>
           <div style="font-size:10px;color:var(--muted);margin-bottom:10px">Probability of moving from one Markov state to another</div>
           <div id="transition-matrix"><div class="empty" style="padding:12px 0">Needs Markov data</div></div>
         </div>
@@ -1264,14 +1264,14 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
       <div class="dp-sidebar">
         <!-- DNA Matches -->
         <div class="dp-side-card">
-          <div class="dp-side-title">Similar Horses</div>
+          <div class="dp-side-title">Similar Horses<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">Stocks with overlapping DNA signal profiles — they behave similarly. This is hidden family risk: if you hold NVDA and SMH both show up here as similar, a bad day for one likely hits the other. Angular distance below 35° = nearly identical signal profile.</span></span></div>
           <div class="dp-side-sub">Stocks with overlapping DNA — hidden family risk</div>
           <div id="dp-matches"><div class="empty" style="padding:16px 0">load a ticker</div></div>
         </div>
 
         <!-- Industry Drivers -->
         <div class="dp-side-card">
-          <div class="dp-side-title">What's Driving It</div>
+          <div class="dp-side-title">What's Driving It<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:14px;height:14px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">The macro forces most responsible for this stock's current behavior. Scored 0-100. High AI Spending = stock moves with AI infrastructure news. High Crowd Heat = momentum-driven, vulnerable to reversals. High Cycle Position = timing-sensitive, near the top of its rhythm.</span></span></div>
           <div class="dp-side-sub">Macro forces shaping this stock right now</div>
           <div id="dp-drivers"><div class="empty" style="padding:16px 0">load a ticker</div></div>
         </div>
@@ -4308,7 +4308,9 @@ async function loadAll(){
     renderTransitionMatrix();
   }
   if($('tab-cheatsheet').classList.contains('active'))renderCheatSheet();
-  if($('tab-dna').classList.contains('active')&&S._dnaSelected)loadDNA(S._dnaSelected);
+  // Only auto-reload DNA if user hasn't manually selected in last 3 minutes
+  const dnaCooldown=S._dnaManualTime&&(Date.now()-S._dnaManualTime<180000);
+  if($('tab-dna').classList.contains('active')&&S._dnaSelected&&!dnaCooldown)loadDNA(S._dnaSelected);
   if($('tab-monte').classList.contains('active')){renderSimTickerList();if(Object.keys(simResults).length)renderMarkovFlow();}
   else renderSimTickerList();
 }
@@ -4886,6 +4888,7 @@ function panelFillColor(v){return v>=70?'var(--green)':v>=45?'var(--blue)':'var(
 
 function loadDNA(ticker){
   S._dnaSelected=ticker;
+  S._dnaManualTime=Date.now(); // prevent auto-refresh reset for 3 min
   const inp=$('dna-search-input');
   if(inp&&inp.value!==ticker){inp.value=ticker;const d=$('dna-search-dropdown');if(d)d.style.display='none';}
   const d=S.dna.find(x=>x.ticker===ticker)||{};
