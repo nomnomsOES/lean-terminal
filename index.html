@@ -1409,16 +1409,16 @@ const _BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj
 const _csv = gid => `${_BASE}?gid=${gid}&single=true&output=csv`;
 
 const DEFAULTS = {
-  holdings:     _csv('173487017'),   // HOLDINGS ✓
-  ranking:      _csv('1491454451'),  // RANKING_EXPORT ✓
-  engine:       _csv('618550882'),   // ACTION_ENGINE ✓
-  dna:          _csv('1896968484'),  // DNA_EXPORT ✓
-  macro:        _csv('609162264'),   // MARKOV_CURRENT ✓
-  radar:        _csv('1162539347'),  // RADAR ✓
-  aifilter:     _csv('618550882'),   // ACTION_ENGINE (same as engine)
-  shock:        _csv('882353282'),   // SHOCK_RADAR ✓
-  sysexport:    _csv('1361758105'),  // SYSTEM_EXPORT ✓
-  pricehistory: _csv('1814199069'),  // PRICE_HISTORY ✓ (NVDA + SMH included)
+  holdings:     _csv('1470433113'),  // HOLDINGS ✓
+  ranking:      _csv('775695405'),   // RANKING_EXPORT ✓
+  engine:       _csv('1836279524'),  // ACTION_ENGINE ✓
+  dna:          _csv('1848889674'),  // DNA_EXPORT ✓
+  macro:        _csv('290762793'),   // MACRO_DATA ✓
+  radar:        _csv('1962581226'),  // RADAR ✓
+  aifilter:     _csv('358995125'),   // AI_FILTER ✓
+  shock:        _csv('1166565719'),  // SHOCK_RADAR ✓
+  sysexport:    _csv('1064123242'),  // SYSTEM_EXPORT ✓
+  pricehistory: _csv('1814199069'),  // PRICE_HISTORY ✓ (NVDA + SMH)
 };
 const K = {
   engine:'lt_engine', holdings:'lt_holdings', ranking:'lt_ranking',
@@ -3162,6 +3162,7 @@ const DOCK_ITEMS=[
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
 function renderTodaysMoves(){
+  const card=$('todays-moves-card');
   const minSc=minScore();
   const holdTickers=new Set(S.holdings.map(h=>h.Ticker||h.ticker||'').filter(Boolean));
   const allRanked=[...S.ranking,...S.radar].filter((r,i,a)=>{
@@ -3169,14 +3170,18 @@ function renderTodaysMoves(){
     return t&&a.findIndex(x=>(x.Ticker||x.ticker)===t)===i;
   });
 
-  // BUY: score >= minScore, not already max-sized holding
+  // Hide card entirely if no ranking data yet
+  if(!allRanked.length){
+    if(card)card.style.display='none';
+    return;
+  }
+  if(card)card.style.display='block';
+
   const buys=allRanked.filter(r=>{
     const sc=num(r.Score||r.score,0);
-    const status=(r.Status||r.status||'').toUpperCase();
-    return sc>=minSc&&(status==='BUY'||sc>=minSc);
+    return sc>=minSc;
   }).slice(0,4);
 
-  // EXIT: score < 50 or explicit SELL
   const exits=allRanked.filter(r=>{
     const sc=num(r.Score||r.score,0);
     const status=(r.Status||r.status||'').toUpperCase();
@@ -3184,7 +3189,6 @@ function renderTodaysMoves(){
     return held&&(status==='SELL'||sc<50);
   }).slice(0,4);
 
-  // WATCH: score 65-74, approaching qualification
   const watches=allRanked.filter(r=>{
     const sc=num(r.Score||r.score,0);
     return sc>=65&&sc<minSc;
@@ -3209,7 +3213,6 @@ function renderTodaysMoves(){
   if(exitsEl) exitsEl.innerHTML=exits.length?exits.map(r=>moveRow(r,'exit')).join(''):`<div style="font-size:10px;color:var(--dim)">No exits flagged</div>`;
   if(watchesEl) watchesEl.innerHTML=watches.length?watches.map(r=>moveRow(r,'watch')).join(''):`<div style="font-size:10px;color:var(--dim)">Nothing near threshold</div>`;
 
-  // Concentration check
   renderConcentrationFlag();
 }
 
