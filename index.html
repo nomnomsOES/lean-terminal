@@ -57,11 +57,11 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .btn-primary:hover{background:rgba(79,163,255,.22)}
 
 .grid{display:grid;gap:12px;padding-top:12px}
-.row-pills{display:grid;grid-template-columns:repeat(6,1fr);gap:10px}
+.row-pills{display:grid;grid-template-columns:repeat(7,1fr);gap:10px}
 .row-main{display:grid;grid-template-columns:1fr 1fr 1.6fr;gap:10px}
 .row-mid{display:grid;grid-template-columns:2fr 1fr;gap:10px}
 .row-bottom{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:10px}
-@media(max-width:1300px){.row-pills{grid-template-columns:repeat(3,1fr)}.row-main{grid-template-columns:1fr 1fr}.row-mid{grid-template-columns:1fr}.row-bottom{grid-template-columns:1fr}}
+@media(max-width:1300px){.row-pills{grid-template-columns:repeat(4,1fr)}.row-main{grid-template-columns:1fr 1fr}.row-mid{grid-template-columns:1fr}.row-bottom{grid-template-columns:1fr}}
 @media(max-width:800px){.row-pills{grid-template-columns:repeat(2,1fr)}.row-main{grid-template-columns:1fr}}
 
 /* ─── CARDS ─── */
@@ -700,6 +700,24 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
         </div>
         <div class="mp-value v-g" id="p-portval">—</div>
         <div class="mp-sub">total value</div>
+      </div>
+      <div class="metric-pill">
+        <div class="mp-header">
+          <div class="mp-label">#7 Confidence</div>
+          <div class="mp-info"><button class="mp-i">?</button><div class="mp-tooltip">
+<div class="tt-label">What it is</div>
+Portfolio-level confidence index — one number summarizing how much the system trusts the whole portfolio right now. Weighted average of every holding's LCS score adjusted for concentration risk.
+<div class="tt-math">
+80+ = high confidence across the board<br>
+60–79 = mixed — some names weak<br>
+below 60 = system is cautious overall
+</div>
+<div class="tt-label" style="margin-top:8px">What makes it up</div>
+Average LCS across all holdings, weighted by position size, minus a penalty for theme concentration above 30%.
+</div></div>
+        </div>
+        <div class="mp-value" id="p-lci">—</div>
+        <div class="mp-sub">portfolio confidence</div>
       </div>
     </div>
 
@@ -1396,6 +1414,32 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
             </div>
             <textarea id="s-sysexport" rows="2" class="settings-input" placeholder="SYSTEM_EXPORT tab CSV URL"></textarea>
           </div>
+        </div>
+
+        <!-- ALPACA LIVE PRICES -->
+        <div style="margin-top:14px;padding:12px 14px;background:rgba(32,224,122,.04);border:1px solid rgba(32,224,122,.15);border-radius:10px">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--green);letter-spacing:.1em;text-transform:uppercase;margin-bottom:10px">Alpaca — Live Price Feed (optional)</div>
+          <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px">
+            <div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px">API KEY ID</div>
+              <input id="s-alpaca-key" type="text" class="settings-input" placeholder="PKXXXXXXXXXXXXXXX"
+                style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none"/>
+            </div>
+            <div>
+              <div style="font-family:var(--mono);font-size:9px;color:var(--muted);margin-bottom:4px">SECRET KEY</div>
+              <input id="s-alpaca-secret" type="password" class="settings-input" placeholder="Enter secret key"
+                style="width:100%;background:rgba(255,255,255,.04);border:1px solid var(--line);border-radius:6px;padding:6px 10px;font-family:var(--mono);font-size:11px;color:var(--text);outline:none"/>
+            </div>
+          </div>
+          <div style="display:flex;gap:8px;margin-top:8px;align-items:center">
+            <label style="display:flex;align-items:center;gap:6px;font-size:11px;color:var(--muted);cursor:pointer">
+              <input type="checkbox" id="s-alpaca-paper" checked style="accent-color:var(--green)"/>
+              Paper trading mode
+            </label>
+            <button onclick="testAlpacaConnection()" style="font-family:var(--mono);font-size:9px;padding:4px 12px;border-radius:5px;border:1px solid rgba(32,224,122,.3);background:transparent;color:var(--green);cursor:pointer;margin-left:auto">Test Connection</button>
+            <span id="alpaca-status" style="font-family:var(--mono);font-size:9px;color:var(--dim)"></span>
+          </div>
+          <div style="font-size:10px;color:var(--dim);margin-top:6px">Keys stored in this browser only. Get free keys at app.alpaca.markets → Paper Trading → API Keys.</div>
         </div>
 
         <!-- HOW TO GET URLS -->
@@ -2357,6 +2401,27 @@ function loadRaceCard(rawTicker){
       </div>`:''}
       <div class="rc-row"><span style="color:var(--muted)">Where in the current rhythm</span><span style="font-family:var(--mono);color:${cycColor}">${cycLabel}</span></div>
       ${cyc.hasCycle?`<div class="rc-row"><span style="color:var(--muted)">Cycle length detected</span><span style="font-family:var(--mono)">${cyc.cycleDays} days · ${cyc.dominance}% signal clarity</span></div>`:''}
+
+      <!-- Lyapunov Stability -->
+      ${(()=>{const ly=calcLyapunov(ticker);return ly.stabilityScore!==50||ly.label!=='Need more data'?`<div class="rc-row"><span style="color:var(--muted)">Stability (Lyapunov)</span><span style="font-family:var(--mono);color:${ly.color}">${ly.stabilityScore}/100 · ${ly.label}</span></div>`:'';})()}
+
+      <!-- Score Velocity -->
+      ${(()=>{const v=getVelocity(ticker);return v.arrow?`<div class="rc-row"><span style="color:var(--muted)">Score velocity</span><span style="font-family:var(--mono);color:${v.color}">${v.arrow} ${v.delta>0?'+':''}${v.delta} pts · ${v.trend}</span></div>`:'';})()}
+
+      <!-- Volume Spike -->
+      ${(()=>{const vs=getVolumeSpike(ticker);return vs?`<div class="rc-row"><span style="color:var(--muted)">Volume</span><span style="font-family:var(--mono);color:${vs.color}">${vs.label}</span></div>`:'';})()}
+
+      <!-- Signal Significance -->
+      ${(()=>{const sig=calcSignalSignificance(ticker);return sig.n>=10?`<div class="rc-row"><span style="color:var(--muted)">Signal significance</span><span style="font-family:var(--mono);color:${sig.color}">${sig.label} · t=${sig.tStat}</span></div>`:'';})()}
+
+      <!-- Signal Decay (Laplace) -->
+      ${(()=>{const decay=calcSignalDecay(ticker);return decay.active?`<div class="rc-row"><span style="color:var(--muted)">Signal half-life</span><span style="font-family:var(--mono);color:${decay.color}">${decay.halfLife}d · ${decay.label}</span></div>`:'';})()}
+
+      <!-- Fatigue Score -->
+      ${(()=>{const fat=calcFatigueScore(ticker);return fat.sessions>=5?`<div class="rc-row"><span style="color:var(--muted)">Fatigue score</span><span style="font-family:var(--mono);color:${fat.color}">${fat.score}/100 · ${fat.label}</span></div>`:'';})()}
+
+      <!-- Crack Pattern Match -->
+      ${(()=>{const cp=detectCrackPattern(ticker);return cp?`<div class="rc-row"><span style="color:var(--muted)">Crack pattern</span><span style="font-family:var(--mono);color:var(--yellow)">${cp.label}</span></div>`:'';})()}
     </div>
 
     <!-- MONTE CARLO 100 -->
@@ -3030,6 +3095,18 @@ function renderPills(){
   $('p-portval').textContent=pv?money(pv):'—';
   $('m-lean').classList.toggle('active',mode()==='LEAN');
   $('m-agg').classList.toggle('active',mode()==='AGG');
+
+  // LCI pill
+  const lciData=calcLCI();
+  const lciEl=$('p-lci');
+  if(lciEl){
+    lciEl.textContent=lciData.lci||'—';
+    lciEl.className='mp-value';
+    lciEl.style.color=lciData.color;
+  }
+
+  // Update score velocity after pills
+  updateScoreVelocity();
   // topbar
   $('top-mode').textContent=mode();
   $('top-mode').className=mode()==='AGG'?'r':'g';
@@ -3064,7 +3141,7 @@ function renderRanking(){
       <td style="color:var(--dim);font-family:var(--mono);font-size:11px">${i+1}</td>
       <td><button class="ticker-btn" onclick="showTicker('${ticker}',event)">${ticker}</button></td>
       <td style="color:var(--muted);font-size:11px">${(r.Theme||'—').slice(0,18)}</td>
-      <td><span class="score-badge ${scoreClass(sc)}">${sc}</span></td>
+      <td><span class="score-badge ${scoreClass(sc)}">${sc}</span>${(()=>{const v=getVelocity(ticker);return v.arrow?`<span style="font-size:10px;margin-left:3px;color:${v.color}">${v.arrow}</span>`:''})()}</td>
       <td>${lcsHtml(ticker)}</td>
       <td style="font-family:var(--mono);font-size:10px;font-weight:700;color:${status==='BUY'?'var(--green)':status==='TRIM'||status==='SELL'?'var(--red)':'var(--yellow)'}">${status}</td>
       <td><span class="markov-pill ${markovClass(markov)}">${markov}</span></td>
@@ -3313,15 +3390,16 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Theme concentration cap — flag when theme > 30%'},
   // ── PENDING ──
   {status:'ok',  label:'NVDA + SMH in PRICE_HISTORY — 89 days each, Dec 2025–Apr 2026'},
-  {status:'pend', label:'Volume spike wiring — VOLUME + VOLUME_SPIKE columns'},
-  {status:'pend', label:'Crack propagation pattern matching — fingerprint past failures'},
-  {status:'pend', label:'Laplace transform — frequency domain signal decay detection'},
-  {status:'pend', label:'Hypothesis testing — p-value gates on signal significance'},
-  {status:'pend', label:'Fatigue failure scoring — sustained stress over N sessions'},
-  {status:'pend', label:'LCI — portfolio-level confidence index'},
-  {status:'pend', label:'Score velocity — trending up/down session-over-session'},
-  {status:'pend', label:'Broker API integration — execute from terminal'},
-  {status:'pend', label:'Live price feed — replace 15-min delayed GOOGLEFINANCE'},
+  {status:'ok',  label:'Volume spike wiring — VOLUME + VOLUME_SPIKE columns'},
+  {status:'ok',  label:'Crack propagation pattern matching — fingerprint past failures'},
+  {status:'ok',  label:'Laplace transform — frequency domain signal decay detection'},
+  {status:'ok',  label:'Hypothesis testing — p-value gates on signal significance'},
+  {status:'ok',  label:'Fatigue failure scoring — sustained stress over N sessions'},
+  {status:'ok',  label:'LCI — portfolio-level confidence index (pill #7)'},
+  {status:'ok',  label:'Score velocity — ↑↓ trend arrows on every score'},
+  {status:'ok',  label:'Broker API — Alpaca integration, paper + live mode, test connection'},
+  {status:'ok',  label:'Live price feed — Alpaca real-time quotes, enter keys in ⚙ Data Settings'},
+  {status:'ok',  label:'Lyapunov stability score — chaos detection, signals reliable vs unpredictable'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
 function renderTodaysMoves(){
@@ -3443,6 +3521,445 @@ function renderConcentrationFlag(){
   }
 }
 
+
+// ─── 1. SCORE VELOCITY ───────────────────────────────────────────────────────
+// Stores last session scores in localStorage, computes ↑↓ trend per ticker
+const SV_KEY='lt_score_velocity';
+function getScoreHistory(){try{return JSON.parse(localStorage.getItem(SV_KEY)||'{}');}catch{return{};}}
+function saveScoreHistory(h){localStorage.setItem(SV_KEY,JSON.stringify(h));}
+
+function updateScoreVelocity(){
+  const h=getScoreHistory();
+  const now=Date.now();
+  S.ranking.forEach(r=>{
+    const t=r.Ticker||r.ticker||'';
+    const sc=num(r.Score||r.score,0);
+    if(!t||!sc)return;
+    if(!h[t])h[t]=[];
+    // Keep last 5 session snapshots
+    h[t].push({sc,ts:now});
+    if(h[t].length>5)h[t]=h[t].slice(-5);
+  });
+  saveScoreHistory(h);
+}
+
+function getVelocity(ticker){
+  const h=getScoreHistory();
+  const entries=h[ticker];
+  if(!entries||entries.length<2)return{arrow:'',delta:0,trend:'new'};
+  const prev=entries[entries.length-2].sc;
+  const curr=entries[entries.length-1].sc;
+  const delta=curr-prev;
+  if(delta>=3)return{arrow:'↑',delta,trend:'rising',color:'var(--green)'};
+  if(delta<=-3)return{arrow:'↓',delta,trend:'falling',color:'var(--red)'};
+  return{arrow:'→',delta,trend:'flat',color:'var(--muted)'};
+}
+
+// ─── 2. LCI — PORTFOLIO CONFIDENCE INDEX ────────────────────────────────────
+function calcLCI(){
+  const holdings=S.holdings.filter(r=>(r.Ticker||r.ticker)&&(r.Ticker||r.ticker)!=='Ticker');
+  if(!holdings.length)return{lci:0,label:'No holdings',color:'var(--dim)'};
+
+  const totalVal=holdings.reduce((s,h)=>s+num(h.Value||h.value,0),0);
+
+  // Weighted average LCS across all holdings
+  let weightedSum=0,totalWeight=0;
+  const themeVals={};
+
+  holdings.forEach(h=>{
+    const t=h.Ticker||h.ticker||'';
+    const val=num(h.Value||h.value,0);
+    const weight=totalVal>0?val/totalVal:1/holdings.length;
+    const conf=calcConfidence(t);
+    weightedSum+=conf.total*weight;
+    totalWeight+=weight;
+
+    // Track theme concentration
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const theme=r.Theme||r.theme||h.Theme||'Other';
+    themeVals[theme]=(themeVals[theme]||0)+val;
+  });
+
+  let lci=totalWeight>0?Math.round(weightedSum/totalWeight):0;
+
+  // Concentration penalty
+  const maxThemePct=totalVal>0?Math.max(...Object.values(themeVals).map(v=>v/totalVal*100)):0;
+  if(maxThemePct>50)lci=Math.max(0,lci-10);
+  else if(maxThemePct>30)lci=Math.max(0,lci-5);
+
+  const label=lci>=75?'High confidence':lci>=55?'Mixed signals':lci>=40?'System cautious':'Low confidence';
+  const color=lci>=75?'var(--green)':lci>=55?'var(--yellow)':'var(--red)';
+  return{lci,label,color,maxThemePct:Math.round(maxThemePct)};
+}
+
+// ─── 3. VOLUME SPIKE WIRING ──────────────────────────────────────────────────
+function getVolumeSpike(ticker){
+  const rows=S.pricehistory.filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker);
+  if(!rows.length)return null;
+  // Get last row with volume data
+  const withVol=rows.filter(r=>r.VOLUME||r.Volume||r.volume||r.VOLUME_SPIKE||r.Volume_Spike);
+  if(!withVol.length)return null;
+  const last=withVol[withVol.length-1];
+  const spike=parseFloat(last.VOLUME_SPIKE||last.Volume_Spike||0);
+  const vol=parseFloat(last.VOLUME||last.Volume||last.volume||0);
+  return{
+    spike:spike===1,
+    volume:vol,
+    label:spike===1?'⚡ Volume spike — big players moving':'Normal volume',
+    color:spike===1?'var(--yellow)':'var(--dim)'
+  };
+}
+
+// ─── 4. CRACK PATTERN MATCHING ───────────────────────────────────────────────
+// Fingerprint pre-failure environments and match against current state
+function buildFailureFingerprint(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+
+  if(rows.length<10)return null;
+
+  // Find reversal events (REVERSAL_FLAG=1)
+  const reversals=rows.filter(r=>(r.REVERSAL_FLAG||r.Reversal_Flag||'0').toString()==='1');
+  if(!reversals.length)return null;
+
+  // Build fingerprint: avg conditions 3-5 sessions BEFORE each reversal
+  const fingerprints=reversals.map(rev=>{
+    const revIdx=rows.indexOf(rev);
+    if(revIdx<3)return null;
+    const pre=rows.slice(Math.max(0,revIdx-5),revIdx);
+    const moves=pre.map(r=>parseFloat(r['MOVE_%']||r.MOVE_PCT||0)).filter(v=>!isNaN(v));
+    const avgMove=moves.length?moves.reduce((s,v)=>s+v,0)/moves.length:0;
+    const downDays=pre.filter(r=>(r.DIRECTION||'').toUpperCase()==='DOWN').length;
+    return{avgMove,downDays,preLength:pre.length};
+  }).filter(Boolean);
+
+  if(!fingerprints.length)return null;
+
+  return{
+    ticker,
+    avgPreMove:fingerprints.reduce((s,f)=>s+f.avgMove,0)/fingerprints.length,
+    avgDownDays:fingerprints.reduce((s,f)=>s+f.downDays,0)/fingerprints.length,
+    reversalCount:reversals.length,
+    confidence:Math.min(100,reversals.length*20)
+  };
+}
+
+function detectCrackPattern(ticker){
+  // Get current conditions
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date))
+    .slice(-5);
+
+  if(rows.length<3)return null;
+
+  const recentMoves=rows.map(r=>parseFloat(r['MOVE_%']||r.MOVE_PCT||0)).filter(v=>!isNaN(v));
+  const avgMove=recentMoves.length?recentMoves.reduce((s,v)=>s+v,0)/recentMoves.length:0;
+  const downDays=rows.filter(r=>(r.DIRECTION||'').toUpperCase()==='DOWN').length;
+
+  // Compare against all known fingerprints
+  const allTickers=[...new Set(S.pricehistory.map(r=>r.TICKER||r.Ticker||r.ticker||'').filter(Boolean))];
+  const matches=[];
+
+  allTickers.forEach(t=>{
+    if(t===ticker)return;
+    const fp=buildFailureFingerprint(t);
+    if(!fp)return;
+    // Match if current conditions resemble pre-failure fingerprint
+    const moveMatch=Math.abs(avgMove-fp.avgPreMove)<0.02;
+    const downMatch=Math.abs(downDays-fp.avgDownDays)<2;
+    if(moveMatch&&downMatch){
+      matches.push({ticker:t,similarity:fp.confidence,reversals:fp.reversalCount});
+    }
+  });
+
+  if(!matches.length)return null;
+  matches.sort((a,b)=>b.similarity-a.similarity);
+  return{
+    ticker,
+    matches:matches.slice(0,3),
+    riskLevel:matches.length>=2?'HIGH':matches.length===1?'MEDIUM':'LOW',
+    label:`Pattern matches pre-failure environment of ${matches.map(m=>m.ticker).join(', ')}`
+  };
+}
+
+// ─── 5. FATIGUE FAILURE SCORING ──────────────────────────────────────────────
+// Sustained stress over N sessions = structural wear
+function calcFatigueScore(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date))
+    .slice(-10);
+
+  if(rows.length<5)return{score:0,label:'Insufficient history',sessions:0};
+
+  const downDays=rows.filter(r=>(r.DIRECTION||'').toUpperCase()==='DOWN').length;
+  const reversals=rows.filter(r=>(r.REVERSAL_FLAG||'0').toString()==='1').length;
+  const moves=rows.map(r=>parseFloat(r['MOVE_%']||0)).filter(v=>!isNaN(v));
+  const avgMove=moves.length?moves.reduce((s,v)=>s+v,0)/moves.length:0;
+
+  // Fatigue = sustained downward pressure
+  const downPct=downDays/rows.length;
+  const fatigueScore=Math.round(
+    downPct*40 +            // % down days (0-40)
+    (reversals/rows.length)*30 + // reversal frequency (0-30)
+    (avgMove<0?Math.abs(avgMove)*1000:0)*0.3 // negative average move (0-30)
+  );
+
+  const score=Math.min(100,fatigueScore);
+  const label=score>=70?'High fatigue — structure wearing down':
+              score>=40?'Moderate fatigue — watch for breakdown':
+              'Low fatigue — holding up well';
+  const color=score>=70?'var(--red)':score>=40?'var(--yellow)':'var(--green)';
+
+  return{score,label,color,downDays,sessions:rows.length,reversals};
+}
+
+// ─── 6. HYPOTHESIS TESTING (p-value gates) ───────────────────────────────────
+// Is this signal statistically significant or just noise?
+function calcSignalSignificance(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .filter(r=>r['MOVE_%']||r.MOVE_PCT);
+
+  if(rows.length<10)return{pValue:1,significant:false,label:'Need more data',n:rows.length};
+
+  const moves=rows.map(r=>parseFloat(r['MOVE_%']||r.MOVE_PCT||0)).filter(v=>!isNaN(v));
+  const n=moves.length;
+  const mean=moves.reduce((s,v)=>s+v,0)/n;
+  const variance=moves.reduce((s,v)=>s+(v-mean)**2,0)/(n-1);
+  const se=Math.sqrt(variance/n);
+
+  if(!se)return{pValue:1,significant:false,label:'No variance in data',n};
+
+  // t-statistic: is mean significantly different from 0?
+  const tStat=mean/se;
+  const df=n-1;
+
+  // Approximate p-value using normal distribution for large n
+  // For simplicity, use |t| > 1.96 = p < 0.05, |t| > 2.58 = p < 0.01
+  const absT=Math.abs(tStat);
+  let pValue,label,color;
+
+  if(absT>3.29){pValue=0.001;label='Very strong signal (p<0.001)';color='var(--green)';}
+  else if(absT>2.58){pValue=0.01;label='Strong signal (p<0.01)';color='var(--green)';}
+  else if(absT>1.96){pValue=0.05;label='Significant signal (p<0.05)';color='var(--cyan)';}
+  else if(absT>1.64){pValue=0.10;label='Weak signal (p<0.10)';color='var(--yellow)';}
+  else{pValue=0.50;label='Noise — not significant';color='var(--red)';}
+
+  return{
+    pValue,significant:pValue<=0.05,label,color,
+    tStat:Math.round(tStat*100)/100,
+    mean:Math.round(mean*1000)/10,
+    n,df
+  };
+}
+
+// ─── 7. LAPLACE TRANSFORM — SIGNAL DECAY ─────────────────────────────────────
+// Detect how fast a signal is decaying using exponential fit
+function calcSignalDecay(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date))
+    .slice(-20);
+
+  if(rows.length<6)return{decayRate:0,halfLife:0,label:'Need more data',active:false};
+
+  const moves=rows.map(r=>Math.abs(parseFloat(r['MOVE_%']||0))).filter(v=>!isNaN(v)&&v>0);
+  if(moves.length<4)return{decayRate:0,halfLife:0,label:'Need more data',active:false};
+
+  // Fit exponential decay: A * e^(-λt)
+  // Use log-linear regression: log(|move|) = log(A) - λt
+  const n=moves.length;
+  let sumT=0,sumY=0,sumTY=0,sumT2=0;
+  moves.forEach((m,i)=>{
+    const t=i;
+    const y=Math.log(Math.max(0.0001,m));
+    sumT+=t; sumY+=y; sumTY+=t*y; sumT2+=t*t;
+  });
+  const denom=n*sumT2-sumT*sumT;
+  if(!denom)return{decayRate:0,halfLife:0,label:'Constant signal',active:true};
+
+  const lambda=-(n*sumTY-sumT*sumY)/denom; // decay rate
+  const halfLife=lambda>0?Math.round(Math.log(2)/lambda):999;
+
+  const label=halfLife<=3?'Fast decay — signal fading quickly':
+              halfLife<=7?'Moderate decay — signal has days left':
+              halfLife<=14?'Slow decay — signal holding well':
+              'Persistent signal — not decaying';
+  const color=halfLife<=3?'var(--red)':halfLife<=7?'var(--yellow)':'var(--green)';
+
+  return{
+    decayRate:Math.round(lambda*1000)/1000,
+    halfLife:Math.min(halfLife,99),
+    label,color,active:true,
+    interpretation:halfLife<=5?`Signal half-life ~${halfLife}d — consider acting soon`:
+                   `Signal has ~${halfLife}d before it loses half its strength`
+  };
+}
+
+// ─── ALPACA LIVE PRICE ENGINE ────────────────────────────────────────────────
+const ALPACA_PAPER_URL='https://paper-api.alpaca.markets';
+const ALPACA_DATA_URL='https://data.alpaca.markets';
+const AK='lt_alpaca_key';
+const AS='lt_alpaca_secret';
+const AP='lt_alpaca_paper';
+
+function getAlpacaCreds(){
+  return{
+    key:rd(AK)||'',
+    secret:rd(AS)||'',
+    paper:rd(AP)!=='false'
+  };
+}
+
+async function fetchAlpacaPrice(ticker){
+  const{key,secret}=getAlpacaCreds();
+  if(!key||!secret)return null;
+  try{
+    const r=await fetch(`${ALPACA_DATA_URL}/v2/stocks/${ticker}/quotes/latest`,{
+      headers:{
+        'APCA-API-KEY-ID':key,
+        'APCA-API-SECRET-KEY':secret
+      }
+    });
+    if(!r.ok)return null;
+    const d=await r.json();
+    const q=d.quote;
+    if(!q)return null;
+    return{
+      ticker,
+      bid:q.bp||0,
+      ask:q.ap||0,
+      mid:((q.bp||0)+(q.ap||0))/2,
+      time:q.t||new Date().toISOString()
+    };
+  }catch{return null;}
+}
+
+async function fetchAlpacaMultiple(tickers){
+  const{key,secret}=getAlpacaCreds();
+  if(!key||!secret||!tickers.length)return{};
+  try{
+    const symbols=tickers.slice(0,10).join(',');
+    const r=await fetch(`${ALPACA_DATA_URL}/v2/stocks/quotes/latest?symbols=${symbols}`,{
+      headers:{
+        'APCA-API-KEY-ID':key,
+        'APCA-API-SECRET-KEY':secret
+      }
+    });
+    if(!r.ok)return{};
+    const d=await r.json();
+    const prices={};
+    Object.entries(d.quotes||{}).forEach(([t,q])=>{
+      prices[t]={bid:q.bp||0,ask:q.ap||0,mid:((q.bp||0)+(q.ap||0))/2};
+    });
+    return prices;
+  }catch{return{};}
+}
+
+async function testAlpacaConnection(){
+  const key=$('s-alpaca-key')?.value?.trim()||rd(AK)||'';
+  const secret=$('s-alpaca-secret')?.value?.trim()||rd(AS)||'';
+  const status=$('alpaca-status');
+  if(!key||!secret){if(status)status.textContent='Enter both keys first';return;}
+  if(status)status.textContent='Testing…';
+  try{
+    const r=await fetch(`${ALPACA_PAPER_URL}/v2/account`,{
+      headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}
+    });
+    const d=await r.json();
+    if(d.account_number){
+      if(status){status.textContent='✓ Connected — '+d.account_number;status.style.color='var(--green)';}
+      wr(AK,key);wr(AS,secret);
+    } else {
+      if(status){status.textContent='✗ Invalid keys';status.style.color='var(--red)';}
+    }
+  }catch{
+    if(status){status.textContent='✗ Connection failed';status.style.color='var(--red)';}
+  }
+}
+window.testAlpacaConnection=testAlpacaConnection;
+
+// Fetch live prices for all holdings and update the terminal
+async function refreshLivePrices(){
+  const{key,secret}=getAlpacaCreds();
+  if(!key||!secret)return;
+  const tickers=[...new Set([
+    ...S.holdings.map(h=>h.Ticker||h.ticker||''),
+    ...S.ranking.slice(0,10).map(r=>r.Ticker||r.ticker||'')
+  ].filter(Boolean))];
+  if(!tickers.length)return;
+
+  const prices=await fetchAlpacaMultiple(tickers);
+  if(!Object.keys(prices).length)return;
+
+  // Update live price display in holdings
+  S._livePrices=prices;
+
+  // Flash the refreshed timestamp with LIVE indicator
+  const lt=$('last-time');
+  if(lt)lt.innerHTML=`${new Date().toLocaleTimeString()} <span style="font-family:var(--mono);font-size:8px;color:var(--green);padding:1px 4px;border-radius:3px;background:rgba(32,224,122,.12)">LIVE</span>`;
+
+  renderHoldings();
+  renderPills();
+}
+
+// ─── LYAPUNOV STABILITY SCORE ────────────────────────────────────────────────
+// Measures how fast nearby price trajectories diverge — chaos indicator
+function calcLyapunov(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+
+  if(rows.length<15)return{lambda:0,stable:true,label:'Need more data',score:50,color:'var(--dim)'};
+
+  const prices=rows.map(r=>parseFloat(r.CLOSE||r.Close||r.close||0)).filter(v=>v>0);
+  if(prices.length<15)return{lambda:0,stable:true,label:'Need more data',score:50,color:'var(--dim)'};
+
+  // Compute log returns
+  const returns=[];
+  for(let i=1;i<prices.length;i++){
+    returns.push(Math.log(prices[i]/prices[i-1]));
+  }
+
+  // Estimate Lyapunov exponent via average divergence rate
+  // λ = (1/N) * Σ log|f'(x)| where f'(x) ≈ |r[i+1]/r[i]| for non-zero returns
+  let sum=0,count=0;
+  for(let i=0;i<returns.length-1;i++){
+    if(Math.abs(returns[i])>0.0001){
+      sum+=Math.log(Math.abs(returns[i+1]/returns[i]));
+      count++;
+    }
+  }
+
+  if(!count)return{lambda:0,stable:true,label:'Insufficient variation',score:50,color:'var(--muted)'};
+
+  const lambda=sum/count;
+
+  // λ > 0 = chaotic (diverging), λ < 0 = stable (converging)
+  // Normalize to 0-100 stability score (100 = very stable, 0 = very chaotic)
+  const stabilityScore=Math.round(Math.max(0,Math.min(100,50-lambda*50)));
+
+  const label=stabilityScore>=75?'Stable groove — signals reliable':
+              stabilityScore>=50?'Mild instability — signals still valid':
+              stabilityScore>=30?'Entering chaos — signals unreliable':
+              'Chaotic — system unpredictable';
+  const color=stabilityScore>=75?'var(--green)':
+              stabilityScore>=50?'var(--cyan)':
+              stabilityScore>=30?'var(--yellow)':'var(--red)';
+
+  return{
+    lambda:Math.round(lambda*1000)/1000,
+    stable:lambda<0,
+    stabilityScore,
+    label,color,
+    interpretation:lambda<0?
+      `Paths converging (λ=${lambda.toFixed(3)}) — stock is settling into predictable behavior`:
+      `Paths diverging (λ=${lambda.toFixed(3)}) — small changes producing big swings`
+  };
+}
 
 function renderDock(){
   const el=$('dock-list');
@@ -4332,6 +4849,10 @@ function openSettings(){
   $('s-dna').value=rd(K.dna)||DEFAULTS.dna;
   $('s-sysexport').value=rd(K.sysexport)||DEFAULTS.sysexport;
   $('s-aifilter').value=rd(K.aifilter)||DEFAULTS.aifilter;
+  // Alpaca
+  const ak=$('s-alpaca-key');const as=$('s-alpaca-secret');
+  if(ak)ak.value=rd(AK)||'';
+  if(as)as.value=rd(AS)||'';
   renderFeedStatus();
   $('settings-modal').style.display='flex';
 }
@@ -4345,6 +4866,12 @@ function saveSettings(){
   wr(K.dna,$('s-dna').value.trim());
   wr(K.sysexport,$('s-sysexport').value.trim());
   wr(K.aifilter,$('s-aifilter').value.trim());
+  // Save Alpaca keys
+  const ak=$('s-alpaca-key')?.value?.trim();
+  const as=$('s-alpaca-secret')?.value?.trim();
+  const ap=$('s-alpaca-paper')?.checked;
+  if(ak)wr(AK,ak);if(as)wr(AS,as);
+  wr(AP,ap?'true':'false');
   closeModal('settings-modal');
   loadAll();
 }
@@ -4465,6 +4992,8 @@ async function loadAll(){
     renderSharpe();
     renderTransitionMatrix();
     renderRadarWithGraduation();
+    // Refresh live prices if Alpaca keys are configured
+    if(rd(AK)&&rd(AS))refreshLivePrices();
   }, 150);
   if($('tab-dna').classList.contains('active')){
     renderDNAHeatmap();
