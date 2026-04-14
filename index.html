@@ -754,12 +754,15 @@ Average LCS across all holdings, weighted by position size, minus a penalty for 
           <div class="card-title">Action Engine<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">?</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:280px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Suggested trades based on your current mode and min score. BUY = qualified signals above threshold. TRIM/SELL = names below threshold or flagged for exit. These are suggestions — you execute manually.</span></span></div>
           <div class="card-meta" id="action-summary">BUY · TRIM · SELL</div>
         </div>
+        <!-- DIAGNOSTIC BAR -->
+        <div id="action-diag" style="display:none;padding:6px 14px;background:rgba(245,197,66,.06);border-bottom:1px solid rgba(245,197,66,.15);font-family:var(--mono);font-size:9px;color:var(--yellow);line-height:1.8"></div>
         <div class="card-body card-body-scroll">
           <div style="display:flex;justify-content:space-between;align-items:center;margin-bottom:8px">
             <div style="font-family:var(--mono);font-size:10px;font-weight:700;color:var(--green)">BUY</div>
             <div style="display:flex;gap:6px">
               <button class="btn" style="padding:4px 10px;font-size:10px" onclick="markAllDone('buy')">✓ All</button>
               <button class="btn" style="padding:4px 10px;font-size:10px" onclick="clearActions('buy')">✕ Skip</button>
+              <button class="btn" style="padding:4px 8px;font-size:9px;color:var(--dim)" onclick="resetAllChecks()" title="Clear all done/skip marks from previous sessions">↺ Reset</button>
             </div>
           </div>
           <div id="buy-list"></div>
@@ -3141,7 +3144,10 @@ function renderPills(){
 function renderRanking(){
   const rows=S.ranking;
   if(!rows.length){$('rank-body').innerHTML=`<tr><td colspan="7" class="empty">No ranking data — add CSV in Data Settings</td></tr>`;return}
-  const sorted=[...rows].sort((a,b)=>num(b.Score,0)-num(a.Score,0));
+  const sorted=[...rows].sort((a,b)=>
+    num(b.Score||b.score||b.SCORE||b.BASE_SCORE,0)-
+    num(a.Score||a.score||a.SCORE||a.BASE_SCORE,0)
+  );
   $('rank-body').innerHTML=sorted.slice(0,25).map((r,i)=>{
     const sc=num(r.Score,0),mv=num(r.Move||r.move,0);
     const status=r.Status||r.status||'—';
@@ -3164,11 +3170,16 @@ function renderRanking(){
 function renderActions(){
   const checks=JSON.parse(rd(K.checks,'{}'));
   const ms=minScore(),md=mode();
-  const rows=[...S.ranking].sort((a,b)=>num(b.Score,0)-num(a.Score,0));
+  // Sort by score — handle all column name variants from sheet
+  const rows=[...S.ranking].sort((a,b)=>
+    num(b.Score||b.score||b.SCORE||b.BASE_SCORE,0)-
+    num(a.Score||a.score||a.SCORE||a.BASE_SCORE,0)
+  );
 
-  const buys=rows.filter(r=>num(r.Score,0)>=ms).slice(0,3);
+  const buys=rows.filter(r=>num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0)>=ms).slice(0,3);
   const sells=rows.filter(r=>{
-    const sc=num(r.Score,0),st=(r.Status||r.status||'').toUpperCase();
+    const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
+    const st=(r.Status||r.status||r.ACTION||r.action||r.FINAL_ACTION||'').toUpperCase();
     return sc<ms||st==='TRIM'||st==='SELL';
   }).slice(0,3);
 
@@ -3194,6 +3205,26 @@ function renderActions(){
 
   $('buy-list').innerHTML=buys.length?buys.map((r,i)=>makeRow(r,i,'BUY')).join(''):`<div class="empty">no qualified buys</div>`;
   $('sell-list').innerHTML=sells.length?sells.map((r,i)=>makeRow(r,i,'TRIM')).join(''):`<div class="empty">no trim signals</div>`;
+
+  // Diagnostic bar — shows what the engine is seeing
+  const diag=$('action-diag');
+  if(diag){
+    const totalRows=rows.length;
+    const topScore=totalRows?num(rows[0].Score||rows[0].score||rows[0].SCORE||rows[0].BASE_SCORE,0):0;
+    const scoreCol=totalRows?(Object.keys(rows[0]).find(k=>k.toLowerCase()==='score')||'not found'):'—';
+    const aboveMs=rows.filter(r=>num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0)>=ms).length;
+    if(totalRows===0||topScore===0){
+      diag.style.display='block';
+      diag.innerHTML=totalRows===0?
+        `⚠ No ranking data loaded — check RANKING feed in ⚙ Data Settings`:
+        `⚠ All scores reading as 0 — sheet column may be named "${scoreCol}" but expected "Score". Check RANKING_EXPORT tab headers.`;
+    } else if(aboveMs===0){
+      diag.style.display='block';
+      diag.innerHTML=`ℹ ${totalRows} tickers loaded · top score: ${topScore} · min score: ${ms} · none qualify yet`;
+    } else {
+      diag.style.display='none';
+    }
+  }
 }
 
 // ─── RENDER: HOLDINGS ────────────────────────────────────────────────────────
@@ -5349,6 +5380,15 @@ function clearTradeLog(){
 window.clearTradeLog=clearTradeLog;
 
 // Keep old tcheck for backward compat
+function resetAllChecks(){
+  if(confirm('Clear all done/skip marks? This resets the action engine for a fresh session.')){
+    wr(K.checks,'{}');
+    renderActions();
+    renderTodaysMoves();
+  }
+}
+window.resetAllChecks=resetAllChecks;
+
 function tcheck(k,v){const d=JSON.parse(rd(K.checks,'{}'));d[k]=v;wr(K.checks,JSON.stringify(d))}
 window.tcheck=tcheck;
 function closeModal(id){$(id).style.display='none'}
