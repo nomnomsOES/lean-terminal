@@ -5430,69 +5430,70 @@ $('rf-btn').onclick=loadAll;
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 if(!rd(K.mode))wr(K.mode,'LEAN');
 
-// Global tooltip delegation — smart positioning, never goes off-screen
+// Global tooltip delegation — smart viewport-aware positioning
 function positionTooltip(btn, tip){
-  // Reset position first so getBoundingClientRect is accurate
-  tip.style.top='';tip.style.bottom='';tip.style.left='';tip.style.right='';
+  // Use fixed positioning relative to viewport — never clipped by parent
+  tip.style.position='fixed';
   tip.style.display='block';
+  tip.style.top='';tip.style.bottom='';
+  tip.style.left='';tip.style.right='';
+  tip.style.zIndex='99999';
 
   const btnR=btn.getBoundingClientRect();
-  const tipR=tip.getBoundingClientRect();
+  const tipW=parseInt(tip.style.width)||260;
+  const tipH=tip.offsetHeight||120;
   const vw=window.innerWidth;
   const vh=window.innerHeight;
-  const gap=8;
+  const gap=6;
 
-  // Vertical: prefer below, flip to above if not enough room below
-  const spaceBelow=vh-btnR.bottom;
-  const spaceAbove=btnR.top;
-  if(spaceBelow>=tipR.height+gap||spaceBelow>=spaceAbove){
-    tip.style.top=(btnR.height+gap)+'px';
+  // Horizontal: align to button right edge, clamp to viewport
+  let left=btnR.right-tipW;
+  if(left<8)left=8;
+  if(left+tipW>vw-8)left=vw-tipW-8;
+  tip.style.left=left+'px';
+  tip.style.right='auto';
+
+  // Vertical: prefer below, flip above if not enough room
+  const spaceBelow=vh-(btnR.bottom+gap);
+  const spaceAbove=btnR.top-gap;
+  if(spaceBelow>=tipH||spaceBelow>=spaceAbove){
+    tip.style.top=(btnR.bottom+gap)+'px';
     tip.style.bottom='auto';
   } else {
-    tip.style.bottom=(btnR.height+gap)+'px';
+    tip.style.bottom=(vh-btnR.top+gap)+'px';
     tip.style.top='auto';
-  }
-
-  // Horizontal: align right edge to button, but clamp to viewport
-  const naturalRight=0; // right:0 aligns right edge of tip to right edge of btn
-  const tipWidth=Math.min(280,tipR.width||260);
-  tip.style.width=tipWidth+'px';
-
-  // Check if right-aligned would go off left edge
-  const rightAlignLeft=btnR.right-tipWidth;
-  if(rightAlignLeft<8){
-    // Align left edge instead
-    tip.style.right='auto';
-    tip.style.left='0';
-  } else {
-    tip.style.right='0';
-    tip.style.left='auto';
   }
 }
 
 document.addEventListener('mouseover',e=>{
   const btn=e.target.closest('.msi-btn');
-  if(!btn)return;
-  const tip=btn.nextElementSibling;
-  if(tip&&tip.classList.contains('msi-tip')){
-    positionTooltip(btn,tip);
+  if(btn){
+    const tip=btn.nextElementSibling;
+    if(tip&&tip.classList.contains('msi-tip')) positionTooltip(btn,tip);
   }
-  // Also handle mp-i buttons (metric pill ?)
   const mpBtn=e.target.closest('.mp-i');
   if(mpBtn){
     const tt=mpBtn.nextElementSibling;
     if(tt&&tt.classList.contains('mp-tooltip')){
+      tt.style.position='fixed';
       tt.style.display='block';
+      tt.style.zIndex='99999';
       const btnR=mpBtn.getBoundingClientRect();
-      const ttR=tt.getBoundingClientRect();
+      const ttH=tt.offsetHeight||150;
+      const vw=window.innerWidth;
       const vh=window.innerHeight;
-      const spaceBelow=vh-btnR.bottom;
-      if(spaceBelow<ttR.height+10&&btnR.top>ttR.height+10){
-        tt.style.top='auto';
-        tt.style.bottom='calc(100% + 8px)';
-      } else {
-        tt.style.top='calc(100% + 8px)';
+      const gap=6;
+      let left=btnR.right-(parseInt(tt.style.width)||260);
+      if(left<8)left=8;
+      if(left+(parseInt(tt.style.width)||260)>vw-8)left=vw-(parseInt(tt.style.width)||260)-8;
+      tt.style.left=left+'px';
+      tt.style.right='auto';
+      if(vh-(btnR.bottom+gap)>=ttH){
+        tt.style.top=(btnR.bottom+gap)+'px';
         tt.style.bottom='auto';
+      } else {
+        tt.style.bottom=(vh-btnR.top+gap)+'px';
+        tt.style.top='auto';
       }
     }
   }
