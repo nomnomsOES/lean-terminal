@@ -861,18 +861,31 @@ Drives the portfolio donut weights, theme concentration %, stress map node sizin
     <!-- PORTFOLIO STRESS MAP -->
     <div class="card" style="margin-top:10px">
       <div class="card-head">
-        <div class="card-title">Portfolio Stress Map</div>
-        <div class="card-meta">FEM-style · stress per node · crack propagation lines</div>
+        <div class="card-title">Portfolio Stress Map
+          <span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span class="msi-btn" style="width:15px;height:15px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:var(--cyan);font-size:9px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)">?</span><span class="msi-tip" style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:260px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:10px 12px;font-size:10px;line-height:1.7;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal">Each circle is a holding. Color = health. Lines = contagion paths — connected holdings move together. The sidebar tells you what to do right now in plain English. Dotted boxes group same-theme holdings into clusters.</span></span>
+        </div>
+        <div class="card-meta" id="sm-crack-count">computing…</div>
       </div>
       <div class="card-body" style="padding:14px">
-        <div id="stress-map-wrap" style="position:relative;min-height:200px">
-          <canvas id="stress-map-canvas" style="width:100%;display:block"></canvas>
-          <div id="stress-map-legend" style="display:flex;gap:14px;margin-top:10px;flex-wrap:wrap;font-size:10px;color:var(--muted)">
-            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low stress</span>
-            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
-            <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>High stress</span>
-            <span><span style="display:inline-block;width:20px;height:2px;background:rgba(255,79,79,.5);margin-right:4px;vertical-align:middle;display:inline-block"></span>Crack path</span>
-            <span style="margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:9px">Click node to open DNA panel</span>
+        <!-- TWO COLUMN LAYOUT -->
+        <div style="display:grid;grid-template-columns:1fr 260px;gap:14px;align-items:start">
+          <!-- LEFT: canvas -->
+          <div>
+            <div id="stress-map-wrap" style="position:relative;min-height:180px">
+              <canvas id="stress-map-canvas" style="width:100%;display:block"></canvas>
+            </div>
+            <div id="stress-map-legend" style="display:flex;gap:12px;margin-top:8px;flex-wrap:wrap;font-size:10px;color:var(--muted)">
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:rgba(32,224,122,.8);margin-right:3px;vertical-align:middle"></span>Low</span>
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:rgba(79,163,255,.8);margin-right:3px;vertical-align:middle"></span>Moderate</span>
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:rgba(245,197,66,.8);margin-right:3px;vertical-align:middle"></span>Elevated</span>
+              <span><span style="display:inline-block;width:9px;height:9px;border-radius:50%;background:rgba(255,79,79,.8);margin-right:3px;vertical-align:middle"></span>Critical</span>
+              <span style="color:var(--dim);font-family:var(--mono);font-size:9px">number = stress score · click node → DNA panel</span>
+            </div>
+          </div>
+          <!-- RIGHT: plain English sidebar -->
+          <div id="stress-map-sidebar" style="display:grid;gap:8px;align-content:start">
+            <div style="font-family:var(--mono);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em">Reading the map</div>
+            <div style="font-size:11px;color:var(--muted);line-height:1.6">Computing stress…</div>
           </div>
         </div>
       </div>
@@ -1780,7 +1793,6 @@ function findCracks(nodes){
 }
 
 function renderStressMap(){
-  // Cooldown guard — don't restart Phase 2 if it ran recently (25s cooldown)
   const smNow=Date.now();
   const smCooldown=S._stressLastFull&&(smNow-S._stressLastFull<25000);
   if(smCooldown&&S._stressRunning)return;
@@ -1789,14 +1801,14 @@ function renderStressMap(){
 
   const holdings=S.holdings.filter(r=>(r.Ticker||r.ticker)&&(r.Ticker||r.ticker)!=='Ticker');
   if(!holdings.length){
-    canvasEl.style.display='none';
-    const wrap=$('stress-map-wrap');
-    if(wrap)wrap.innerHTML=`<div style="font-size:10px;color:var(--dim);text-align:center;padding:20px;font-family:var(--mono)">No holdings loaded</div>`;
+    const sb=$('stress-map-sidebar');
+    if(sb)sb.innerHTML=`<div style="font-size:11px;color:var(--dim)">No holdings loaded</div>`;
     return;
   }
 
+  // ── LAYOUT ───────────────────────────────────────────────────────────────
   const dpr=window.devicePixelRatio||1;
-  const W=canvasEl.parentElement?.offsetWidth||700;
+  const W=canvasEl.parentElement?.offsetWidth||600;
   const cols=Math.min(7,holdings.length);
   const numRows=Math.ceil(holdings.length/cols);
   const H=Math.max(160,numRows*100+40);
@@ -1804,66 +1816,220 @@ function renderStressMap(){
   const positions={};
   holdings.forEach((h,i)=>{
     const t=h.Ticker||h.ticker||'';
-    const col=i%cols, row=Math.floor(i/cols);
-    positions[t]={x:cellW*col+cellW/2, y:cellH*row+cellH/2, _r:32};
+    const col=i%cols,row=Math.floor(i/cols);
+    positions[t]={x:cellW*col+cellW/2,y:cellH*row+cellH/2,_r:32};
   });
 
-  function seededRand(seed){
-  const x=Math.sin(seed+1)*10000;
-  return x-Math.floor(x);
-}
-function drawMap(canvas, nodes, cracks, phase){
+  // ── SEEDED RAND ──────────────────────────────────────────────────────────
+  function seededRand(seed){const x=Math.sin(seed+1)*10000;return x-Math.floor(x);}
+
+  // ── DRAW FUNCTION ────────────────────────────────────────────────────────
+  function drawMap(canvas,nodes,cracks,phase){
     canvas.style.width=W+'px'; canvas.style.height=H+'px';
     canvas.width=W*dpr; canvas.height=H*dpr;
     const ctx=canvas.getContext('2d');
     ctx.scale(dpr,dpr); ctx.clearRect(0,0,W,H);
+
+    // Draw cluster boxes first (same-theme groups)
+    const themes={};
+    nodes.forEach(n=>{
+      if(!n.theme||n.theme==='Uncategorized')return;
+      if(!themes[n.theme])themes[n.theme]=[];
+      themes[n.theme].push(n.ticker);
+    });
+    const themeColors=['rgba(255,79,79,.12)','rgba(79,163,255,.1)','rgba(245,197,66,.1)',
+                       'rgba(32,224,122,.1)','rgba(167,139,250,.1)','rgba(249,115,22,.1)'];
+    const themeBorders=['rgba(255,79,79,.35)','rgba(79,163,255,.3)','rgba(245,197,66,.3)',
+                        'rgba(32,224,122,.3)','rgba(167,139,250,.3)','rgba(249,115,22,.3)'];
+    let ci=0;
+    Object.entries(themes).forEach(([theme,tickers])=>{
+      if(tickers.length<2){ci++;return;}
+      const pts=tickers.map(t=>positions[t]).filter(Boolean);
+      if(!pts.length){ci++;return;}
+      const xs=pts.map(p=>p.x),ys=pts.map(p=>p.y);
+      const pad=38;
+      const bx=Math.min(...xs)-pad,by=Math.min(...ys)-pad;
+      const bw=Math.max(...xs)-Math.min(...xs)+pad*2;
+      const bh=Math.max(...ys)-Math.min(...ys)+pad*2;
+      ctx.beginPath();ctx.roundRect(bx,by,bw,bh,10);
+      ctx.fillStyle=themeColors[ci%themeColors.length];ctx.fill();
+      ctx.strokeStyle=themeBorders[ci%themeBorders.length];
+      ctx.lineWidth=1;ctx.setLineDash([5,3]);ctx.stroke();ctx.setLineDash([]);
+      // Theme label
+      ctx.fillStyle=themeBorders[ci%themeBorders.length];
+      ctx.font=`8px "Space Mono",monospace`;ctx.textAlign='left';ctx.textBaseline='top';
+      ctx.fillText(theme.toUpperCase().slice(0,18),bx+6,by+4);
+      ci++;
+    });
+
+    // Crack lines
     cracks.forEach(c=>{
-      const pa=positions[c.a], pb=positions[c.b]; if(!pa||!pb)return;
+      const pa=positions[c.a],pb=positions[c.b];if(!pa||!pb)return;
       const alpha=Math.min(0.85,Math.max(0.25,0.3+(c.severity-30)/80));
       const _ck=c.a.charCodeAt(0)+c.b.charCodeAt(0);
-      const mx=(pa.x+pb.x)/2+(seededRand(_ck)-.5)*40, my=(pa.y+pb.y)/2+(seededRand(_ck+1)-.5)*40;
-      ctx.beginPath(); ctx.moveTo(pa.x,pa.y); ctx.lineTo(mx,my); ctx.lineTo(pb.x,pb.y);
-      ctx.strokeStyle=`rgba(255,79,79,${alpha})`; ctx.lineWidth=c.severity>80?2.5:1.5;
-      ctx.setLineDash([4,3]); ctx.stroke(); ctx.setLineDash([]);
-      ctx.beginPath(); ctx.arc(mx,my,3,0,Math.PI*2);
-      ctx.fillStyle=`rgba(255,79,79,${alpha})`; ctx.fill();
+      const mx=(pa.x+pb.x)/2+(seededRand(_ck)-.5)*30;
+      const my=(pa.y+pb.y)/2+(seededRand(_ck+1)-.5)*30;
+      ctx.beginPath();ctx.moveTo(pa.x,pa.y);ctx.lineTo(mx,my);ctx.lineTo(pb.x,pb.y);
+      ctx.strokeStyle=`rgba(255,79,79,${alpha})`;
+      ctx.lineWidth=c.severity>70?2.5:1.5;
+      ctx.setLineDash([4,3]);ctx.stroke();ctx.setLineDash([]);
+      ctx.beginPath();ctx.arc(mx,my,2.5,0,Math.PI*2);
+      ctx.fillStyle=`rgba(255,79,79,${alpha})`;ctx.fill();
     });
+
+    // Nodes
     nodes.forEach(n=>{
-      const pos=positions[n.ticker]; if(!pos)return;
+      const pos=positions[n.ticker];if(!pos)return;
       const stress=n.stress;
-      const isPlaceholder=phase==='fast';
-      const fillColor=isPlaceholder?'rgba(99,160,255,0.4)':
-                      stress<=30?'rgba(32,224,122,0.85)':
-                      stress<=55?'rgba(79,163,255,0.85)':
-                      stress<=75?'rgba(245,197,66,0.85)':'rgba(255,79,79,0.85)';
-      const glowColor=isPlaceholder?'rgba(99,160,255,0.08)':
-                      stress<=30?'rgba(32,224,122,0.2)':
-                      stress<=55?'rgba(79,163,255,0.12)':
-                      stress<=75?'rgba(245,197,66,0.15)':'rgba(255,79,79,0.2)';
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,32,0,Math.PI*2);
-      ctx.fillStyle=glowColor; ctx.fill();
-      if(!isPlaceholder){
-        ctx.beginPath(); ctx.arc(pos.x,pos.y,28,-Math.PI/2,-Math.PI/2+(stress/100)*Math.PI*2);
-        ctx.strokeStyle=fillColor; ctx.lineWidth=3; ctx.stroke();
+      const fast=phase==='fast';
+      const col=fast?'rgba(99,160,255,0.6)':
+                stress<=30?'rgba(32,224,122,0.9)':
+                stress<=55?'rgba(79,163,255,0.9)':
+                stress<=75?'rgba(245,197,66,0.9)':'rgba(255,79,79,0.9)';
+      const glow=fast?'rgba(99,160,255,0.08)':
+                 stress<=30?'rgba(32,224,122,0.15)':
+                 stress<=55?'rgba(79,163,255,0.1)':
+                 stress<=75?'rgba(245,197,66,0.12)':'rgba(255,79,79,0.18)';
+
+      // Glow
+      ctx.beginPath();ctx.arc(pos.x,pos.y,30,0,Math.PI*2);
+      ctx.fillStyle=glow;ctx.fill();
+      // Arc ring
+      if(!fast){
+        ctx.beginPath();ctx.arc(pos.x,pos.y,26,-Math.PI/2,-Math.PI/2+(stress/100)*Math.PI*2);
+        ctx.strokeStyle=col;ctx.lineWidth=3;ctx.stroke();
       }
-      ctx.beginPath(); ctx.arc(pos.x,pos.y,24,0,Math.PI*2);
-      ctx.fillStyle='rgba(7,13,24,0.92)'; ctx.fill();
-      ctx.strokeStyle=fillColor; ctx.lineWidth=1.5; ctx.stroke();
-      ctx.fillStyle='rgba(214,233,255,0.95)'; ctx.font=`bold 9px "Space Mono",monospace`;
-      ctx.textAlign='center'; ctx.textBaseline='middle';
+      // Circle
+      ctx.beginPath();ctx.arc(pos.x,pos.y,22,0,Math.PI*2);
+      ctx.fillStyle='rgba(7,13,24,0.92)';ctx.fill();
+      ctx.strokeStyle=col;ctx.lineWidth=fast?1:1.5;ctx.stroke();
+      // Ticker
+      ctx.fillStyle='rgba(214,233,255,0.95)';
+      ctx.font=`bold 8px "Space Mono",monospace`;
+      ctx.textAlign='center';ctx.textBaseline='middle';
       ctx.fillText(n.ticker.slice(0,4),pos.x,pos.y-5);
-      ctx.fillStyle=isPlaceholder?'rgba(140,145,166,0.5)':fillColor;
-      ctx.font=`bold 9px "Space Mono",monospace`;
-      ctx.fillText(isPlaceholder?'…':stress,pos.x,pos.y+7);
+      // Stress number
+      ctx.fillStyle=fast?'rgba(140,145,166,0.5)':col;
+      ctx.font=`bold 8px "Space Mono",monospace`;
+      ctx.fillText(fast?'…':stress,pos.x,pos.y+6);
     });
+
     if(phase==='fast'){
-      ctx.fillStyle='rgba(99,160,255,0.35)'; ctx.font=`9px "Space Mono",monospace`;
-      ctx.textAlign='right'; ctx.textBaseline='top';
-      ctx.fillText('computing…',W-8,8);
+      ctx.fillStyle='rgba(99,160,255,0.3)';
+      ctx.font=`8px "Space Mono",monospace`;
+      ctx.textAlign='right';ctx.textBaseline='top';
+      ctx.fillText('computing…',W-6,6);
     }
   }
 
-  // PHASE 1: fast render with score-only stress
+  // ── SIDEBAR GENERATOR ────────────────────────────────────────────────────
+  function buildSidebar(nodes,cracks){
+    const sidebar=$('stress-map-sidebar');
+    const crackMeta=$('sm-crack-count');
+    if(!sidebar)return;
+
+    const holdTickers=new Set(S.holdings.map(h=>h.Ticker||h.ticker||'').filter(Boolean));
+    const radarTickers=new Set(S.radar.map(r=>r.Ticker||r.ticker||'').filter(Boolean));
+
+    // Categorise nodes
+    const critical=nodes.filter(n=>n.stress>70).sort((a,b)=>b.stress-a.stress);
+    const elevated=nodes.filter(n=>n.stress>45&&n.stress<=70).sort((a,b)=>b.stress-a.stress);
+    const healthy=nodes.filter(n=>n.stress<=45);
+
+    // Find isolated nodes (no crack connections)
+    const connected=new Set([...cracks.map(c=>c.a),...cracks.map(c=>c.b)]);
+    const isolated=nodes.filter(n=>!connected.has(n.ticker));
+
+    // Find bridge nodes (connected to 2+ others)
+    const connCount={};
+    cracks.forEach(c=>{
+      connCount[c.a]=(connCount[c.a]||0)+1;
+      connCount[c.b]=(connCount[c.b]||0)+1;
+    });
+    const bridges=Object.entries(connCount).filter(([,v])=>v>=2).sort((a,b)=>b[1]-a[1]);
+
+    // Radar names in stressed clusters
+    const stressedClusters=new Set(cracks.filter(c=>c.severity>50).flatMap(c=>[c.a,c.b]));
+    const radarAtRisk=[...radarTickers].filter(t=>
+      nodes.some(n=>n.ticker!==t&&stressedClusters.has(n.ticker)&&n.theme===
+        (S.ranking.find(r=>(r.Ticker||r.ticker)===t)||{}).Theme)
+    );
+
+    // Update meta
+    if(crackMeta)crackMeta.textContent=cracks.length?`⚡ ${cracks.length} crack paths active`:`no crack paths`;
+
+    let html='';
+
+    // ACT NOW block
+    const actNow=critical.filter(n=>connected.has(n.ticker));
+    if(actNow.length){
+      html+=`<div style="padding:10px 12px;border-radius:8px;background:rgba(255,79,79,.1);border:1px solid rgba(255,79,79,.25)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:.1em;margin-bottom:6px">⚠ ACT NOW</div>
+        ${actNow.map(n=>{
+          const linked=cracks.filter(c=>c.a===n.ticker||c.b===n.ticker).map(c=>c.a===n.ticker?c.b:c.a);
+          return`<div style="font-size:11px;color:var(--text);margin-bottom:4px">
+            <span style="font-family:var(--mono);font-weight:700;color:var(--red)">${n.ticker}</span>
+            <span style="color:var(--dim)"> is critical — connected to </span>
+            <span style="font-family:var(--mono);color:var(--yellow)">${linked.join(', ')}</span>
+            <span style="color:var(--dim)">. If it drops, they follow.</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    // WATCH block
+    const watchNow=elevated.filter(n=>connected.has(n.ticker));
+    if(watchNow.length){
+      html+=`<div style="padding:10px 12px;border-radius:8px;background:rgba(245,197,66,.08);border:1px solid rgba(245,197,66,.2)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--yellow);letter-spacing:.1em;margin-bottom:6px">◎ WATCH</div>
+        ${watchNow.map(n=>{
+          const linked=cracks.filter(c=>c.a===n.ticker||c.b===n.ticker).map(c=>c.a===n.ticker?c.b:c.a);
+          return`<div style="font-size:11px;color:var(--text);margin-bottom:3px">
+            <span style="font-family:var(--mono);font-weight:700;color:var(--yellow)">${n.ticker}</span>
+            <span style="color:var(--dim)"> is elevated — runs with ${linked.join(', ')}.</span>
+          </div>`;
+        }).join('')}
+      </div>`;
+    }
+
+    // RADAR AT RISK
+    if(radarAtRisk.length){
+      html+=`<div style="padding:10px 12px;border-radius:8px;background:rgba(79,163,255,.08);border:1px solid rgba(79,163,255,.2)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;margin-bottom:6px">RADAR NAMES — DON'T BUY YET</div>
+        ${radarAtRisk.map(t=>`<div style="font-size:11px;color:var(--text);margin-bottom:3px">
+          <span style="font-family:var(--mono);font-weight:700;color:var(--cyan)">${t}</span>
+          <span style="color:var(--dim)"> is on your radar but its cluster is under stress. Wait for cluster to stabilize first.</span>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    // BRIDGES
+    if(bridges.length){
+      html+=`<div style="padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:5px">BRIDGE NODES — highest contagion risk</div>
+        ${bridges.slice(0,3).map(([t,cnt])=>`<div style="font-size:11px;color:var(--text);margin-bottom:3px">
+          <span style="font-family:var(--mono);font-weight:700">${t}</span>
+          <span style="color:var(--dim)"> connects ${cnt} other positions. If it cracks, it spreads in ${cnt} directions.</span>
+        </div>`).join('')}
+      </div>`;
+    }
+
+    // ISOLATED (safe)
+    if(isolated.length){
+      html+=`<div style="padding:10px 12px;border-radius:8px;background:rgba(32,224,122,.06);border:1px solid rgba(32,224,122,.15)">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--green);letter-spacing:.1em;margin-bottom:5px">✓ CONTAINED — no contagion lines</div>
+        <div style="font-size:11px;color:var(--muted)">${isolated.map(n=>n.ticker).join(' · ')} — problems here stay isolated.</div>
+      </div>`;
+    }
+
+    if(!html){
+      html=`<div style="padding:10px 12px;border-radius:8px;background:rgba(32,224,122,.06);border:1px solid rgba(32,224,122,.15);font-size:11px;color:var(--green)">✓ Portfolio looks healthy — no critical stress or contagion paths detected.</div>`;
+    }
+
+    sidebar.innerHTML=`<div style="font-family:var(--mono);font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.1em;margin-bottom:6px">Reading the map</div>`+html;
+  }
+
+  // ── FAST PHASE ───────────────────────────────────────────────────────────
   const fastNodes=holdings.map(h=>{
     const t=h.Ticker||h.ticker||'';
     const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||S.radar.find(x=>(x.Ticker||x.ticker)===t)||{};
@@ -1879,7 +2045,9 @@ function drawMap(canvas, nodes, cracks, phase){
 
   const fastCracks=findCracks(fastNodes);
   drawMap(canvasEl,fastNodes,fastCracks,'fast');
-  // Wire clicks immediately in Phase 1 so nodes are clickable right away
+  buildSidebar(fastNodes,fastCracks);
+
+  // Wire clicks immediately
   canvasEl.style.cursor='pointer';
   canvasEl.onclick=function(e){
     const rect=canvasEl.getBoundingClientRect();
@@ -1891,68 +2059,40 @@ function drawMap(canvas, nodes, cracks, phase){
     }
   };
 
-  const legend=$('stress-map-legend');
-  const legendBase=`<span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(79,163,255,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>High</span>
-    <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>Critical</span>
-    <span style="margin-left:auto;font-family:var(--mono);font-size:9px;color:var(--cyan)">⟳ Deep analysis running…</span>
-    <span style="color:var(--dim);font-family:var(--mono);font-size:9px">Click node → DNA panel</span>`;
-  if(legend) legend.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);align-items:center">${legendBase}</div>`;
-
-  // PHASE 2: full Von Mises + LCS + cycle — batched async
+  // ── FULL PHASE ───────────────────────────────────────────────────────────
   S._stressRunning=true;
   setTimeout(()=>{
-    const fullNodes=[];
-    let idx=0;
+    const fullNodes=[];let idx=0;
     function batch(){
       const end=Math.min(idx+4,holdings.length);
       for(let i=idx;i<end;i++){
         const t=holdings[i].Ticker||holdings[i].ticker||'';
-        if(t) fullNodes.push(calcNodeStress(t));
+        if(t)fullNodes.push(calcNodeStress(t));
       }
       idx=end;
-      if(idx<holdings.length){ setTimeout(batch,0); return; }
-      // All computed — final redraw
+      if(idx<holdings.length){setTimeout(batch,0);return;}
       const valid=fullNodes.filter(n=>n.ticker);
       const cracks=findCracks(valid);
       const cur=$('stress-map-canvas');
-      if(!cur)return;
+      if(!cur){S._stressRunning=false;return;}
       drawMap(cur,valid,cracks,'full');
-      // Wire clicks — assign directly, no clone (cloneNode wipes canvas content)
+      buildSidebar(valid,cracks);
       cur.style.cursor='pointer';
       cur.onclick=function(e){
         const rect=cur.getBoundingClientRect();
-        const sx=W/rect.width, sy=H/rect.height;
-        const mx=(e.clientX-rect.left)*sx, my=(e.clientY-rect.top)*sy;
+        const sx=W/rect.width,sy=H/rect.height;
+        const mx=(e.clientX-rect.left)*sx,my=(e.clientY-rect.top)*sy;
         for(const n of valid){
-          const p=positions[n.ticker]; if(!p)continue;
+          const p=positions[n.ticker];if(!p)continue;
           if(Math.sqrt((mx-p.x)**2+(my-p.y)**2)<32){showTicker(n.ticker,e);return;}
         }
       };
-      // Final legend
-      const crackText=cracks.length?`<div style="width:100%;margin-top:8px;font-size:10px;color:var(--muted)">
-        <span style="color:var(--red);font-family:var(--mono);font-size:9px;margin-right:6px">⚡ CRACK PATHS (${cracks.length}):</span>
-        ${cracks.slice(0,4).map(c=>`<span style="font-family:var(--mono);font-size:9px;color:var(--red);margin-right:10px">${c.a}↔${c.b} · ${c.reason}</span>`).join('')}
-      </div>`:'';
-      if(legend) legend.innerHTML=`<div style="display:flex;gap:12px;flex-wrap:wrap;font-size:10px;color:var(--muted);align-items:center">
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(32,224,122,.7);margin-right:4px;vertical-align:middle"></span>Low</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(79,163,255,.7);margin-right:4px;vertical-align:middle"></span>Moderate</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(245,197,66,.7);margin-right:4px;vertical-align:middle"></span>High</span>
-        <span><span style="display:inline-block;width:10px;height:10px;border-radius:2px;background:rgba(255,79,79,.7);margin-right:4px;vertical-align:middle"></span>Critical</span>
-        <span style="margin-left:auto;color:var(--dim);font-family:var(--mono);font-size:9px">Click node → DNA panel</span>
-      </div>${crackText}`;
       S._stressRunning=false;
       S._stressLastFull=Date.now();
     }
     batch();
   },250);
-}
-
-
-
-
-// ─── VARIABLE RADAR GRADUATION TRIGGER ───────────────────────────────────────
+}// ─── VARIABLE RADAR GRADUATION TRIGGER ───────────────────────────────────────
 // How many sessions at score≥threshold before graduating to full holdings candidate
 // Threshold is variable based on:
 // - Market volatility (high VIX = require more confirmation)
