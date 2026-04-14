@@ -3189,7 +3189,9 @@ function renderActions(){
     const key=`${side}:${r.Ticker}:${i}`;
     const done=checks[key]===true||checks[key]==='done';
     const skipped=checks[key]==='skip';
-    const amt=baseAmounts[i]||50;
+    const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
+    const conf=calcConfidence(r.Ticker||r.ticker||'');
+    const amt=side==='BUY'?calcConvictionSize(r.Ticker||r.ticker||'',sc,conf.total):(baseAmounts[i]||50);
     const tagClass=side==='BUY'?'tag-buy':side==='TRIM'?'tag-trim':'tag-sell';
     const rowClass=done?'action-row done':skipped?'action-row done tl-skipped':'action-row';
     return `<div class="${rowClass}" id="ar-${key.replace(/:/g,'-')}">
