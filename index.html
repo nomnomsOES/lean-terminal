@@ -781,6 +781,17 @@ Average LCS across all holdings, weighted by position size, minus a penalty for 
             <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase">Session Log</div>
             <button class="btn" style="padding:2px 8px;font-size:9px" onclick="clearTradeLog()">Clear</button>
           </div>
+          <!-- MANUAL ENTRY -->
+          <div style="padding:0 10px 8px;display:flex;gap:5px;align-items:center;flex-wrap:wrap">
+            <select id="ml-side" style="font-family:var(--mono);font-size:10px;padding:4px 6px;border-radius:5px;border:1px solid var(--line);background:var(--card);color:var(--text);width:68px">
+              <option value="BUY">BUY</option>
+              <option value="SELL">SELL</option>
+              <option value="TRIM">TRIM</option>
+            </select>
+            <input id="ml-ticker" type="text" placeholder="TICKER" style="font-family:var(--mono);font-size:10px;padding:4px 7px;border-radius:5px;border:1px solid var(--line);background:var(--card);color:var(--text);width:72px;text-transform:uppercase"/>
+            <input id="ml-amount" type="number" placeholder="$amt" style="font-family:var(--mono);font-size:10px;padding:4px 7px;border-radius:5px;border:1px solid var(--line);background:var(--card);color:var(--text);width:66px"/>
+            <button onclick="logManualTrade()" style="font-family:var(--mono);font-size:10px;padding:4px 10px;border-radius:5px;border:1px solid rgba(32,224,122,.3);background:transparent;color:var(--green);cursor:pointer;white-space:nowrap">+ Log</button>
+          </div>
           <div id="trade-log-list" style="max-height:160px;overflow-y:auto;padding:0 0 6px">
             <div style="font-size:10px;color:var(--dim);text-align:center;padding:10px;font-family:var(--mono)">No trades logged yet</div>
           </div>
@@ -3191,17 +3202,25 @@ function renderActions(){
     const skipped=checks[key]==='skip';
     const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
     const conf=calcConfidence(r.Ticker||r.ticker||'');
-    const amt=side==='BUY'?calcConvictionSize(r.Ticker||r.ticker||'',sc,conf.total):(baseAmounts[i]||50);
-    const tagClass=side==='BUY'?'tag-buy':side==='TRIM'?'tag-trim':'tag-sell';
+    const hRow=S.holdings.find(x=>(x.Ticker||x.ticker)===(r.Ticker||r.ticker||''))||{};
+    const holdVal=Math.round(num(hRow.Value||hRow.value||hRow.Holding_Value||hRow.holding_value,0));
+    const isSell=(r.Status||r.status||r.ACTION||r.action||'').toUpperCase()==='SELL';
+    const amt=side==='BUY'
+      ? calcConvictionSize(r.Ticker||r.ticker||'',sc,conf.total)
+      : isSell&&holdVal
+        ? holdVal
+        : (baseAmounts[i]||50);
+    const sideLabel=side==='TRIM'&&isSell?'SELL':side;
+    const tagClass=side==='BUY'?'tag-buy':isSell?'tag-sell':'tag-trim';
     const rowClass=done?'action-row done':skipped?'action-row done tl-skipped':'action-row';
     return `<div class="${rowClass}" id="ar-${key.replace(/:/g,'-')}">
-      <div class="ar-check ${done?'checked':''}" onclick="toggleCheck('${key}','${side}','${r.Ticker}',${amt})" title="${done?'Mark skipped':'Mark done'}"></div>
+      <div class="ar-check ${done?'checked':''}" onclick="toggleCheck('${key}','${sideLabel}','${r.Ticker}',${amt})" title="${done?'Mark skipped':'Mark done'}"></div>
       <div class="ar-detail">
         <div class="ar-ticker" onclick="showTicker('${r.Ticker}',event)">${r.Ticker}${done?' ✓':skipped?' —':''}</div>
         <div class="ar-meta">${r.Theme||'—'} · score ${num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0)} · ${r.Markov_State||r.Markov||'—'}</div>
       </div>
-      <div class="ar-amount">${money(amt)}</div>
-      <div class="ar-tag ${tagClass}">${side}</div>
+      <div class="ar-amount">${money(amt)}${isSell&&holdVal?' all':''}</div>
+      <div class="ar-tag ${tagClass}">${sideLabel}</div>
     </div>`;
   }
 
@@ -3494,14 +3513,17 @@ function renderTodaysMoves(){
     const sizing=calcConvictionSize(t,sc,conf.total);
     const color=type==='buy'?'var(--green)':type==='exit'?'var(--red)':'var(--yellow)';
     const held=holdTickers.has(t);
+    const hRow=S.holdings.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const holdVal=Math.round(num(hRow.Value||hRow.value||hRow.Holding_Value||hRow.holding_value,0));
+    const trimAmt=calcConvictionSize(t,sc,conf.total);
     const execBtn=type==='buy'?
       `<button onclick="confirmAndExecute('${t}','BUY',${sizing})" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(32,224,122,.3);background:transparent;color:var(--green);cursor:pointer;margin-left:4px">exec</button>`:
       type==='exit'&&held?
-      `<button onclick="confirmAndExecute('${t}','SELL',75)" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,79,79,.3);background:transparent;color:var(--red);cursor:pointer;margin-left:4px">exec</button>`:'';
+      `<button onclick="confirmAndExecute('${t}','SELL',${holdVal||trimAmt},'full')" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,79,79,.3);background:transparent;color:var(--red);cursor:pointer;margin-left:4px">exit all</button>`:'';
     return`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(99,160,255,.06);cursor:pointer" onclick="showTicker('${t}',event)">
       <span style="font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)">${t}${held?'<span style="font-size:8px;color:var(--green);margin-left:3px">●</span>':''}</span>
       <span style="font-size:10px;color:var(--dim)">${sc}</span>
-      <span style="font-family:var(--mono);font-size:11px;color:${color};font-weight:700">${type==='buy'?'$'+sizing:type==='exit'?'exit':'near'}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:${color};font-weight:700">${type==='buy'?'$'+sizing:type==='exit'?(holdVal?'$'+holdVal+' all':'exit'):'near'}</span>
       ${execBtn}
     </div>`;
   }
@@ -4544,14 +4566,29 @@ async function executeAlpacaTrade(ticker, side, qty, notional){
 window.executeAlpacaTrade=executeAlpacaTrade;
 
 // Confirm dialog before executing
-function confirmAndExecute(ticker, side, amount){
+function confirmAndExecute(ticker, side, amount, exitType){
   const isPaper=rd(AP)!=='false';
   const env=isPaper?'PAPER':'LIVE';
-  const msg=`${env} TRADE\n\n${side} ${ticker} — $${amount}\n\n${isPaper?'This is a paper trade — no real money.':'⚠ This is a LIVE trade with real money.'}\n\nProceed?`;
+  const isFull=exitType==='full';
+  const hRow=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const holdVal=Math.round(num(hRow.Value||hRow.value||hRow.Holding_Value||hRow.holding_value,0));
+
+  let displayAmt=amount;
+  let orderDesc='';
+  if(side==='SELL'&&isFull){
+    displayAmt=holdVal||amount;
+    orderDesc=`SELL ALL — ${ticker}\n$${displayAmt} full position exit`;
+  } else if(side==='SELL'||side==='TRIM'){
+    orderDesc=`TRIM — ${ticker}\n$${displayAmt} partial reduction`;
+  } else {
+    orderDesc=`BUY — ${ticker}\n$${displayAmt}`;
+  }
+
+  const msg=`${env} TRADE\n\n${orderDesc}\n\n${isPaper?'This is a paper trade — no real money.':'⚠ This is a LIVE trade with real money.'}\n\nProceed?`;
   if(!confirm(msg))return;
-  executeAlpacaTrade(ticker,side,null,amount).then(result=>{
+  executeAlpacaTrade(ticker,side==='TRIM'?'sell':side.toLowerCase(),null,displayAmt).then(result=>{
     if(result){
-      alert(`✓ ${side} ${ticker} $${amount} submitted${isPaper?' (paper)':''}\nOrder ID: ${result.id}`);
+      alert(`✓ ${side} ${ticker} $${displayAmt} submitted${isPaper?' (paper)':''}\nOrder ID: ${result.id}`);
       renderTodaysMoves();
     } else {
       alert('Trade failed — check your Alpaca keys and account status');
@@ -5371,6 +5408,22 @@ function clearActions(side){
   });
 }
 window.clearActions=clearActions;
+
+function logManualTrade(){
+  const side=($('ml-side')?.value||'BUY').toUpperCase();
+  const ticker=($('ml-ticker')?.value||'').toUpperCase().trim();
+  const amount=Math.round(parseFloat($('ml-amount')?.value)||0);
+  if(!ticker||!amount){
+    const inp=$('ml-ticker');
+    if(inp){inp.style.borderColor='rgba(255,79,79,.5)';setTimeout(()=>inp.style.borderColor='',1500);}
+    return;
+  }
+  logTrade(side,ticker,amount,'DONE');
+  // Clear inputs
+  if($('ml-ticker'))$('ml-ticker').value='';
+  if($('ml-amount'))$('ml-amount').value='';
+}
+window.logManualTrade=logManualTrade;
 
 function clearTradeLog(){
   if(confirm('Clear session log?')){
