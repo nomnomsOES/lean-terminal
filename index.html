@@ -2723,7 +2723,7 @@ function runFitCheck(){
     </div>
 
     ${mostSimilar.length?`<div style="margin-bottom:8px">
-      <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:.1em;margin-bottom:5px">⚠ ACTS LIKE (angle &lt;35°) — you already have this bet</div>
+      <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:.1em;margin-bottom:5px">⚠ ACTS LIKE (angle <35°) — you already have this bet</div>
       ${mostSimilar.map(x=>`<div style="display:flex;justify-content:space-between;padding:4px 0;border-bottom:1px solid var(--line);font-size:11px">
         <span style="font-family:var(--mono);color:var(--text);cursor:pointer" onclick="showTicker('${x.ticker}',event)">${x.ticker}</span>
         <span style="color:var(--red);font-family:var(--mono)">${x.angle}° apart · ${x.theme||'—'}</span>
@@ -3416,6 +3416,9 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Fokker-Planck PDF — exact probability density replaces Monte Carlo 100 paths'},
   {status:'ok',  label:'Laplacian stress score — each holding vs all cluster neighbors simultaneously'},
   {status:'ok',  label:'Alpaca live execution — BUY/SELL from Today\'s Moves with confirm dialog'},
+  {status:'pend', label:'Accumulated signal integral — Σ score over N sessions, conviction built over time'},
+  {status:'pend', label:'P&L area exposure — definite integral of price vs entry, time-weighted gain/loss'},
+  {status:'pend', label:'Entry anchor (+C resolver) — store entry price/date per holding, resolves position math'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
 function renderTodaysMoves(){
