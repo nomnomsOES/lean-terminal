@@ -4253,7 +4253,7 @@ function fokkerPlanckDensity(mu, sigma, T=20, S0=100, gridN=120){
   const sig0=sigma*0.5;
   for(let i=0;i<=gridN;i++){
     const x=xMin+i*dx;
-    P[i]=Math.exp(-(x-lnS0)**2/(2*sig0**2));
+    P[i]=Math.exp(-((x-lnS0)**2)/(2*sig0**2));
   }
   // Normalize
   let sum=P.reduce((a,b)=>a+b,0)*dx;
