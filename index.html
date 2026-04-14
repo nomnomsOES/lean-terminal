@@ -568,6 +568,28 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
   <div class="tab-pane active" id="tab-terminal">
   <div class="grid">
 
+    <!-- TODAY'S MOVES — always visible first -->
+    <div id="todays-moves-card" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:2px">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase">Today's Moves</div>
+        <div id="tm-concentration-flag" style="display:none;font-family:var(--mono);font-size:9px;padding:2px 8px;border-radius:4px;background:rgba(255,79,79,.12);color:var(--red);border:1px solid rgba(255,79,79,.2)"></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr 1fr;gap:8px" id="tm-grid">
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(32,224,122,.07);border:1px solid rgba(32,224,122,.2)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--green);letter-spacing:.1em;margin-bottom:6px">▲ BUY</div>
+          <div id="tm-buys"><div style="font-size:10px;color:var(--dim)">Loading…</div></div>
+        </div>
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(255,79,79,.07);border:1px solid rgba(255,79,79,.2)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--red);letter-spacing:.1em;margin-bottom:6px">▼ EXIT</div>
+          <div id="tm-exits"><div style="font-size:10px;color:var(--dim)">Loading…</div></div>
+        </div>
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(245,197,66,.07);border:1px solid rgba(245,197,66,.2)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--yellow);letter-spacing:.1em;margin-bottom:6px">◎ WATCH</div>
+          <div id="tm-watches"><div style="font-size:10px;color:var(--dim)">Loading…</div></div>
+        </div>
+      </div>
+    </div>
+
     <!-- ROW 1: METRIC PILLS -->
     <div class="row-pills">
       <div class="metric-pill">
@@ -2112,6 +2134,11 @@ function loadRaceCard(rawTicker){
             <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${statusColor}">${status||'—'}</div>
             <div style="font-size:9px;color:var(--dim)">system call</div>
           </div>
+          <div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(32,224,122,.08);border:1px solid rgba(32,224,122,.2)">
+            <div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--green)">$${calcConvictionSize(ticker,sc,conf.total)}</div>
+            <div style="font-size:9px;color:var(--dim)">suggested size</div>
+          </div>
+          ${(()=>{const sl=calcStopLoss(ticker);return sl?`<div style="text-align:center;padding:8px 14px;border-radius:8px;background:rgba(245,197,66,.06);border:1px solid rgba(245,197,66,.2)"><div style="font-family:var(--mono);font-size:11px;font-weight:700;color:${sl.color}">${sl.label}</div><div style="font-size:9px;color:var(--dim)">trailing stop</div></div>`:'';})()}
         </div>
       </div>
     </div>
@@ -2566,7 +2593,7 @@ function renderSharpe(){
 function renderTransitionMatrix(){
   const el=$('transition-matrix');if(!el)return;
   const states=['STRONG','QUALIFIED','IMPROVING','WATCH','WEAK'];
-  const short={STRONG:'STNG',QUALIFIED:'QUAL',IMPROVING:'IMPR',WATCH:'WTCH',WEAK:'WEAK'};
+  const short={STRONG:'Running',QUALIFIED:'Qualified',IMPROVING:'Climbing',WATCH:'Watch',WEAK:'Fading'};
   const transitions={};
   states.forEach(a=>states.forEach(b=>{transitions[`${a}→${b}`]=0;}));
   S.ranking.forEach(r=>{
@@ -2579,7 +2606,7 @@ function renderTransitionMatrix(){
     if(states.includes(cur)&&states.includes(prev))transitions[`${prev}→${cur}`]=(transitions[`${prev}→${cur}`]||0)+1;
   });
   const rowSums={};states.forEach(a=>{rowSums[a]=states.reduce((s,b)=>s+(transitions[`${a}→${b}`]||0),0);});
-  let html=`<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:9px"><tr><td style="color:var(--dim);padding:3px 2px">↓from</td>`;
+  let html=`<div style="overflow-x:auto"><table style="border-collapse:collapse;width:100%;font-size:9px"><tr><td style="color:var(--dim);padding:3px 2px">From ↓</td>`;
   states.forEach(s=>html+=`<td style="color:var(--cyan);font-family:var(--mono);padding:3px 2px;text-align:center">${short[s]}</td>`);
   html+=`</tr>`;
   states.forEach(a=>{
@@ -3117,12 +3144,12 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Anti-stock suggestions — natural cushion names'},
   {status:'ok',  label:'Holdings flash badge — pulsing if ticker already held'},
   // ── BUILD ──
-  {status:'build',label:'Today\'s Moves card — BUY/EXIT/WATCH at very top of Terminal'},
-  {status:'build',label:'Conviction-based sizing — suggested $ = base × LCS × score'},
-  {status:'build',label:'Stop-loss layer — -15% trailing display on non-top-5'},
-  {status:'build',label:'Theme concentration cap — flag when theme > 30%'},
+  {status:'ok',  label:'Today\'s Moves card — BUY/EXIT/WATCH at very top of Terminal'},
+  {status:'ok',  label:'Conviction-based sizing — suggested $ = base × LCS × score'},
+  {status:'ok',  label:'Stop-loss layer — -15% trailing display on non-top-5'},
+  {status:'ok',  label:'Theme concentration cap — flag when theme > 30%'},
   // ── PENDING ──
-  {status:'pend', label:'NVDA + SMH in PRICE_HISTORY — GOOGLEFINANCE formula method'},
+  {status:'ok',  label:'NVDA + SMH in PRICE_HISTORY — 89 days each, Dec 2025–Apr 2026'},
   {status:'pend', label:'Volume spike wiring — VOLUME + VOLUME_SPIKE columns'},
   {status:'pend', label:'Crack propagation pattern matching — fingerprint past failures'},
   {status:'pend', label:'Laplace transform — frequency domain signal decay detection'},
@@ -3133,6 +3160,124 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Broker API integration — execute from terminal'},
   {status:'pend', label:'Live price feed — replace 15-min delayed GOOGLEFINANCE'},
 ];
+// ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
+function renderTodaysMoves(){
+  const minSc=minScore();
+  const holdTickers=new Set(S.holdings.map(h=>h.Ticker||h.ticker||'').filter(Boolean));
+  const allRanked=[...S.ranking,...S.radar].filter((r,i,a)=>{
+    const t=r.Ticker||r.ticker||'';
+    return t&&a.findIndex(x=>(x.Ticker||x.ticker)===t)===i;
+  });
+
+  // BUY: score >= minScore, not already max-sized holding
+  const buys=allRanked.filter(r=>{
+    const sc=num(r.Score||r.score,0);
+    const status=(r.Status||r.status||'').toUpperCase();
+    return sc>=minSc&&(status==='BUY'||sc>=minSc);
+  }).slice(0,4);
+
+  // EXIT: score < 50 or explicit SELL
+  const exits=allRanked.filter(r=>{
+    const sc=num(r.Score||r.score,0);
+    const status=(r.Status||r.status||'').toUpperCase();
+    const held=holdTickers.has(r.Ticker||r.ticker||'');
+    return held&&(status==='SELL'||sc<50);
+  }).slice(0,4);
+
+  // WATCH: score 65-74, approaching qualification
+  const watches=allRanked.filter(r=>{
+    const sc=num(r.Score||r.score,0);
+    return sc>=65&&sc<minSc;
+  }).slice(0,4);
+
+  function moveRow(r,type){
+    const t=r.Ticker||r.ticker||'';
+    const sc=num(r.Score||r.score,0);
+    const conf=calcConfidence(t);
+    const sizing=calcConvictionSize(t,sc,conf.total);
+    const color=type==='buy'?'var(--green)':type==='exit'?'var(--red)':'var(--yellow)';
+    const held=holdTickers.has(t);
+    return`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(99,160,255,.06);cursor:pointer" onclick="showTicker('${t}',event)">
+      <span style="font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)">${t}${held?'<span style="font-size:8px;color:var(--green);margin-left:3px">●</span>':''}</span>
+      <span style="font-size:10px;color:var(--dim)">${sc}</span>
+      <span style="font-family:var(--mono);font-size:11px;color:${color};font-weight:700">${type==='buy'?'$'+sizing:type==='exit'?'exit':'near'}</span>
+    </div>`;
+  }
+
+  const buysEl=$('tm-buys'),exitsEl=$('tm-exits'),watchesEl=$('tm-watches');
+  if(buysEl) buysEl.innerHTML=buys.length?buys.map(r=>moveRow(r,'buy')).join(''):`<div style="font-size:10px;color:var(--dim)">No qualifiers right now</div>`;
+  if(exitsEl) exitsEl.innerHTML=exits.length?exits.map(r=>moveRow(r,'exit')).join(''):`<div style="font-size:10px;color:var(--dim)">No exits flagged</div>`;
+  if(watchesEl) watchesEl.innerHTML=watches.length?watches.map(r=>moveRow(r,'watch')).join(''):`<div style="font-size:10px;color:var(--dim)">Nothing near threshold</div>`;
+
+  // Concentration check
+  renderConcentrationFlag();
+}
+
+// ─── CONVICTION-BASED SIZING ─────────────────────────────────────────────────
+// Suggested $ = base × (LCS/100) × (score/75)
+// Base: LEAN=$75, AGG=$125
+function calcConvictionSize(ticker, score, lcs){
+  const base=mode()==='AGG'?125:75;
+  const scFactor=Math.min(1.5,Math.max(0.5,(score||50)/75));
+  const lcsFactor=Math.min(1.3,Math.max(0.4,(lcs||50)/100));
+  const raw=base*scFactor*lcsFactor;
+  // Round to nearest $25
+  return Math.round(raw/25)*25;
+}
+
+// ─── STOP-LOSS LAYER ─────────────────────────────────────────────────────────
+// Shows -15% trailing stop for non-top-5 holdings
+function calcStopLoss(ticker){
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===ticker)+1;
+  const isTop5=rank>0&&rank<=5;
+  const price=parseFloat(h.Price||h.price||r.Price||r.price||0);
+  if(!price) return null;
+  const stopPrice=Math.round(price*0.85*100)/100;
+  const pctFromStop=0.15; // -15%
+  return{
+    stopPrice,
+    pctFromStop,
+    isTop5,
+    label:isTop5?'Top 5 — no stop':'Stop at $'+stopPrice+' (-15%)',
+    color:isTop5?'var(--green)':'var(--yellow)'
+  };
+}
+
+// ─── THEME CONCENTRATION CAP ─────────────────────────────────────────────────
+function renderConcentrationFlag(){
+  const flag=$('tm-concentration-flag');
+  if(!flag)return;
+
+  const totalVal=S.holdings.reduce((s,h)=>s+num(h.Value||h.value,0),0);
+  if(!totalVal){flag.style.display='none';return;}
+
+  // Group by theme
+  const themeVals={};
+  S.holdings.forEach(h=>{
+    const t=h.Ticker||h.ticker||'';
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const theme=r.Theme||r.theme||h.Theme||h.theme||'Other';
+    const val=num(h.Value||h.value,0);
+    themeVals[theme]=(themeVals[theme]||0)+val;
+  });
+
+  // Find themes over 30%
+  const breaches=Object.entries(themeVals)
+    .map(([theme,val])=>({theme,pct:Math.round(val/totalVal*100)}))
+    .filter(x=>x.pct>30)
+    .sort((a,b)=>b.pct-a.pct);
+
+  if(breaches.length){
+    flag.style.display='block';
+    flag.textContent=`⚠ ${breaches[0].theme} at ${breaches[0].pct}% — over 30% cap`;
+  } else {
+    flag.style.display='none';
+  }
+}
+
+
 function renderDock(){
   const el=$('dock-list');
   if(!el)return;
@@ -4131,6 +4276,7 @@ async function loadAll(){
   renderFeedStatus();
 
   renderPills();
+  renderTodaysMoves();
   renderRanking();
   renderActions();
   renderHoldings();
@@ -4731,7 +4877,7 @@ const PANEL_GROUPS={
   Environment:[['Sector Fit','mkt_sector_fit']]
 };
 
-const DRIVERS=['AI Capex','Rates','Index Beta','Crowd Speculation','Cycle Timing'];
+const DRIVERS=['AI Spending','Rate Pressure','Market Pull','Crowd Heat','Cycle Position'];
 
 function panelFillColor(v){return v>=70?'var(--green)':v>=45?'var(--blue)':'var(--muted)'}
 
@@ -4810,7 +4956,7 @@ function loadDNA(ticker){
     const inSystem=S.ranking.some(x=>(x.Ticker||x.ticker)===ticker)||S.radar.some(x=>(x.Ticker||x.ticker)===ticker);
     if(streetEl) streetEl.innerHTML=`
       <div style="padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.03);border:1px solid var(--line);margin-bottom:10px">
-        <div style="font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:.1em;margin-bottom:5px">${inSystem?'IN SYSTEM — NO DNA EXPORT':'NOT IN SHEET'}</div>
+        <div style="font-family:var(--mono);font-size:9px;color:var(--cyan);letter-spacing:.1em;margin-bottom:5px">${inSystem?'IN SYSTEM — NO DNA EXPORT':'NOT IN YOUR SYSTEM'}</div>
         <div style="font-size:11px;color:var(--muted);line-height:1.6">
           ${inSystem
             ?`<strong style="color:var(--text)">${ticker}</strong> is in your ranking data but has no DNA_EXPORT entry. Add it to your DNA_EXPORT sheet tab to get real metrics.`
@@ -4820,7 +4966,7 @@ function loadDNA(ticker){
       </div>
       <div style="display:flex;gap:8px;flex-wrap:wrap">
         <button class="btn btn-primary" style="font-size:11px;padding:7px 14px" onclick="generateSyntheticDNA('${ticker}')">
-          🔍 Generate Estimate
+          🔍 Run Local Estimate
         </button>
         <div style="font-size:10px;color:var(--dim);margin-top:6px;line-height:1.5;flex:1">Uses score data + local model. Labeled as estimate — not from your sheet.</div>
       </div>`;
@@ -4863,11 +5009,11 @@ function loadDNA(ticker){
 
   // Industry drivers (derived from DNA scores)
   const drivers=[
-    ['AI Capex',    Math.round((num(d.rel_strength,0)+num(d['5d_mom'],0))/2)],
+    ['AI Spending', Math.round((num(d.rel_strength,0)+num(d['5d_mom'],0))/2)],
     ['Rates',       Math.round(100-num(d.realized_vol,50))],
-    ['Index Beta',  Math.round((num(d['20d_mom'],0)+num(d.rel_strength,0))/2)],
-    ['Crowd Spec',  Math.round((num(d.volume_exp,0)+num(d.accum_dist,0))/2)],
-    ['Cycle Timing',Math.round(num(d.mkt_sector_fit,0))]
+    ['Market Pull', Math.round((num(d['20d_mom'],0)+num(d.rel_strength,0))/2)],
+    ['Crowd Heat',  Math.round((num(d.volume_exp,0)+num(d.accum_dist,0))/2)],
+    ['Cycle Position',Math.round(num(d.mkt_sector_fit,0))]
   ];
   $('dna-drivers').innerHTML=drivers.map(([k,v])=>`
     <div class="dna-driver-row">
