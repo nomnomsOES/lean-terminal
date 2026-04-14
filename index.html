@@ -3196,7 +3196,7 @@ function renderActions(){
       <div class="ar-check ${done?'checked':''}" onclick="toggleCheck('${key}','${side}','${r.Ticker}',${amt})" title="${done?'Mark skipped':'Mark done'}"></div>
       <div class="ar-detail">
         <div class="ar-ticker" onclick="showTicker('${r.Ticker}',event)">${r.Ticker}${done?' ✓':skipped?' —':''}</div>
-        <div class="ar-meta">${r.Theme||'—'} · score ${num(r.Score,0)} · ${r.Markov_State||r.Markov||'—'}</div>
+        <div class="ar-meta">${r.Theme||'—'} · score ${num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0)} · ${r.Markov_State||r.Markov||'—'}</div>
       </div>
       <div class="ar-amount">${money(amt)}</div>
       <div class="ar-tag ${tagClass}">${side}</div>
@@ -3469,19 +3469,19 @@ function renderTodaysMoves(){
   if(card)card.style.display='block';
 
   const buys=allRanked.filter(r=>{
-    const sc=num(r.Score||r.score,0);
+    const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
     return sc>=minSc;
   }).slice(0,4);
 
   const exits=allRanked.filter(r=>{
-    const sc=num(r.Score||r.score,0);
-    const status=(r.Status||r.status||'').toUpperCase();
+    const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
+    const status=(r.Status||r.status||r.ACTION||r.action||r.FINAL_ACTION||'').toUpperCase();
     const held=holdTickers.has(r.Ticker||r.ticker||'');
     return held&&(status==='SELL'||sc<50);
   }).slice(0,4);
 
   const watches=allRanked.filter(r=>{
-    const sc=num(r.Score||r.score,0);
+    const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
     return sc>=65&&sc<minSc;
   }).slice(0,4);
 
@@ -6567,6 +6567,16 @@ $('rf-btn').onclick=loadAll;
 
 // ─── INIT ─────────────────────────────────────────────────────────────────────
 if(!rd(K.mode))wr(K.mode,'LEAN');
+
+// Auto-clear session checks on new day
+(function(){
+  const today=new Date().toDateString();
+  const lastDay=rd('lt_last_session_day','');
+  if(lastDay!==today){
+    wr(K.checks,'{}');
+    wr('lt_last_session_day',today);
+  }
+})();
 
 // Global tooltip delegation — smart viewport-aware positioning
 function positionTooltip(btn, tip){
