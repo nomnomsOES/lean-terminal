@@ -3643,6 +3643,7 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Fokker-Planck PDF — exact probability density replaces Monte Carlo 100 paths'},
   {status:'ok',  label:'Laplacian stress score — each holding vs all cluster neighbors simultaneously'},
   {status:'ok',  label:'Alpaca live execution — BUY/SELL from Today\'s Moves with confirm dialog'},
+  {status:'pend', label:'PDT-free same-day exit signals — intraday spike exit trigger now that $25K rule is gone'},
   {status:'ok',  label:'Accumulated signal integral — Σ score over N sessions, conviction built over time'},
   {status:'ok',  label:'P&L area exposure — definite integral of price vs entry, time-weighted gain/loss'},
   {status:'ok',  label:'Entry anchor (+C resolver) — entry price/date per holding, sheet or manual input'},
@@ -3692,9 +3693,9 @@ function renderTodaysMoves(){
     const holdVal=Math.round(num(hRow.Value||hRow.value||hRow.Holding_Value||hRow.holding_value,0));
     const trimAmt=calcConvictionSize(t,sc,conf.total);
     const execBtn=type==='buy'?
-      `<button onclick="confirmAndExecute('${t}','BUY',${sizing})" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(32,224,122,.3);background:transparent;color:var(--green);cursor:pointer;margin-left:4px">exec</button>`:
+      `<button onclick="smartExec('${t}','BUY',${sizing})" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(32,224,122,.3);background:transparent;color:var(--green);cursor:pointer;margin-left:4px">${isAlpacaRestricted(t)?'log':'exec'}</button>`:
       type==='exit'&&held?
-      `<button onclick="confirmAndExecute('${t}','SELL',${holdVal||trimAmt},'full')" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,79,79,.3);background:transparent;color:var(--red);cursor:pointer;margin-left:4px">exit all</button>`:'';
+      `<button onclick="smartExec('${t}','SELL',${holdVal||trimAmt},'full')" style="font-family:var(--mono);font-size:8px;padding:2px 6px;border-radius:4px;border:1px solid rgba(255,79,79,.3);background:transparent;color:var(--red);cursor:pointer;margin-left:4px">${isAlpacaRestricted(t)?'log exit':'exit all'}</button>`:'';
     return`<div style="display:flex;align-items:center;justify-content:space-between;padding:4px 0;border-bottom:1px solid rgba(99,160,255,.06);cursor:pointer" onclick="showTicker('${t}',event)">
       <span style="font-family:var(--mono);font-weight:700;font-size:12px;color:var(--text)">${t}${held?'<span style="font-size:8px;color:var(--green);margin-left:3px">●</span>':''}</span>
       <span style="font-size:10px;color:var(--dim)">${sc}</span>
@@ -4053,7 +4054,37 @@ function calcSignalDecay(ticker){
   };
 }
 
-// ─── ALPACA LIVE PRICE ENGINE ────────────────────────────────────────────────
+// ─── ALPACA RESTRICTED TICKERS ───────────────────────────────────────────────
+// These tickers are not supported by Alpaca (OTC, cannabis, restricted securities)
+// Exec button will log-only for these instead of attempting Alpaca order
+const ALPACA_RESTRICTED=new Set([
+  // Cannabis / OTC
+  'TLRY','CGC','MSOS','HYFM','ACB','CRON','SNDL','CURA','TPVG','OGI',
+  'APHA','HEXO','FIRE','GTII','CURLF','TCNNF','CCHWF','TRSSF','GRAMF',
+  // Common OTC / Pink Sheet
+  'HMBL','NAKD','ILUS','PHIL','SIGY',
+]);
+
+function isAlpacaRestricted(ticker){
+  return ALPACA_RESTRICTED.has((ticker||'').toUpperCase());
+}
+
+// Smart exec: log-only for restricted, full Alpaca for supported
+function smartExec(ticker, side, amount, exitType){
+  if(isAlpacaRestricted(ticker)){
+    // Skip Alpaca — just log it
+    const isPaper=localStorage.getItem('lt_alpaca_paper')!=='false';
+    const sideLabel=side==='SELL'&&exitType==='full'?'SELL ALL':side;
+    const msg=`LOG TRADE\n\n${sideLabel} — ${ticker}\n$${amount}\n\nThis ticker is not supported by Alpaca.\nTrade will be logged only — execute manually in Robinhood.\n\nProceed?`;
+    if(!confirm(msg))return;
+    logTrade(side.toUpperCase(),ticker,amount,'DONE');
+    renderTodaysMoves();
+    alert(`✓ ${side} ${ticker} $${amount} logged.\nExecute manually in Robinhood.`);
+  } else {
+    confirmAndExecute(ticker,side,amount,exitType);
+  }
+}
+window.smartExec=smartExec;
 const ALPACA_PAPER_URL='https://paper-api.alpaca.markets';
 const ALPACA_DATA_URL='https://data.alpaca.markets';
 const AK='lt_alpaca_key';
