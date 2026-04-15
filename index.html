@@ -4121,23 +4121,25 @@ async function fetchAlpacaMultiple(tickers){
 }
 
 async function testAlpacaConnection(){
-  const key=$('s-alpaca-key')?.value?.trim()||rd(AK)||'';
-  const secret=$('s-alpaca-secret')?.value?.trim()||rd('lt_alpaca_secret')||'';
+  const key=$('s-alpaca-key')?.value?.trim()||localStorage.getItem('lt_alpaca_key')||'';
+  const secret=$('s-alpaca-secret')?.value?.trim()||localStorage.getItem('lt_alpaca_secret')||'';
   const status=$('alpaca-status');
   if(!key||!secret){if(status)status.textContent='Enter both keys first';return;}
-  if(status)status.textContent='Testing…';
+  if(status){status.textContent='Testing…';status.style.color='var(--muted)';}
   try{
-    const r=await fetch(`${ALPACA_PAPER_URL}/v2/account`,{
+    const r=await fetch('https://paper-api.alpaca.markets/v2/account',{
       headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}
     });
     const d=await r.json();
     if(d.account_number){
       if(status){status.textContent='✓ Connected — '+d.account_number;status.style.color='var(--green)';}
-      wr(AK,key);wr('lt_alpaca_secret',secret);
+      // Save to localStorage immediately
+      localStorage.setItem('lt_alpaca_key',key);
+      localStorage.setItem('lt_alpaca_secret',secret);
     } else {
-      if(status){status.textContent='✗ Invalid keys';status.style.color='var(--red)';}
+      if(status){status.textContent='✗ '+(d.message||'Invalid keys');status.style.color='var(--red)';}
     }
-  }catch{
+  }catch(e){
     if(status){status.textContent='✗ Connection failed';status.style.color='var(--red)';}
   }
 }
@@ -4704,39 +4706,71 @@ function getLaplacianForTicker(ticker){
 // BUY/TRIM from Today's Moves card → paper trade → logged
 // ═══════════════════════════════════════════════════════════════════════════
 async function executeAlpacaTrade(ticker, side, qty, notional){
-  const key=rd(AK)||'';
-  const secret=rd('lt_alpaca_secret')||'';
-  const isPaper=rd(AP)!=='false';
+  // Always read fresh from localStorage — don't use stale pre-wired values
+  const key=localStorage.getItem('lt_alpaca_key')||'';
+  const secret=localStorage.getItem('lt_alpaca_secret')||'';
+  const isPaper=localStorage.getItem('lt_alpaca_paper')!=='false';
   if(!key||!secret){
     alert('Enter Alpaca API keys in ⚙ Data Settings first');return null;
   }
   const baseUrl=isPaper?'https://paper-api.alpaca.markets':'https://api.alpaca.markets';
-  const order={
-    symbol:ticker,
-    side:side.toLowerCase(),
+
+  // Build order — try notional first, fall back to qty if notional fails
+  const makeOrder=(useQty)=>({
+    symbol:ticker.toUpperCase(),
+    side:side.toLowerCase()==='trim'?'sell':side.toLowerCase(),
     type:'market',
     time_in_force:'day',
-    notional:notional.toString()
+    ...(useQty
+      ? {qty: qty ? qty.toString() : '1'}
+      : {notional: notional ? notional.toString() : '100'}
+    )
+  });
+
+  const headers={
+    'APCA-API-KEY-ID':key,
+    'APCA-API-SECRET-KEY':secret,
+    'Content-Type':'application/json'
   };
+
   try{
+    // First attempt — notional order
     const r=await fetch(`${baseUrl}/v2/orders`,{
-      method:'POST',
-      headers:{
-        'APCA-API-KEY-ID':key,
-        'APCA-API-SECRET-KEY':secret,
-        'Content-Type':'application/json'
-      },
-      body:JSON.stringify(order)
+      method:'POST',headers,
+      body:JSON.stringify(makeOrder(false))
     });
     const d=await r.json();
+
     if(d.id){
-      logTrade(side,ticker,notional,'DONE');
+      logTrade(side.toUpperCase(),ticker,notional||qty,'DONE');
       return d;
-    } else {
-      console.error('Alpaca order error:',d);
+    }
+
+    // If notional failed, try qty-based order
+    if(d.code||d.message){
+      console.warn('Notional order failed:',d.message,'— trying qty order');
+      const r2=await fetch(`${baseUrl}/v2/orders`,{
+        method:'POST',headers,
+        body:JSON.stringify(makeOrder(true))
+      });
+      const d2=await r2.json();
+      if(d2.id){
+        logTrade(side.toUpperCase(),ticker,notional||qty,'DONE');
+        return d2;
+      }
+      // Both failed — show the actual Alpaca error
+      const errMsg=d2.message||d2.error||d.message||'Unknown error';
+      alert(`Alpaca rejected order for ${ticker}:\n\n${errMsg}\n\nThe trade has NOT been logged.\nYou can use the manual log entry instead.`);
       return null;
     }
-  }catch(e){console.error('Alpaca exec error:',e);return null;}
+
+    console.error('Alpaca unexpected response:',d);
+    return null;
+  }catch(e){
+    console.error('Alpaca exec error:',e);
+    alert(`Connection error sending order to Alpaca.\n\nError: ${e.message||e}\n\nYou can log this trade manually using the Session Log entry form.`);
+    return null;
+  }
 }
 window.executeAlpacaTrade=executeAlpacaTrade;
 
