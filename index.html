@@ -5308,6 +5308,7 @@ function confFillClass(v){return v>=70?'conf-high':v>=45?'conf-mid':'conf-low'}
 
 // ─── QUICK STATS POPUP ───────────────────────────────────────────────────────
 function showTicker(ticker, evt){
+  try{
   const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
   const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
   const d=S.dna.find(x=>(x.ticker||x.Ticker)===ticker)||{};
@@ -5469,6 +5470,7 @@ function showTicker(ticker, evt){
   // Timestamp
   const tsEl=$('bc-timestamp');
   if(tsEl) tsEl.textContent='data from '+new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
+  }catch(err){console.error('Baseball card error for '+ticker+':',err);}
 }
 window.showTicker=showTicker;
 
@@ -5662,8 +5664,15 @@ function loadLens(ticker){
   const el=$('lens-content');
   if(!el)return;
 
+  try{
+
   const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
   const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const hasData=!!(r.Ticker||r.ticker||r.Score||r.score||h.Ticker||h.ticker);
+  if(!hasData){
+    el.innerHTML='<div class="card" style="padding:20px;text-align:center"><div style="font-family:var(--mono);font-size:14px;color:var(--yellow);margin-bottom:8px">'+ticker+' not found in ranking or radar data</div><div style="font-size:12px;color:var(--muted)">Make sure the ticker is in your Google Sheet and data has loaded. Check the Terminal tab to see what tickers are available.</div></div>';
+    return;
+  }
   const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
   const isHeld=S.holdings.some(x=>(x.Ticker||x.ticker)===ticker);
   const theme=r.Theme||h.Theme||h.Role||r.theme||'—';
@@ -5796,6 +5805,11 @@ function loadLens(ticker){
 
   // Render portfolio x-ray below
   renderPortfolioXray();
+
+  }catch(err){
+    console.error('Lens error for '+ticker+':',err);
+    el.innerHTML='<div class="card" style="padding:20px;text-align:center"><div style="font-family:var(--mono);font-size:14px;color:var(--red);margin-bottom:8px">Error loading lens for '+ticker+'</div><div style="font-size:12px;color:var(--muted)">'+err.message+'</div></div>';
+  }
 }
 window.loadLens=loadLens;
 
