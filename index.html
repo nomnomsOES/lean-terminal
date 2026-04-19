@@ -1813,7 +1813,7 @@ function calcNodeStress(ticker){
 
   const sc=num(r.Score||r.score,50);
   const status=(r.Status||r.status||'').toUpperCase();
-  const move=(r.Move||r.move||'').toLowerCase();
+  const move=String(r.Move||r.move||'').toLowerCase();
   const theme=r.Theme||h.Theme||r.theme||'Uncategorized';
 
   // Stress = inverse of health
@@ -2113,7 +2113,7 @@ function renderStressMap(){
     const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||S.radar.find(x=>(x.Ticker||x.ticker)===t)||{};
     const sc=num(r.Score||r.score,50);
     const status=(r.Status||r.status||'').toUpperCase();
-    const move=(r.Move||r.move||'').toLowerCase();
+    const move=String(r.Move||r.move||'').toLowerCase();
     const theme=r.Theme||r.theme||'Uncategorized';
     const ss=Math.round(Math.max(5,Math.min(95,100-sc)));
     const ms=status==='SELL'?80:status==='TRIM'?50:status==='WATCH'?35:status==='BUY'?15:45;
@@ -2196,7 +2196,7 @@ function loadRaceCard(rawTicker){
   const val=num(h.Value||h.value,0);
   const theme=r.Theme||h.Theme||r.theme||'Unknown';
   const status=(r.Status||r.status||'').toUpperCase();
-  const move=(r.Move||r.move||'').toLowerCase();
+  const move=String(r.Move||r.move||'').toLowerCase();
   const fam=getFamilyData(theme,ticker);
   const conf=calcConfidence(ticker);
   const beh=calcBehaviorProb(ticker);
@@ -2882,7 +2882,7 @@ function renderTransitionMatrix(){
   states.forEach(a=>states.forEach(b=>{transitions[`${a}→${b}`]=0;}));
   S.ranking.forEach(r=>{
     const cur=(r.Markov_State||r.Markov||'WATCH').toUpperCase();
-    const move=(r.Move||r.move||'').toLowerCase();
+    const move=String(r.Move||r.move||'').toLowerCase();
     let prev=cur;
     const idx=states.indexOf(cur);
     if(move==='strong'||move==='emerging')prev=states[Math.min(4,idx+1)]||cur;
@@ -3009,7 +3009,7 @@ function calcConfidence(ticker){
   const strengthBonus=strength==='elite'?4:strength==='strong'?3:strength==='okay'?1:0;
   const scoreNorm=Math.min(100,sc);
   // Also pull move field for direction confirmation
-  const moveStr=(r.Move||r.move||r.MOVE||'').toLowerCase();
+  const moveStr=String(r.Move||r.move||r.MOVE||'').toLowerCase();
   const moveBonus=moveStr==='strong'?3:moveStr==='near buy'||moveStr==='emerging'?1:moveStr==='weak'?-2:0;
   const momScore=Math.round(Math.max(0,Math.min(20,(scoreNorm/100)*14+strengthBonus+moveBonus)));
   const momLabel=momScore>=16?'Strong signal with quality confirmation':momScore>=12?'Decent signal, some confirmation':momScore>=8?'Mild signal, weak confirmation':momScore>=4?'Faint signal':'No meaningful momentum signal';
@@ -3087,7 +3087,7 @@ function generateHorseRead(ticker){
 
   const sc=num(r.Score||r.score,0);
   const status=(r.Status||r.status||'').toUpperCase();
-  const move=(r.Move||r.move||'').toLowerCase();
+  const move=String(r.Move||r.move||'').toLowerCase();
   const theme=r.Theme||r.theme||'';
   const strength=(r.Strength||r.strength||'').toLowerCase();
   const markov=(r.Markov_State||r.Markov||'').toUpperCase();
@@ -5337,7 +5337,7 @@ function showTicker(ticker, evt){
   const sysColor=sysCall==='BUY'?'var(--green)':sysCall==='SELL'?'var(--red)':sysCall==='WATCH'?'var(--yellow)':'var(--muted)';
 
   // Direction probabilities from Markov
-  const mk=S.markov.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const mk=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
   const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
   const pFlat=Math.round(num(mk.P_Flat||mk.p_flat||mk.FLAT_PROB,30));
   const pDown=100-pUp-pFlat;
@@ -5525,7 +5525,7 @@ function openCompareView(){
     const ema=calc8EMA(t);
     const ent=calcEntropy?calcEntropy(t):{score:50};
     const stop=calcAdaptiveStop(t);
-    const mk=S.markov.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const mk=S.markovCurrent?.find?.(x=>x.TICKER===t)||{};
     const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
     const isHeld=S.holdings.some(x=>(x.Ticker||x.ticker)===t);
     const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===t)+1;
@@ -5681,7 +5681,7 @@ function loadLens(ticker){
   // Layer 1: Stock
   const ema=calc8EMA(ticker);
   const ent=calcEntropy?calcEntropy(ticker):{score:50};
-  const mk=S.markov.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const mk=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
   const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
   const markov=r.Markov_State||r.Markov||'—';
   const lyap=calcLyapunov?calcLyapunov(ticker):{lambda:0};
