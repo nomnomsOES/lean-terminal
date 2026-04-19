@@ -532,6 +532,8 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .monte-scenario-btns{display:flex;gap:6px;flex-wrap:wrap;margin-top:4px}
 .monte-scenario-btn{padding:4px 10px;border-radius:6px;border:1px solid var(--line2);background:transparent;color:var(--muted);font-family:var(--mono);font-size:9px;font-weight:700;cursor:pointer;transition:all .12s;text-transform:uppercase}
 .monte-scenario-btn:hover,.monte-scenario-btn.active{background:var(--blue2);border-color:var(--blue);color:var(--blue)}
+
+@keyframes softpulse{0%,100%{opacity:1}50%{opacity:.6}}
 </style>
 </head>
 <body>
@@ -562,6 +564,7 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
     <button class="tab-btn" onclick="switchTab('cheatsheet',this)">📋 Cheat Sheet</button>
     <button class="tab-btn" onclick="switchTab('monte',this)">📈 Monte / Markov</button>
     <button class="tab-btn" onclick="switchTab('racecard',this)">🏇 Race Card</button>
+    <button class="tab-btn" onclick="switchTab('lens',this)">🔬 Lens</button>
   </div>
 
   <!-- ══════════ TAB: TERMINAL ══════════ -->
@@ -1252,6 +1255,18 @@ Average LCS across all holdings, weighted by position size, minus a penalty for 
   </div><!-- /tab-racecard -->
 
 </div><!-- /wrap -->
+
+
+  <!-- ══════════ TAB: LENS ══════════ -->
+  <div class="tab-pane" id="tab-lens">
+    <div style="max-width:820px;margin:0 auto">
+      <div style="display:flex;gap:8px;margin-bottom:14px">
+        <input id="lens-input" placeholder="Type a ticker..." style="flex:1;background:rgba(255,255,255,.05);border:1px solid var(--line2);border-radius:9px;color:var(--text);padding:9px 14px;font-family:var(--mono);font-size:13px" onkeydown="if(event.key==='Enter')loadLens(this.value.trim().toUpperCase())">
+        <button class="btn" onclick="loadLens($('lens-input').value.trim().toUpperCase())">Scan</button>
+      </div>
+      <div id="lens-content"><div class="empty" style="padding:40px 0;text-align:center;color:var(--muted)">Type a ticker and hit Scan to load the lens view</div></div>
+    </div>
+  </div><!-- /tab-lens -->
 
 <!-- DNA PANEL MODAL -->
 <div id="dna-panel">
@@ -2402,7 +2417,10 @@ function loadRaceCard(rawTicker){
           :`<div style="font-size:10px;color:var(--dim)">Add ticker to PRICE_HISTORY for live behavior stats</div>`}
         </div>
         <div>
-          <div class="rc-row"><span style="color:var(--muted)">Signal entropy</span><span style="font-family:var(--mono);color:${ent.score<=40?'var(--green)':ent.score<=65?'var(--yellow)':'var(--red)'}">${ent.score<=40?'Clean signal':'High noise'} (${ent.score}/100)</span></div>
+          ${(()=>{const ema=calc8EMA(ticker);return ema.hasEMA?'<div class="rc-row"><span style="color:var(--muted)">8 EMA position</span><span style="font-family:var(--mono);color:'+ema.color+'"><span style="font-size:14px">'+ema.dot+'</span> '+ema.label+'</span></div><div class="rc-row"><span style="color:var(--muted)">Entry timing</span><span style="font-family:var(--mono);font-size:10px;color:'+(ema.above?'var(--green)':'var(--yellow)')+'">'+ema.entryLabel+'</span></div>':'';})()}
+      ${(()=>{const as=calcAdaptiveStop(ticker);return as?'<div class="rc-row"><span style="color:var(--muted)">Adaptive stop</span><span style="font-family:var(--mono);color:'+as.color+'">'+as.label+(as.nearStopLabel?' · '+as.nearStopLabel:'')+'</span></div>':'';})()}
+      ${(()=>{if(!isHeld)return'';const rs=calcRunnerSplit(ticker,val||100);return'<div class="rc-row"><span style="color:var(--muted)">Runner strategy</span><span style="font-family:var(--mono);color:var(--cyan)">'+rs.label+'</span></div><div class="rc-row"><span style="color:var(--muted)">Runner exit trigger</span><span style="font-size:10px;color:var(--muted)">'+rs.runnerExitTrigger+'</span></div>';})()}
+      <div class="rc-row"><span style="color:var(--muted)">Signal entropy</span><span style="font-family:var(--mono);color:${ent.score<=40?'var(--green)':ent.score<=65?'var(--yellow)':'var(--red)'}">${ent.score<=40?'Clean signal':'High noise'} (${ent.score}/100)</span></div>
           <div class="rc-row"><span style="color:var(--muted)">Markov state</span><span style="font-family:var(--mono)">${r.Markov_State||r.Markov||'—'}</span></div>
           <div class="rc-row"><span style="color:var(--muted)">Momentum</span><span style="font-family:var(--mono)">${move||'—'}</span></div>
         </div>
@@ -3186,7 +3204,7 @@ function renderRanking(){
       <td>${lcsHtml(ticker)}</td>
       <td style="font-family:var(--mono);font-size:10px;font-weight:700;color:${status==='BUY'?'var(--green)':status==='TRIM'||status==='SELL'?'var(--red)':'var(--yellow)'}">${status}</td>
       <td><span class="markov-pill ${markovClass(markov)}">${markov}</span></td>
-      <td class="${moveClass(mv)}" style="font-family:var(--mono);font-size:11px">${mv?pct(mv):'—'}</td>
+      <td>${(()=>{const e=calc8EMA(ticker);return e.hasEMA?'<span style="color:'+e.dotColor+';font-size:10px;margin-right:3px" title="'+e.label+'">'+e.dot+'</span>':'';})()}<span class="${moveClass(mv)}" style="font-family:var(--mono);font-size:11px">${mv?pct(mv):'—'}</span></td>
     </tr>`;
   }).join('');
 }
@@ -3647,6 +3665,13 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Accumulated signal integral — Σ score over N sessions, conviction built over time'},
   {status:'ok',  label:'P&L area exposure — definite integral of price vs entry, time-weighted gain/loss'},
   {status:'ok',  label:'Entry anchor (+C resolver) — entry price/date per holding, sheet or manual input'},
+  {status:'ok',  label:'8 EMA position flag — green/red dot showing trend direction per ticker'},
+  {status:'ok',  label:'EMA-based adaptive stop — tighter than fixed -15% when EMA is above fixed stop'},
+  {status:'ok',  label:'Runner strategy — 75% exit at target, 25% runner held until EMA breaks'},
+  {status:'ok',  label:'Baseball Card — compact stat card popup replacing full DNA panel on click'},
+  {status:'ok',  label:'Portfolio X-Ray — holdings connection map, same bet / cushion / independent'},
+  {status:'ok',  label:'Compare Tray — add 2-5 tickers, side-by-side with deep math and correlation'},
+  {status:'ok',  label:'Lens Tab — 5-layer regime overlay with anomaly detection and auto-verdict'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
 function renderTodaysMoves(){
@@ -4051,6 +4076,77 @@ function calcSignalDecay(ticker){
     label,color,active:true,
     interpretation:halfLife<=5?`Signal half-life ~${halfLife}d — consider acting soon`:
                    `Signal has ~${halfLife}d before it loses half its strength`
+  };
+}
+
+
+
+// ─── ITEM 59: 8 EMA POSITION FLAG ────────────────────────────────────────────
+function calc8EMA(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+  if(rows.length<10) return{hasEMA:false,label:'Need price history',color:'var(--dim)'};
+  const prices=rows.map(r=>parseFloat(r.CLOSE||r.Close||r.close||0)).filter(v=>v>0);
+  if(prices.length<10) return{hasEMA:false,label:'Need 10+ sessions',color:'var(--dim)'};
+  const period=8;
+  const k=2/(period+1);
+  let ema=prices.slice(0,period).reduce((s,v)=>s+v,0)/period;
+  for(let i=period;i<prices.length;i++){ema=prices[i]*k+ema*(1-k);}
+  const lastPrice=prices[prices.length-1];
+  const above=lastPrice>ema;
+  const pctFromEMA=((lastPrice-ema)/ema*100);
+  const dist=Math.abs(pctFromEMA);
+  const strength=dist>3?'strong':dist>1?'moderate':'weak';
+  return{
+    hasEMA:true,ema:Math.round(ema*100)/100,lastPrice,above,
+    pctFromEMA:Math.round(pctFromEMA*10)/10,strength,
+    label:above?'Above 8 EMA ($'+ema.toFixed(2)+') — trend is with you':'Below 8 EMA ($'+ema.toFixed(2)+') — trend is against you',
+    dot:'\u25CF',dotColor:above?'var(--green)':'var(--red)',color:above?'var(--green)':'var(--red)',
+    entryLabel:above?(dist<1.5?'Near the line — ideal entry zone':'Running above — wait for pullback to EMA'):(dist<1.5?'Testing from below — watch for reclaim':'Extended below — not entry territory'),
+  };
+}
+
+// ─── ITEM 61: RUNNER STRATEGY ─────────────────────────────────────────────────
+function calcRunnerSplit(ticker, totalAmount){
+  const ema=calc8EMA(ticker);
+  const exitPct=0.75;
+  const runnerPct=0.25;
+  const exitAmt=Math.round(totalAmount*exitPct);
+  const runnerAmt=totalAmount-exitAmt;
+  return{
+    exitAmount:exitAmt,runnerAmount:runnerAmt,
+    exitPct:Math.round(exitPct*100),runnerPct:Math.round(runnerPct*100),
+    runnerExitTrigger:ema.hasEMA?'Runner exits when price closes below $'+ema.ema+' (8 EMA)':'Runner exits on score drop below 65 or manual review',
+    label:'Take $'+exitAmt+' profit ('+Math.round(exitPct*100)+'%) · hold $'+runnerAmt+' runner ('+Math.round(runnerPct*100)+'%)',
+  };
+}
+
+// ─── ITEM 60: EMA-BASED ADAPTIVE STOP ────────────────────────────────────────
+function calcAdaptiveStop(ticker){
+  const ema=calc8EMA(ticker);
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===ticker)+1;
+  const isTop5=rank>0&&rank<=5;
+  const price=parseFloat(h.Price||h.price||r.Price||r.price||0);
+  if(!price) return null;
+  const fixedStop=Math.round(price*0.85*100)/100;
+  const emaStop=ema.hasEMA?ema.ema:null;
+  let activeStop, stopType, stopLabel;
+  if(isTop5){
+    if(emaStop&&ema.above){activeStop=emaStop;stopType='ema';stopLabel='Top 5 — EMA stop at $'+emaStop.toFixed(2);}
+    else{activeStop=null;stopType='none';stopLabel='Top 5 — hold through';}
+  } else if(emaStop){
+    if(emaStop>fixedStop&&ema.above){activeStop=emaStop;stopType='ema';stopLabel='EMA stop $'+emaStop.toFixed(2)+' (tighter than -15%)';}
+    else{activeStop=fixedStop;stopType='fixed';stopLabel='Fixed stop $'+fixedStop+' (-15%)';}
+  } else {activeStop=fixedStop;stopType='fixed';stopLabel='Fixed stop $'+fixedStop+' (-15%)';}
+  const pctFromStop=activeStop?Math.round((price-activeStop)/price*100*10)/10:null;
+  return{
+    activeStop,fixedStop,emaStop,stopType,isTop5,label:stopLabel,pctFromStop,
+    color:stopType==='ema'?'var(--cyan)':stopType==='fixed'?'var(--yellow)':'var(--green)',
+    nearStop:pctFromStop!==null&&pctFromStop<3,
+    nearStopLabel:pctFromStop!==null&&pctFromStop<3?'Only '+pctFromStop+'% above stop — watch closely':null,
   };
 }
 
@@ -5212,243 +5308,530 @@ function confFillClass(v){return v>=70?'conf-high':v>=45?'conf-mid':'conf-low'}
 
 // ─── QUICK STATS POPUP ───────────────────────────────────────────────────────
 function showTicker(ticker, evt){
-  const r=S.ranking.find(x=>x.Ticker===ticker)||S.radar.find(x=>x.Ticker===ticker)||{};
-  const h=S.holdings.find(x=>x.Ticker===ticker)||{};
-  const d=S.dna.find(x=>x.ticker===ticker)||{};
-  const sc=num(r.Score||r.score,0);
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const d=S.dna.find(x=>(x.ticker||x.Ticker)===ticker)||{};
+  const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
   const mv=num(r.Move||r.move,0);
-  const val=num(h.Value||h.value||h.Holding_Value,0);
+  const val=Math.round(num(h.Value||h.value||h.Holding_Value||h.holding_value,0));
   const markov=r.Markov_State||r.Markov||'—';
   const theme=r.Theme||h.Theme||h.Role||r.theme||'—';
-  const fam=getFamilyData(theme,ticker);
-  const dnaScore=num(d.dna_score,0);
-  const mcScore=num(d.mc_score||r.Markov_Score||r.Monte_Skew,0);
-  const rank=S.ranking.findIndex(x=>x.Ticker===ticker)+1;
+  const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===ticker)+1;
+  const isHeld=S.holdings.some(x=>(x.Ticker||x.ticker)===ticker);
+  const conf=calcConfidence(ticker);
+  const sizing=calcConvictionSize(ticker,sc,conf.total);
+  const ema=calc8EMA(ticker);
+  const stop=calcAdaptiveStop(ticker);
+  const runner=isHeld?calcRunnerSplit(ticker,val||100):null;
+  const price=parseFloat(h.Price||h.price||r.Price||r.price||0);
+  const entryPrice=parseFloat(h.Entry_Price||h.entry_price||h.Avg_Cost||h.avg_cost||0);
+  const pnl=entryPrice&&price?((price-entryPrice)/entryPrice*100):null;
+  const pnlDollar=entryPrice&&price&&val?(val-(val/(price/entryPrice))):null;
 
   S._dnaSelected=ticker;
 
-  // Header
-  $('dp-ticker').textContent=ticker;
-  $('dp-ticker-sub').textContent=theme+(fam.family&&fam.family!=='Uncategorized'?' · '+fam.family:'');
-  $('dp-title').textContent=`${ticker} — Stock DNA`;
-  $('dp-sub').textContent=`DNA footprint for current state · rank #${rank||'?'} · ${theme}`;
+  // System call
+  const action=(r.Status||r.status||r.ACTION||r.action||r.FINAL_ACTION||'').toUpperCase();
+  const sysCall=sc>=75?'BUY':action==='SELL'?'SELL':sc>=65?'WATCH':sc>=50?'HOLD':'AVOID';
+  const sysColor=sysCall==='BUY'?'var(--green)':sysCall==='SELL'?'var(--red)':sysCall==='WATCH'?'var(--yellow)':'var(--muted)';
 
-  // Tags
-  const isBull=(r.Bias||r.bias||r.Status||'').toUpperCase();
-  const dupRisk=sc>=75?'Low':'High';
-  const horseTag=d.horse_read?(d.horse_read.split('.')[0].slice(0,22)+(d.horse_read.length>22?'…':'')):'—';
-  const mcLabel=mcScore>=70?'Stable Path':mcScore>=45?'Mixed Path':'Caution';
-  // Small inline tooltip for tags
-  const dtip=(txt)=>`<span style="position:relative;display:inline-flex;margin-left:3px;vertical-align:middle"><span style="width:12px;height:12px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:7px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:190px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">${txt}</span></span>`;
+  // Direction probabilities from Markov
+  const mk=S.markov.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
+  const pFlat=Math.round(num(mk.P_Flat||mk.p_flat||mk.FLAT_PROB,30));
+  const pDown=100-pUp-pFlat;
 
-  $('dp-tags').innerHTML=`
-    <div class="dp-tag"><div class="dp-tag-label">Board Rank${dtip('Where this ticker sits on the signal ranking board right now. #1 = top signal. Lower = weaker.')}</div><div class="dp-tag-val" style="color:var(--cyan)">#${rank||'?'}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Overlap Risk${dtip('How much this stock looks like others you already hold. High = you may already have this bet in disguise under another name.')}</div><div class="dp-tag-val" style="color:${dupRisk==='Low'?'var(--green)':'var(--yellow)'}">${dupRisk}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Confidence${dtip('Lean Confidence Score — how much to trust this signal right now. Built from direction, momentum, survivability, and DNA fit. Hover the badge for the full breakdown.')}</div><div class="dp-tag-val">${lcsHtml(ticker)}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Street Tag${dtip('One-line read on this ticker from the DNA engine. Summarizes its current profile in plain language.')}</div><div class="dp-tag-val">${horseTag||'—'}</div></div>
-    <div class="dp-tag"><div class="dp-tag-label">Sim Path${dtip('Monte Carlo simulation result. Stable Path = majority of simulated futures end positive. Mixed = uncertain. Caution = more paths end negative than positive.')}</div><div class="dp-tag-val" style="color:${mcScore>=70?'var(--green)':mcScore>=45?'var(--yellow)':'var(--red)'}">${mcLabel}</div></div>`;
+  // Cycle position from Fourier
+  const cycle=typeof calcCycle==="function"?calcCycle(ticker):null;
+  const cycPct=cycle&&cycle.hasCycle?cycle.cyclePosition:null;
+  const cycLabel=cycPct!==null?(cycPct<25?'early — just started':cycPct<50?'climbing — mid ride':cycPct<75?'peaking — getting late':'fading — near the end'):null;
 
-  // Wire tag tooltip hovers after render
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('#dp-tags .msi-btn').forEach(btn=>{
-      btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
-      btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
+  // Entropy
+  const ent=calcEntropy?calcEntropy(ticker):{score:null};
+  const noiseLabel=ent.score!==null?(ent.score<=30?'clean':ent.score<=55?'ok':'noisy'):'—';
+
+  // Fatigue
+  const fat=calcFatigueScore?calcFatigueScore(ticker):{score:null};
+  const fatLabel=fat.score!==null?(fat.score<=25?'still fresh':fat.score<=50?'getting tired':'worn out'):'—';
+
+  // Does This Fit (for non-held tickers)
+  let fitHtml='';
+  if(!isHeld){
+    const held=S.holdings.map(x=>x.Ticker||x.ticker).filter(Boolean);
+    const sameFamily=held.filter(t=>{
+      const corr=calcCorrelation?calcCorrelation(ticker,t):0;
+      return Math.abs(corr)>0.6;
     });
-  });
-
-  // Street read
-  const isBullish=isBull==='BULL'||isBull==='BUY'||sc>=75;
-  const streetRead=generateHorseRead(ticker)||d.horse_read||'No read available for this ticker.';
-  $('dp-street').innerHTML=streetRead+entropyHTML+cycleHTML;
-
-  // Radar chart
-  const radarLabels=['5D Mom','20D Mom','Rel Str','Volatility','Downside','Drawdown','Recovery','Continuation','Accumulation','Volume Exp','Sector Fit','Fakeout'];
-  const radarVals=[
-    num(d['5d_mom'],0),num(d['20d_mom'],0),num(d.rel_strength,0),
-    num(d.realized_vol,0),num(d.downside_vol,0),num(d.drawdown,0),
-    num(d.recovery,0),num(d.continuation,0),num(d.accum_dist,0),
-    num(d.volume_exp,0),num(d.mkt_sector_fit,0),num(d.fakeout,0)
-  ];
-  // If no DNA data, derive from ranking fields
-  if(!radarVals.some(v=>v>0)){
-    const react=num(r.REACTION_STRENGTH||r.reaction_strength,0)*50;
-    const follow=num(r.FOLLOW_THROUGH_SCORE||r.follow_through_score,0)*50;
-    radarVals[0]=react; radarVals[1]=react*.9; radarVals[2]=sc;
-    radarVals[6]=follow; radarVals[7]=follow*.9;
+    if(sameFamily.length>0){
+      fitHtml='<div style="padding:6px 10px;border-radius:8px;background:rgba(248,113,113,.08);border:1px solid rgba(248,113,113,.15);margin-top:8px"><div style="font-family:var(--mono);font-size:10px;color:#f87171">you already own this bet — moves with '+sameFamily.join(', ')+'</div></div>';
+    } else {
+      fitHtml='<div style="padding:6px 10px;border-radius:8px;background:rgba(94,234,212,.08);border:1px solid rgba(94,234,212,.15);margin-top:8px"><div style="font-family:var(--mono);font-size:10px;color:#5eead4">genuine new exposure — doesn\'t move with anything you hold</div></div>';
+    }
   }
-  requestAnimationFrame(()=>drawDPRadar(radarLabels, radarVals.map(v=>v/100)));
 
-  // Metric panels
-  // Panel groups: title, subtitle tooltip, rows with [label, tooltip, value]
-  const panels=[
-    {title:'Price Direction', tip:'Is the stock moving up recently and how strong vs peers?',
-     rows:[
-       ['5-Day Move',    'How much it moved in the last 5 days. High = strong short-term momentum.',        num(d['5d_mom'],0)],
-       ['20-Day Move',   'Trend over the last month. Confirms if the 5-day move is part of a bigger run.', num(d['20d_mom'],0)],
-       ['Vs Peers',      'How this stock is performing compared to others in its sector right now.',        num(d.rel_strength,0)],
-     ]},
-    {title:'Danger Signals', tip:'How risky and volatile is this stock right now?',
-     rows:[
-       ['Daily Swings',  'How much it moves day to day. High = unpredictable. Low = steadier ride.',       num(d.realized_vol,0)],
-       ['Downside Risk', 'How bad the drops tend to be when it falls. High = painful dips.',               num(d.downside_vol,0)],
-       ['Worst Dip',     'The deepest pullback from its recent high. How far it has fallen at its worst.', num(d.drawdown,0)],
-     ]},
-    {title:'Money Movement', tip:'Is real money flowing into or out of this stock?',
-     rows:[
-       ['Volume Spike',  'Unusual trading volume vs normal. High = big players are moving.',               num(d.volume_exp,0)],
-       ['Buying Pressure','Accumulation vs distribution. High = more buying than selling over time.',      num(d.accum_dist,0)],
-     ]},
-    {title:'How It Moves', tip:'What does this stock do after a big move — does it follow through or fade?',
-     rows:[
-       ['Bounce Speed',  'How fast it recovers after a dip. High = bounces back quickly.',                 num(d.recovery,0)],
-       ['Follow Through','After a move, does it keep going? High = signals tend to be real.',              num(d.continuation,0)],
-       ['False Move Risk','How often moves turn out to be fakes. High = lots of head fakes.',              num(d.fakeout,0)],
-     ]},
-    {title:'Market Fit',   tip:'How well does this stock fit current market conditions?',
-     rows:[
-       ['Sector Fit',    'Is this sector in favor right now? High = the wind is at its back.',             num(d.mkt_sector_fit,0)],
-     ]},
-    {title:'Signal Strength', tip:'Raw signal quality from the ranking engine.',
-     rows:[
-       ['Rank Score',    'Overall score from the ranking engine. Above 75 = qualified.',                   sc],
-       ['Reaction',      'How strongly it reacted on its last big move. High = sharp, clean signal.',      num(r.REACTION_STRENGTH||r.reaction_strength,0)*50],
-       ['Follows Thru',  'Does the reaction turn into a sustained move? High = not a one-day wonder.',     num(r.FOLLOW_THROUGH_SCORE||r.follow_through_score,0)*50],
-     ]},
-  ];
+  // Verdict sentence
+  let verdict='';
+  if(sysCall==='BUY'&&ema.hasEMA&&ema.above) verdict='System says buy — strong trend, clean signal'+(!isHeld?', good entry window.':'. You already hold this.');
+  else if(sysCall==='BUY'&&ema.hasEMA&&!ema.above) verdict='System says buy but price is below its 8-day avg — wait for it to reclaim the line.';
+  else if(sysCall==='SELL') verdict='System says sell — signal is breaking down. Consider exiting.';
+  else if(sysCall==='WATCH') verdict='On the watchlist — signal is building but not strong enough yet. Check back tomorrow.';
+  else if(sysCall==='HOLD') verdict='Hold what you have — nothing to add, nothing to cut right now.';
+  else verdict='Weak signal — sit on your hands with this one.';
 
-  const panelTip=(text)=>`<span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle">
-    <span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span>
-    <span style="display:none;position:absolute;bottom:calc(100% + 6px);left:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);font-weight:400;box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">${text}</span>
-  </span>`;
-
-  $('dp-panels').innerHTML=panels.map(p=>`
-    <div class="dp-panel">
-      <div class="dp-panel-title">${p.title}${panelTip(p.tip)}</div>
-      ${p.rows.map(([label,tooltip,v])=>`
-        <div class="dp-bar-row">
-          <span class="dp-bar-key" style="display:flex;align-items:center;gap:4px">${label}${panelTip(tooltip)}</span>
-          <div class="dp-bar-track"><div class="dp-bar-fill" style="width:${Math.min(v,100)}%;background:${barColor(v)}"></div></div>
-          <span class="dp-bar-num" style="color:${barColor(v)}">${Math.round(v)||'—'}</span>
-        </div>`).join('')}
-    </div>`).join('');
-
-  // Wire tooltip hovers
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('#dp-panels .msi-btn').forEach(btn=>{
-      btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
-      btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
-    });
-  });
-
-  // Evolution
-  const evoSlices=[
-    {slice:'Now', text:d.horse_read?d.horse_read.split('.')[0]:(isBullish?'Momentum-heavy, fast recovery':'Higher caution, weaker trend quality')},
-    {slice:'3M Ago', text:'Less flow, more volatility'},
-    {slice:'6M Ago', text:'Early-cycle breakout profile'}
-  ];
-  $('dp-evo-grid').innerHTML=evoSlices.map(s=>`
-    <div class="dp-evo-card">
-      <div class="dp-evo-slice">${s.slice}</div>
-      <div class="dp-evo-text">${s.text}</div>
-    </div>`).join('');
-
-  // DNA Matches
-  const allRows=[...S.ranking,...S.radar].filter(x=>(x.Ticker||x.ticker)!==ticker);
-  const matches=allRows.slice(0,5).map(x=>{
-    const xd=S.dna.find(z=>z.ticker===(x.Ticker||x.ticker))||{};
-    const shared=['5d_mom','20d_mom','rel_strength','realized_vol','recovery','continuation'].filter(k=>{
-      return Math.abs(num(d[k],0)-num(xd[k],0))<20;
-    });
-    const pct=Math.round((shared.length/6)*100);
-    const xFam=getFamilyData(x.Theme||'',x.Ticker||x.ticker||'');
-    const desc=xFam.family===fam.family?'Same family, correlated DNA':'Related momentum, different behavior';
-    return{ticker:x.Ticker||x.ticker,pct,desc};
-  }).sort((a,b)=>b.pct-a.pct).slice(0,3);
-
-  $('dp-matches').innerHTML=matches.length?matches.map(m=>`
-    <div class="dp-match-row" onclick="showTicker('${m.ticker}',event)">
-      <div class="dp-match-top">
-        <span class="dp-match-ticker">${m.ticker}</span>
-        <span class="dp-match-pct">${m.pct}% match</span>
+  // Build the baseball card HTML
+  const cardHtml=`
+    <div style="padding:16px 18px">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start;margin-bottom:12px">
+        <div>
+          <div style="display:flex;align-items:center;gap:8px">
+            <span style="font-family:var(--mono);font-size:20px;font-weight:700;color:var(--text)">${ticker}</span>
+            ${isHeld?'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(94,234,212,.12);color:#5eead4">holding · $'+val+'</span>':''}
+            ${theme&&theme!=='—'?'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(96,165,250,.12);color:#60a5fa">'+theme+'</span>':''}
+            ${pnl!==null?'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:'+(pnl>=0?'rgba(94,234,212,.12);color:#5eead4':'rgba(248,113,113,.12);color:#f87171')+'">'+(pnl>=0?'+':'')+pnl.toFixed(1)+'% · '+(pnlDollar>=0?'+$':'-$')+Math.abs(Math.round(pnlDollar))+'</span>':''}
+          </div>
+          <div style="font-size:11px;color:var(--muted);margin-top:3px">${verdict}</div>
+        </div>
+        <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">#${rank||'?'}</span>
       </div>
-      <div class="dp-match-desc">${m.desc}</div>
-    </div>`).join(''):`<div class="empty" style="padding:14px 0">no match data — add ranking CSV</div>`;
 
-  // Industry Drivers
-  const driverTip=(txt)=>`<span style="position:relative;display:inline-flex;margin-left:3px;vertical-align:middle"><span style="width:12px;height:12px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:7px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;bottom:calc(100% + 6px);right:0;width:180px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">${txt}</span></span>`;
-
-  const drivers=[
-    ['AI Spending',    'How much AI infrastructure buildout is fueling demand in this sector right now.',    Math.round((num(d.rel_strength,0)+num(d['5d_mom'],0))/2)],
-    ['Rate Pressure',  'Impact of interest rates on this stock. High = benefits from current rate environment.', Math.round(100-num(d.realized_vol,50))],
-    ['Index Pull',     'How much it moves with the broader market. High = rides market waves up and down.',  Math.round((num(d['20d_mom'],0)+num(d.rel_strength,0))/2)],
-    ['Crowd Heat',     'Retail and speculative interest. High = lots of crowd attention, can amplify moves.', Math.round((num(d.volume_exp,0)+num(d.accum_dist,0))/2)],
-    ['Cycle Timing',   'How well timed this stock is within the current market cycle. High = right place, right time.', Math.round(num(d.mkt_sector_fit,0))],
-  ];
-  $('dp-drivers').innerHTML=drivers.map(([k,tip,v])=>`
-    <div class="dp-driver-row">
-      <span class="dp-driver-key" style="display:flex;align-items:center">${k}${driverTip(tip)}</span>
-      <div class="dp-driver-bar"><div class="dp-driver-fill" style="width:${v||0}%;background:${barColor(v||0)}"></div></div>
-      <span class="dp-driver-num" style="color:${barColor(v||0)}">${v||'—'}</span>
-    </div>`).join('');
-
-  // Wire driver tooltip hovers
-  requestAnimationFrame(()=>{
-    document.querySelectorAll('#dp-drivers .msi-btn').forEach(btn=>{
-      btn.addEventListener('mouseenter',()=>{const t=btn.nextElementSibling;if(t)t.style.display='block';});
-      btn.addEventListener('mouseleave',()=>{const t=btn.nextElementSibling;if(t)t.style.display='none';});
-    });
-  });
-
-  // Entropy + Cycle
-  const ent=calcEntropy(ticker);
-  const cyc=calcCycle(ticker);
-
-  // Add entropy and cycle as extra info rows below the street read
-  const entropyColor=ent.score<=25?'var(--green)':ent.score<=50?'var(--cyan)':ent.score<=75?'var(--yellow)':'var(--red)';
-  const cycleHTML=cyc.hasCycle?`
-    <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-top:10px">
-      <div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Dominant Cycle</div>
-        <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text)">${cyc.cycleDays}d</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">${cyc.dominance}% signal clarity</div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${sc>=75?'var(--green)':sc>=50?'var(--yellow)':'var(--red)'}">${sc}</div>
+          <div style="font-size:10px;color:var(--muted)">signal strength</div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${conf.total>=70?'var(--green)':conf.total>=50?'var(--yellow)':'var(--red)'}">${conf.total}</div>
+          <div style="font-size:10px;color:var(--muted)">signal trust</div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${sysColor}">${sysCall}</div>
+          <div style="font-size:10px;color:var(--muted)">system call</div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px;text-align:center">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700">$${sizing.amount||'—'}</div>
+          <div style="font-size:10px;color:var(--muted)">size</div>
+        </div>
       </div>
-      <div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:4px">Cycle Position</div>
-        <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${cyc.cyclePosition<50?'var(--green)':'var(--yellow)'}">${cyc.cyclePosition}%</div>
-        <div style="font-size:10px;color:var(--muted);margin-top:2px">${cyc.positionLabel.split('—')[0].trim()}</div>
-      </div>
-    </div>
-    ${cyc.resonantNames.length?`<div style="margin-top:8px;padding:7px 10px;border-radius:7px;background:rgba(255,79,79,.07);border:1px solid rgba(255,79,79,.2);font-size:10px;color:var(--muted)"><span style="color:var(--red);font-family:var(--mono);font-size:9px">⚠ RESONANCE</span> — ${cyc.resonantNames.join(', ')} running same ${cyc.cycleDays}d cycle. Holding all = amplified risk.</div>`:''}`:
-    `<div style="margin-top:8px;font-size:10px;color:var(--dim)">${cyc.msg}</div>`;
 
-  const entropyHTML=`
-    <div style="display:flex;align-items:center;gap:10px;margin-top:10px;padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);border:1px solid var(--line)">
-      <div>
-        <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;text-transform:uppercase;margin-bottom:3px">Signal Entropy</div>
-        <div style="font-size:10px;color:var(--muted)">${ent.label}</div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:8px;margin-bottom:12px">
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">direction</div>
+          <div style="display:flex;gap:2px;height:18px;border-radius:4px;overflow:hidden;font-family:var(--mono);font-size:10px;margin-bottom:8px">
+            <div style="flex:${pUp};background:rgba(94,234,212,.25);color:#5eead4;display:flex;align-items:center;justify-content:center">${pUp}% up</div>
+            <div style="flex:${pFlat};background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center">${pFlat}% flat</div>
+            <div style="flex:${Math.max(pDown,1)};background:rgba(248,113,113,.2);color:#f87171;display:flex;align-items:center;justify-content:center">${pDown}% dn</div>
+          </div>
+          <div style="display:grid;gap:4px;font-size:11px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">8-day avg</span><span style="font-family:var(--mono);color:${ema.hasEMA?(ema.above?'#5eead4':'#f87171'):'var(--dim)'};font-size:10px">${ema.hasEMA?(ema.above?'price is above — riding the trend':'price is below — fighting the current'):'not enough data'}</span></div>
+            ${cycPct!==null?'<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">rhythm</span><span style="font-family:var(--mono);font-size:10px">'+cycPct+'% — '+cycLabel+'</span></div>':''}
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">streak</span><span style="font-family:var(--mono);font-size:10px">${markov}</span></div>
+          </div>
+        </div>
+        <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px">
+          <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">risk</div>
+          <div style="display:grid;gap:4px;font-size:11px">
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">stop</span><span style="font-family:var(--mono);color:var(--cyan);font-size:10px">${stop?'auto-exit at $'+stop.activeStop:'—'}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">noise</span><span style="font-family:var(--mono);color:${ent.score<=30?'#5eead4':ent.score<=55?'var(--yellow)':'#f87171'};font-size:10px">${ent.score!==null?ent.score+' — '+noiseLabel:'—'}</span></div>
+            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">fatigue</span><span style="font-family:var(--mono);color:${fat.score<=25?'#5eead4':fat.score<=50?'var(--yellow)':'#f87171'};font-size:10px">${fat.score!==null?fat.score+' — '+fatLabel:'—'}</span></div>
+            ${runner?'<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">runner</span><span style="font-family:var(--mono);font-size:10px">take $'+runner.exitAmount+' / hold $'+runner.runnerAmount+'</span></div>':''}
+          </div>
+        </div>
       </div>
-      <div style="margin-left:auto;text-align:right">
-        <div style="font-family:var(--mono);font-size:20px;font-weight:700;color:${entropyColor}">${ent.score}</div>
-        <div style="font-size:9px;color:var(--dim)">${ent.H} bits</div>
+
+      ${fitHtml}
+
+      <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:12px">
+        <button class="btn" style="font-size:10px;padding:5px 12px" onclick="compareTrayAdd('${ticker}')">+ compare</button>
+        <button class="btn" style="font-size:10px;padding:5px 12px" onclick="closeDNAPanel();loadLens('${ticker}');switchTab('lens',document.querySelectorAll('.tab-btn')[5])">lens</button>
+        <button class="btn" style="font-size:10px;padding:5px 12px" onclick="switchToDNA()">full DNA</button>
+        <button class="btn" style="font-size:10px;padding:5px 12px" onclick="closeDNAPanel();loadRaceCard('${ticker}');switchTab('racecard',document.querySelectorAll('.tab-btn')[4])">race card</button>
+        <button class="btn" style="font-size:10px;padding:5px 12px" onclick="closeDNAPanel()">close</button>
       </div>
+
+      <div id="compare-tray-bar" style="display:none;margin-top:10px;padding:8px 10px;background:rgba(255,255,255,.03);border-radius:8px">
+        <div style="display:flex;align-items:center;gap:6px;flex-wrap:wrap">
+          <span style="font-family:var(--mono);font-size:10px;color:var(--muted)">comparing:</span>
+          <span id="compare-tray-pills" style="display:flex;gap:4px;flex-wrap:wrap"></span>
+          <button class="btn" style="font-size:10px;padding:4px 10px;margin-left:auto" onclick="openCompareView()">compare</button>
+        </div>
+      </div>
+
+      <div style="margin-top:8px;font-family:var(--mono);font-size:9px;color:var(--dim);text-align:right" id="bc-timestamp"></div>
     </div>`;
-  const overlap=fam.with.filter(t=>holdTickers.includes(t));
-  if(overlap.length>=2){
-    $('dp-warn-text').textContent=`This horse overlaps heavily with ${overlap.join(' and ')}. If you already hold both, this entry may increase the same family risk instead of adding a new edge.`;
-    $('dp-warning').style.display='block';
-  } else {
-    $('dp-warning').style.display='none';
-  }
 
-  // Open panel
-  const panel=$('dna-panel');
-  panel.classList.add('open');
-  panel.scrollTop=0;
+  // Render into the DNA panel modal (reuse existing modal structure)
+  const inner=$('dna-panel').querySelector('.dp-inner');
+  inner.innerHTML='<div style="display:flex;justify-content:flex-end;padding:8px 12px 0"><button class="dp-close" onclick="closeDNAPanel()">✕</button></div>'+cardHtml;
+  
+  $('dna-panel').classList.add('open');
+  $('dna-panel').scrollTop=0;
 
-  // Draw candlestick chart from price history
-  requestAnimationFrame(()=>drawCandlestickChart(ticker));
+  // Timestamp
+  const tsEl=$('bc-timestamp');
+  if(tsEl) tsEl.textContent='data from '+new Date().toLocaleString('en-US',{month:'short',day:'numeric',hour:'numeric',minute:'2-digit'});
 }
 window.showTicker=showTicker;
+
+// ─── COMPARE TRAY ─────────────────────────────────────────────────────────────
+const compareTray=[];
+function compareTrayAdd(ticker){
+  if(compareTray.includes(ticker))return;
+  if(compareTray.length>=5)return;
+  compareTray.push(ticker);
+  renderCompareTray();
+}
+function compareTrayRemove(ticker){
+  const idx=compareTray.indexOf(ticker);
+  if(idx>=0)compareTray.splice(idx,1);
+  renderCompareTray();
+}
+function renderCompareTray(){
+  const bar=$('compare-tray-bar');
+  const pills=$('compare-tray-pills');
+  if(!bar||!pills)return;
+  if(compareTray.length===0){bar.style.display='none';return;}
+  bar.style.display='block';
+  pills.innerHTML=compareTray.map(t=>'<span style="font-family:var(--mono);font-size:11px;padding:3px 8px;border-radius:6px;background:rgba(255,255,255,.06);border:1px solid var(--line2);display:inline-flex;align-items:center;gap:4px">'+t+'<span style="cursor:pointer;color:var(--dim);font-size:14px" onclick="compareTrayRemove(\''+t+'\')">×</span></span>').join('');
+}
+window.compareTrayAdd=compareTrayAdd;
+window.compareTrayRemove=compareTrayRemove;
+
+// ─── COMPARE VIEW ─────────────────────────────────────────────────────────────
+function openCompareView(){
+  if(compareTray.length<2)return;
+  closeDNAPanel();
+  const el=$('lens-content');
+  if(!el)return;
+  
+  // Switch to lens tab
+  switchTab('lens',document.querySelectorAll('.tab-btn')[5]);
+  
+  const tickers=compareTray.slice();
+  const cols=tickers.length;
+  
+  function cellClass(val,best,worst,higherBetter){
+    if(val===best)return'background:rgba(94,234,212,.12);animation:softpulse 3s ease-in-out infinite';
+    if(val===worst)return'background:rgba(248,113,113,.1);animation:softpulse 3s ease-in-out infinite';
+    return'';
+  }
+  
+  const data=tickers.map(t=>{
+    const r=S.ranking.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const h=S.holdings.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
+    const conf=calcConfidence(t);
+    const ema=calc8EMA(t);
+    const ent=calcEntropy?calcEntropy(t):{score:50};
+    const stop=calcAdaptiveStop(t);
+    const mk=S.markov.find(x=>(x.Ticker||x.ticker)===t)||{};
+    const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
+    const isHeld=S.holdings.some(x=>(x.Ticker||x.ticker)===t);
+    const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===t)+1;
+    const action=(r.Status||r.status||r.ACTION||r.action||'').toUpperCase();
+    const sysCall=sc>=75?'BUY':action==='SELL'?'SELL':sc>=65?'WATCH':'HOLD';
+    const sd=calcSignalDecay?calcSignalDecay(t):{halfLife:99};
+    const lyap=calcLyapunov?calcLyapunov(t):{lambda:0,label:'—'};
+    const cyc=typeof calcCycle==="function"?calcCycle(t):null;
+    return{t,sc,conf:conf.total,ema,ent:ent.score||50,stop,pUp,isHeld,rank,sysCall,
+      halfLife:sd.halfLife||99,lyap:lyap.lambda||0,lyapLabel:lyap.label||'—',
+      cycPhase:cyc&&cyc.hasCycle?cyc.cyclePosition:null};
+  });
+  
+  const bestSc=Math.max(...data.map(d=>d.sc));
+  const bestConf=Math.max(...data.map(d=>d.conf));
+  const bestNoise=Math.min(...data.map(d=>d.ent));
+  const worstNoise=Math.max(...data.map(d=>d.ent));
+  const bestHL=Math.max(...data.map(d=>d.halfLife));
+  const worstHL=Math.min(...data.map(d=>d.halfLife));
+
+  function row(label,vals,bestVal,worstVal,fmt){
+    return'<div style="padding:5px 0;border-bottom:1px solid var(--line);color:var(--muted);font-size:11px">'+label+'</div>'+
+      vals.map((v,i)=>{
+        const s=v===bestVal?'background:rgba(94,234,212,.12)':v===worstVal?'background:rgba(248,113,113,.1)':'';
+        return'<div style="padding:5px 6px;border-bottom:1px solid var(--line);text-align:center;font-family:var(--mono);font-size:11px;border-radius:4px;'+s+'">'+fmt(v,i)+'</div>';
+      }).join('');
+  }
+
+  // Correlation matrix
+  let corrHtml='';
+  if(typeof calcCorrelation==='function'){
+    for(let i=0;i<tickers.length;i++){
+      for(let j=i+1;j<tickers.length;j++){
+        const c=calcCorrelation(tickers[i],tickers[j]);
+        const cAbs=Math.abs(c);
+        const label=cAbs>.75?'twins':cAbs>.5?'related':'independent';
+        const color=cAbs>.75?'#f87171':cAbs>.5?'var(--yellow)':'#5eead4';
+        corrHtml+='<div style="display:flex;justify-content:space-between;font-size:11px;padding:3px 0"><span style="color:var(--muted)">'+tickers[i]+' vs '+tickers[j]+'</span><span style="font-family:var(--mono);color:'+color+'">'+c.toFixed(2)+' '+label+'</span></div>';
+      }
+    }
+  }
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head"><div class="card-title">Compare — ${tickers.join(' vs ')}</div><div class="card-meta">best values glow green · danger glows red</div></div>
+      <div style="padding:12px;display:grid;grid-template-columns:130px repeat(${cols},1fr);gap:0">
+        <div></div>
+        ${data.map(d=>'<div style="text-align:center;padding:6px;border-bottom:1px solid var(--line)"><div style="font-family:var(--mono);font-size:14px;font-weight:700">'+d.t+'</div><div style="font-size:9px;color:'+(d.isHeld?'#5eead4':'var(--muted)')+'">'+( d.isHeld?'holding':'watching')+'</div></div>').join('')}
+        ${row('rank',data.map(d=>d.rank),Math.min(...data.map(d=>d.rank)),Math.max(...data.map(d=>d.rank)),(v)=>'#'+v)}
+        ${row('signal strength',data.map(d=>d.sc),bestSc,Math.min(...data.map(d=>d.sc)),(v)=>'<span style="color:'+(v>=75?'#5eead4':v>=50?'var(--yellow)':'#f87171')+'">'+v+'</span>')}
+        ${row('signal trust',data.map(d=>d.conf),bestConf,Math.min(...data.map(d=>d.conf)),(v)=>v)}
+        ${row('system call',data.map(d=>d.sysCall),null,null,(v)=>'<span style="color:'+(v==='BUY'?'#5eead4':v==='SELL'?'#f87171':'var(--yellow)')+'">'+v+'</span>')}
+        ${row('8-day avg',data.map(d=>d.ema.above?1:0),1,0,(v)=>'<span style="color:'+(v?'#5eead4':'#f87171')+'">'+(v?'above':'below')+'</span>')}
+        ${row('noise',data.map(d=>d.ent),bestNoise,worstNoise,(v)=>'<span style="color:'+(v<=30?'#5eead4':v<=55?'var(--yellow)':'#f87171')+'">'+v+'</span>')}
+        ${row('signal shelf life',data.map(d=>d.halfLife),bestHL,worstHL,(v)=>v+'d')}
+        ${row('up probability',data.map(d=>d.pUp),Math.max(...data.map(d=>d.pUp)),Math.min(...data.map(d=>d.pUp)),(v)=>v+'%')}
+      </div>
+      ${corrHtml?'<div style="padding:8px 12px;margin:8px 12px 12px;border-radius:8px;background:rgba(255,255,255,.02)"><div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">how alike are they? <span style="font-size:9px;color:var(--dim)">(correlation)</span></div>'+corrHtml+'</div>':''}
+    </div>`;
+}
+window.openCompareView=openCompareView;
+
+// ─── PORTFOLIO X-RAY ──────────────────────────────────────────────────────────
+function renderPortfolioXray(){
+  const wrap=$('xray-content');
+  if(!wrap)return;
+  const held=S.holdings.filter(h=>(h.Ticker||h.ticker)).map(h=>{
+    const t=h.Ticker||h.ticker;
+    const sc=num(h.Score||h.score||0);
+    const val=Math.round(num(h.Value||h.value||h.Holding_Value||0));
+    const theme=h.Theme||h.Role||h.theme||'—';
+    return{t,sc,val,theme};
+  });
+  if(!held.length){wrap.innerHTML='<div class="empty" style="padding:20px">No holdings to x-ray</div>';return;}
+
+  // Build connections using correlation
+  const connections=[];
+  for(let i=0;i<held.length;i++){
+    for(let j=i+1;j<held.length;j++){
+      const corr=typeof calcCorrelation==='function'?calcCorrelation(held[i].t,held[j].t):0;
+      const type=corr>0.6?'same':corr<-0.3?'cushion':'none';
+      if(type!=='none') connections.push({a:held[i].t,b:held[j].t,corr,type});
+    }
+  }
+
+  // Group by theme
+  const themes={};
+  held.forEach(h=>{if(!themes[h.theme])themes[h.theme]=[];themes[h.theme].push(h);});
+
+  // Same bet warnings
+  const sameBets=connections.filter(c=>c.type==='same');
+  const cushions=connections.filter(c=>c.type==='cushion');
+  const isolated=held.filter(h=>!connections.some(c=>c.a===h.t||c.b===h.t));
+
+  let sideHtml='';
+  if(sameBets.length){
+    const tickers=[...new Set(sameBets.flatMap(c=>[c.a,c.b]))];
+    sideHtml+='<div style="padding:8px 10px;border-radius:8px;background:rgba(248,113,113,.06);border:1px solid rgba(248,113,113,.1);margin-bottom:6px"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:#f87171;margin-bottom:3px">same bet warning</div><div style="font-size:11px;color:#f87171">'+tickers.join(' + ')+' move together. One bad day hits all of them.</div></div>';
+  }
+  if(cushions.length){
+    sideHtml+='<div style="padding:8px 10px;border-radius:8px;background:rgba(94,234,212,.06);border:1px solid rgba(94,234,212,.1);margin-bottom:6px"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:#5eead4;margin-bottom:3px">cushions</div><div style="font-size:11px;color:#5eead4">'+cushions.map(c=>c.a+' ↔ '+c.b).join(', ')+' move opposite — softens the blow on red days.</div></div>';
+  }
+  if(isolated.length){
+    sideHtml+='<div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.03);margin-bottom:6px"><div style="font-family:var(--mono);font-size:11px;font-weight:600;color:var(--muted);margin-bottom:3px">on their own</div><div style="font-size:11px;color:var(--muted)">'+isolated.map(h=>h.t).join(', ')+' — no strong connection to anything else.</div></div>';
+  }
+
+  // Render holdings as a simple visual list with connection indicators
+  let holdHtml=held.map(h=>{
+    const inSame=sameBets.some(c=>c.a===h.t||c.b===h.t);
+    const inCush=cushions.some(c=>c.a===h.t||c.b===h.t);
+    const borderColor=inSame?'#f87171':inCush?'#5eead4':'var(--line2)';
+    const fat=calcFatigueScore?calcFatigueScore(h.t):{score:0};
+    const nearStop=calcAdaptiveStop(h.t);
+    const danger=fat.score>50||(nearStop&&nearStop.nearStop);
+    return'<div style="display:inline-flex;align-items:center;gap:6px;padding:6px 10px;border-radius:8px;border:1.5px solid '+borderColor+';background:rgba(255,255,255,.02);cursor:pointer" onclick="showTicker(\''+h.t+'\')"><span style="font-family:var(--mono);font-size:12px;font-weight:700">'+h.t+'</span><span style="font-size:10px;color:var(--muted)">$'+h.val+'</span>'+(danger?'<span style="width:6px;height:6px;border-radius:50%;background:#fbbf24;animation:softpulse 2s ease-in-out infinite"></span>':'')+'</div>';
+  }).join(' ');
+
+  wrap.innerHTML=`
+    <div style="display:flex;gap:16px;align-items:flex-start;flex-wrap:wrap">
+      <div style="flex:1;min-width:280px">
+        <div style="display:flex;gap:12px;margin-bottom:10px;font-size:10px;color:var(--muted)">
+          <span><span style="display:inline-block;width:14px;height:3px;background:#f87171;border-radius:2px;vertical-align:middle;margin-right:4px"></span>same bet</span>
+          <span><span style="display:inline-block;width:14px;height:3px;background:var(--dim);border-radius:2px;vertical-align:middle;margin-right:4px"></span>no connection</span>
+          <span><span style="display:inline-block;width:14px;height:3px;background:#5eead4;border-radius:2px;vertical-align:middle;margin-right:4px"></span>moves opposite (cushion)</span>
+        </div>
+        <div style="display:flex;flex-wrap:wrap;gap:6px">${holdHtml}</div>
+      </div>
+      <div style="flex:0 0 200px">${sideHtml}</div>
+    </div>`;
+}
+
+// ─── LENS TAB ─────────────────────────────────────────────────────────────────
+function loadLens(ticker){
+  if(!ticker)return;
+  $('lens-input').value=ticker;
+  const el=$('lens-content');
+  if(!el)return;
+
+  const r=S.ranking.find(x=>(x.Ticker||x.ticker)===ticker)||S.radar.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
+  const isHeld=S.holdings.some(x=>(x.Ticker||x.ticker)===ticker);
+  const theme=r.Theme||h.Theme||h.Role||r.theme||'—';
+  const conf=calcConfidence(ticker);
+
+  // Layer 1: Stock
+  const ema=calc8EMA(ticker);
+  const ent=calcEntropy?calcEntropy(ticker):{score:50};
+  const mk=S.markov.find(x=>(x.Ticker||x.ticker)===ticker)||{};
+  const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
+  const markov=r.Markov_State||r.Markov||'—';
+  const lyap=calcLyapunov?calcLyapunov(ticker):{lambda:0};
+  const cyc=typeof calcCycle==="function"?calcCycle(ticker):null;
+  const cycPct=cyc&&cyc.hasCycle?cyc.cyclePosition:null;
+  const sd=calcSignalDecay?calcSignalDecay(ticker):{halfLife:99};
+
+  const l1Score=(sc>=75&&ema.above&&ent.score<=40)?'bullish':(sc>=50?'mixed':'bearish');
+  const l1Color=l1Score==='bullish'?'#5eead4':l1Score==='mixed'?'#fbbf24':'#f87171';
+
+  // Layer 2: Family
+  const familyTickers=S.ranking.filter(x=>{
+    const xt=x.Theme||x.theme||'';
+    return xt===theme&&(x.Ticker||x.ticker)!==ticker;
+  }).slice(0,4);
+  const famUp=familyTickers.filter(x=>num(x.Move||x.move,0)>0).length;
+  const famTotal=familyTickers.length||1;
+  const l2Score=famUp/famTotal>0.6?'aligned':(famUp/famTotal>0.3?'mixed':'diverging');
+  const l2Color=l2Score==='aligned'?'#5eead4':l2Score==='mixed'?'#fbbf24':'#f87171';
+
+  // Layer 3: Market (use SPY/VOO from holdings or ranking)
+  const spy=S.ranking.find(x=>(x.Ticker||x.ticker)==='SPY'||(x.Ticker||x.ticker)==='VOO')||{};
+  const spyEma=calc8EMA('SPY');
+  const spyAbove=spyEma.hasEMA?spyEma.above:true;
+  const l3Score=spyAbove?'tailwind':'headwind';
+  const l3Color=spyAbove?'#5eead4':'#f87171';
+
+  // Layer 4: Calendar (simplified — earnings proximity if available)
+  const l4Score='neutral';
+  const l4Color='#fbbf24';
+
+  // Layer 5: Anomaly detection — compare current metrics to what's expected
+  const anomalies=[];
+  if(ema.hasEMA&&sc>=75&&!ema.above) anomalies.push({metric:'8-day avg',desc:'Score is high but price is below its average — the numbers say buy but the price action says wait.',mag:15});
+  if(ent.score>50&&sc>=70) anomalies.push({metric:'noise',desc:'Signal is noisy ('+ent.score+') but score is still high — the quality of this signal is suspect.',mag:Math.round(ent.score-30)});
+  if(lyap.lambda>0.1&&sc>=65) anomalies.push({metric:'groove',desc:'Behavior is erratic (Lyapunov +'+lyap.lambda.toFixed(2)+') while score stays up — this stock is acting unpredictable.',mag:Math.round(lyap.lambda*100)});
+  if(l1Score==='bullish'&&l2Score==='diverging') anomalies.push({metric:'pack sync',desc:ticker+' is green but its family is red — solo run. These usually don\'t last.',mag:25});
+  if(l1Score==='bearish'&&pUp>55) anomalies.push({metric:'streak odds',desc:'Score is weak but streak odds are climbing ('+pUp+'% up). Something might be changing underneath.',mag:pUp-45});
+
+  const hasAnom=anomalies.length>0;
+  const l5Color=hasAnom?(anomalies.some(a=>a.mag>20)?'#f87171':'#fbbf24'):'#5eead4';
+
+  // Layer agreement
+  const layers=[
+    {name:'stock',score:l1Score,color:l1Color,bull:l1Score==='bullish'},
+    {name:'family',score:l2Score,color:l2Color,bull:l2Score==='aligned'},
+    {name:'market',score:l3Score,color:l3Color,bull:l3Score==='tailwind'},
+    {name:'calendar',score:l4Score,color:l4Color,bull:l4Score==='clear'},
+    {name:'anomaly',score:hasAnom?'flag':'clear',color:l5Color,bull:!hasAnom}
+  ];
+  const bullCount=layers.filter(l=>l.bull).length;
+
+  // Conviction from layers
+  const layerVerdict=bullCount>=5?'All five lenses say go. Full send, full size. Don\'t overthink it.':
+    bullCount>=4?'Four lenses agree. One is off but the picture is clear. Normal size, stay alert.':
+    bullCount>=3?'Mixed signals — three say go but two don\'t. Half size at most. Figure out which lens is right.':
+    bullCount>=2?'Only two lenses agree. The picture is blurry. Sit on your hands.':
+    'Almost nothing lines up. Stay out. Wait for the picture to clear.';
+
+  el.innerHTML=`
+    <div class="card" style="margin-bottom:12px">
+      <div class="card-head">
+        <div style="display:flex;align-items:center;gap:8px">
+          <span style="font-family:var(--mono);font-size:18px;font-weight:700">${ticker}</span>
+          ${isHeld?'<span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(94,234,212,.12);color:#5eead4">holding</span>':''}
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(96,165,250,.12);color:#60a5fa">${theme}</span>
+          <span style="font-size:10px;padding:3px 8px;border-radius:6px;background:rgba(96,165,250,.12);color:#60a5fa">lens scan</span>
+        </div>
+      </div>
+      <div style="padding:12px">
+
+        <div style="display:grid;gap:6px;margin-bottom:14px">
+          <div style="display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.02)">
+            <div><div style="font-family:var(--mono);font-size:12px;font-weight:600">layer 1 — stock</div><div style="font-size:10px;color:var(--dim)">its own behavior</div></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">
+              streak: <span style="color:${l1Color}">${markov}</span> · 
+              noise: <span style="color:${ent.score<=30?'#5eead4':ent.score<=55?'var(--yellow)':'#f87171'}">${ent.score}</span> · 
+              8d avg: <span style="color:${ema.above?'#5eead4':'#f87171'}">${ema.above?'above':'below'}</span>
+              ${cycPct!==null?' · rhythm: '+cycPct+'%':''}
+            </div>
+            <div style="font-family:var(--mono);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;background:${l1Color}22;color:${l1Color}">${l1Score}</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.02)">
+            <div><div style="font-family:var(--mono);font-size:12px;font-weight:600">layer 2 — family</div><div style="font-size:10px;color:var(--dim)">${theme} group</div></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">
+              ${familyTickers.map(f=>(f.Ticker||f.ticker)+': <span style="color:'+(num(f.Move||f.move,0)>0?'#5eead4':'#f87171')+'">'+(num(f.Move||f.move,0)>0?'up':'down')+'</span>').join(' · ')||'no family data'}
+            </div>
+            <div style="font-family:var(--mono);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;background:${l2Color}22;color:${l2Color}">${l2Score}</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.02)">
+            <div><div style="font-family:var(--mono);font-size:12px;font-weight:600">layer 3 — market</div><div style="font-size:10px;color:var(--dim)">SPY regime</div></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">
+              SPY 8d avg: <span style="color:${spyAbove?'#5eead4':'#f87171'}">${spyAbove?'above — bull':'below — bear'}</span>
+            </div>
+            <div style="font-family:var(--mono);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;background:${l3Color}22;color:${l3Color}">${l3Score}</div>
+          </div>
+
+          <div style="display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(255,255,255,.02)">
+            <div><div style="font-family:var(--mono);font-size:12px;font-weight:600">layer 4 — calendar</div><div style="font-size:10px;color:var(--dim)">time patterns</div></div>
+            <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">
+              shelf life: <span style="color:${sd.halfLife>10?'#5eead4':sd.halfLife>5?'var(--yellow)':'#f87171'}">${sd.halfLife}d</span>
+            </div>
+            <div style="font-family:var(--mono);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;background:${l4Color}22;color:${l4Color}">neutral</div>
+          </div>
+
+          ${hasAnom?anomalies.map(a=>'<div style="display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;border:1.5px solid '+(a.mag>20?'#f87171':'#fbbf24')+';background:rgba(255,255,255,.01)"><div><div style="font-family:var(--mono);font-size:12px;font-weight:600">layer 5 — anomaly</div><div style="font-size:10px;color:var(--dim)">'+a.metric+'</div></div><div style="font-family:var(--mono);font-size:10px;color:'+(a.mag>20?'#f87171':'#fbbf24')+'">'+a.desc+'</div><div style="font-family:var(--mono);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;background:'+(a.mag>20?'rgba(248,113,113,.12)':'rgba(251,191,36,.12)')+';color:'+(a.mag>20?'#f87171':'#fbbf24')+'">flag +'+a.mag+'%</div></div>').join(''):'<div style="display:grid;grid-template-columns:130px 1fr auto;align-items:center;gap:8px;padding:10px 12px;border-radius:8px;background:rgba(94,234,212,.03)"><div><div style="font-family:var(--mono);font-size:12px;font-weight:600">layer 5 — anomaly</div><div style="font-size:10px;color:var(--dim)">scan</div></div><div style="font-family:var(--mono);font-size:10px;color:#5eead4">No anomalies detected — everything lines up.</div><div style="font-family:var(--mono);padding:4px 10px;border-radius:6px;font-size:11px;font-weight:600;text-align:center;background:rgba(94,234,212,.12);color:#5eead4">clear</div></div>'}
+        </div>
+
+        <div style="display:flex;gap:2px;height:28px;border-radius:6px;overflow:hidden;font-family:var(--mono);font-size:12px;font-weight:600;margin-bottom:8px">
+          ${bullCount>0?'<div style="flex:'+bullCount+';background:rgba(94,234,212,.15);color:#5eead4;display:flex;align-items:center;justify-content:center">'+bullCount+' say go</div>':''}
+          ${(5-bullCount)>0?'<div style="flex:'+(5-bullCount)+';background:rgba(248,113,113,.1);color:#f87171;display:flex;align-items:center;justify-content:center">'+(5-bullCount)+' say wait</div>':''}
+        </div>
+        <div style="font-size:12px;color:var(--muted)">${layerVerdict}</div>
+      </div>
+    </div>
+
+    <div id="xray-content"></div>
+  `;
+
+  // Render portfolio x-ray below
+  renderPortfolioXray();
+}
+window.loadLens=loadLens;
+
+// ─── HELPER: calcCorrelation ──────────────────────────────────────────────────
+function calcCorrelation(t1,t2){
+  const rows1=S.pricehistory.filter(r=>(r.TICKER||r.Ticker||r.ticker)===t1).sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+  const rows2=S.pricehistory.filter(r=>(r.TICKER||r.Ticker||r.ticker)===t2).sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+  if(rows1.length<10||rows2.length<10)return 0;
+  
+  const dates1=new Map(rows1.map(r=>[r.DATE||r.Date||r.date,parseFloat(r.CLOSE||r.Close||r.close||0)]));
+  const paired=[];
+  rows2.forEach(r2=>{
+    const d=r2.DATE||r2.Date||r2.date;
+    if(dates1.has(d))paired.push([dates1.get(d),parseFloat(r2.CLOSE||r2.Close||r2.close||0)]);
+  });
+  if(paired.length<10)return 0;
+  
+  // Returns from paired prices
+  const r1=[],r2=[];
+  for(let i=1;i<paired.length;i++){
+    r1.push((paired[i][0]-paired[i-1][0])/paired[i-1][0]);
+    r2.push((paired[i][1]-paired[i-1][1])/paired[i-1][1]);
+  }
+  if(r1.length<5)return 0;
+  
+  const mean1=r1.reduce((s,v)=>s+v,0)/r1.length;
+  const mean2=r2.reduce((s,v)=>s+v,0)/r2.length;
+  let cov=0,var1=0,var2=0;
+  for(let i=0;i<r1.length;i++){
+    cov+=(r1[i]-mean1)*(r2[i]-mean2);
+    var1+=(r1[i]-mean1)**2;
+    var2+=(r2[i]-mean2)**2;
+  }
+  const denom=Math.sqrt(var1*var2);
+  return denom>0?Math.round(cov/denom*100)/100:0;
+}
 
 function closeDNAPanel(){
   $('dna-panel').classList.remove('open');
@@ -6234,6 +6617,7 @@ function switchTab(name, btn){
   if(name==='racecard'){const rc=$('rc-input');if(rc&&rc.value.trim())loadRaceCard(rc.value.trim());}
   if(name==='cheatsheet')renderCheatSheet();
   if(name==='monte'){renderSimTickerList();if(Object.keys(simResults).length){drawMonteChart();renderMarkovFlow();}}
+  if(name==='lens'){const li=$('lens-input');if(li&&li.value.trim())loadLens(li.value.trim().toUpperCase());}
 }
 window.switchTab=switchTab;
 
@@ -6953,6 +7337,7 @@ loadAll();
 renderTradeLog();
 updateActionSummary();
 setInterval(tick,1000);
+
 </script>
 </body>
 </html>
