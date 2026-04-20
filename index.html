@@ -3672,6 +3672,7 @@ const DOCK_ITEMS=[
   {status:'ok',  label:'Portfolio X-Ray — holdings connection map, same bet / cushion / independent'},
   {status:'ok',  label:'Compare Tray — add 2-5 tickers, side-by-side with deep math and correlation'},
   {status:'ok',  label:'Lens Tab — 5-layer regime overlay with anomaly detection and auto-verdict'},
+  {status:'ok',  label:'Mini Lens on Baseball Card — 5 dots + one-line verdict, quick regime read on every ticker click'},
   {status:'pend', label:'Fourier permutation test — shuffle 1,000x, flag cycles that dont beat 95th percentile as noise'},
   {status:'pend', label:'Markov confidence intervals — standard error on transition probs, display .68 ± .12 not just .68'},
   {status:'pend', label:'Spearman rank correlation + 20-day rolling window replacing Pearson'},
@@ -5374,6 +5375,29 @@ function showTicker(ticker, evt){
   const fatLabel=fat.score!==null?(fat.score<=25?'still fresh':fat.score<=50?'getting tired':'worn out'):'—';
 
   // Does This Fit (for non-held tickers)
+  // ─── MINI LENS (5 dots + verdict) ──────────────────────────
+  const _ml_l1=(sc>=75&&ema.hasEMA&&ema.above&&(ent.score===null||ent.score<=40))?'go':(sc>=50?'mixed':'stop');
+  const _ml_famTickers=S.ranking.filter(x=>{const xt=x.Theme||x.theme||'';return xt===theme&&(x.Ticker||x.ticker)!==ticker;}).slice(0,4);
+  const _ml_famUp=_ml_famTickers.filter(x=>num(x.Move||x.move,0)>0).length;
+  const _ml_l2=_ml_famTickers.length?(_ml_famUp/_ml_famTickers.length>0.6?'go':(_ml_famUp/_ml_famTickers.length>0.3?'mixed':'stop')):'mixed';
+  const _ml_spyEma=calc8EMA('SPY');
+  const _ml_l3=_ml_spyEma.hasEMA?(_ml_spyEma.above?'go':'stop'):'mixed';
+  const _ml_sd=calcSignalDecay?calcSignalDecay(ticker):{halfLife:99};
+  const _ml_l4=_ml_sd.halfLife>10?'go':(_ml_sd.halfLife>5?'mixed':'stop');
+  const _ml_anomalies=[];
+  if(ema.hasEMA&&sc>=75&&!ema.above)_ml_anomalies.push('price below avg');
+  if(ent.score>50&&sc>=70)_ml_anomalies.push('noisy signal');
+  const _ml_lyap=calcLyapunov?calcLyapunov(ticker):{lambda:0};
+  if(_ml_lyap.lambda>0.1&&sc>=65)_ml_anomalies.push('erratic groove');
+  if(_ml_l1==='go'&&_ml_l2==='stop')_ml_anomalies.push('solo run');
+  const _ml_l5=_ml_anomalies.length===0?'go':(_ml_anomalies.length>=2?'stop':'mixed');
+  const _ml_layers=[{n:'stock',s:_ml_l1},{n:'family',s:_ml_l2},{n:'market',s:_ml_l3},{n:'calendar',s:_ml_l4},{n:'anomaly',s:_ml_l5}];
+  const _ml_goCount=_ml_layers.filter(l=>l.s==='go').length;
+  const _ml_stopLayers=_ml_layers.filter(l=>l.s!=='go');
+  const _ml_verdict=_ml_goCount>=5?'all clear — full conviction':_ml_goCount>=4?'4/5 agree — '+(_ml_stopLayers[0]?.n||'')+' says wait':_ml_goCount>=3?'3/5 — mixed signals, half size':_ml_goCount>=2?'only 2 agree — sit on your hands':'picture is blurry — stay out';
+  const _ml_dot=s=>s==='go'?'<span style="color:#5eead4">◉</span>':s==='stop'?'<span style="color:#f87171">◉</span>':'<span style="color:#fbbf24">◎</span>';
+  const miniLensHtml='<div style="padding:8px 10px;border-radius:8px;background:rgba(255,255,255,.02);margin-top:8px"><div style="display:flex;align-items:center;gap:6px;margin-bottom:4px"><span style="font-size:14px;display:flex;gap:4px">'+_ml_layers.map(l=>_ml_dot(l.s)).join('')+'</span><span style="font-family:var(--mono);font-size:11px;color:'+(_ml_goCount>=4?'#5eead4':_ml_goCount>=3?'#fbbf24':'#f87171')+'">'+_ml_verdict+'</span></div><div style="display:flex;gap:12px;font-size:9px;color:var(--dim)">'+_ml_layers.map(l=>'<span>'+l.n+'</span>').join('')+'</div></div>';
+
   let fitHtml='';
   if(!isHeld){
     const held=S.holdings.map(x=>x.Ticker||x.ticker).filter(Boolean);
@@ -5458,6 +5482,7 @@ function showTicker(ticker, evt){
       </div>
 
       ${fitHtml}
+      ${miniLensHtml}
 
       <div style="display:flex;gap:6px;justify-content:flex-end;margin-top:12px">
         <button class="btn" style="font-size:10px;padding:5px 12px" onclick="compareTrayAdd('${ticker}')">+ compare</button>
