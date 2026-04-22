@@ -3690,6 +3690,18 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Baseball Card — peak-to-peak and valley-to-valley speed comparison'},
   {status:'pend', label:'Historical dominance tracker — who ranks #1 most often, win streaks, seasonal patterns, head-to-head'},
   {status:'pend', label:'Baseball Card — standings line (rank frequency, current streak, win/loss character)'},
+  {status:'pend', label:'Auto-SPY lookup in HISTORY tab — formula pulls SPY close from PRICE_HISTORY by date'},
+  {status:'pend', label:'Owl — passive micro-signal surveillance with scrolling alert banner, volume pressure, cycle sync, pack divergence'},
+  {status:'pend', label:'Owl banner — horizontal scroll ticker tape at top of Terminal, vertical expand for detail, click-to-baseball-card'},
+  {status:'pend', label:'Owl inner circle — scan holdings + ranking + radar tickers on every refresh'},
+  {status:'pend', label:'Owl outer circle — sector ETF sweep for regime shift detection (weekly)'},
+  {status:'pend', label:'Project blog — public page with journey updates, concept explanations, no source code exposed'},
+  {status:'pend', label:'Code obfuscation step — minify + obfuscate JS before deploy to protect IP from View Source'},
+  {status:'pend', label:'LICENSE file — All Rights Reserved added to repo'},
+  {status:'pend', label:'Provisional patent research — Lens concept + Owl concept novelty assessment'},
+  {status:'pend', label:'Alpaca market data auto-fetch — pull historical bars for any ticker, auto-populate PRICE_HISTORY'},
+  {status:'pend', label:'Alpaca universe expansion — add sector ETFs (XLF XLV XLY XLI XLC XLP) + top holdings via API'},
+  {status:'pend', label:'Max drawdown distribution — theoretical vs actual portfolio risk using CDF/order statistics'},
   {status:'pend', label:'Composite score weight optimization — regression on signal attribution data to find real weights'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
@@ -5357,9 +5369,13 @@ function showTicker(ticker, evt){
 
   // Direction probabilities from Markov
   const mk=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
-  const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
-  const pFlat=Math.round(num(mk.P_Flat||mk.p_flat||mk.FLAT_PROB,30));
-  const pDown=100-pUp-pFlat;
+  const _rawUp=num(mk.P_Up||mk.p_up||mk.UP_PROB,0);
+  const _rawFlat=num(mk.P_Flat||mk.p_flat||mk.FLAT_PROB,0);
+  const _rawDown=num(mk.P_Down||mk.p_down||mk.DOWN_PROB,0);
+  const _hasMarkov=(_rawUp+_rawFlat+_rawDown)>0.5;
+  const pUp=_hasMarkov?Math.round(_rawUp*100):0;
+  const pFlat=_hasMarkov?Math.round(_rawFlat*100):0;
+  const pDown=_hasMarkov?Math.round(_rawDown*100):0;
 
   // Cycle position from Fourier
   const cycle=typeof calcCycle==="function"?calcCycle(ticker):null;
@@ -5460,9 +5476,7 @@ function showTicker(ticker, evt){
         <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">direction</div>
           <div style="display:flex;gap:2px;height:18px;border-radius:4px;overflow:hidden;font-family:var(--mono);font-size:10px;margin-bottom:8px">
-            <div style="flex:${pUp};background:rgba(94,234,212,.25);color:#5eead4;display:flex;align-items:center;justify-content:center">${pUp}% up</div>
-            <div style="flex:${pFlat};background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center">${pFlat}% flat</div>
-            <div style="flex:${Math.max(pDown,1)};background:rgba(248,113,113,.2);color:#f87171;display:flex;align-items:center;justify-content:center">${pDown}% dn</div>
+            ${_hasMarkov?'<div style="flex:'+pUp+';background:rgba(94,234,212,.25);color:#5eead4;display:flex;align-items:center;justify-content:center">'+pUp+'% up</div><div style="flex:'+pFlat+';background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center">'+pFlat+'% flat</div><div style="flex:'+Math.max(pDown,1)+';background:rgba(248,113,113,.2);color:#f87171;display:flex;align-items:center;justify-content:center">'+pDown+'% dn</div>':'<div style="flex:1;background:rgba(255,255,255,.03);color:var(--dim);display:flex;align-items:center;justify-content:center;font-size:10px">no probability data — add to MARKOV_CURRENT</div>'}
           </div>
           <div style="display:grid;gap:4px;font-size:11px">
             <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">8-day avg</span><span style="font-family:var(--mono);color:${ema.hasEMA?(ema.above?'#5eead4':'#f87171'):'var(--dim)'};font-size:10px">${ema.hasEMA?(ema.above?'price is above — riding the trend':'price is below — fighting the current'):'not enough data'}</span></div>
@@ -5569,7 +5583,9 @@ function openCompareView(){
     const ent=calcEntropy?calcEntropy(t):{score:50};
     const stop=calcAdaptiveStop(t);
     const mk=S.markovCurrent?.find?.(x=>x.TICKER===t)||{};
-    const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
+    const _rUp=num(mk.P_Up||mk.p_up||mk.UP_PROB,0);const _rFl=num(mk.P_Flat||mk.p_flat||mk.FLAT_PROB,0);const _rDn=num(mk.P_Down||mk.p_down||mk.DOWN_PROB,0);
+    const _hasMk=(_rUp+_rFl+_rDn)>0.5;
+    const pUp=_hasMk?Math.round(_rUp*100):0;
     const isHeld=S.holdings.some(x=>(x.Ticker||x.ticker)===t);
     const rank=S.ranking.findIndex(x=>(x.Ticker||x.ticker)===t)+1;
     const action=(r.Status||r.status||r.ACTION||r.action||'').toUpperCase();
@@ -5725,7 +5741,9 @@ function loadLens(ticker){
   const ema=calc8EMA(ticker);
   const ent=calcEntropy?calcEntropy(ticker):{score:50};
   const mk=S.markovCurrent?.find?.(x=>x.TICKER===ticker)||{};
-  const pUp=Math.round(num(mk.P_Up||mk.p_up||mk.UP_PROB,50));
+  const _rU3=num(mk.P_Up||mk.p_up||mk.UP_PROB,0);const _rF3=num(mk.P_Flat||mk.p_flat||mk.FLAT_PROB,0);const _rD3=num(mk.P_Down||mk.p_down||mk.DOWN_PROB,0);
+  const _hasMk3=(_rU3+_rF3+_rD3)>0.5;
+  const pUp=_hasMk3?Math.round(_rU3*100):0;
   const markov=r.Markov_State||r.Markov||'—';
   const lyap=calcLyapunov?calcLyapunov(ticker):{lambda:0};
   const cyc=typeof calcCycle==="function"?calcCycle(ticker):null;
