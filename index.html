@@ -3697,11 +3697,31 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Owl outer circle — sector ETF sweep for regime shift detection (weekly)'},
   {status:'pend', label:'Project blog — public page with journey updates, concept explanations, no source code exposed'},
   {status:'pend', label:'Code obfuscation step — minify + obfuscate JS before deploy to protect IP from View Source'},
-  {status:'pend', label:'LICENSE file — All Rights Reserved added to repo'},
+  {status:'ok',  label:'LICENSE file — All Rights Reserved added to repo'},
   {status:'pend', label:'Provisional patent research — Lens concept + Owl concept novelty assessment'},
   {status:'pend', label:'Alpaca market data auto-fetch — pull historical bars for any ticker, auto-populate PRICE_HISTORY'},
   {status:'pend', label:'Alpaca universe expansion — add sector ETFs (XLF XLV XLY XLI XLC XLP) + top holdings via API'},
   {status:'pend', label:'Max drawdown distribution — theoretical vs actual portfolio risk using CDF/order statistics'},
+  {status:'pend', label:'Supply Chain Radar — auto-scan upstream international ETFs (EWT EWJ EWY KWEB) via Alpaca, divergence alerts via Owl'},
+  {status:'pend', label:'Upstream contagion detection — correlate foreign ETF moves to holdings, flag when supply chain shows stress before US names react'},
+  {status:'pend', label:'Add MOH (healthcare) to RANKING_EXPORT + PRICE_HISTORY — genuine diversification from AI/semis'},
+  {status:'pend', label:'Add BRKR (life sciences) to RANKING_EXPORT + PRICE_HISTORY — insider buying, independent from portfolio'},
+  {status:'pend', label:'Add BABA (China tech) to Supply Chain Radar — sentiment signal for AI/semis, not for trading'},
+  {status:'pend', label:'Add XLF (financials ETF) — interest rate driven, inverse tech correlation'},
+  {status:'pend', label:'Add XLV (healthcare ETF) — drug approvals, Medicare policy, independent from semis'},
+  {status:'pend', label:'Add XLP (consumer staples ETF) — defensive, recession-proof, holds when tech drops'},
+  {status:'pend', label:'Add XLI (industrials ETF) — government spending, construction, manufacturing cycle'},
+  {status:'pend', label:'Add XLU (utilities ETF) — most defensive sector, the anti-tech trade'},
+  {status:'pend', label:'Add EWT (Taiwan ETF) — TSMC 25%+, chip supply chain radar signal'},
+  {status:'pend', label:'Add UNH (UnitedHealth) — healthcare giant, independent driver'},
+  {status:'pend', label:'Add JPM (JPMorgan) — financial bellwether, rate-sensitive'},
+  {status:'pend', label:'Add COST (Costco) — consumer defensive, recession-proof'},
+  {status:'pend', label:'Add CAT (Caterpillar) — global construction bellwether'},
+  {status:'pend', label:'Add KMT (Kennametal) — superhard materials, industrial cutting tools, upstream to semis manufacturing'},
+  {status:'pend', label:'Add MMM (3M) — boron nitride producer, thermal management, diversified industrial'},
+  {status:'pend', label:'Gamma distribution fitting — replace normal assumptions with Gamma-shaped return distributions for fat tail modeling'},
+  {status:'pend', label:'Recovery cycle counter — count consecutive highs/lows before reversal, measure avg recovery time per ticker'},
+  {status:'pend', label:'Transition frequency matrix — P(up after N downs), P(down after N ups), streak exhaustion probabilities per ticker'},
   {status:'pend', label:'Composite score weight optimization — regression on signal attribution data to find real weights'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
@@ -5729,7 +5749,7 @@ function loadLens(ticker){
   const h=S.holdings.find(x=>(x.Ticker||x.ticker)===ticker)||{};
   const hasData=!!(r.Ticker||r.ticker||r.Score||r.score||h.Ticker||h.ticker);
   if(!hasData){
-    el.innerHTML='<div class="card" style="padding:20px;text-align:center"><div style="font-family:var(--mono);font-size:14px;color:var(--yellow);margin-bottom:8px">'+ticker+' not found in ranking or radar data</div><div style="font-size:12px;color:var(--muted)">Make sure the ticker is in your Google Sheet and data has loaded. Check the Terminal tab to see what tickers are available.</div></div>';
+    el.innerHTML='<div class="card" style="padding:20px;text-align:center"><div style="font-family:var(--mono);font-size:14px;color:var(--yellow);margin-bottom:8px">'+ticker+' not found</div><div style="font-size:12px;color:var(--muted);line-height:1.8">To scan this ticker, add it to your Google Sheet:<br><span style="color:var(--cyan)">RANKING_EXPORT</span> or <span style="color:var(--cyan)">RADAR</span> tab — for score and system call<br><span style="color:var(--cyan)">PRICE_HISTORY</span> tab — for EMA, cycle, entropy, and full lens analysis<br><span style="color:var(--cyan)">MARKOV_CURRENT</span> tab — for direction probabilities<br><br>Or wait for Alpaca auto-fetch (coming soon) to pull data automatically.</div></div>';
     return;
   }
   const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
