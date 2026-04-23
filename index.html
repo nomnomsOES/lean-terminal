@@ -1458,6 +1458,14 @@ Average LCS across all holdings, weighted by position size, minus a penalty for 
             </div>
             <textarea id="s-sysexport" rows="2" class="settings-input" placeholder="SYSTEM_EXPORT tab CSV URL"></textarea>
           </div>
+          <div>
+            <label class="settings-label">MARKOV CURRENT</label>
+            <textarea id="s-markovcurrent" rows="2" class="settings-input" placeholder="MARKOV_CURRENT tab CSV URL"></textarea>
+          </div>
+          <div>
+            <label class="settings-label">PRICE HISTORY</label>
+            <textarea id="s-pricehistory" rows="2" class="settings-input" placeholder="PRICE_HISTORY tab CSV URL"></textarea>
+          </div>
         </div>
 
         <!-- ALPACA LIVE PRICES -->
@@ -1520,12 +1528,13 @@ const DEFAULTS = {
   shock:        _csv('1166565719'),  // SHOCK_RADAR ✓
   sysexport:    _csv('1064123242'),  // SYSTEM_EXPORT ✓
   pricehistory: _csv('1814199069'),  // PRICE_HISTORY ✓ (NVDA + SMH)
+  markovcurrent: _csv('0'),  // MARKOV_CURRENT — needs GID from user
 };
 const K = {
   engine:'lt_engine', holdings:'lt_holdings', ranking:'lt_ranking',
   radar:'lt_radar', macro:'lt_macro', shock:'lt_shock', dna:'lt_dna',
   sysexport:'lt_sysexport', aifilter:'lt_aifilter', mode:'lt_mode',
-  checks:'lt_checks', pricehistory:'lt_pricehistory'
+  checks:'lt_checks', pricehistory:'lt_pricehistory', markovcurrent:'lt_markovcurrent'
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -6214,6 +6223,8 @@ async function testAllFeeds(){
     {key:'dna',      url:$('s-dna')?.value?.trim()||rd(K.dna)},
     {key:'sysexport',url:$('s-sysexport')?.value?.trim()||rd(K.sysexport)},
     {key:'aifilter', url:$('s-aifilter')?.value?.trim()||rd(K.aifilter)},
+    {key:'markovcurrent',url:$('s-markovcurrent')?.value?.trim()||rd(K.markovcurrent)},
+    {key:'pricehistory',url:$('s-pricehistory')?.value?.trim()||rd(K.pricehistory)},
   ];
   await Promise.all(feeds.map(f=>fetchCSV(f.url,f.key)));
   renderFeedStatus();
@@ -6231,6 +6242,8 @@ function openSettings(){
   $('s-dna').value=rd(K.dna)||DEFAULTS.dna;
   $('s-sysexport').value=rd(K.sysexport)||DEFAULTS.sysexport;
   $('s-aifilter').value=rd(K.aifilter)||DEFAULTS.aifilter;
+  if($('s-markovcurrent'))$('s-markovcurrent').value=rd(K.markovcurrent)||DEFAULTS.markovcurrent;
+  if($('s-pricehistory'))$('s-pricehistory').value=rd(K.pricehistory)||DEFAULTS.pricehistory;
   // Alpaca
   const ak=$('s-alpaca-key');const as=$('s-alpaca-secret');
   if(ak)ak.value=rd(AK)||'';
@@ -6248,6 +6261,8 @@ function saveSettings(){
   wr(K.dna,$('s-dna').value.trim());
   wr(K.sysexport,$('s-sysexport').value.trim());
   wr(K.aifilter,$('s-aifilter').value.trim());
+  if($('s-markovcurrent'))wr(K.markovcurrent,$('s-markovcurrent').value.trim());
+  if($('s-pricehistory'))wr(K.pricehistory,$('s-pricehistory').value.trim());
   // Save Alpaca keys
   const ak=$('s-alpaca-key')?.value?.trim();
   const as=$('s-alpaca-secret')?.value?.trim();
@@ -6267,14 +6282,16 @@ async function loadAll(){
     engine:u('engine'), holdings:u('holdings'), ranking:u('ranking'),
     radar:u('radar'),   macro:u('macro'),        shock:u('shock'),
     dna:u('dna'),       sysexport:u('sysexport'),aifilter:u('aifilter'),
-    pricehistory:u('pricehistory')
+    pricehistory:u('pricehistory'),
+    markovcurrent:u('markovcurrent')
   };
 
-  const [eng,hld,rnk,rad,mac,shk,dna,sys,aif,ph]=await Promise.allSettled([
+  const [eng,hld,rnk,rad,mac,shk,dna,sys,aif,ph,mkc]=await Promise.allSettled([
     fetchCSV(urls.engine,'engine'),fetchCSV(urls.holdings,'holdings'),fetchCSV(urls.ranking,'ranking'),
     fetchCSV(urls.radar,'radar'),fetchCSV(urls.macro||urls.ranking,'macro'),fetchCSV(urls.shock,'shock'),
     fetchCSV(urls.dna,'dna'),fetchCSV(urls.sysexport,'sysexport'),fetchCSV(urls.aifilter,'aifilter'),
-    fetchCSV(urls.pricehistory,'pricehistory')
+    fetchCSV(urls.pricehistory,'pricehistory'),
+    fetchCSV(urls.markovcurrent,'markovcurrent')
   ]);
 
   S.engine=(eng.status==='fulfilled'&&eng.value.length)?eng.value[0]:{};
@@ -6288,6 +6305,7 @@ async function loadAll(){
   S.sysexport=sys.status==='fulfilled'?sys.value:[];
   S.aifilter=(aif.status==='fulfilled'&&aif.value.length)?aif.value[0]:{};
   S.pricehistory=ph.status==='fulfilled'?ph.value:[];;
+  S.markovCurrent=mkc.status==='fulfilled'?mkc.value:[];
 
   S.last=new Date();S.cd=30;
   $('last-time').textContent=S.last.toLocaleTimeString();
