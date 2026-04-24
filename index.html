@@ -1514,21 +1514,21 @@ Average LCS across all holdings, weighted by position size, minus a penalty for 
 <script>
 // ─── CONFIG ───────────────────────────────────────────────────────────────────
 // All URLs from your published Google Sheet (PACX-1vSu4G… sheet)
-const _BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vSu4GvMP2KBmt8Mfj1Scw8W5DGikJ5_sPzrjQ-cf2Non1IR7VO9phD7tKPXduZT35yLh5PwYOrawynS/pub';
+const _BASE = 'https://docs.google.com/spreadsheets/d/e/2PACX-1vRzT61bz879guKmZrTYPqsPNQXEbb_gvHBE-uVa-SwjcCquGUIckNxIY3KAxMWBgw/pub';
 const _csv = gid => `${_BASE}?gid=${gid}&single=true&output=csv`;
 
 const DEFAULTS = {
-  holdings:     _csv('1470433113'),  // HOLDINGS ✓
-  ranking:      _csv('775695405'),   // RANKING_EXPORT ✓
-  engine:       _csv('1836279524'),  // ACTION_ENGINE ✓
-  dna:          _csv('1848889674'),  // DNA_EXPORT ✓
-  macro:        _csv('290762793'),   // MACRO_DATA ✓
-  radar:        _csv('1962581226'),  // RADAR ✓
-  aifilter:     _csv('358995125'),   // AI_FILTER ✓
-  shock:        _csv('1166565719'),  // SHOCK_RADAR ✓
-  sysexport:    _csv('1064123242'),  // SYSTEM_EXPORT ✓
-  pricehistory: _csv('1814199069'),  // PRICE_HISTORY ✓ (NVDA + SMH)
-  markovcurrent: _csv('0'),  // MARKOV_CURRENT — needs GID from user
+  holdings:     _csv('0'),
+  ranking:      _csv('19715440933'),
+  engine:       _csv('9581989118'),
+  dna:          _csv('1407639974'),
+  macro:        _csv('16914712264'),
+  radar:        _csv('11168234968'),
+  aifilter:     _csv('5425008574'),
+  shock:        _csv('9561941474'),
+  sysexport:    _csv('10148766998'),
+  pricehistory: _csv('0'),
+  markovcurrent: _csv('812502824'),
 };
 const K = {
   engine:'lt_engine', holdings:'lt_holdings', ranking:'lt_ranking',
@@ -3731,6 +3731,18 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Gamma distribution fitting — replace normal assumptions with Gamma-shaped return distributions for fat tail modeling'},
   {status:'pend', label:'Recovery cycle counter — count consecutive highs/lows before reversal, measure avg recovery time per ticker'},
   {status:'pend', label:'Transition frequency matrix — P(up after N downs), P(down after N ups), streak exhaustion probabilities per ticker'},
+  {status:'pend', label:'Add 20-day and 50-day EMA to baseball card — full stack display with bull/bear state'},
+  {status:'pend', label:'EMA crossover alerts — browser notifications when 8/20 or 20/50 cross on any holding'},
+  {status:'pend', label:'Real-time alert engine — scan all holdings every refresh cycle for 14 signal triggers via Owl'},
+  {status:'pend', label:'S&P 11-sector rotation dashboard — rank all sector ETFs daily, call out top 3 and bottom 3'},
+  {status:'pend', label:'Add all 11 sector ETFs (XLK XLV XLF XLY XLP XLE XLI XLB XLRE XLU XLC) to Alpaca scan'},
+  {status:'pend', label:'Order block detection — identify high-volume reversal zones as support/resistance levels'},
+  {status:'pend', label:'Feigenbaum period-doubling detection — predict transition from stable to chaotic 2-3 days early'},
+  {status:'pend', label:'Khinchin probability engine — geometric mean convergence for continued fraction modeling of price behavior'},
+  {status:'pend', label:'Bus schedule analogy — arrival/on board/departed/next bus ETA across all signal types'},
+  {status:'pend', label:'Bus line on baseball card — top line shows current state in bus analogy (at stop, on board, slowing, next stop at X)'},
+  {status:'pend', label:'Omega stall point — calculate where momentum equals resistance, show as next bus stop price'},
+  {status:'pend', label:'Complete bus state machine — 10 states from no bus in sight to bus left, all tied to existing math'},
   {status:'pend', label:'Composite score weight optimization — regression on signal attribution data to find real weights'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
@@ -4165,6 +4177,149 @@ function calc8EMA(ticker){
     dot:'\u25CF',dotColor:above?'var(--green)':'var(--red)',color:above?'var(--green)':'var(--red)',
     entryLabel:above?(dist<1.5?'Near the line — ideal entry zone':'Running above — wait for pullback to EMA'):(dist<1.5?'Testing from below — watch for reclaim':'Extended below — not entry territory'),
   };
+}
+
+// ─── EMA STACK (8/20/50) WITH CROSSOVER SIGNALS ──────────────────────────────
+function calcEMAValue(prices, period){
+  if(prices.length<period) return null;
+  const k=2/(period+1);
+  let ema=prices.slice(0,period).reduce((s,v)=>s+v,0)/period;
+  for(let i=period;i<prices.length;i++){ema=prices[i]*k+ema*(1-k);}
+  return Math.round(ema*100)/100;
+}
+
+function calcEMAStack(ticker){
+  const rows=S.pricehistory
+    .filter(r=>(r.TICKER||r.Ticker||r.ticker)===ticker)
+    .sort((a,b)=>new Date(a.DATE||a.Date||a.date)-new Date(b.DATE||b.Date||b.date));
+  const prices=rows.map(r=>parseFloat(r.CLOSE||r.Close||r.close||0)).filter(v=>v>0);
+  if(prices.length<50) return{hasStack:false,msg:'Need 50+ days of price history'};
+
+  const ema8=calcEMAValue(prices,8);
+  const ema20=calcEMAValue(prices,20);
+  const ema50=calcEMAValue(prices,50);
+  const lastPrice=prices[prices.length-1];
+
+  // Compute yesterday's EMAs for crossover detection
+  const pricesYesterday=prices.slice(0,-1);
+  const ema8y=pricesYesterday.length>=8?calcEMAValue(pricesYesterday,8):null;
+  const ema20y=pricesYesterday.length>=20?calcEMAValue(pricesYesterday,20):null;
+  const ema50y=pricesYesterday.length>=50?calcEMAValue(pricesYesterday,50):null;
+
+  // Crossover detection
+  const crosses=[];
+  if(ema8y&&ema20y){
+    if(ema8y<=ema20y&&ema8>ema20) crosses.push({type:'hop_on',label:'HOP ON — 8 EMA crossed above 20 EMA',color:'var(--green)',icon:'▲'});
+    if(ema8y>=ema20y&&ema8<ema20) crosses.push({type:'hop_off',label:'HOP OFF — 8 EMA crossed below 20 EMA',color:'var(--red)',icon:'▼'});
+  }
+  if(ema20y&&ema50y){
+    if(ema20y<=ema50y&&ema20>ema50) crosses.push({type:'trend_on',label:'TREND SHIFT — 20 EMA crossed above 50 EMA (golden cross)',color:'var(--green)',icon:'⬆'});
+    if(ema20y>=ema50y&&ema20<ema50) crosses.push({type:'bail',label:'BAIL — 20 EMA crossed below 50 EMA (death cross)',color:'var(--red)',icon:'⬇'});
+  }
+
+  // Stack state
+  const above8=lastPrice>ema8;
+  const above20=lastPrice>ema20;
+  const above50=lastPrice>ema50;
+  const bullCount=[above8,above20,above50].filter(Boolean).length;
+  const ema8above20=ema8>ema20;
+  const ema20above50=ema20>ema50;
+
+  let state,stateColor,stateLabel;
+  if(bullCount===3&&ema8above20&&ema20above50){
+    state='full_bull';stateColor='var(--green)';stateLabel='full bull — stay on the bus';
+  }else if(bullCount>=2&&ema8above20){
+    state='bull';stateColor='var(--green)';stateLabel='bullish — momentum is with you';
+  }else if(!ema8above20&&ema20above50){
+    state='fading';stateColor='var(--yellow)';stateLabel='fading — momentum slipping, watch for hop off';
+  }else if(bullCount===1){
+    state='weak';stateColor='var(--yellow)';stateLabel='weak — only one average holding, be cautious';
+  }else if(bullCount===0&&!ema8above20&&!ema20above50){
+    state='full_bear';stateColor='var(--red)';stateLabel='full bear — stay off the bus';
+  }else{
+    state='mixed';stateColor='var(--yellow)';stateLabel='mixed — no clear direction';
+  }
+
+  return{
+    hasStack:true,lastPrice,
+    ema8,ema20,ema50,
+    above8,above20,above50,
+    bullCount,state,stateColor,stateLabel,
+    crosses,
+    ema8dot:above8?'●':'○',ema20dot:above20?'●':'○',ema50dot:above50?'●':'○',
+    ema8color:above8?'var(--green)':'var(--red)',
+    ema20color:above20?'var(--green)':'var(--red)',
+    ema50color:above50?'var(--green)':'var(--red)',
+  };
+}
+
+
+// ─── BUS STATE — UX LAYER TRANSLATING SIGNALS TO BUS ANALOGY ─────────────
+function calcBusState(ticker, ema, emaStack, pUp, pFlat, pDown, cycle, fatigue){
+  // If no EMA stack data, fallback to basic logic
+  if(!emaStack||!emaStack.hasStack){
+    if(ema&&ema.hasEMA){
+      if(ema.above) return{icon:'🚌',label:'on the bus — stay seated',detail:'riding the 8 EMA, watch for slowdown',color:'#5eead4'};
+      return{icon:'🚌',label:'no bus in sight',detail:'price below 8 EMA, wait for setup',color:'#6b7d8e'};
+    }
+    return{icon:'🚌',label:'bus schedule unknown',detail:'need more price history',color:'#6b7d8e'};
+  }
+
+  const {ema8, ema20, ema50, above8, above20, above50, state, crosses, lastPrice} = emaStack;
+  const distTo20=Math.abs(lastPrice-ema20);
+  const pctTo20=(distTo20/lastPrice*100).toFixed(1);
+
+  // Check for fresh crossover events (highest priority)
+  if(crosses&&crosses.length){
+    const c=crosses[0];
+    if(c.type==='hop_on') return{icon:'🚌',label:'BUS AT THE STOP — HOP ON NOW',detail:'8 EMA just crossed above 20 EMA today',color:'#5eead4',alert:true};
+    if(c.type==='hop_off') return{icon:'🚌',label:'GET OFF — HOP OFF NOW',detail:'8 EMA just crossed below 20 EMA today',color:'#f87171',alert:true};
+    if(c.type==='trend_on') return{icon:'🚌',label:'TREND SHIFT — long-haul bus boarding',detail:'20 crossed above 50 (golden cross)',color:'#5eead4',alert:true};
+    if(c.type==='bail') return{icon:'🚌',label:'BAIL — bus broke down',detail:'20 crossed below 50 (death cross)',color:'#f87171',alert:true};
+  }
+
+  // Full bull — on the bus
+  if(state==='full_bull'){
+    const nextStop=lastPrice+(distTo20*2);
+    return{icon:'🚌',label:'on the bus — stay seated',detail:'next stop around $'+nextStop.toFixed(2)+' ('+pctTo20+'% from 20 EMA)',color:'#5eead4'};
+  }
+
+  // Bull but fatigued
+  if(state==='bull'&&fatigue&&fatigue.score>60){
+    return{icon:'🚌',label:'bus slowing down',detail:'still moving but momentum fading, next stop approaching',color:'#fbbf24'};
+  }
+
+  // Bull
+  if(state==='bull'){
+    return{icon:'🚌',label:'on the bus — standing room',detail:'above 8 EMA but stack not fully aligned',color:'#5eead4'};
+  }
+
+  // Fading — slowing down before exit
+  if(state==='fading'){
+    return{icon:'🚌',label:'next stop — get ready',detail:'8 EMA slipping below 20, exit setup forming',color:'#fbbf24'};
+  }
+
+  // Weak
+  if(state==='weak'){
+    return{icon:'🚌',label:'bus shaky — barely on',detail:'only one average holding, be cautious',color:'#fbbf24'};
+  }
+
+  // Full bear — off the bus
+  if(state==='full_bear'){
+    // Check if approaching from below (bus approaching)
+    if(lastPrice>ema20*0.97){
+      return{icon:'🚌',label:'bus approaching',detail:'watch for 8 to cross 20 ($'+pctTo20+'% away)',color:'#60a5fa'};
+    }
+    // Check cycle position to estimate next bus
+    if(cycle&&cycle.hasCycle){
+      const daysToNext=Math.round(cycle.cycleDays*(1-cycle.cyclePosition/100));
+      return{icon:'🚌',label:'bus left — next bus ~'+daysToNext+' days',detail:'cycle at '+cycle.cyclePosition+'%, wait for reset',color:'#6b7d8e'};
+    }
+    return{icon:'🚌',label:'no bus in sight',detail:'price below all averages, wait for setup',color:'#6b7d8e'};
+  }
+
+  // Mixed
+  return{icon:'🚌',label:'bus confused — schedule unclear',detail:'mixed signals across EMA stack',color:'#6b7d8e'};
 }
 
 // ─── ITEM 61: RUNNER STRATEGY ─────────────────────────────────────────────────
@@ -5382,6 +5537,7 @@ function showTicker(ticker, evt){
   const conf=calcConfidence(ticker);
   const sizing=calcConvictionSize(ticker,sc,conf.total);
   const ema=calc8EMA(ticker);
+  const emaStack=calcEMAStack(ticker);
   const stop=calcAdaptiveStop(ticker);
   const runner=isHeld?calcRunnerSplit(ticker,val||100):null;
   const price=parseFloat(h.Price||h.price||r.Price||r.price||0);
@@ -5420,6 +5576,11 @@ function showTicker(ticker, evt){
   const fatLabel=fat.score!==null?(fat.score<=25?'still fresh':fat.score<=50?'getting tired':'worn out'):'—';
 
   // Does This Fit (for non-held tickers)
+  // ─── BUS STATE ─────────────────────────
+  const _fatigue=calcFatigueScore(ticker);
+  const _cycle=calcCycle(ticker);
+  const busState=calcBusState(ticker, ema, emaStack, pUp, pFlat, pDown, _cycle, _fatigue);
+
   // ─── MINI LENS (5 dots + verdict) ──────────────────────────
   const _ml_l1=(sc>=75&&ema.hasEMA&&ema.above&&(ent.score===null||ent.score<=40))?'go':(sc>=50?'mixed':'stop');
   const _ml_famTickers=S.ranking.filter(x=>{const xt=x.Theme||x.theme||'';return xt===theme&&(x.Ticker||x.ticker)!==ticker;}).slice(0,4);
@@ -5482,6 +5643,14 @@ function showTicker(ticker, evt){
         <span style="font-family:var(--mono);font-size:10px;color:var(--dim)">#${rank||'?'}</span>
       </div>
 
+      <div style="padding:10px 12px;border-radius:8px;background:${busState.alert?(busState.color==='#5eead4'?'rgba(94,234,212,.12)':'rgba(248,113,113,.12)'):'rgba(255,255,255,.03)'};border:1px solid ${busState.alert?(busState.color==='#5eead4'?'rgba(94,234,212,.25)':'rgba(248,113,113,.25)'):'rgba(255,255,255,.06)'};margin-bottom:12px;display:flex;align-items:center;gap:10px">
+        <span style="font-size:18px">${busState.icon}</span>
+        <div style="flex:1">
+          <div style="font-family:var(--mono);font-size:12px;font-weight:${busState.alert?'700':'600'};color:${busState.color};letter-spacing:.02em">${busState.label}</div>
+          <div style="font-size:10px;color:var(--dim);margin-top:2px">${busState.detail}</div>
+        </div>
+      </div>
+
       <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:6px;margin-bottom:12px">
         <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:8px;text-align:center">
           <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${sc>=75?'var(--green)':sc>=50?'var(--yellow)':'var(--red)'}">${sc}</div>
@@ -5505,10 +5674,16 @@ function showTicker(ticker, evt){
         <div style="background:rgba(255,255,255,.03);border-radius:8px;padding:10px">
           <div style="font-family:var(--mono);font-size:10px;color:var(--muted);margin-bottom:6px">direction</div>
           <div style="display:flex;gap:2px;height:18px;border-radius:4px;overflow:hidden;font-family:var(--mono);font-size:10px;margin-bottom:8px">
-            ${_hasMarkov?'<div style="flex:'+pUp+';background:rgba(94,234,212,.25);color:#5eead4;display:flex;align-items:center;justify-content:center">'+pUp+'% up</div><div style="flex:'+pFlat+';background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center">'+pFlat+'% flat</div><div style="flex:'+Math.max(pDown,1)+';background:rgba(248,113,113,.2);color:#f87171;display:flex;align-items:center;justify-content:center">'+pDown+'% dn</div>':'<div style="flex:1;background:rgba(255,255,255,.03);color:var(--dim);display:flex;align-items:center;justify-content:center;font-size:10px">no probability data — add to MARKOV_CURRENT</div>'}
+            ${_hasMarkov?'<div style="flex:'+Math.max(pUp,3)+';background:rgba(94,234,212,.25);color:#5eead4;display:flex;align-items:center;justify-content:center;font-size:'+(pUp>=10?'11':'8')+'px;overflow:hidden">'+(pUp>=5?pUp+'% up':'')+'</div><div style="flex:'+Math.max(pFlat,3)+';background:rgba(255,255,255,.05);color:var(--muted);display:flex;align-items:center;justify-content:center;font-size:'+(pFlat>=10?'11':'8')+'px;overflow:hidden">'+(pFlat>=5?pFlat+'%':'')+'</div><div style="flex:'+Math.max(pDown,3)+';background:rgba(248,113,113,.2);color:#f87171;display:flex;align-items:center;justify-content:center;font-size:'+(pDown>=10?'11':'8')+'px;overflow:hidden">'+(pDown>=5?pDown+'% dn':'')+'</div>':'<div style="flex:1;background:rgba(255,255,255,.03);color:var(--dim);display:flex;align-items:center;justify-content:center;font-size:10px">no probability data — add to MARKOV_CURRENT</div>'}
           </div>
           <div style="display:grid;gap:4px;font-size:11px">
-            <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">8-day avg</span><span style="font-family:var(--mono);color:${ema.hasEMA?(ema.above?'#5eead4':'#f87171'):'var(--dim)'};font-size:10px">${ema.hasEMA?(ema.above?'price is above — riding the trend':'price is below — fighting the current'):'not enough data'}</span></div>
+            ${emaStack.hasStack?'<div style="margin-bottom:4px">'+
+              '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--muted)">8 EMA</span><span style="font-family:var(--mono);font-size:10px;color:'+emaStack.ema8color+'">$'+emaStack.ema8+' '+emaStack.ema8dot+(emaStack.above8?' above':' below')+'</span></div>'+
+              '<div style="display:flex;justify-content:space-between;margin-bottom:2px"><span style="color:var(--muted)">20 EMA</span><span style="font-family:var(--mono);font-size:10px;color:'+emaStack.ema20color+'">$'+emaStack.ema20+' '+emaStack.ema20dot+(emaStack.above20?' above':' below')+'</span></div>'+
+              '<div style="display:flex;justify-content:space-between;margin-bottom:4px"><span style="color:var(--muted)">50 EMA</span><span style="font-family:var(--mono);font-size:10px;color:'+emaStack.ema50color+'">$'+emaStack.ema50+' '+emaStack.ema50dot+(emaStack.above50?' above':' below')+'</span></div>'+
+              '<div style="display:flex;justify-content:space-between;padding:4px 0;border-top:1px solid rgba(255,255,255,.04)"><span style="color:var(--muted)">stack</span><span style="font-family:var(--mono);font-size:10px;color:'+emaStack.stateColor+'">'+(['full_bull','bull'].includes(emaStack.state)?'▲▲▲ ':emaStack.state==='fading'?'▲▲▽ ':emaStack.state==='weak'?'▲▽▽ ':'▽▽▽ ')+emaStack.stateLabel+'</span></div>'+
+              (emaStack.crosses.length?emaStack.crosses.map(c=>'<div style="margin-top:4px;padding:5px 8px;border-radius:6px;background:'+(c.type.includes('hop_on')||c.type==='trend_on'?'rgba(94,234,212,.1);border:1px solid rgba(94,234,212,.2)':'rgba(248,113,113,.1);border:1px solid rgba(248,113,113,.2)')+'"><span style="font-family:var(--mono);font-size:10px;color:'+(c.type.includes('hop_on')||c.type==='trend_on'?'#5eead4':'#f87171')+'">'+c.icon+' '+c.label+'</span></div>').join(''):'')+
+              '</div>':'<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">EMA stack</span><span style="font-family:var(--mono);color:var(--dim);font-size:10px">need 50+ days history</span></div>'}
             ${cycPct!==null?'<div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">rhythm</span><span style="font-family:var(--mono);font-size:10px">'+cycPct+'% — '+cycLabel+'</span></div>':''}
             <div style="display:flex;justify-content:space-between"><span style="color:var(--muted)">streak</span><span style="font-family:var(--mono);font-size:10px">${markov}</span></div>
           </div>
