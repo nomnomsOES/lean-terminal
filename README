@@ -1,0 +1,221 @@
+# Lean Terminal
+
+A conviction-based swing trading terminal that translates 18 mathematical methods into one sentence a driver would understand.
+
+> "I had no coding experience when I started thinking about this. About six months later, this terminal runs my real money."
+
+---
+
+## The Story
+
+Late August 2025. I screenshot my portfolio and ask, "how can I improve this?" I have no programming background, no formal finance training, no quantitative methods education. What I have is an opinion that markets have patterns, and a stubborn belief I can find them.
+
+Six months and a dozen build sessions later, this is what exists:
+
+- **7,777 lines** of self-contained HTML running in any browser
+- **18 mathematical methods** spanning information theory, dynamical systems, stochastic processes, and signal analysis
+- **6 tabs** for analysis, comparison, regime detection, and historical backtest
+- **Live deployment** at [nomnomsoes.github.io/lean-terminal](https://nomnomsoes.github.io/lean-terminal)
+- **Real capital** deployed daily through this system
+
+This is an AI-assisted project. Every concept, architecture decision, signal design, and product call is mine. The implementation was built collaboratively. In 2026 this is industry standard — what matters is whether you understand what you built and whether it works.
+
+---
+
+## Timeline
+
+The project evolved through distinct phases:
+
+- **Aug 2025** — Began screenshot-based portfolio research. Asking "how do I improve this?"
+- **Oct 2025** — Named the campaign approach "Lean." Started thinking systematically.
+- **Nov 2025** — Refined to "Lean 2.0" with risk-tier framework and disciplined sizing.
+- **Feb 2026** — First "Lean Terminal" concept as an iPhone-readable app.
+- **Mar 2026** — Heavy build phase. 600+ message sessions wiring the engine.
+- **Apr 2026** — Formal L sessions begin (L1 on April 10). System goes live.
+- **Today** — L12. 15 logged trades, 66 shipped features, 7,777 lines.
+
+The "8-month journey" includes everything from first portfolio screenshot to today. The actual coded Lean Terminal as we know it took form over the past several months. The formal operator phase — where I trade based on the system's signals — has only been running about three weeks.
+
+---
+
+## The Approach
+
+Most trading dashboards show you data and ask you to interpret it. This one shows you data, runs eighteen interpretations of it, then synthesizes those interpretations into a single actionable sentence.
+
+The most distinctive feature is the **bus analogy** — translating 18 distinct mathematical methods into a single ten-state UX layer:
+
+```
+🚌 BUS AT THE STOP — HOP ON NOW
+   8 EMA just crossed above 20 EMA today
+
+🚌 on the bus — stay seated
+   next stop around $204.30 (2.3% from 20 EMA)
+
+🚌 next stop — get ready
+   8 EMA slipping below 20, exit setup forming
+
+🚌 GET OFF — HOP OFF NOW
+   8 EMA just crossed below 20 EMA today
+```
+
+This isn't gimmickry. It's a translation layer between mathematical sophistication and actionable clarity. Behind the bus state is the full mathematical stack — but on the surface, it's a sentence anyone can understand.
+
+---
+
+## The Math
+
+The terminal runs eighteen methods on every ticker click:
+
+**Trend & Momentum**
+- 8 / 20 / 50 EMA stack with crossover detection
+- Adaptive trailing stop (EMA-based)
+- Runner strategy (75% exit, 25% hold)
+
+**Cycles & Frequency**
+- Fourier cycle detection
+- Cycle position tracking (0–100% phase)
+- Signal decay half-life
+
+**Stochastic Processes**
+- Markov state probabilities (UP / FLAT / DOWN with continuation rates)
+- Fokker-Planck probability density
+- Monte Carlo path projections
+
+**Information Theory**
+- Shannon entropy (noise score)
+- Lyapunov exponent (chaos vs stability)
+- Confidence-weighted ensemble scoring
+
+**Risk & Stress**
+- Heat equation diffusion (cross-asset stress map)
+- Pearson correlation (portfolio X-ray)
+- Fatigue scoring (cumulative stress)
+- Drawdown circuit breaker (10% peak-to-trough)
+
+**Composite**
+- Bus state classifier (10 states)
+- Lens 5-layer regime overlay
+- Mini lens compact verdict
+- Per-ticker signal trust scoring
+
+---
+
+## The Six Tabs
+
+**Terminal** — Daily decision dashboard. Today's moves, action engine, system metrics, top bull / top bear / highest reaction.
+
+**DNA Lab** — Deep analysis on individual tickers. Full DNA panel, candlestick charts, history breakdown.
+
+**Cheat Sheet** — Quick reference for what every score means and how to read every signal.
+
+**Monte / Markov** — Probabilistic modeling. Monte Carlo path projections, Markov state flow grid, transition matrices.
+
+**Race Card** — Comparative ranking with full math context. Used for "which of these should I trade?" decisions.
+
+**Lens** — 5-layer regime overlay. Stock layer, family layer, market layer, calendar layer, anomaly layer. The verdict.
+
+---
+
+## The Baseball Card
+
+Click any ticker on any tab and a baseball card opens — a single screen showing every number that matters:
+
+- Holding status, P&L, theme classification, ranking
+- Verdict line (synthesized natural language)
+- Bus state (current action — hop on, stay seated, hop off)
+- Signal strength, signal trust, system call, position size
+- Direction probabilities (Markov: % up / flat / down)
+- 8 / 20 / 50 EMA stack with current price relationship
+- EMA stack state classifier (full bull / fading / weak / full bear / mixed)
+- Adaptive stop level
+- Noise, fatigue, runner allocation
+- Mini lens (5 dots — stock / family / market / calendar / anomaly)
+- "Does this fit?" overlap analysis for non-held tickers
+- Buttons: compare, lens, full DNA, race card, close
+
+No scrolling. No menus. No tabs to navigate. Click a ticker, get the full picture.
+
+---
+
+## The Stack
+
+- **Frontend:** Single-file HTML, no build step, no framework
+- **Data layer:** Google Sheets CSV publish feeds (read-only)
+- **Live data:** Alpaca market data API
+- **Hosting:** GitHub Pages (free, fast, version-controlled)
+- **State:** localStorage for user preferences and settings
+- **Math:** Pure vanilla JavaScript, no external libraries
+
+This is intentional. The system can be deployed anywhere, runs without a backend, has zero dependencies, and survives indefinitely. The entire trading system is one HTML file.
+
+---
+
+## Live Operation
+
+The terminal connects to:
+
+- **Google Sheets** — for ranking, holdings, price history, Markov current state, and macro indicators
+- **Alpaca** — for live price feeds and execution (paper / live toggle)
+- **Robinhood** — for manual trade execution
+
+The flow:
+
+1. Google Sheet computes scores, signals, and probabilities (server side via formulas)
+2. Terminal pulls CSV feeds, runs 18 math methods locally
+3. User reviews baseball card and bus state
+4. Trade executes through Robinhood (manual) or Alpaca (paper)
+5. Result logs to TRADE_LOG, BEHAVIOR_LOG, and HISTORY tabs
+
+---
+
+## The Discipline
+
+This system is operated by rules:
+
+- **Daily routine:** open terminal at 4:15 PM PT, log portfolio value to HISTORY, log any trades to TRADE_LOG, log any overrides to BEHAVIOR_LOG.
+- **Circuit breaker:** if portfolio drops 10% from peak, sell all and wait 14 days. Non-negotiable.
+- **Bench days are valid:** if signals are noisy, do nothing. Logged just like trade days.
+- **Behavior log is mandatory:** every system override gets a written reason. No exceptions.
+
+The discipline is the system. The math is just the input.
+
+---
+
+## What's Next
+
+The roadmap (v3.5 → v4.0):
+
+- Backtest engine (validate signals against historical PRICE_HISTORY)
+- Sector rotation dashboard (11 S&P sectors, top 3 / bottom 3 daily)
+- Owl surveillance (volume pressure + cycle sync + pack divergence alerts)
+- Universal ticker search (any US stock via Alpaca)
+- Add-to-radar write-back (Google Apps Script webhook)
+- Confidence intervals on Markov probabilities
+- Statistical significance testing on Fourier cycles
+
+---
+
+## Track Record
+
+*(Updating as trades accumulate. Target: 100 logged trades for full system evaluation.)*
+
+- **Trades logged:** 15 of 100
+- **First formal session:** April 10, 2026 (L1)
+- **Operating discipline:** daily HISTORY entries, daily checklist, behavior log on overrides
+- **Benchmark comparisons:** vs SPY, SGOV, equal-weight basket — coming at trade 30
+
+---
+
+## Contact
+
+This is a proprietary system. Source code is licensed under All Rights Reserved (see LICENSE).
+
+For inquiries about the system, methodology, or commercial licensing, reach out via the email in my GitHub profile.
+
+---
+
+*First portfolio research: August 2025*
+*"Lean" framework named: October 2025*
+*Lean Terminal coding phase: February–April 2026*
+*First formal L session: April 10, 2026*
+*Last major release: April 24, 2026 (v3.5 — bus line + EMA stack + circuit breaker)*
