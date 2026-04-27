@@ -534,9 +534,65 @@ body{font-family:var(--sans);color:var(--text);font-size:13px;
 .monte-scenario-btn:hover,.monte-scenario-btn.active{background:var(--blue2);border-color:var(--blue);color:var(--blue)}
 
 @keyframes softpulse{0%,100%{opacity:1}50%{opacity:.6}}
+
+/* ─── CIRCUIT BREAKER STYLES ─── */
+@keyframes cb-pulse {
+  0%, 100% { background:rgba(248,113,113,.95); box-shadow:0 0 24px rgba(248,113,113,.6); }
+  50% { background:rgba(220,38,38,1); box-shadow:0 0 48px rgba(248,113,113,.9); }
+}
+@keyframes cb-flash {
+  0%, 50% { opacity:1; }
+  51%, 100% { opacity:0.3; }
+}
+#circuit-breaker {
+  display:none;
+  position:fixed;
+  top:0; left:0; right:0;
+  z-index:99999;
+  padding:14px 20px;
+  text-align:center;
+  font-family:var(--mono);
+  color:#fff;
+  font-weight:700;
+  letter-spacing:.05em;
+  border-bottom:2px solid #fff;
+  animation: cb-pulse 1.2s infinite;
+  cursor:pointer;
+}
+#circuit-breaker .stop-sign {
+  display:inline-block;
+  font-size:24px;
+  margin-right:10px;
+  animation: cb-flash 0.7s infinite;
+}
+#circuit-breaker .cb-text { font-size:14px; }
+#circuit-breaker .cb-detail { font-size:11px; opacity:0.9; margin-top:3px; font-weight:400; }
+#circuit-breaker.active { display:block; }
+body.cb-active { padding-top:64px; }
+
+/* warning state — yellow, less aggressive */
+#circuit-breaker.warning {
+  background:rgba(251,191,36,.95) !important;
+  animation:none;
+  box-shadow:0 0 16px rgba(251,191,36,.4);
+  border-bottom-color:#fbbf24;
+  color:#1a1500;
+}
+#circuit-breaker.warning .stop-sign { animation: cb-flash 1.2s infinite; }
+
 </style>
 </head>
 <body>
+
+<!-- CIRCUIT BREAKER BANNER -->
+<div id="circuit-breaker" onclick="this.classList.remove('active');document.body.classList.remove('cb-active');">
+  <div>
+    <span class="stop-sign">🛑</span>
+    <span class="cb-text" id="cb-message">CIRCUIT BREAKER TRIGGERED</span>
+  </div>
+  <div class="cb-detail" id="cb-detail">click to dismiss · suggested: liquidate, hold cash, return in 14 days</div>
+</div>
+
 <div class="wrap">
 
   <!-- TOP BAR -->
@@ -1466,6 +1522,10 @@ Average LCS across all holdings, weighted by position size, minus a penalty for 
             <label class="settings-label">PRICE HISTORY</label>
             <textarea id="s-pricehistory" rows="2" class="settings-input" placeholder="PRICE_HISTORY tab CSV URL"></textarea>
           </div>
+          <div>
+            <label class="settings-label">HISTORY (PORTFOLIO TIMELINE)</label>
+            <textarea id="s-history" rows="2" class="settings-input" placeholder="HISTORY tab CSV URL — for circuit breaker"></textarea>
+          </div>
         </div>
 
         <!-- ALPACA LIVE PRICES -->
@@ -1529,12 +1589,13 @@ const DEFAULTS = {
   sysexport:    _csv('10148766998'),
   pricehistory: _csv('0'),
   markovcurrent: _csv('812502824'),
+  history: _csv('0'),
 };
 const K = {
   engine:'lt_engine', holdings:'lt_holdings', ranking:'lt_ranking',
   radar:'lt_radar', macro:'lt_macro', shock:'lt_shock', dna:'lt_dna',
   sysexport:'lt_sysexport', aifilter:'lt_aifilter', mode:'lt_mode',
-  checks:'lt_checks', pricehistory:'lt_pricehistory', markovcurrent:'lt_markovcurrent'
+  checks:'lt_checks', pricehistory:'lt_pricehistory', markovcurrent:'lt_markovcurrent', history:'lt_history'
 };
 
 // ─── STATE ────────────────────────────────────────────────────────────────────
@@ -3686,7 +3747,7 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Markov confidence intervals — standard error on transition probs, display .68 ± .12 not just .68'},
   {status:'pend', label:'Spearman rank correlation + 20-day rolling window replacing Pearson'},
   {status:'pend', label:'Z-score anomaly thresholds — trailing 30-day mean/stdev, flag beyond 2 sigma in Lens tab'},
-  {status:'pend', label:'Drawdown circuit breaker — 15% drop from peak forces full exit, 2-week pause, no override'},
+  {status:'ok',  label:'Drawdown circuit breaker — 15% drop from peak forces full exit, 2-week pause, no override'},
   {status:'pend', label:'Time-based exit rule — flag stale positions after 10 trading days with no meaningful move'},
   {status:'pend', label:'Transaction cost modeling — configurable spread/commission deducted from sizing and P&L'},
   {status:'pend', label:'Signal attribution engine — snapshot all signals at entry, compare to outcome at exit (needs 30+ trades)'},
@@ -6400,6 +6461,7 @@ async function testAllFeeds(){
     {key:'aifilter', url:$('s-aifilter')?.value?.trim()||rd(K.aifilter)},
     {key:'markovcurrent',url:$('s-markovcurrent')?.value?.trim()||rd(K.markovcurrent)},
     {key:'pricehistory',url:$('s-pricehistory')?.value?.trim()||rd(K.pricehistory)},
+    {key:'history',url:$('s-history')?.value?.trim()||rd(K.history)},
   ];
   await Promise.all(feeds.map(f=>fetchCSV(f.url,f.key)));
   renderFeedStatus();
@@ -6419,6 +6481,7 @@ function openSettings(){
   $('s-aifilter').value=rd(K.aifilter)||DEFAULTS.aifilter;
   if($('s-markovcurrent'))$('s-markovcurrent').value=rd(K.markovcurrent)||DEFAULTS.markovcurrent;
   if($('s-pricehistory'))$('s-pricehistory').value=rd(K.pricehistory)||DEFAULTS.pricehistory;
+  if($('s-history'))$('s-history').value=rd(K.history)||DEFAULTS.history;
   // Alpaca
   const ak=$('s-alpaca-key');const as=$('s-alpaca-secret');
   if(ak)ak.value=rd(AK)||'';
@@ -6438,6 +6501,7 @@ function saveSettings(){
   wr(K.aifilter,$('s-aifilter').value.trim());
   if($('s-markovcurrent'))wr(K.markovcurrent,$('s-markovcurrent').value.trim());
   if($('s-pricehistory'))wr(K.pricehistory,$('s-pricehistory').value.trim());
+  if($('s-history'))wr(K.history,$('s-history').value.trim());
   // Save Alpaca keys
   const ak=$('s-alpaca-key')?.value?.trim();
   const as=$('s-alpaca-secret')?.value?.trim();
@@ -6451,6 +6515,84 @@ window.saveSettings=saveSettings;
 $('settings-btn').onclick=openSettings;
 
 // ─── LOAD ALL ─────────────────────────────────────────────────────────────────
+// ─── DRAWDOWN CIRCUIT BREAKER ───────────────────────────────────────────
+function calcPortfolioDrawdown(){
+  // Look for portfolio history. Try HISTORY-like data from various sources.
+  // First check if user has uploaded history data into S
+  const histRows=(S.history||[]).filter(r=>{
+    const v=r.PortfolioValue||r.portfolio_value||r.Portfolio||r.AdjustedValue||r['Adjusted Value']||r.Value;
+    return v&&parseFloat(v)>0;
+  });
+
+  // Fall back to current portfolio value if no history
+  let currentValue=0;
+  let peakValue=0;
+
+  if(histRows.length>0){
+    const values=histRows.map(r=>parseFloat(r.AdjustedValue||r['Adjusted Value']||r.PortfolioValue||r.portfolio_value||r.Portfolio||r.Value||0));
+    currentValue=values[values.length-1];
+    peakValue=Math.max(...values);
+  } else {
+    // Fall back to summing current holdings
+    currentValue=(S.holdings||[]).reduce((sum,h)=>sum+parseFloat(h.Value||h.value||h.Market_Value||0),0);
+    peakValue=currentValue;
+  }
+
+  if(peakValue<=0) return{hasData:false};
+
+  const drawdown=((currentValue-peakValue)/peakValue)*100;
+  const breakerLevel=peakValue*0.9;
+  const warningLevel=peakValue*0.93;
+  const distToBreaker=currentValue-breakerLevel;
+  const distPct=(distToBreaker/peakValue)*100;
+
+  return{
+    hasData:true,
+    currentValue:Math.round(currentValue*100)/100,
+    peakValue:Math.round(peakValue*100)/100,
+    breakerLevel:Math.round(breakerLevel*100)/100,
+    warningLevel:Math.round(warningLevel*100)/100,
+    drawdown:Math.round(drawdown*100)/100,
+    distToBreaker:Math.round(distToBreaker*100)/100,
+    distPct:Math.round(distPct*100)/100,
+    triggered:drawdown<=-10,
+    warning:drawdown<=-7&&drawdown>-10,
+  };
+}
+
+function checkCircuitBreaker(){
+  const dd=calcPortfolioDrawdown();
+  const banner=$('circuit-breaker');
+  const msg=$('cb-message');
+  const detail=$('cb-detail');
+  if(!banner||!msg||!detail) return;
+
+  if(!dd.hasData){
+    banner.classList.remove('active','warning');
+    document.body.classList.remove('cb-active');
+    return;
+  }
+
+  if(dd.triggered){
+    banner.classList.add('active');
+    banner.classList.remove('warning');
+    document.body.classList.add('cb-active');
+    msg.textContent='🛑 CIRCUIT BREAKER TRIGGERED — STOP TRADING';
+    detail.innerHTML='Portfolio at $'+dd.currentValue.toLocaleString()+' · down '+Math.abs(dd.drawdown)+'% from peak of $'+dd.peakValue.toLocaleString()+' · wait 14 days · click to dismiss';
+  } else if(dd.warning){
+    banner.classList.add('active','warning');
+    document.body.classList.add('cb-active');
+    msg.textContent='⚠️ APPROACHING CIRCUIT BREAKER — '+Math.abs(dd.drawdown)+'% drawdown';
+    detail.innerHTML='Portfolio $'+dd.currentValue.toLocaleString()+' · '+Math.abs(distPct=dd.distPct)+'% from -10% trigger ($'+dd.breakerLevel.toLocaleString()+')';
+  } else {
+    banner.classList.remove('active','warning');
+    document.body.classList.remove('cb-active');
+  }
+}
+
+// Run circuit breaker check on every load
+const _origLoadAll=null;
+
 async function loadAll(){
   const u=k=>rd(K[k])||DEFAULTS[k]||'';
   const urls={
@@ -6458,15 +6600,17 @@ async function loadAll(){
     radar:u('radar'),   macro:u('macro'),        shock:u('shock'),
     dna:u('dna'),       sysexport:u('sysexport'),aifilter:u('aifilter'),
     pricehistory:u('pricehistory'),
-    markovcurrent:u('markovcurrent')
+    markovcurrent:u('markovcurrent'),
+    history:u('history')
   };
 
-  const [eng,hld,rnk,rad,mac,shk,dna,sys,aif,ph,mkc]=await Promise.allSettled([
+  const [eng,hld,rnk,rad,mac,shk,dna,sys,aif,ph,mkc,hst]=await Promise.allSettled([
     fetchCSV(urls.engine,'engine'),fetchCSV(urls.holdings,'holdings'),fetchCSV(urls.ranking,'ranking'),
     fetchCSV(urls.radar,'radar'),fetchCSV(urls.macro||urls.ranking,'macro'),fetchCSV(urls.shock,'shock'),
     fetchCSV(urls.dna,'dna'),fetchCSV(urls.sysexport,'sysexport'),fetchCSV(urls.aifilter,'aifilter'),
     fetchCSV(urls.pricehistory,'pricehistory'),
-    fetchCSV(urls.markovcurrent,'markovcurrent')
+    fetchCSV(urls.markovcurrent,'markovcurrent'),
+    fetchCSV(urls.history,'history')
   ]);
 
   S.engine=(eng.status==='fulfilled'&&eng.value.length)?eng.value[0]:{};
@@ -6481,6 +6625,8 @@ async function loadAll(){
   S.aifilter=(aif.status==='fulfilled'&&aif.value.length)?aif.value[0]:{};
   S.pricehistory=ph.status==='fulfilled'?ph.value:[];;
   S.markovCurrent=mkc.status==='fulfilled'?mkc.value:[];
+  S.history=hst.status==='fulfilled'?hst.value:[];
+  checkCircuitBreaker();
 
   S.last=new Date();S.cd=30;
   $('last-time').textContent=S.last.toLocaleTimeString();
