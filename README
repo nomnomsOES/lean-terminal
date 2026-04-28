@@ -137,6 +137,98 @@ No scrolling. No menus. No tabs to navigate. Click a ticker, get the full pictur
 
 ---
 
+## How to Read a Ticker — The Decision Path
+
+Most days, reading a ticker should take 30 seconds. The system is built so the quick-look indicators handle 80% of decisions, and the deeper tools are reserved for the 20% where you genuinely need more information.
+
+The right path is not to use every tool every time. It's to trust the quick-look tools when they agree, and only dig deeper when they disagree or when you're choosing between alternatives.
+
+### Step 1 — The Bus Line (3 seconds)
+
+This is the first read, every time, no exceptions. Click the ticker. The bus line at the top of the baseball card tells you what to do.
+
+- 🚌 *BUS AT THE STOP — HOP ON NOW* → strong action signal, dig deeper
+- 🚌 *on the bus — stay seated* → already a good situation, no urgency
+- 🚌 *next stop — get ready* → exit setup forming, watch
+- 🚌 *GET OFF — HOP OFF NOW* → strong exit signal, dig deeper
+- 🚌 *no bus in sight* / *bus left* → skip, move on
+
+If the bus is calm and you already hold the position, you're done. Close the card.
+
+### Step 2 — The Mini Lens (3 seconds)
+
+Five dots showing whether five independent layers agree:
+
+- **5/5 or 4/5** → the picture is clear, signals agree
+- **3/5** → mixed, proceed with caution
+- **2/5 or fewer** → blurry, the bus might be lying
+
+This is the sanity check on the bus. If they agree, high conviction. If they disagree, you have a decision to make.
+
+### Step 3 — Signal Strength + System Call (5 seconds)
+
+The four big numbers at the top of the card.
+
+- **Score 90+ with BUY call** → high quality
+- **Score 75-89 with BUY call** → solid
+- **Score below 75** → weak, even if bus says go
+- **Signal Trust significantly lower than Signal Strength** → the system is unsure of itself
+
+Most days, you stop here. Three green lights (bus, lens, score) means trade. One green light means bench.
+
+### Step 4 — The Stack and Direction Bar (10 seconds)
+
+Confirmation or contradiction.
+
+- **Stack ▲▲▲ full bull** → strong trend confirmation
+- **Direction bar 60%+ up** → probability supports the move
+- **Stack ▲▽▽ or ▽▲▲** → mixed, trend unclear
+
+If the stack agrees with the bus and lens, you're done. If it disagrees, continue.
+
+### Step 5 — Risk Panel (5 seconds, only when buying)
+
+Before clicking execute:
+
+- **Stop level** → are you OK with that loss size?
+- **Noise above 80** → signals are unreliable today, consider waiting
+- **Fatigue above 70** → trend is exhausted, late entry
+
+Healthy ranges → execute. One concern → reduce size by 50%. Two concerns → bench.
+
+### Step 6 — Deep Tools (only when needed)
+
+These tools answer specific questions. You shouldn't need them every day.
+
+| Question | Tool |
+|----------|------|
+| "Should I pick NVDA or SMH today?" | Compare Tray |
+| "Is my whole portfolio safe?" | Portfolio X-Ray |
+| "Is the regime saying yes?" | Lens Tab (full) |
+| "Where could this go in 30 days?" | Monte / Markov |
+| "Where is this in its cycle?" | DNA Lab + cycle position |
+| "What's the historical pattern here?" | Race Card |
+
+If you find yourself spending 5+ minutes on a ticker, the system is telling you it's not a clear setup. That's information. Bench it.
+
+### The Daily 30-Second Routine
+
+```
+1. Open terminal at 4:15 PM PT
+2. Glance at Today's Moves panel
+3. For each flagged ticker:
+   - Read bus line (3 sec)
+   - Read mini lens (3 sec)
+   - Read score (3 sec)
+   - Decide: trade, bench, or dig deeper
+4. Execute in Robinhood
+5. Log trade
+```
+
+When the math reduces to a single sentence and a row of dots, it can feel like something must be missing. That feeling is the system working correctly. The complexity is still there — it just already happened, in the bus line you're reading.
+
+---
+
 ## The Stack
 
 - **Frontend:** Single-file HTML, no build step, no framework
