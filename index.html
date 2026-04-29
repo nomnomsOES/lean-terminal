@@ -606,6 +606,10 @@ body.cb-active { padding-top:64px; }
       <div class="pill-sm"><span style="color:var(--muted)">RISK</span><span style="position:relative;display:inline-flex;margin-left:4px;vertical-align:middle"><span style="width:13px;height:13px;border-radius:50%;border:1px solid rgba(99,160,255,.25);color:rgba(90,122,158,.8);font-size:8px;font-weight:700;cursor:default;display:inline-grid;place-items:center;font-family:var(--mono)" class="msi-btn">i</span><span style="display:none;position:absolute;top:calc(100% + 6px);right:0;width:200px;background:#0a1628;border:1px solid rgba(99,160,255,.2);border-radius:9px;padding:8px 10px;font-size:10px;line-height:1.6;color:#d6e8ff;z-index:9999;font-family:var(--sans);box-shadow:0 8px 24px rgba(0,0,0,.8);pointer-events:none;white-space:normal" class="msi-tip">Portfolio danger level right now. Low number = safer conditions. High = instability in the system. Feeds into the PLAN suggestion.</span></span>&nbsp;<span id="top-risk" style="font-weight:700">—</span></div>
       <div class="pill-sm"><span style="color:var(--muted)">REFRESHED</span>&nbsp;<span id="last-time">—</span></div>
     </div>
+    <div style="display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:8px">
+      <input id="ticker-search" type="text" placeholder="Search any ticker…" maxlength="6" style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--text);font-family:var(--mono);font-size:11px;width:130px;text-transform:uppercase" onkeydown="if(event.key==='Enter')runTickerSearch()" />
+      <button class="btn" onclick="runTickerSearch()" style="font-size:11px;padding:5px 10px">🔍 Look up</button>
+    </div>
     <div class="ctrl-btns">
       <div class="btn" style="font-size:10px;color:var(--muted)">Next: <span id="cd">30s</span></div>
       <button class="btn btn-primary" id="rf-btn">↺ Refresh</button>
@@ -3289,12 +3293,12 @@ function renderActions(){
     num(a.Score||a.score||a.SCORE||a.BASE_SCORE,0)
   );
 
-  const buys=rows.filter(r=>num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0)>=ms).slice(0,3);
+  const buys=rows.filter(r=>num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0)>=ms).slice(0,5);
   const sells=rows.filter(r=>{
     const sc=num(r.Score||r.score||r.SCORE||r.BASE_SCORE,0);
     const st=(r.Status||r.status||r.ACTION||r.action||r.FINAL_ACTION||'').toUpperCase();
     return sc<ms||st==='TRIM'||st==='SELL';
-  }).slice(0,3);
+  }).slice(0,5);
 
   const baseAmounts=md==='AGG'?[150,100,75]:[100,75,50];
 
@@ -3804,6 +3808,26 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Bus line on baseball card — top line shows current state in bus analogy (at stop, on board, slowing, next stop at X)'},
   {status:'pend', label:'Omega stall point — calculate where momentum equals resistance, show as next bus stop price'},
   {status:'pend', label:'Complete bus state machine — 10 states from no bus in sight to bus left, all tied to existing math'},
+  {status:'pend', label:'Wild day detector — when today moves much bigger than the last 10 days average, flag it. Predict if it bounces back or keeps going'},
+  {status:'pend', label:'Speed limit per stock — what a typical green day and red day looks like for this stock. Flag rare events when it breaks its own speed limit'},
+  {status:'pend', label:'Cycle trajectory comparator — average historical bull/bear paths for each stock, plot current cycle against tolerance band, show running hot or running cold'},
+  {status:'pend', label:'Family trajectory benchmark — compare a stock cycle path against the average path of its theme family, show leading or lagging the pack'},
+  {status:'pend', label:'Lead-lag relationship map (simple) — within your universe, who drags who and by how much, timing offsets per pair'},
+  {status:'pend', label:'Lead-lag relationship map (full) — include outside leaders (AAPL MSFT GOOGL) as predictors via Alpaca, broader supporting cast analysis'},
+  {status:'pend', label:'Cycle decile tracker — slice every bull or bear journey into 10 equal sections, show which 10% chunk we are in, predict if cycle has fulfilled its journey'},
+  {status:'pend', label:'Gaussian fit on cycle deciles — find which decile slices behave normally vs which have fat tails, calibrate exit timing per cycle phase'},
+  {status:'pend', label:'Vector distance and angle relationships — embedding-based stock similarity with directional component, nearest neighbor map per ticker'},
+  {status:'pend', label:'Green and red signal scoreboard on baseball card — every indicator as a vote with total tally, force signal attribution into view'},
+  {status:'pend', label:'Holographic 3D or 4D sphere — typical position vs current position, animated rotation, decile profile per ticker visualized in space'},
+  {status:'pend', label:'Glowing green design system — flash green deciles 2-5, flash green for hop on signals, flash green for full bull stack, unified positive feedback language'},
+  {status:'pend', label:'Math vocabulary tags — small scrolling labels under every indicator showing technical name, click to open street speak explanation popup'},
+  {status:'pend', label:'EMA Geometry Pack — distance, angle, and pattern recognition between EMAs (ribbon spread, squeeze, convergence rate, angular momentum)'},
+  {status:'pend', label:'500 days of history per ticker via Alpaca — replace 85-day PRICE_HISTORY with deeper data so trajectory, decile, and lead-lag features become statistically reliable'},
+  {status:'ok', label:'Universal ticker search — research-only baseball card for any US equity, fetches 90 days of Alpaca bars on the fly, runs EMA stack + Markov-lite + volatility, no Google Sheet pollution'},
+  {status:'pend', label:'TimeGPT benchmark — run foundation model (TimeGPT, Chronos, Times FM) on your tickers and compare zero-shot forecasts to your custom system'},
+  {status:'pend', label:'Project knowledge wiki (Karpathy-style) — markdown vault of L summaries, dock items, Big 3 reviews, and concept links so future sessions can query history efficiently'},
+  {status:'pend', label:'Volume profile and point of control — value area, high volume nodes as magnets, low volume nodes as repellers, complement to decile tracker'},
+  {status:'pend', label:'Causal AI exploration — track foundation-model causality research, eventually replace correlation with causation in the X-Ray'},
   {status:'pend', label:'Composite score weight optimization — regression on signal attribution data to find real weights'},
 ];
 // ─── TODAY'S MOVES CARD ───────────────────────────────────────────────────────
@@ -4521,6 +4545,181 @@ async function fetchAlpacaMultiple(tickers){
     });
     return prices;
   }catch{return{};}
+}
+
+// ─── UNIVERSAL TICKER SEARCH ─────────────────────────────────────────────────
+// Fetches 90 days of bars from Alpaca, runs core math methods, displays
+// a research baseball card without polluting the trading universe.
+
+async function fetchAlpacaBars(ticker, days=90){
+  const{key,secret}=getAlpacaCreds();
+  if(!key||!secret)return null;
+  const end=new Date();
+  const start=new Date(end.getTime()-days*24*60*60*1000);
+  const startISO=start.toISOString().split('T')[0];
+  const endISO=end.toISOString().split('T')[0];
+  try{
+    const url=`${ALPACA_DATA_URL}/v2/stocks/${ticker}/bars?timeframe=1Day&start=${startISO}&end=${endISO}&limit=200&adjustment=raw`;
+    const r=await fetch(url,{headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}});
+    if(!r.ok)return null;
+    const d=await r.json();
+    return(d.bars||[]).map(b=>({t:b.t,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v}));
+  }catch{return null;}
+}
+
+function computeEMA(closes, period){
+  if(!closes.length)return [];
+  const k=2/(period+1);
+  const out=[closes[0]];
+  for(let i=1;i<closes.length;i++)out.push(closes[i]*k+out[i-1]*(1-k));
+  return out;
+}
+
+function searchTickerMath(bars){
+  if(!bars||bars.length<20)return null;
+  const closes=bars.map(b=>b.c);
+  const ema8=computeEMA(closes,8);
+  const ema20=computeEMA(closes,20);
+  const ema50=computeEMA(closes,Math.min(50,closes.length-1));
+  const last=closes[closes.length-1];
+  const e8=ema8[ema8.length-1];
+  const e20=ema20[ema20.length-1];
+  const e50=ema50[ema50.length-1];
+  // stack state
+  let stack='mixed', stackArrows='▲▽▽';
+  if(last>e8&&e8>e20&&e20>e50){stack='full bull';stackArrows='▲▲▲';}
+  else if(last<e8&&e8<e20&&e20<e50){stack='full bear';stackArrows='▽▽▽';}
+  else if(last>e8&&e8>e20){stack='fading bull';stackArrows='▲▲▽';}
+  else if(last<e8&&e8<e20){stack='weak bear';stackArrows='▽▽▲';}
+  // returns + volatility
+  const rets=[];
+  for(let i=1;i<closes.length;i++)rets.push((closes[i]-closes[i-1])/closes[i-1]);
+  const meanR=rets.reduce((a,b)=>a+b,0)/rets.length;
+  const vol=Math.sqrt(rets.reduce((a,b)=>a+(b-meanR)**2,0)/rets.length);
+  // markov-lite: % up days, % down, % flat
+  const upDays=rets.filter(r=>r>0.005).length;
+  const dnDays=rets.filter(r=>r<-0.005).length;
+  const flatDays=rets.length-upDays-dnDays;
+  const pUp=upDays/rets.length;
+  const pDn=dnDays/rets.length;
+  const pFlat=flatDays/rets.length;
+  // bus state heuristic
+  let bus='no bus in sight',busEmoji='⚪';
+  if(stack==='full bull'){bus='on the bus — stay seated';busEmoji='🚌';}
+  else if(stack==='fading bull'){bus='next stop — get ready';busEmoji='🟡';}
+  else if(stack==='full bear'){bus='no bus in sight';busEmoji='⚪';}
+  else if(stack==='weak bear'&&last>e8){bus='BUS AT THE STOP — HOP ON NOW';busEmoji='🚌';}
+  // simple score: blends trend, momentum, volatility into 0-100
+  const trendScore=Math.max(0,Math.min(100,((last-e50)/e50)*500+50));
+  const momScore=Math.max(0,Math.min(100,pUp*100+30));
+  const cleanScore=Math.max(0,Math.min(100,100-vol*1000));
+  const score=Math.round(trendScore*0.4+momScore*0.4+cleanScore*0.2);
+  // signal call
+  let call='WATCH';
+  if(score>=80&&stack==='full bull')call='BUY';
+  else if(score>=70&&(stack==='full bull'||stack==='fading bull'))call='BUY';
+  else if(score<40||stack==='full bear')call='AVOID';
+  else if(score<55)call='WATCH';
+  return{
+    last,ema8:e8,ema20:e20,ema50:e50,
+    stack,stackArrows,bus,busEmoji,
+    pUp,pDn,pFlat,vol,
+    score,call,trendScore,momScore,cleanScore,
+    bars:bars.length
+  };
+}
+
+async function runTickerSearch(){
+  const inp=$('ticker-search');
+  if(!inp)return;
+  const ticker=(inp.value||'').toUpperCase().trim();
+  if(!ticker)return;
+  const{key,secret}=getAlpacaCreds();
+  if(!key||!secret){alert('Alpaca keys not set. Open ⚙ Data settings to add API keys.');return;}
+  // overlay loading state
+  showSearchOverlay(`<div style="font-family:var(--mono);font-size:11px;color:var(--cyan);text-align:center;padding:40px">Fetching 90 days of ${ticker}…</div>`);
+  const bars=await fetchAlpacaBars(ticker,90);
+  if(!bars||!bars.length){
+    showSearchOverlay(`<div style="text-align:center;padding:40px"><div style="font-family:var(--mono);font-size:14px;color:var(--red);margin-bottom:8px">${ticker} not found</div><div style="font-size:11px;color:var(--dim)">Alpaca returned no data. Verify the ticker symbol or try a US-listed equity.</div><div style="margin-top:16px"><button class="btn" onclick="closeSearchOverlay()">Close</button></div></div>`);
+    return;
+  }
+  const m=searchTickerMath(bars);
+  if(!m){
+    showSearchOverlay(`<div style="text-align:center;padding:40px;color:var(--red)">Insufficient data for ${ticker}</div>`);
+    return;
+  }
+  // render research baseball card
+  const callColor=m.call==='BUY'?'var(--green)':(m.call==='AVOID'?'var(--red)':'var(--yellow)');
+  const stackColor=m.stack.includes('bull')?'var(--green)':(m.stack.includes('bear')?'var(--red)':'var(--yellow)');
+  const html=`
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:680px;margin:20px auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--mono);font-size:22px;font-weight:700;color:var(--text)">${ticker}</div>
+          <div style="font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(99,160,255,.12);color:var(--cyan);border:1px solid rgba(99,160,255,.2)">RESEARCH ONLY</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:11px;color:var(--muted)">$${m.last.toFixed(2)} · ${m.bars} bars</div>
+      </div>
+      <div style="font-size:13px;color:var(--text);margin-bottom:14px;line-height:1.5">${m.busEmoji} <span style="color:${stackColor};font-weight:600">${m.bus}</span></div>
+      <div style="display:grid;grid-template-columns:repeat(4,1fr);gap:10px;margin-bottom:14px">
+        <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">SCORE</div><div style="font-family:var(--mono);font-size:20px;font-weight:700;color:${m.score>=70?'var(--green)':(m.score<40?'var(--red)':'var(--yellow)')}">${m.score}</div></div>
+        <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">CALL</div><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:${callColor};margin-top:3px">${m.call}</div></div>
+        <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">STACK</div><div style="font-family:var(--mono);font-size:18px;font-weight:700;color:${stackColor}">${m.stackArrows}</div></div>
+        <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px"><div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">VOL</div><div style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text);margin-top:3px">${(m.vol*100).toFixed(1)}%</div></div>
+      </div>
+      <div style="display:grid;grid-template-columns:1fr 1fr;gap:14px;margin-bottom:14px">
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px">EMA STACK</div>
+          <div style="font-size:11px;color:var(--text);font-family:var(--mono);line-height:1.6">
+            <div>8 EMA &nbsp;$${m.ema8.toFixed(2)} · ${m.last>m.ema8?'<span style="color:var(--green)">above</span>':'<span style="color:var(--red)">below</span>'}</div>
+            <div>20 EMA $${m.ema20.toFixed(2)} · ${m.last>m.ema20?'<span style="color:var(--green)">above</span>':'<span style="color:var(--red)">below</span>'}</div>
+            <div>50 EMA $${m.ema50.toFixed(2)} · ${m.last>m.ema50?'<span style="color:var(--green)">above</span>':'<span style="color:var(--red)">below</span>'}</div>
+          </div>
+        </div>
+        <div>
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px">DAY DISTRIBUTION (90D)</div>
+          <div style="font-size:11px;color:var(--text);font-family:var(--mono);line-height:1.6">
+            <div><span style="color:var(--green)">Up</span>: ${(m.pUp*100).toFixed(0)}%</div>
+            <div><span style="color:var(--muted)">Flat</span>: ${(m.pFlat*100).toFixed(0)}%</div>
+            <div><span style="color:var(--red)">Down</span>: ${(m.pDn*100).toFixed(0)}%</div>
+          </div>
+        </div>
+      </div>
+      <div style="background:var(--bg);border:1px solid var(--line);border-radius:8px;padding:10px;margin-bottom:14px">
+        <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:6px">SCORE BREAKDOWN</div>
+        <div style="font-size:11px;color:var(--text);font-family:var(--mono);line-height:1.6">
+          <div>Trend (40%): ${Math.round(m.trendScore)}</div>
+          <div>Momentum (40%): ${Math.round(m.momScore)}</div>
+          <div>Clean signal (20%): ${Math.round(m.cleanScore)}</div>
+        </div>
+      </div>
+      <div style="font-size:10px;color:var(--dim);line-height:1.5;padding:10px;background:rgba(99,160,255,.05);border-radius:6px;border:1px solid rgba(99,160,255,.15);margin-bottom:14px">
+        <strong style="color:var(--cyan)">RESEARCH MODE:</strong> Live computed from Alpaca bars, not in your trading universe. To trade ${ticker}, add it to your RANKING_EXPORT and PRICE_HISTORY tabs in the Google Sheet. This card uses simplified math (EMA stack + Markov-lite + volatility) for fast lookup; full DNA math runs only on universe tickers.
+      </div>
+      <div style="text-align:right">
+        <button class="btn" onclick="closeSearchOverlay()" style="font-size:11px">Close</button>
+      </div>
+    </div>
+  `;
+  showSearchOverlay(html);
+}
+
+function showSearchOverlay(innerHTML){
+  let ov=$('search-overlay');
+  if(!ov){
+    ov=document.createElement('div');
+    ov.id='search-overlay';
+    ov.style.cssText='position:fixed;inset:0;background:rgba(5,12,24,.85);z-index:10000;overflow-y:auto;padding:40px 20px';
+    ov.onclick=(e)=>{if(e.target===ov)closeSearchOverlay();};
+    document.body.appendChild(ov);
+  }
+  ov.innerHTML=innerHTML;
+  ov.style.display='block';
+}
+
+function closeSearchOverlay(){
+  const ov=$('search-overlay');
+  if(ov)ov.style.display='none';
 }
 
 async function testAlpacaConnection(){
