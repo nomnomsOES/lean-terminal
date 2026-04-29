@@ -137,6 +137,47 @@ No scrolling. No menus. No tabs to navigate. Click a ticker, get the full pictur
 
 ---
 
+## Philosophy — Tools, Not Outputs
+
+This terminal was always meant to be a **tool set to accomplish the job of decision making**. Not a black box. Not an oracle. Not a buy-or-sell signal generator that tells you what to do.
+
+A tool is something you pick up, point at a question, and use to think more clearly. A precise tool creates precise products. A precise decision-making tool creates precise decisions.
+
+That distinction shows up everywhere in how the system is built:
+
+- **The bus state** does not say "buy now." It tells you the trend's structural state, in language a driver would understand. You decide whether to act.
+- **The lens** does not say "this trade is wrong." It tells you how many of the five layers — stock, family, market, calendar, anomaly — agree right now. You weigh that against your conviction.
+- **The X-Ray** does not say "your portfolio is bad." It shows you which of your positions are the same bet held twice and which are diversifiers. You choose what to do with that.
+- **The Monte Carlo / Markov** panels do not say "this stock will hit $300." They show you the probability distribution of where it could land in 30 days. You decide whether the asymmetry is worth the position size.
+
+Every panel is an instrument. The user is the operator.
+
+### Precision is constantly tested
+
+The math methods are not chosen for sophistication. They are chosen for precision — for the specific job each one does:
+
+- Fourier for cycle detection because cycles are periodic.
+- Markov chains for probability flow because state transitions are state-dependent.
+- Fokker-Planck for density estimation because price action diffuses.
+- Lyapunov for chaos detection because we need to know when the system is unpredictable.
+- Heat equation diffusion for stress propagation because pressure spreads.
+
+When a method stops earning its place — when its signal doesn't translate into better decisions — it gets retired. The Mandelbrot set fractal explorer never made it into production for this reason. Neither did several oscillator indicators that looked sophisticated but added noise. The dock catches every idea. Most never ship. The discipline is at the build step, not the curiosity step.
+
+This is also why the loading dock exists at all. Every feature gets logged before it gets built, every feature gets validated against the question "does this make decisions more precise?" — and most candidates die in the dock without consuming code.
+
+### What this means for the user
+
+If you treat this terminal like a slot machine — pull the lever, look at the score, push buy — you will lose money. The system was not designed for that workflow.
+
+If you treat it as a research instrument — point it at a hypothesis, read what the math says, weigh against your own conviction, decide with discipline — it earns its place in your daily workflow.
+
+The bus line, the lens, the score, the stack — these are not the conclusions of the system. They are the language the system uses to talk to you. The conclusion is the trade you decide to make, or the trade you decide to bench.
+
+The job of the system is to make that conversation clearer. The job of the operator is to listen.
+
+---
+
 ## How to Read a Ticker — The Decision Path
 
 Most days, reading a ticker should take 30 seconds. The system is built so the quick-look indicators handle 80% of decisions, and the deeper tools are reserved for the 20% where you genuinely need more information.
