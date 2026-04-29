@@ -607,7 +607,7 @@ body.cb-active { padding-top:64px; }
       <div class="pill-sm"><span style="color:var(--muted)">REFRESHED</span>&nbsp;<span id="last-time">—</span></div>
     </div>
     <div style="display:flex;align-items:center;gap:6px;margin-left:auto;margin-right:8px">
-      <input id="ticker-search" type="text" placeholder="Search any ticker…" maxlength="6" style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--text);font-family:var(--mono);font-size:11px;width:130px;text-transform:uppercase" onkeydown="if(event.key==='Enter')runTickerSearch()" />
+      <input id="ticker-search" type="text" placeholder="Search ticker(s)…" maxlength="60" style="background:var(--card);border:1px solid var(--line);border-radius:8px;padding:5px 10px;color:var(--text);font-family:var(--mono);font-size:11px;width:200px;text-transform:uppercase" onkeydown="if(event.key==='Enter')runTickerSearch()" />
       <button class="btn" onclick="runTickerSearch()" style="font-size:11px;padding:5px 10px">🔍 Look up</button>
     </div>
     <div class="ctrl-btns">
@@ -3823,6 +3823,7 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Math vocabulary tags — small scrolling labels under every indicator showing technical name, click to open street speak explanation popup'},
   {status:'pend', label:'EMA Geometry Pack — distance, angle, and pattern recognition between EMAs (ribbon spread, squeeze, convergence rate, angular momentum)'},
   {status:'pend', label:'500 days of history per ticker via Alpaca — replace 85-day PRICE_HISTORY with deeper data so trajectory, decile, and lead-lag features become statistically reliable'},
+  {status:'ok', label:'Multi-ticker compare table — search 2+ tickers space-separated, see side-by-side scores/calls/stacks/vol/closest universe correlation, sorted BUY first then WATCH then AVOID'},
   {status:'ok', label:'Universal ticker search — research-only baseball card for any US equity, fetches 90 days of Alpaca bars on the fly, runs EMA stack + Markov-lite + volatility, no Google Sheet pollution'},
   {status:'pend', label:'TimeGPT benchmark — run foundation model (TimeGPT, Chronos, Times FM) on your tickers and compare zero-shot forecasts to your custom system'},
   {status:'pend', label:'Project knowledge wiki (Karpathy-style) — markdown vault of L summaries, dock items, Big 3 reviews, and concept links so future sessions can query history efficiently'},
@@ -4643,8 +4644,18 @@ function searchTickerMath(bars){
 async function runTickerSearch(){
   const inp=$('ticker-search');
   if(!inp)return;
-  const ticker=(inp.value||'').toUpperCase().trim();
-  if(!ticker)return;
+  const raw=(inp.value||'').toUpperCase().trim();
+  if(!raw)return;
+  // Detect space- or comma-separated multi-ticker
+  const tickers=raw.split(/[\s,]+/).filter(t=>t.length>0&&t.length<=6);
+  if(tickers.length>1){
+    if(tickers.length>10){
+      alert('Maximum 10 tickers per search. Trim your list.');
+      return;
+    }
+    return runMultiTickerSearch(tickers);
+  }
+  const ticker=tickers[0];
   const{key,secret}=getAlpacaCreds();
   if(!key||!secret){alert('Alpaca keys not set. Open ⚙ Data settings to add API keys.');return;}
   // overlay loading state
@@ -4731,6 +4742,147 @@ function showSearchOverlay(innerHTML){
 function closeSearchOverlay(){
   const ov=$('search-overlay');
   if(ov)ov.style.display='none';
+}
+
+// ─── MULTI-TICKER COMPARE ────────────────────────────────────────────────────
+// When user types more than one ticker (space-separated), show a comparison
+// table instead of a single baseball card. Sorted by call status then score.
+
+function pearsonCorrelation(x, y){
+  const n=Math.min(x.length,y.length);
+  if(n<5)return 0;
+  const xs=x.slice(-n), ys=y.slice(-n);
+  const meanX=xs.reduce((a,b)=>a+b,0)/n;
+  const meanY=ys.reduce((a,b)=>a+b,0)/n;
+  let num=0,denX=0,denY=0;
+  for(let i=0;i<n;i++){
+    const dx=xs[i]-meanX, dy=ys[i]-meanY;
+    num+=dx*dy; denX+=dx*dx; denY+=dy*dy;
+  }
+  const den=Math.sqrt(denX*denY);
+  return den===0?0:num/den;
+}
+
+function findClosestUniverseTicker(searchedReturns){
+  // Compare against existing universe tickers via S.priceHistory
+  if(!S.priceHistory||!S.priceHistory.length)return null;
+  // Build a map: ticker -> array of returns
+  const universeMap={};
+  S.priceHistory.forEach(row=>{
+    const t=(row.TICKER||row.Ticker||'').toUpperCase();
+    const c=parseFloat(row.CLOSE||row.close||0);
+    if(!t||!c)return;
+    if(!universeMap[t])universeMap[t]=[];
+    universeMap[t].push(c);
+  });
+  // Convert closes to returns
+  let bestTicker=null, bestCorr=-2;
+  Object.entries(universeMap).forEach(([t,closes])=>{
+    if(closes.length<10)return;
+    const rets=[];
+    for(let i=1;i<closes.length;i++){
+      rets.push((closes[i]-closes[i-1])/closes[i-1]);
+    }
+    const c=pearsonCorrelation(searchedReturns, rets);
+    if(c>bestCorr){bestCorr=c; bestTicker=t;}
+  });
+  return bestTicker?{ticker:bestTicker, corr:bestCorr}:null;
+}
+
+function getUniverseRankFor(score){
+  // How would this score rank against existing universe?
+  if(!S.ranking||!S.ranking.length)return null;
+  const scores=S.ranking.map(r=>num(r.Score||r.score||r.SCORE||0,0)).sort((a,b)=>b-a);
+  let rank=1;
+  for(const s of scores){
+    if(score>=s)return rank;
+    rank++;
+  }
+  return rank;
+}
+
+async function runMultiTickerSearch(tickers){
+  const{key,secret}=getAlpacaCreds();
+  if(!key||!secret){alert('Alpaca keys not set. Open ⚙ Data settings.');return;}
+  showSearchOverlay(`<div style="font-family:var(--mono);font-size:11px;color:var(--cyan);text-align:center;padding:40px">Fetching ${tickers.length} tickers — please wait…</div>`);
+  // Fetch all in parallel
+  const results=await Promise.all(tickers.map(async t=>{
+    const bars=await fetchAlpacaBars(t,90);
+    if(!bars||!bars.length)return{ticker:t, error:true};
+    const m=searchTickerMath(bars);
+    if(!m)return{ticker:t, error:true};
+    // Build returns array for correlation
+    const closes=bars.map(b=>b.c);
+    const rets=[];
+    for(let i=1;i<closes.length;i++)rets.push((closes[i]-closes[i-1])/closes[i-1]);
+    const closest=findClosestUniverseTicker(rets);
+    const universeRank=getUniverseRankFor(m.score);
+    return{ticker:t, m, closest, universeRank};
+  }));
+  // Sort: BUY first (by score desc), then WATCH (by score desc), then AVOID
+  const callOrder={'BUY':1,'WATCH':2,'AVOID':3};
+  const valid=results.filter(r=>!r.error);
+  const errors=results.filter(r=>r.error);
+  valid.sort((a,b)=>{
+    const ca=callOrder[a.m.call]||4, cb=callOrder[b.m.call]||4;
+    if(ca!==cb)return ca-cb;
+    return b.m.score-a.m.score;
+  });
+  // Render the table
+  const rows=valid.map(r=>{
+    const m=r.m;
+    const callColor=m.call==='BUY'?'var(--green)':(m.call==='AVOID'?'var(--red)':'var(--yellow)');
+    const stackColor=m.stack.includes('bull')?'var(--green)':(m.stack.includes('bear')?'var(--red)':'var(--yellow)');
+    const scoreColor=m.score>=70?'var(--green)':(m.score<40?'var(--red)':'var(--yellow)');
+    const closestStr=r.closest?`<span style="color:var(--yellow)">≈ ${r.closest.ticker} (${r.closest.corr.toFixed(2)})</span>`:'<span style="color:var(--dim)">—</span>';
+    const rankStr=r.universeRank?`#${r.universeRank}`:'—';
+    return `<tr style="border-bottom:1px solid var(--line)">
+      <td style="padding:8px 10px;font-family:var(--mono);font-weight:700;color:var(--text)">${r.ticker}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-weight:700;color:${scoreColor};text-align:center">${m.score}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-weight:700;color:${callColor};text-align:center">${m.call}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-weight:700;color:${stackColor};text-align:center">${m.stackArrows}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);color:var(--text);text-align:right">$${m.last.toFixed(2)}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);color:var(--text);text-align:center">${(m.vol*100).toFixed(1)}%</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--text);text-align:center">${rankStr}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:10px;text-align:left">${closestStr}</td>
+      <td style="padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--dim)">${m.bus}</td>
+    </tr>`;
+  }).join('');
+  const errorRows=errors.map(r=>`<tr><td colspan="9" style="padding:8px 10px;font-family:var(--mono);font-size:10px;color:var(--red)">${r.ticker}: not found in Alpaca data</td></tr>`).join('');
+  const html=`
+    <div style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:20px;max-width:1100px;margin:20px auto">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:14px">
+        <div style="display:flex;align-items:center;gap:10px">
+          <div style="font-family:var(--mono);font-size:18px;font-weight:700;color:var(--text)">Multi-Ticker Compare</div>
+          <div style="font-family:var(--mono);font-size:9px;padding:3px 8px;border-radius:4px;background:rgba(99,160,255,.12);color:var(--cyan);border:1px solid rgba(99,160,255,.2)">RESEARCH ONLY · ${valid.length} of ${tickers.length} resolved</div>
+        </div>
+        <div style="font-family:var(--mono);font-size:10px;color:var(--muted)">Sorted: BUY → WATCH → AVOID, then score</div>
+      </div>
+      <table style="width:100%;border-collapse:collapse;font-family:var(--mono);font-size:11px">
+        <thead>
+          <tr style="border-bottom:1px solid var(--line)">
+            <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--muted);letter-spacing:.1em">TICKER</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--muted);letter-spacing:.1em">SCORE</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--muted);letter-spacing:.1em">CALL</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--muted);letter-spacing:.1em">STACK</th>
+            <th style="padding:8px 10px;text-align:right;font-size:9px;color:var(--muted);letter-spacing:.1em">PRICE</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--muted);letter-spacing:.1em">VOL</th>
+            <th style="padding:8px 10px;text-align:center;font-size:9px;color:var(--muted);letter-spacing:.1em">RANK</th>
+            <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--muted);letter-spacing:.1em">CLOSEST IN UNIVERSE</th>
+            <th style="padding:8px 10px;text-align:left;font-size:9px;color:var(--muted);letter-spacing:.1em">BUS STATE</th>
+          </tr>
+        </thead>
+        <tbody>${rows}${errorRows}</tbody>
+      </table>
+      <div style="font-size:10px;color:var(--dim);line-height:1.5;padding:10px;background:rgba(99,160,255,.05);border-radius:6px;border:1px solid rgba(99,160,255,.15);margin-top:14px">
+        <strong style="color:var(--cyan)">RESEARCH MODE:</strong> Live computed from Alpaca bars, not in your trading universe. RANK column shows where each would rank against your existing tickers if added. CLOSEST IN UNIVERSE shows the highest-correlated ticker you already hold — if correlation is high (>0.7), this name is already represented in your portfolio.
+      </div>
+      <div style="text-align:right;margin-top:14px">
+        <button class="btn" onclick="closeSearchOverlay()" style="font-size:11px">Close</button>
+      </div>
+    </div>
+  `;
+  showSearchOverlay(html);
 }
 
 async function testAlpacaConnection(){
