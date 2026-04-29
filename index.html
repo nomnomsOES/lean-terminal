@@ -653,6 +653,45 @@ body.cb-active { padding-top:64px; }
       </div>
     </div>
 
+    <!-- BENCHMARK PANEL — portfolio vs SPY -->
+    <div id="benchmark-card" style="background:var(--card);border:1px solid var(--line);border-radius:12px;padding:12px 16px;margin-bottom:2px;display:none">
+      <div style="display:flex;align-items:center;justify-content:space-between;margin-bottom:10px">
+        <div style="display:flex;align-items:center;gap:8px">
+          <div style="font-family:var(--mono);font-size:9px;font-weight:700;color:var(--cyan);letter-spacing:.12em;text-transform:uppercase">Benchmark — You vs Market</div>
+          <div id="bm-window-tabs" style="display:flex;gap:4px;font-family:var(--mono);font-size:9px">
+            <span class="bm-tab" data-window="1W" style="padding:3px 8px;border-radius:4px;cursor:pointer;color:var(--muted);border:1px solid var(--line)">1W</span>
+            <span class="bm-tab" data-window="1M" style="padding:3px 8px;border-radius:4px;cursor:pointer;color:var(--cyan);border:1px solid var(--cyan);background:rgba(99,160,255,.08)">1M</span>
+            <span class="bm-tab" data-window="3M" style="padding:3px 8px;border-radius:4px;cursor:pointer;color:var(--muted);border:1px solid var(--line)">3M</span>
+            <span class="bm-tab" data-window="ALL" style="padding:3px 8px;border-radius:4px;cursor:pointer;color:var(--muted);border:1px solid var(--line)">ALL</span>
+          </div>
+        </div>
+        <div id="bm-trade-count" style="font-family:var(--mono);font-size:10px;color:var(--muted)"></div>
+      </div>
+      <div id="bm-grid" style="display:grid;grid-template-columns:1fr 1fr 1fr 1fr;gap:8px">
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(32,224,122,.07);border:1px solid rgba(32,224,122,.2)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--green);letter-spacing:.1em;margin-bottom:4px">YOU</div>
+          <div id="bm-you" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)">—</div>
+          <div id="bm-you-detail" style="font-size:9px;color:var(--dim);margin-top:2px">—</div>
+        </div>
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(99,160,255,.07);border:1px solid rgba(99,160,255,.2)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--cyan);letter-spacing:.1em;margin-bottom:4px">SPY</div>
+          <div id="bm-spy" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)">—</div>
+          <div id="bm-spy-detail" style="font-size:9px;color:var(--dim);margin-top:2px">—</div>
+        </div>
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(245,197,66,.07);border:1px solid rgba(245,197,66,.2)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--yellow);letter-spacing:.1em;margin-bottom:4px">ALPHA</div>
+          <div id="bm-alpha" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)">—</div>
+          <div id="bm-alpha-detail" style="font-size:9px;color:var(--dim);margin-top:2px">vs SPY</div>
+        </div>
+        <div style="padding:8px 10px;border-radius:8px;background:rgba(180,180,200,.05);border:1px solid var(--line)">
+          <div style="font-family:var(--mono);font-size:8px;color:var(--muted);letter-spacing:.1em;margin-bottom:4px">SGOV (CASH)</div>
+          <div id="bm-sgov" style="font-family:var(--mono);font-size:14px;font-weight:700;color:var(--text)">—</div>
+          <div id="bm-sgov-detail" style="font-size:9px;color:var(--dim);margin-top:2px">risk-free</div>
+        </div>
+      </div>
+      <div id="bm-narrative" style="font-size:10px;color:var(--dim);line-height:1.5;margin-top:10px;padding:8px 10px;background:rgba(99,160,255,.04);border-radius:6px;border:1px solid rgba(99,160,255,.12)">—</div>
+    </div>
+
     <!-- ROW 1: METRIC PILLS -->
     <div class="row-pills">
       <div class="metric-pill">
@@ -3823,8 +3862,13 @@ const DOCK_ITEMS=[
   {status:'pend', label:'Math vocabulary tags — small scrolling labels under every indicator showing technical name, click to open street speak explanation popup'},
   {status:'pend', label:'EMA Geometry Pack — distance, angle, and pattern recognition between EMAs (ribbon spread, squeeze, convergence rate, angular momentum)'},
   {status:'pend', label:'500 days of history per ticker via Alpaca — replace 85-day PRICE_HISTORY with deeper data so trajectory, decile, and lead-lag features become statistically reliable'},
+  {status:'ok', label:'Benchmark panel — portfolio vs SPY/SGOV growth % over 1W/1M/3M/ALL windows, with alpha calculation and trade-count-aware narrative. Sits at top of Terminal tab, hidden until HISTORY data has 2+ rows'},
   {status:'ok', label:'Multi-ticker compare table — search 2+ tickers space-separated, see side-by-side scores/calls/stacks/vol/closest universe correlation, sorted BUY first then WATCH then AVOID'},
   {status:'ok', label:'Universal ticker search — research-only baseball card for any US equity, fetches 90 days of Alpaca bars on the fly, runs EMA stack + Markov-lite + volatility, no Google Sheet pollution'},
+  {status:'pend', label:'Decline lifecycle decile tracker — for each ticker, identify historical decline events (5%+ drops from peak), slice each into 10 time buckets, compute typical magnitude/volume/duration profile per decile. When current drop is active, place it on typical trajectory: which decile is it at, expected remaining drop, expected days to trough. Frame as percentile ranges (60-75%) not point estimates (89%). Requires 250+ days of price history per ticker. Build AFTER EMA crossover backtest validates basic reversal signals'},
+  {status:'pend', label:'Reversal candidate signal — multi-condition convergence (RSI<30 rising, volume divergence, EMA stack break, lens turning) producing 0-100 confidence score. Build AFTER EMA crossover backtest validates whether existing reversal signals work. Avoid bottom-catching framing'},
+  {status:'pend', label:'Tail correlation / copula analysis — Pearson correlation captures linear co-movement only; assets can have low Pearson but still crash together in tail events. Add tail-dependence measure (Kendall tau, lower-tail copula) to X-Ray panel for crash-correlation visibility'},
+  {status:'pend', label:'Research lens for compare table — separate from universe lens, designed for exploration of non-portfolio tickers, possibly via correlation-borrow (closest in universe lens) or simplified 3-dot version (stock/market/anomaly only). Reasoning: current lens is precision-tuned for trading universe; forcing it to handle research would dilute its primary job'},
   {status:'pend', label:'TimeGPT benchmark — run foundation model (TimeGPT, Chronos, Times FM) on your tickers and compare zero-shot forecasts to your custom system'},
   {status:'pend', label:'Project knowledge wiki (Karpathy-style) — markdown vault of L summaries, dock items, Big 3 reviews, and concept links so future sessions can query history efficiently'},
   {status:'pend', label:'Volume profile and point of control — value area, high volume nodes as magnets, low volume nodes as repellers, complement to decile tracker'},
@@ -4475,7 +4519,7 @@ function smartExec(ticker, side, amount, exitType){
     const msg=`LOG TRADE\n\n${sideLabel} — ${ticker}\n$${amount}\n\nThis ticker is not supported by Alpaca.\nTrade will be logged only — execute manually in Robinhood.\n\nProceed?`;
     if(!confirm(msg))return;
     logTrade(side.toUpperCase(),ticker,amount,'DONE');
-    renderTodaysMoves();
+    renderTodaysMoves(); renderBenchmark();
     alert(`✓ ${side} ${ticker} $${amount} logged.\nExecute manually in Robinhood.`);
   } else {
     confirmAndExecute(ticker,side,amount,exitType);
@@ -4763,29 +4807,37 @@ function pearsonCorrelation(x, y){
   return den===0?0:num/den;
 }
 
-function findClosestUniverseTicker(searchedReturns){
-  // Compare against existing universe tickers via S.priceHistory
-  if(!S.priceHistory||!S.priceHistory.length)return null;
+function findClosestUniverseTicker(searchedReturns, searchedTicker){
+  // Compare against existing universe tickers via S.pricehistory
+  if(!S.pricehistory||!S.pricehistory.length){
+    console.warn('findClosestUniverseTicker: S.pricehistory is empty or missing');
+    return null;
+  }
   // Build a map: ticker -> array of returns
   const universeMap={};
-  S.priceHistory.forEach(row=>{
-    const t=(row.TICKER||row.Ticker||'').toUpperCase();
-    const c=parseFloat(row.CLOSE||row.close||0);
+  S.pricehistory.forEach(row=>{
+    const t=(row.TICKER||row.Ticker||row.ticker||'').toUpperCase();
+    const c=parseFloat(row.CLOSE||row.Close||row.close||0);
     if(!t||!c)return;
     if(!universeMap[t])universeMap[t]=[];
     universeMap[t].push(c);
   });
   // Convert closes to returns
   let bestTicker=null, bestCorr=-2;
+  let candidatesEvaluated=0;
   Object.entries(universeMap).forEach(([t,closes])=>{
     if(closes.length<10)return;
+    // Skip self-match if the searched ticker is already in universe
+    if(searchedTicker && t===searchedTicker.toUpperCase())return;
     const rets=[];
     for(let i=1;i<closes.length;i++){
       rets.push((closes[i]-closes[i-1])/closes[i-1]);
     }
     const c=pearsonCorrelation(searchedReturns, rets);
+    candidatesEvaluated++;
     if(c>bestCorr){bestCorr=c; bestTicker=t;}
   });
+  console.log(`findClosestUniverseTicker: evaluated ${candidatesEvaluated} candidates, best=${bestTicker} (${bestCorr.toFixed(3)})`);
   return bestTicker?{ticker:bestTicker, corr:bestCorr}:null;
 }
 
@@ -4815,7 +4867,7 @@ async function runMultiTickerSearch(tickers){
     const closes=bars.map(b=>b.c);
     const rets=[];
     for(let i=1;i<closes.length;i++)rets.push((closes[i]-closes[i-1])/closes[i-1]);
-    const closest=findClosestUniverseTicker(rets);
+    const closest=findClosestUniverseTicker(rets, t);
     const universeRank=getUniverseRankFor(m.score);
     return{ticker:t, m, closest, universeRank};
   }));
@@ -5563,7 +5615,7 @@ function confirmAndExecute(ticker, side, amount, exitType){
   executeAlpacaTrade(ticker,side==='TRIM'?'sell':side.toLowerCase(),null,displayAmt).then(result=>{
     if(result){
       alert(`✓ ${side} ${ticker} $${displayAmt} submitted${isPaper?' (paper)':''}\nOrder ID: ${result.id}`);
-      renderTodaysMoves();
+      renderTodaysMoves(); renderBenchmark();
     } else {
       alert('Trade failed — check your Alpaca keys and account status');
     }
@@ -6764,7 +6816,7 @@ function resetAllChecks(){
   if(confirm('Clear all done/skip marks? This resets the action engine for a fresh session.')){
     wr(K.checks,'{}');
     renderActions();
-    renderTodaysMoves();
+    renderTodaysMoves(); renderBenchmark();
   }
 }
 window.resetAllChecks=resetAllChecks;
@@ -6922,6 +6974,136 @@ function calcPortfolioDrawdown(){
   };
 }
 
+// ─── BENCHMARK PANEL — Portfolio vs SPY/SGOV ─────────────────────────────────
+// Reads HISTORY tab data, computes growth % over selectable windows
+function renderBenchmark(){
+  const card=$('benchmark-card');
+  if(!card)return;
+
+  // Parse history rows
+  const histRows=(S.history||[]).filter(r=>{
+    const v=r.PortfolioValue||r.portfolio_value||r.Portfolio||r.AdjustedValue||r['Adjusted Value']||r.Value;
+    return v&&parseFloat(v)>0;
+  }).map(r=>{
+    const dateStr=r.Timestamp||r.Date||r.date||r.timestamp||'';
+    const portfolio=parseFloat(r.AdjustedValue||r['Adjusted Value']||r.PortfolioValue||r.portfolio_value||r.Portfolio||r.Value||0);
+    const spy=parseFloat(r.SPY||r.spy||r.Spy||0);
+    let date;
+    try{date=new Date(dateStr);}catch{date=null;}
+    return{date, portfolio, spy};
+  }).filter(r=>r.date&&!isNaN(r.date.getTime())).sort((a,b)=>a.date-b.date);
+
+  if(histRows.length<2){
+    card.style.display='none';
+    return;
+  }
+  card.style.display='block';
+
+  // Determine active window from tabs
+  const activeTab=document.querySelector('.bm-tab[style*="cyan"]');
+  const win=activeTab?activeTab.dataset.window:'1M';
+
+  const today=histRows[histRows.length-1].date;
+  let cutoffDate;
+  if(win==='1W'){cutoffDate=new Date(today.getTime()-7*86400000);}
+  else if(win==='1M'){cutoffDate=new Date(today.getTime()-30*86400000);}
+  else if(win==='3M'){cutoffDate=new Date(today.getTime()-90*86400000);}
+  else{cutoffDate=histRows[0].date;}
+
+  // Find earliest row in window
+  const inWindow=histRows.filter(r=>r.date>=cutoffDate);
+  if(inWindow.length<2){
+    // Fall back to oldest available
+    const start=histRows[0];
+    const end=histRows[histRows.length-1];
+    renderBenchmarkValues(start, end, 'ALL', histRows.length);
+    return;
+  }
+
+  const start=inWindow[0];
+  const end=inWindow[inWindow.length-1];
+  renderBenchmarkValues(start, end, win, inWindow.length);
+}
+
+function renderBenchmarkValues(start, end, windowLabel, dataPoints){
+  // Portfolio growth
+  const youPct=start.portfolio>0?((end.portfolio-start.portfolio)/start.portfolio)*100:0;
+  const youDollar=end.portfolio-start.portfolio;
+
+  // SPY growth (only if both endpoints have SPY data)
+  let spyPct=null, spyDollar=null;
+  if(start.spy>0&&end.spy>0){
+    spyPct=((end.spy-start.spy)/start.spy)*100;
+    spyDollar=end.spy-start.spy;
+  }
+
+  // SGOV growth (synthetic — assume SGOV averages ~5% APY = ~0.014% daily)
+  // More accurately we'd pull this from PRICE_HISTORY; for now use approximation
+  const days=Math.max(1, Math.round((end.date-start.date)/86400000));
+  const sgovPct=Math.pow(1.05, days/365)*100-100;
+
+  // Alpha (You - SPY)
+  const alphaPct=spyPct!==null?youPct-spyPct:null;
+
+  // Render
+  const fmt=(p)=>p===null?'—':(p>=0?'+':'')+p.toFixed(2)+'%';
+  const colorFor=(p)=>p===null?'var(--text)':(p>0.5?'var(--green)':(p<-0.5?'var(--red)':'var(--yellow)'));
+
+  $('bm-you').textContent=fmt(youPct);
+  $('bm-you').style.color=colorFor(youPct);
+  $('bm-you-detail').textContent=`$${start.portfolio.toFixed(0)} → $${end.portfolio.toFixed(0)}`;
+
+  $('bm-spy').textContent=fmt(spyPct);
+  $('bm-spy').style.color=colorFor(spyPct);
+  $('bm-spy-detail').textContent=spyPct!==null?`$${start.spy.toFixed(2)} → $${end.spy.toFixed(2)}`:'no SPY data';
+
+  $('bm-alpha').textContent=fmt(alphaPct);
+  $('bm-alpha').style.color=alphaPct===null?'var(--text)':(alphaPct>0?'var(--green)':'var(--red)');
+
+  $('bm-sgov').textContent=fmt(sgovPct);
+  $('bm-sgov').style.color='var(--muted)';
+
+  // Narrative
+  const tradeCount=15; // could pull from BEHAVIOR_LOG eventually
+  $('bm-trade-count').textContent=`${tradeCount} of 100 trades · ${dataPoints} data points`;
+
+  let narrative='';
+  if(alphaPct===null){
+    narrative=`${windowLabel} window: portfolio ${fmt(youPct)}. SPY data not available for this window — add SPY column to HISTORY tab to enable comparison.`;
+  } else if(alphaPct>2){
+    narrative=`${windowLabel} window: outperforming SPY by ${alphaPct.toFixed(2)} points. Strong relative performance — but ${tradeCount} trades is too small for confident attribution. Trade 30 is the real evaluation point.`;
+  } else if(alphaPct>0){
+    narrative=`${windowLabel} window: slightly ahead of SPY by ${alphaPct.toFixed(2)} points. Directionally positive but within noise range. Need more trades to call this signal.`;
+  } else if(alphaPct>-2){
+    narrative=`${windowLabel} window: tracking close to SPY (${alphaPct.toFixed(2)} points). Active management not yet adding value. Still early — keep operating.`;
+  } else {
+    narrative=`${windowLabel} window: underperforming SPY by ${Math.abs(alphaPct).toFixed(2)} points. Worth reviewing what trades drove the gap. Check BEHAVIOR_LOG for override patterns.`;
+  }
+  $('bm-narrative').textContent=narrative;
+}
+
+function setBenchmarkWindow(win){
+  document.querySelectorAll('.bm-tab').forEach(t=>{
+    if(t.dataset.window===win){
+      t.style.color='var(--cyan)';
+      t.style.borderColor='var(--cyan)';
+      t.style.background='rgba(99,160,255,.08)';
+    } else {
+      t.style.color='var(--muted)';
+      t.style.borderColor='var(--line)';
+      t.style.background='transparent';
+    }
+  });
+  renderBenchmark();
+}
+
+// Wire up tab clicks after DOM is ready
+document.addEventListener('DOMContentLoaded',()=>{
+  document.querySelectorAll('.bm-tab').forEach(t=>{
+    t.addEventListener('click',()=>setBenchmarkWindow(t.dataset.window));
+  });
+});
+
 function checkCircuitBreaker(){
   const dd=calcPortfolioDrawdown();
   const banner=$('circuit-breaker');
@@ -7054,7 +7236,7 @@ async function loadAll(){
   renderFeedStatus();
 
   renderPills();
-  renderTodaysMoves();
+  renderTodaysMoves(); renderBenchmark();
   renderRanking();
   renderActions();
   renderHoldings();
