@@ -4554,17 +4554,28 @@ async function fetchAlpacaMultiple(tickers){
 async function fetchAlpacaBars(ticker, days=90){
   const{key,secret}=getAlpacaCreds();
   if(!key||!secret)return null;
+  // End date is yesterday, not today — Alpaca free tier (IEX feed) has 15-min delay
+  // and won't serve current-day bars reliably
   const end=new Date();
+  end.setDate(end.getDate()-1);
   const start=new Date(end.getTime()-days*24*60*60*1000);
   const startISO=start.toISOString().split('T')[0];
   const endISO=end.toISOString().split('T')[0];
   try{
-    const url=`${ALPACA_DATA_URL}/v2/stocks/${ticker}/bars?timeframe=1Day&start=${startISO}&end=${endISO}&limit=200&adjustment=raw`;
+    const url=`${ALPACA_DATA_URL}/v2/stocks/${ticker}/bars?timeframe=1Day&start=${startISO}&end=${endISO}&limit=200&adjustment=raw&feed=iex`;
     const r=await fetch(url,{headers:{'APCA-API-KEY-ID':key,'APCA-API-SECRET-KEY':secret}});
-    if(!r.ok)return null;
+    if(!r.ok){
+      console.warn(`Alpaca bars fetch failed for ${ticker}: ${r.status} ${r.statusText}`);
+      return null;
+    }
     const d=await r.json();
-    return(d.bars||[]).map(b=>({t:b.t,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v}));
-  }catch{return null;}
+    const bars=(d.bars||[]).map(b=>({t:b.t,o:b.o,h:b.h,l:b.l,c:b.c,v:b.v}));
+    console.log(`Alpaca bars for ${ticker}: ${bars.length} bars`);
+    return bars;
+  }catch(e){
+    console.error(`fetchAlpacaBars error for ${ticker}:`, e);
+    return null;
+  }
 }
 
 function computeEMA(closes, period){
